@@ -70,7 +70,8 @@ Future<void> _guard(
     if (context.mounted) {
       showWalletToast(context, e.message, icon: DeeMusiqIcons.error);
     }
-  } catch (_) {
+  } catch (e, stack) {
+    AppLogger.log.w('Account op failed: ${e.toString()}');
     if (context.mounted) {
       showWalletToast(context, "Something went wrong.", icon: DeeMusiqIcons.error);
     }
