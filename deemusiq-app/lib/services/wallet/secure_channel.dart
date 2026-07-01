@@ -50,16 +50,31 @@ abstract class SecureChannel {
 
   /// Seal a JSON string into an envelope map ready to send as the request body.
   static Map<String, dynamic> seal(String plainJson) {
-    final iv = enc.IV.fromSecureRandom(12);
-    final encrypted = _encrypter().encryptBytes(utf8.encode(plainJson), iv: iv);
-    return {"v": 1, "iv": iv.base64, "ct": encrypted.base64};
+    try {
+      final iv = enc.IV.fromSecureRandom(12);
+      final encrypted = _encrypter().encryptBytes(utf8.encode(plainJson), iv: iv);
+      return {"v": 1, "iv": iv.base64, "ct": encrypted.base64};
+    } catch (e, stack) {
+      AppLogger.log.e('SecureChannel: seal failed: $e');
+      AppLogger.reportError(e, stack);
+      rethrow;
+    }
   }
 
   /// Open an envelope map back into its JSON string.
   static String open(Map<String, dynamic> envelope) {
-    final iv = enc.IV.fromBase64(envelope["iv"] as String);
-    final ct = enc.Encrypted.fromBase64(envelope["ct"] as String);
-    return utf8.decode(_encrypter().decryptBytes(ct, iv: iv));
+    if (!isEnvelope(envelope)) {
+      throw ArgumentError('SecureChannel.open: invalid envelope — missing iv or ct');
+    }
+    try {
+      final iv = enc.IV.fromBase64(envelope["iv"] as String);
+      final ct = enc.Encrypted.fromBase64(envelope["ct"] as String);
+      return utf8.decode(_encrypter().decryptBytes(ct, iv: iv));
+    } catch (e, stack) {
+      AppLogger.log.e('SecureChannel: open/decrypt failed: $e');
+      AppLogger.reportError(e, stack);
+      rethrow;
+    }
   }
 
   /// True if [data] looks like one of our envelopes.

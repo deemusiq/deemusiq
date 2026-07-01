@@ -6,7 +6,6 @@ VoidCallback useCustomStatusBarColor(
   Color color,
   bool isCurrentRoute, {
   bool noSetBGColor = false,
-  bool? automaticSystemUiAdjustment,
 }) {
   final context = useContext();
   final backgroundColor = Theme.of(context).colorScheme.background;
@@ -29,11 +28,6 @@ VoidCallback useCustomStatusBarColor(
 
   useEffect(() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (automaticSystemUiAdjustment != null) {
-        // ignore: deprecated_member_use
-        WidgetsBinding.instance.renderView.automaticSystemUiAdjustment =
-            automaticSystemUiAdjustment;
-      }
       if (isCurrentRoute && statusBarColor != color) {
         final isLight = color.computeLuminance() > 0.179;
         SystemChrome.setSystemUIOverlayStyle(
@@ -48,12 +42,7 @@ VoidCallback useCustomStatusBarColor(
         resetStatusbar();
       }
     });
-    return () {
-      if (automaticSystemUiAdjustment != null) {
-        // ignore: deprecated_member_use
-        WidgetsBinding.instance.renderView.automaticSystemUiAdjustment = false;
-      }
-    };
+    return () {};
   }, [color, isCurrentRoute, statusBarColor]);
 
   useEffect(() {

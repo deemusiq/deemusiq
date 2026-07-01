@@ -245,7 +245,9 @@ class AudioErrorHandler {
       );
       await Future.delayed(delay);
       return true;
-    } catch (_) {
+    } catch (e, stack) {
+      AppLogger.log.w('_retryWithBackoff delay interrupted: $e');
+      AppLogger.reportError(e, stack, '_retryWithBackoff delay');
       return false;
     }
   }

@@ -10,11 +10,19 @@ class NewPipeEngine implements YouTubeEngine {
   static bool get isAvailableForPlatform => kIsAndroid || kIsDesktop;
 
   AudioOnlyStreamInfo _parseAudioStream(AudioStream stream, String videoId) {
+    final mediaFormat = stream.mediaFormat;
+    if (mediaFormat == null) {
+      throw ArgumentError('NewPipeEngine: AudioStream has null mediaFormat for $videoId');
+    }
+    final content = stream.content;
+    if (content.isEmpty) {
+      throw ArgumentError('NewPipeEngine: AudioStream has empty content URL for $videoId');
+    }
     return AudioOnlyStreamInfo(
       VideoId(videoId),
       stream.itag,
-      Uri.parse(stream.content),
-      StreamContainer.parse(stream.mediaFormat!.mimeType.split("/").last),
+      Uri.parse(content),
+      StreamContainer.parse(mediaFormat.mimeType.split("/").last),
       FileSize.unknown,
       Bitrate(stream.bitrate),
       stream.codec,
@@ -24,7 +32,7 @@ class NewPipeEngine implements YouTubeEngine {
         _ => "low",
       },
       [],
-      MediaType.parse(stream.mediaFormat!.mimeType),
+      MediaType.parse(mediaFormat.mimeType),
       null,
     );
   }

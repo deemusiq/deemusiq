@@ -88,23 +88,29 @@ class IsolatedYoutubeExplode {
       }
 
       // Run the requested method on YoutubeExplode
-      var result = switch (methodName) {
-        "search" => youtubeExplode.search
-            .search(
+      try {
+        var result = switch (methodName) {
+          "search" => youtubeExplode.search
+              .search(
+                arguments[0] as String,
+                filter: arguments.elementAtOrNull(1) ?? TypeFilters.video,
+              )
+              .then((s) => s.toList()),
+          "video" => youtubeExplode.videos.get(arguments[0] as String),
+          "manifest" => youtubeExplode.videos.streamsClient.getManifest(
               arguments[0] as String,
-              filter: arguments.elementAtOrNull(1) ?? TypeFilters.video,
-            )
-            .then((s) => s.toList()),
-        "video" => youtubeExplode.videos.get(arguments[0] as String),
-        "manifest" => youtubeExplode.videos.streamsClient.getManifest(
-            arguments[0] as String,
-            requireWatchPage: arguments.elementAtOrNull(1) ?? true,
-            ytClients: arguments.elementAtOrNull(2) as List<YoutubeApiClient>?,
-          ),
-        _ => throw ArgumentError('Invalid method name: $methodName'),
-      };
+              requireWatchPage: arguments.elementAtOrNull(1) ?? true,
+              ytClients: arguments.elementAtOrNull(2) as List<YoutubeApiClient>?,
+            ),
+          _ => throw ArgumentError('Invalid method name: $methodName'),
+        };
 
-      replyPort.send(await result);
+        replyPort.send(await result);
+      } catch (e, stack) {
+        debugPrint('IsolatedYoutubeExplode: unhandled error in isolate: $e');
+        debugPrintStack(stackTrace: stack);
+        replyPort.send(e); // Propagate error to caller
+      }
     });
   }
 
@@ -114,7 +120,11 @@ class IsolatedYoutubeExplode {
 
     responsePort.listen((message) {
       if (!completer.isCompleted) {
-        completer.complete(message as T);
+        if (message is Exception || message is Error) {
+          completer.completeError(message);
+        } else {
+          completer.complete(message as T);
+        }
         responsePort.close();
       }
     });
@@ -122,9 +132,12 @@ class IsolatedYoutubeExplode {
     _sendPort.send([responsePort.sendPort, methodName, args]);
     return completer.future.timeout(
       const Duration(seconds: 30),
-      onTimeout: () => throw TimeoutException(
-        'YoutubeExplode isolate timed out on $methodName',
-      ),
+      onTimeout: () {
+        responsePort.close();
+        throw TimeoutException(
+          'YoutubeExplode isolate timed out on $methodName',
+        );
+      },
     );
   }
 
@@ -168,6 +181,9 @@ class YouTubeExplodeEngine implements YouTubeEngine {
 
   @override
   Future<StreamManifest> getStreamManifest(String videoId) async {
+    if (videoId.isEmpty) {
+      throw ArgumentError('videoId must not be empty');
+    }
     await IsolatedYoutubeExplode.initialize();
 
     try {
@@ -215,8 +231,17 @@ class YouTubeExplodeEngine implements YouTubeEngine {
 
   @override
   Future<Video> getVideo(String videoId) async {
+    if (videoId.isEmpty) {
+      throw ArgumentError('videoId must not be empty');
+    }
     await IsolatedYoutubeExplode.initialize();
-    return _youtubeExplode.video(videoId);
+    try {
+      return await _youtubeExplode.video(videoId);
+    } catch (e, stack) {
+      AppLogger.log.w('YouTubeExplode: Failed to get video for $videoId: ${e.toString()}');
+      AppLogger.reportError(e, stack);
+      rethrow;
+    }
   }
 
   @override
@@ -231,18 +256,29 @@ class YouTubeExplodeEngine implements YouTubeEngine {
 
   @override
   Future<List<Video>> searchVideos(String query) async {
+    if (query.trim().isEmpty) {
+      return const [];
+    }
     await IsolatedYoutubeExplode.initialize();
 
-    return _youtubeExplode
-        .search(
-          query,
-          filter: TypeFilters.video,
-        )
-        .then((searchList) => searchList.toList());
+    try {
+      return await _youtubeExplode
+          .search(
+            query,
+            filter: TypeFilters.video,
+          )
+          .then((searchList) => searchList.toList());
+    } catch (e, stack) {
+      AppLogger.log.w('YouTubeExplode: Search failed for "$query": ${e.toString()}');
+      AppLogger.reportError(e, stack);
+      rethrow;
+    }
   }
 
   @override
   void dispose() {
-    IsolatedYoutubeExplode.instance.dispose();
+    if (IsolatedYoutubeExplode.isInitialized) {
+      IsolatedYoutubeExplode.instance.dispose();
+    }
   }
 }

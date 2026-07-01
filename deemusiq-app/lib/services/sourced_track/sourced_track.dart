@@ -263,18 +263,28 @@ class SourcedTrack extends BasicSourcedTrack {
 
     final stringBuffer = StringBuffer();
     for (final source in sources) {
-      final res = await globalDio.head(
-        source.url,
-        options:
-            Options(validateStatus: (status) => status != null && status < 500),
-      );
+      try {
+        final res = await globalDio.head(
+          source.url,
+          options: Options(
+              validateStatus: (status) => status != null && status < 500),
+        );
 
-      stringBuffer.writeln(
-        "[${query.id}] ${res.statusCode} ${source.container} ${source.codec} ${source.bitrate}",
-      );
+        final statusCode = res.statusCode;
+        stringBuffer.writeln(
+          "[${query.id}] ${statusCode ?? 'null'} ${source.container} ${source.codec} ${source.bitrate}",
+        );
 
-      if (res.statusCode! < 400) {
-        validStreams.add(source);
+        if (statusCode != null && statusCode < 400) {
+          validStreams.add(source);
+        }
+      } catch (e) {
+        AppLogger.log.w(
+          'refreshStream HEAD failed for ${source.url}: $e',
+        );
+        stringBuffer.writeln(
+          "[${query.id}] ERROR ${source.container} ${source.codec} ${source.bitrate}: $e",
+        );
       }
     }
 

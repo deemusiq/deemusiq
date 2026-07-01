@@ -72,15 +72,7 @@ class PlayerView extends HookConsumerWidget {
     );
 
     useEffect(() {
-      for (final renderView in WidgetsBinding.instance.renderViews) {
-        renderView.automaticSystemUiAdjustment = false;
-      }
-
-      return () {
-        for (final renderView in WidgetsBinding.instance.renderViews) {
-          renderView.automaticSystemUiAdjustment = true;
-        }
-      };
+      return null;
     }, [panelController.isAttached && panelController.isPanelOpen]);
 
     return AppPopScope(

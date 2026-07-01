@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:path_provider/path_provider.dart';
 import 'package:encrypt/encrypt.dart' as enc;
 import 'package:deemusiq/services/kv_store/kv_store.dart';
 import 'package:deemusiq/services/kv_store/encrypted_kv_store.dart';
@@ -41,9 +42,14 @@ class OfflineTrackEncryption {
 
     final secureStorage = EncryptedKvStoreService.storage;
     final existing = await secureStorage.read(key: _keyAlias);
-    if (existing != null && existing.length >= 44) {
+    // 48 raw bytes (32 key + 16 IV) → 64 base64 chars
+    if (existing != null && existing.length >= 64) {
       try {
         final decoded = base64Decode(existing);
+        if (decoded.length < 48) {
+          AppLogger.log.w('OfflineDRM: stored key too short (${decoded.length} bytes), regenerating');
+          throw FormatException('Key too short');
+        }
         _cachedKey = enc.Key(decoded.sublist(0, 32));
         _cachedIV = enc.IV(decoded.sublist(32, 48));
         return _cachedKey!;
@@ -89,13 +95,17 @@ class OfflineTrackEncryption {
     // a malicious track metadata entry like "../../../etc/passwd" from writing
     // outside the intended download directory.
     final safeName = _sanitizeFileName(outputPath);
-    final path = safeName.endsWith(_encryptedExtension)
+    final encodedName = safeName.endsWith(_encryptedExtension)
         ? safeName
         : '$safeName$_encryptedExtension';
 
-    await File(path).writeAsBytes(encrypted.bytes);
-    AppLogger.log.i('Encrypted offline track: $path');
-    return path;
+    // Write to the app's document directory, not CWD, to prevent
+    // accidental writes to unpredictable locations.
+    final dir = await getApplicationDocumentsDirectory();
+    final fullPath = '${dir.path}/$encodedName';
+    await File(fullPath).writeAsBytes(encrypted.bytes);
+    AppLogger.log.i('Encrypted offline track: $fullPath');
+    return fullPath;
   }
 
   /// Strips path traversal sequences and returns only a safe base filename.
@@ -122,15 +132,22 @@ class OfflineTrackEncryption {
   }
 
   /// Decrypts a `.deemusiq` file and returns raw audio bytes.
+  /// [encryptedPath] may be a full path or just a filename; it is sanitized
+  /// and resolved relative to the app's documents directory.
   Future<Uint8List> decrypt(String encryptedPath) async {
-    final file = File(encryptedPath);
+    // Sanitize path against traversal — extract only the safe basename
+    final safeName = _sanitizeFileName(encryptedPath);
+    final dir = await getApplicationDocumentsDirectory();
+    final fullPath = '${dir.path}/$safeName';
+
+    final file = File(fullPath);
     if (!await file.exists()) {
-      throw OfflineTrackDecryptException('File not found: $encryptedPath');
+      throw OfflineTrackDecryptException('File not found: $fullPath');
     }
 
     final raw = await file.readAsBytes();
     if (raw.length < 16) {
-      throw OfflineTrackDecryptException('File too short: $encryptedPath');
+      throw OfflineTrackDecryptException('File too short: $fullPath');
     }
 
     final key = await _key();

@@ -1,4 +1,3 @@
-import 'dart:async';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:deemusiq/services/audio_player/audio_player.dart';

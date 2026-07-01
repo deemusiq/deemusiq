@@ -30,9 +30,14 @@ class CustomPlayer extends Player {
 
   CustomPlayer({super.configuration})
       : _playerStateStream = StreamController.broadcast() {
-    nativePlayer.setProperty('network-timeout', '120');
-    // Audio-only playback: disable video decoding entirely
-    nativePlayer.setProperty('vid', 'no');
+    try {
+      nativePlayer.setProperty('network-timeout', '120');
+      // Audio-only playback: disable video decoding entirely
+      nativePlayer.setProperty('vid', 'no');
+    } catch (e, stack) {
+      AppLogger.log.w('CustomPlayer init setProperty failed: $e');
+      AppLogger.reportError(e, stack, 'CustomPlayer init setProperty');
+    }
 
     _subscriptions = [
       stream.buffering.listen((event) {
@@ -77,6 +82,9 @@ class CustomPlayer extends Player {
           _androidAudioSessionId.toString(),
         );
         await nativePlayer.setProperty("ao", "audiotrack,opensles,");
+      }).catchError((e, stack) {
+        AppLogger.log.e('AudioSession init failed: $e');
+        AppLogger.reportError(e, stack, 'AudioSession init');
       });
     }
   }
@@ -160,7 +168,11 @@ class CustomPlayer extends Player {
     }
   }
 
-  NativePlayer get nativePlayer => platform as NativePlayer;
+  NativePlayer get nativePlayer {
+    assert(platform is NativePlayer,
+        'CustomPlayer.platform must be a NativePlayer (mpv backend)');
+    return platform as NativePlayer;
+  }
 
   Future<void> insert(int index, Media media) async {
     final addedMediaCompleter = Completer<int>();
@@ -183,19 +195,31 @@ class CustomPlayer extends Player {
   }
 
   Future<void> setAudioNormalization(bool normalize) async {
-    if (normalize) {
-      await nativePlayer.setProperty('af', 'dynaudnorm=g=5:f=250:r=0.9:p=0.5');
-    } else {
-      await nativePlayer.setProperty('af', '');
+    try {
+      if (normalize) {
+        await nativePlayer
+            .setProperty('af', 'dynaudnorm=g=5:f=250:r=0.9:p=0.5');
+      } else {
+        await nativePlayer.setProperty('af', '');
+      }
+    } catch (e, stack) {
+      AppLogger.log.w('setAudioNormalization failed: $e');
+      AppLogger.reportError(e, stack, 'setAudioNormalization');
     }
   }
 
   Future<void> setDemuxerBufferSize(int sizeInBytes) async {
-    await nativePlayer.setProperty('demuxer-max-bytes', sizeInBytes.toString());
-    await nativePlayer.setProperty(
-      'demuxer-max-back-bytes',
-      sizeInBytes.toString(),
-    );
+    try {
+      await nativePlayer
+          .setProperty('demuxer-max-bytes', sizeInBytes.toString());
+      await nativePlayer.setProperty(
+        'demuxer-max-back-bytes',
+        sizeInBytes.toString(),
+      );
+    } catch (e, stack) {
+      AppLogger.log.w('setDemuxerBufferSize failed: $e');
+      AppLogger.reportError(e, stack, 'setDemuxerBufferSize');
+    }
   }
 
   // ── Spotify-style crossfade ──────────────────────────────────────────────
@@ -204,36 +228,52 @@ class CustomPlayer extends Player {
   /// mpv handles this via `audio-fade-in` on the next track — gapless
   /// playback is always enabled (mpv default).
   Future<void> setCrossfade(Duration duration) async {
-    if (duration.inSeconds <= 0) {
-      await nativePlayer.setProperty('audio-fade-in', '0');
-    } else {
-      await nativePlayer.setProperty(
-        'audio-fade-in',
-        duration.inSeconds.toString(),
-      );
+    try {
+      if (duration.inSeconds <= 0) {
+        await nativePlayer.setProperty('audio-fade-in', '0');
+      } else {
+        await nativePlayer.setProperty(
+          'audio-fade-in',
+          duration.inSeconds.toString(),
+        );
+      }
+    } catch (e, stack) {
+      AppLogger.log.w('setCrossfade failed: $e');
+      AppLogger.reportError(e, stack, 'setCrossfade');
     }
   }
 
   /// Enables gapless playback (mpv default, no gaps between tracks).
   /// Explicitly sets the relevant mpv properties.
   Future<void> setGaplessPlayback(bool enabled) async {
-    await nativePlayer.setProperty('gapless-audio', enabled ? 'yes' : 'no');
-    // Prefetch the next track's audio data for seamless transitions.
-    await nativePlayer.setProperty('prefetch-playlist', enabled ? 'yes' : 'no');
+    try {
+      await nativePlayer.setProperty('gapless-audio', enabled ? 'yes' : 'no');
+      // Prefetch the next track's audio data for seamless transitions.
+      await nativePlayer
+          .setProperty('prefetch-playlist', enabled ? 'yes' : 'no');
+    } catch (e, stack) {
+      AppLogger.log.w('setGaplessPlayback failed: $e');
+      AppLogger.reportError(e, stack, 'setGaplessPlayback');
+    }
   }
 
   /// Sets audio replaygain mode. 'track' = per-track, 'album' = per-album,
   /// 'off' = disabled. Matches Spotify's volume normalization.
   Future<void> setReplayGain(String mode) async {
-    switch (mode) {
-      case 'track':
-        await nativePlayer.setProperty('replaygain', 'track');
-        break;
-      case 'album':
-        await nativePlayer.setProperty('replaygain', 'album');
-        break;
-      default:
-        await nativePlayer.setProperty('replaygain', 'no');
+    try {
+      switch (mode) {
+        case 'track':
+          await nativePlayer.setProperty('replaygain', 'track');
+          break;
+        case 'album':
+          await nativePlayer.setProperty('replaygain', 'album');
+          break;
+        default:
+          await nativePlayer.setProperty('replaygain', 'no');
+      }
+    } catch (e, stack) {
+      AppLogger.log.w('setReplayGain failed: $e');
+      AppLogger.reportError(e, stack, 'setReplayGain');
     }
   }
 

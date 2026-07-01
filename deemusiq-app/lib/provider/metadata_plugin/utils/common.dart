@@ -27,22 +27,8 @@ mixin MetadataPluginMixin<K>
   }
 }
 
-extension AutoDisposeAsyncNotifierCacheFor
-// ignore: deprecated_member_use
-    on AutoDisposeAsyncNotifierProviderRef {
-  // When invoked keeps your provider alive for [duration]
-  // ignore: unused_element
-  void cacheFor([Duration duration = const Duration(minutes: 5)]) {
-    final link = keepAlive();
-    final timer = Timer(duration, () => link.close());
-    onDispose(() => timer.cancel());
-  }
-}
-
-// ignore: deprecated_member_use
-extension AutoDisposeCacheFor on AutoDisposeRef {
-  // When invoked keeps your provider alive for [duration]
-  // ignore: unused_element
+extension RefCacheFor on Ref {
+  /// When invoked keeps your provider alive for [duration].
   void cacheFor([Duration duration = const Duration(minutes: 5)]) {
     final link = keepAlive();
     final timer = Timer(duration, () => link.close());

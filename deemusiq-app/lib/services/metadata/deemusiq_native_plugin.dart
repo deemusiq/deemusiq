@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math';
 
 import 'package:dio/dio.dart';
@@ -66,7 +65,9 @@ class _CatalogApi {
   static const _maxRetries = 3;
   static const _baseDelayMs = 500;
 
-  Dio _client() => Dio(
+  Dio? _cachedClient;
+
+  Dio _client() => _cachedClient ??= Dio(
         BaseOptions(
           baseUrl: PaymentGatewayConfig.backendBaseUrl,
           connectTimeout: const Duration(seconds: 12),
@@ -303,18 +304,24 @@ class _NativeSearch extends MetadataPluginSearchEndpoint {
   Future<DeeMusiqSearchResponseObject> all(String query) async {
     // Try backend first
     if (api.isConfigured) {
-      final d = await api.search(query, "all", 20);
-      if (d != null) {
-        final tracks = _list(d["tracks"]).map(_track).toList();
-        // If backend returned tracks with sources, use those
-        if (tracks.isNotEmpty && tracks.any((t) => t.externalUri.isNotEmpty)) {
-          return DeeMusiqSearchResponseObject(
-            albums: _list(d["albums"]).map(_simpleAlbum).toList(),
-            artists: _list(d["artists"]).map(_fullArtist).toList(),
-            playlists: _list(d["playlists"]).map(_simplePlaylist).toList(),
-            tracks: tracks,
-          );
+      try {
+        final d = await api.search(query, "all", 20);
+        if (d != null) {
+          final tracks = _list(d["tracks"]).map(_track).toList();
+          // If backend returned tracks with sources, use those
+          if (tracks.isNotEmpty && tracks.any((t) => t.externalUri.isNotEmpty)) {
+            return DeeMusiqSearchResponseObject(
+              albums: _list(d["albums"]).map(_simpleAlbum).toList(),
+              artists: _list(d["artists"]).map(_fullArtist).toList(),
+              playlists: _list(d["playlists"]).map(_simplePlaylist).toList(),
+              tracks: tracks,
+            );
+          }
         }
+      } catch (e, stack) {
+        AppLogger.log.w('Backend search "all" failed, falling back to YouTube: ${e.toString()}');
+        AppLogger.reportError(e, stack);
+        // Fall through to YouTube fallback
       }
     }
     // Fallback to YouTube search
@@ -331,27 +338,45 @@ class _NativeSearch extends MetadataPluginSearchEndpoint {
   Future<DeeMusiqPaginationResponseObject<DeeMusiqSimpleAlbumObject>> albums(
       String query, {int? limit, int? offset}) async {
     if (!api.isConfigured) return _page(const []);
-    final d = await api.search(query, "album", limit ?? 20);
-    if (d == null) return _page(const []);
-    return _page(_list(d["albums"]).map(_simpleAlbum).toList());
+    try {
+      final d = await api.search(query, "album", limit ?? 20);
+      if (d == null) return _page(const []);
+      return _page(_list(d["albums"]).map(_simpleAlbum).toList());
+    } catch (e, stack) {
+      AppLogger.log.w('Backend album search failed for "$query": ${e.toString()}');
+      AppLogger.reportError(e, stack);
+      return _page(const []);
+    }
   }
 
   @override
   Future<DeeMusiqPaginationResponseObject<DeeMusiqFullArtistObject>> artists(
       String query, {int? limit, int? offset}) async {
     if (!api.isConfigured) return _page(const []);
-    final d = await api.search(query, "artist", limit ?? 20);
-    if (d == null) return _page(const []);
-    return _page(_list(d["artists"]).map(_fullArtist).toList());
+    try {
+      final d = await api.search(query, "artist", limit ?? 20);
+      if (d == null) return _page(const []);
+      return _page(_list(d["artists"]).map(_fullArtist).toList());
+    } catch (e, stack) {
+      AppLogger.log.w('Backend artist search failed for "$query": ${e.toString()}');
+      AppLogger.reportError(e, stack);
+      return _page(const []);
+    }
   }
 
   @override
   Future<DeeMusiqPaginationResponseObject<DeeMusiqSimplePlaylistObject>>
       playlists(String query, {int? limit, int? offset}) async {
     if (!api.isConfigured) return _page(const []);
-    final d = await api.search(query, "playlist", limit ?? 20);
-    if (d == null) return _page(const []);
-    return _page(_list(d["playlists"]).map(_simplePlaylist).toList());
+    try {
+      final d = await api.search(query, "playlist", limit ?? 20);
+      if (d == null) return _page(const []);
+      return _page(_list(d["playlists"]).map(_simplePlaylist).toList());
+    } catch (e, stack) {
+      AppLogger.log.w('Backend playlist search failed for "$query": ${e.toString()}');
+      AppLogger.reportError(e, stack);
+      return _page(const []);
+    }
   }
 
   @override
@@ -360,12 +385,18 @@ class _NativeSearch extends MetadataPluginSearchEndpoint {
     final lim = limit ?? 20;
     // Try backend first
     if (api.isConfigured) {
-      final d = await api.search(query, "track", lim);
-      if (d != null) {
-        final tracks = _list(d["tracks"]).map(_track).toList();
-        if (tracks.isNotEmpty && tracks.any((t) => t.externalUri.isNotEmpty)) {
-          return _page(tracks);
+      try {
+        final d = await api.search(query, "track", lim);
+        if (d != null) {
+          final tracks = _list(d["tracks"]).map(_track).toList();
+          if (tracks.isNotEmpty && tracks.any((t) => t.externalUri.isNotEmpty)) {
+            return _page(tracks);
+          }
         }
+      } catch (e, stack) {
+        AppLogger.log.w('Backend track search failed for "$query", falling back to YouTube: ${e.toString()}');
+        AppLogger.reportError(e, stack);
+        // Fall through to YouTube fallback
       }
     }
     // Fallback to YouTube search
@@ -484,15 +515,21 @@ class _NativeAlbum extends MetadataPluginAlbumEndpoint {
       {int? offset, int? limit}) async {
     // 1) Try the real backend first.
     if (api.isConfigured) {
-      final d = await api.home();
-      if (d != null) {
-        final albums = <DeeMusiqSimpleAlbumObject>[];
-        for (final s in _list(d["sections"])) {
-          if (s["type"] == "albums") {
-            albums.addAll(_list(s["items"]).map(_simpleAlbum));
+      try {
+        final d = await api.home();
+        if (d != null) {
+          final albums = <DeeMusiqSimpleAlbumObject>[];
+          for (final s in _list(d["sections"])) {
+            if (s["type"] == "albums") {
+              albums.addAll(_list(s["items"]).map(_simpleAlbum));
+            }
           }
+          if (albums.isNotEmpty) return _page(albums);
         }
-        if (albums.isNotEmpty) return _page(albums);
+      } catch (e, stack) {
+        AppLogger.log.w('Backend home (releases) failed, falling back to YouTube: ${e.toString()}');
+        AppLogger.reportError(e, stack);
+        // Fall through to YouTube fallback
       }
     }
 
@@ -756,38 +793,44 @@ class _NativeBrowse extends MetadataPluginBrowseEndpoint {
       sections({int? offset, int? limit}) async {
     // 1) Try the real backend first.
     if (api.isConfigured) {
-      final d = await api.home();
-      if (d != null) {
-        final sections = <DeeMusiqBrowseSectionObject<Object>>[];
-        for (final s in _list(d["sections"])) {
-          final type = s["type"];
-          final items = _list(s["items"]);
-          final List<Object> mapped;
-          switch (type) {
-            case "tracks":
-              mapped = items.map(_track).toList();
-              break;
-            case "albums":
-              mapped = items.map(_simpleAlbum).toList();
-              break;
-            case "artists":
-              mapped = items.map(_fullArtist).toList();
-              break;
-            case "playlists":
-              mapped = items.map(_simplePlaylist).toList();
-              break;
-            default:
-              mapped = const [];
+      try {
+        final d = await api.home();
+        if (d != null) {
+          final sections = <DeeMusiqBrowseSectionObject<Object>>[];
+          for (final s in _list(d["sections"])) {
+            final type = s["type"];
+            final items = _list(s["items"]);
+            final List<Object> mapped;
+            switch (type) {
+              case "tracks":
+                mapped = items.map(_track).toList();
+                break;
+              case "albums":
+                mapped = items.map(_simpleAlbum).toList();
+                break;
+              case "artists":
+                mapped = items.map(_fullArtist).toList();
+                break;
+              case "playlists":
+                mapped = items.map(_simplePlaylist).toList();
+                break;
+              default:
+                mapped = const [];
+            }
+            sections.add(DeeMusiqBrowseSectionObject<Object>(
+              id: (s["id"] ?? "").toString(),
+              title: (s["title"] ?? "").toString(),
+              externalUri: "deemusiq:section:${s["id"] ?? ""}",
+              browseMore: false,
+              items: mapped,
+            ));
           }
-          sections.add(DeeMusiqBrowseSectionObject<Object>(
-            id: (s["id"] ?? "").toString(),
-            title: (s["title"] ?? "").toString(),
-            externalUri: "deemusiq:section:${s["id"] ?? ""}",
-            browseMore: false,
-            items: mapped,
-          ));
+          if (sections.isNotEmpty) return _page(sections);
         }
-        if (sections.isNotEmpty) return _page(sections);
+      } catch (e, stack) {
+        AppLogger.log.w('Backend home (browse) failed, falling back to YouTube: ${e.toString()}');
+        AppLogger.reportError(e, stack);
+        // Fall through to YouTube fallback
       }
     }
 

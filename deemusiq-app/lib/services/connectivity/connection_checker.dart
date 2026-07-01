@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:deemusiq/services/logger/logger.dart';
@@ -41,7 +40,8 @@ class ConnectionChecker {
         } else {
           results[host] = false;
         }
-      } catch (_) {
+      } catch (e) {
+        AppLogger.log.d('ConnectionChecker: DNS lookup failed for $host: $e');
         results[host] = false;
       }
     }

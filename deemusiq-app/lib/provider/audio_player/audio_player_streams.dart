@@ -20,11 +20,14 @@ import 'package:deemusiq/services/logger/logger.dart';
 
 class AudioPlayerStreamListeners {
   final Ref ref;
-  late final AudioServices notificationService;
+  AudioServices? _notificationService;
   AudioPlayerStreamListeners(this.ref) {
     AudioServices.create(ref, ref.read(audioPlayerProvider.notifier)).then(
-      (value) => notificationService = value,
-    );
+      (value) => _notificationService = value,
+    ).catchError((e, stack) {
+      AppLogger.log.e('AudioServices.create failed: $e');
+      AppLogger.reportError(e, stack, 'AudioServices.create');
+    });
 
     // ── Single position subscription shared across all position-based
     //     listeners to avoid creating duplicate mpv stream subscriptions.
@@ -60,7 +63,7 @@ class AudioPlayerStreamListeners {
     return audioPlayer.playlistStream.listen((mpvPlaylist) {
       try {
         if (audioPlayerState.activeTrack == null) return;
-        notificationService.addTrack(audioPlayerState.activeTrack!);
+        _notificationService?.addTrack(audioPlayerState.activeTrack!);
         discord.updatePresence(audioPlayerState.activeTrack!);
       } catch (e, stack) {
         AppLogger.reportError(e, stack);
@@ -120,9 +123,10 @@ class AudioPlayerStreamListeners {
       var activeTrack = audioPlayerState.activeTrack!;
       if (activeTrack.artists.any((a) => a.images == null)) {
         final metadataPlugin = await ref.read(metadataPluginProvider.future);
+        if (metadataPlugin == null) return;
         final artists = await Future.wait(
           activeTrack.artists
-              .map((artist) => metadataPlugin!.artist.getArtist(artist.id)),
+              .map((artist) => metadataPlugin.artist.getArtist(artist.id)),
         );
         activeTrack = activeTrack.copyWith(
           artists: artists
@@ -157,12 +161,23 @@ class AudioPlayerStreamListeners {
         return;
       }
 
+      if (nextTrack is! DeeMusiqFullTrackObject) {
+        AppLogger.log.w(
+          '_onPositionForPrefetch: nextTrack is not DeeMusiqFullTrackObject, type=${nextTrack.runtimeType}',
+        );
+        return;
+      }
+
+      // Set guard immediately to prevent concurrent fetches of the same track
+      _lastTrack = nextTrack.id;
       try {
         await ref.read(
-          sourcedTrackProvider(nextTrack as DeeMusiqFullTrackObject).future,
+          sourcedTrackProvider(nextTrack).future,
         );
-      } finally {
-        _lastTrack = nextTrack.id;
+      } catch (e, stack) {
+        // Clear guard on error so it can be retried on the next position event
+        _lastTrack = '';
+        AppLogger.reportError(e, stack, '_onPositionForPrefetch');
       }
     } catch (e, stack) {
       AppLogger.reportError(e, stack);

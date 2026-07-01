@@ -197,7 +197,7 @@ class DeeMusiqAudioPlayer extends AudioPlayerInterface
 
   Future<void> clearPlaylist() async {
     try {
-      _mkPlayer.stop();
+      await _mkPlayer.stop();
     } catch (e, stack) {
       AppLogger.reportError(e, stack, 'clearPlaylist() failed');
     }

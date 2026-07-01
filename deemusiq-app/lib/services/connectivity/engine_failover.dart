@@ -1,4 +1,3 @@
-import 'dart:async';
 
 import 'package:deemusiq/services/logger/logger.dart';
 import 'package:deemusiq/services/connectivity/connection_checker.dart';
@@ -101,8 +100,10 @@ class EngineFailover {
         );
         AppLogger.log.i('EngineFailover: success on reconnect retry');
         return result;
-      } catch (_) {
-        errors.add('reconnect-retry: ${_shortError(_)}');
+      } catch (e) {
+        AppLogger.log.w('EngineFailover: reconnect retry failed: $e');
+        AppLogger.reportError(e, StackTrace.current, 'EngineFailover reconnect retry');
+        errors.add('reconnect-retry: ${_shortError(e)}');
       }
     }
 

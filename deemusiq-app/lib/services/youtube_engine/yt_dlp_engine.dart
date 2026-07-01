@@ -11,32 +11,43 @@ import 'package:http_parser/http_parser.dart';
 
 class YtDlpEngine implements YouTubeEngine {
   StreamManifest _parseFormats(List formats, videoId) {
+    if (formats.isEmpty) {
+      AppLogger.log.w('YtDlpEngine: _parseFormats received empty formats list for $videoId');
+      return StreamManifest(const []);
+    }
     final audioOnlyStreams = formats
         .where((f) => f["resolution"] == "audio only")
         .sorted((a, b) => a["quality"] > b["quality"] ? 1 : -1)
         .map((f) {
+      // Validate required fields before constructing stream info
+      final urlStr = f["url"] as String?;
+      if (urlStr == null || urlStr.isEmpty) {
+        AppLogger.log.w('YtDlpEngine: skipping format with null/empty url for $videoId');
+        return null;
+      }
       final filesize = f["filesize"] ?? f["filesize_approx"];
+      final containerRaw = (f["container"] as String?)?.replaceAll("_dash", "").replaceAll("m4a", "mp4");
+      final containerStr = containerRaw ?? (f["protocol"] == "m3u8_native" ? "m3u8" : "mp4");
+      final abrRaw = (f["abr"] ?? f["tbr"] ?? 0);
+      final abr = (abrRaw is num) ? abrRaw.toInt() : (int.tryParse(abrRaw.toString()) ?? 0);
+      final audioExt = f["audio_ext"] as String? ?? "mp4";
+      final codec = f["acodec"] as String? ?? "aac";
       return AudioOnlyStreamInfo(
         VideoId(videoId),
         0,
-        Uri.parse(f["url"]),
-        StreamContainer.parse(
-          f["container"]?.replaceAll("_dash", "").replaceAll("m4a", "mp4") ??
-              (f["protocol"] == "m3u8_native" ? "m3u8" : "mp4"),
-        ),
+        Uri.parse(urlStr),
+        StreamContainer.parse(containerStr),
         filesize != null ? FileSize(filesize) : FileSize.unknown,
-        Bitrate(
-          (((f["abr"] ?? f["tbr"] ?? 0) * 1000) as num).toInt(),
-        ),
-        f["acodec"] ?? "aac",
+        Bitrate(abr * 1000),
+        codec,
         f["format_note"],
         [],
         MediaType.parse(
-          "audio/${f["audio_ext"]}",
+          "audio/$audioExt",
         ),
         null,
       );
-    });
+    }).whereType<AudioOnlyStreamInfo>();
 
     return StreamManifest(audioOnlyStreams);
   }
