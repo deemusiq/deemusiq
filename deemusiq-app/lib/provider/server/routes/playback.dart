@@ -102,11 +102,18 @@ class ServerPlaybackRoutes {
       );
     }
 
-    String url = track.url ??
-        await ref
+    String? url = track.url;
+    if (url == null) {
+      try {
+        final sibling = await ref
             .read(sourcedTrackProvider(track.query).notifier)
-            .swapWithNextSibling()
-            .then((track) => track.url!);
+            .swapWithNextSibling();
+        url = sibling.url;
+      } catch (_) {
+        url = null;
+      }
+    }
+    if (url == null) return Response.internalServerError(body: 'No audio source available');
 
     final options = Options(
       headers: {
@@ -155,11 +162,18 @@ class ServerPlaybackRoutes {
       );
     }
 
-    String url = track.url ??
-        await ref
+    String? url = track.url;
+    if (url == null) {
+      try {
+        final sibling = await ref
             .read(sourcedTrackProvider(track.query).notifier)
-            .swapWithNextSibling()
-            .then((track) => track.url!);
+            .swapWithNextSibling();
+        url = sibling.url;
+      } catch (_) {
+        url = null;
+      }
+    }
+    if (url == null) return Response.internalServerError(body: 'No audio source available');
 
     final options = Options(
       headers: {
