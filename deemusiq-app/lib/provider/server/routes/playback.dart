@@ -109,7 +109,8 @@ class ServerPlaybackRoutes {
             .read(sourcedTrackProvider(track.query).notifier)
             .swapWithNextSibling();
         url = sibling.url;
-      } catch (_) {
+      } catch (e, stack) {
+        AppLogger.log.w('swapWithNextSibling failed: ${e.toString()}');
         url = null;
       }
     }
@@ -169,7 +170,8 @@ class ServerPlaybackRoutes {
             .read(sourcedTrackProvider(track.query).notifier)
             .swapWithNextSibling();
         url = sibling.url;
-      } catch (_) {
+      } catch (e, stack) {
+        AppLogger.log.w('swapWithNextSibling failed: ${e.toString()}');
         url = null;
       }
     }

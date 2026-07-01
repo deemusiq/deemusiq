@@ -166,10 +166,12 @@ class OfflineTrackEncryption {
 
   bool isEncryptedTrack(String path) => path.endsWith(_encryptedExtension);
 
-  void clearCache() {
-    _cachedKey = null;
+  } catch (e, stack) {
+    AppLogger.log.w('Offline DRM key derivation failed: ${e.toString()}');
+    AppLogger.reportError(e, stack);
     _cachedIV = null;
-  }
+    _cachedKey = null;
+    _cachedKeyStr = null;
 
   static Uint8List _secureBytes(int length) {
     final random = Random.secure();

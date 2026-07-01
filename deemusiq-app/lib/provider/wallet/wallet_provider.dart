@@ -381,8 +381,8 @@ class WalletNotifier extends Notifier<WalletState> {
             .map((e) =>
                 LinkedAccount.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList();
-      } catch (_) {
-        // Keep last known accounts if this sub-call fails.
+      } catch (e) {
+        AppLogger.log.d('Malformed linked account in storage: ${e.toString()}');
       }
 
       await _commit(state.copyWith(

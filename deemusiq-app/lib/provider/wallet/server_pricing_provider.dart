@@ -52,7 +52,9 @@ final serverPricingProvider =
         .where((p) => p.pack.id.isNotEmpty && p.priceLabel.isNotEmpty)
         .toList();
     return packs.isEmpty ? null : packs;
-  } catch (_) {
+  } catch (e, stack) {
+    AppLogger.log.w('Pricing fetch failed: ${e.toString()}');
+    AppLogger.reportError(e, stack);
     return null;
   }
 });

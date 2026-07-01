@@ -59,7 +59,9 @@ class AdRollService {
     if (raw != null) {
       try {
         _excludeIds.addAll((jsonDecode(raw) as List).cast<String>());
-      } catch (_) {}
+      } catch (e, stack) {
+        AppLogger.log.d('Ad roll exclude-ids parse failed: ${e.toString()}');
+      }
     }
   }
 

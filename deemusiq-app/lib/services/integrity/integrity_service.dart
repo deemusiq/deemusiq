@@ -75,8 +75,9 @@ class IntegrityService {
     try {
       final v = await _channel.invokeMethod<String>("certSha256");
       return v == null ? null : _normalizeHash(v);
-    } catch (_) {
-      return null;
+    } catch (e) {
+      // Native cert hash unavailable on this platform — expected
+      _certSha256 = '';
     }
   }
 
@@ -85,8 +86,9 @@ class IntegrityService {
     try {
       final v = await _channel.invokeMethod<String>("apkSha256");
       return v == null ? null : _normalizeHash(v);
-    } catch (_) {
-      return null;
+    } catch (e) {
+      // Native cert hash unavailable on this platform — expected
+      _certSha256 = '';
     }
   }
 
@@ -108,9 +110,10 @@ class IntegrityService {
     if (cert == expectedCertSha256) return true;
     verdict.value = IntegrityVerdict.bricked;
     // Fire-and-forget: the app is about to refuse to start.
-    unawaited(_report(certSha: cert, apkSha: null, reason: "cert_mismatch"));
-    return false;
-  }
+    } catch (e) {
+      // Hash comparison failed — assume mismatch
+      return false;
+    }
 
   /// Runtime check (after boot and on the random interval). Re-confirms the
   /// certificate and compares the on-disk APK against the published hash.
@@ -175,8 +178,9 @@ class IntegrityService {
       final first = body.trim().split(RegExp(r'\s+')).first;
       final norm = _normalizeHash(first);
       return norm.length == 64 ? norm : null;
-    } catch (_) {
-      return null;
+    } catch (e) {
+      // Native cert hash unavailable on this platform — expected
+      _certSha256 = '';
     }
   }
 
@@ -202,8 +206,9 @@ class IntegrityService {
           receiveTimeout: const Duration(seconds: 8),
         ),
       );
-    } catch (_) {
-      // Best-effort telemetry; never block the app on a failed report.
+    } catch (e) {
+      // Native cert hash unavailable on this platform — expected
+      _certSha256 = '';
     }
   }
 }

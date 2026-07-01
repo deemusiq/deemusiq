@@ -114,8 +114,9 @@ class _ProviderTile extends ConsumerWidget {
             : e.message,
         icon: DeeMusiqIcons.info,
       );
-    } catch (_) {
-      // launchUrlString can throw (no browser/handler installed).
+    } catch (e, stack) {
+      AppLogger.log.w('Linked accounts load failed: ${e.toString()}');
+      showWalletToast(context, 'Failed to load linked accounts',
       if (!context.mounted) return;
       showWalletToast(
         context,
