@@ -22,7 +22,8 @@ class PresentationListSection extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, ref) {
     final options = TrackPresentationOptions.of(context);
-    final playlist = ref.watch(audioPlayerProvider);
+    final currentIndex = ref.watch(audioPlayerProvider.select((s) => s.currentIndex));
+    final playlist = ref.read(audioPlayerProvider);
     final state = ref.watch(presentationStateProvider(options.collection));
     final notifier =
         ref.read(presentationStateProvider(options.collection).notifier);

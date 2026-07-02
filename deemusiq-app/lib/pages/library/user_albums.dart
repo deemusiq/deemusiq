@@ -58,7 +58,11 @@ class UserAlbumsPage extends HookConsumerWidget {
           errorCode: MetadataPluginErrorCode.noDefaultMetadataPlugin,
           message: _,
         )) {
-      return const Center(child: NoDefaultMetadataPlugin());
+      return Center(
+        child: NoDefaultMetadataPlugin(
+          onRetry: () => ref.invalidate(metadataPluginSavedAlbumsProvider),
+        ),
+      );
     }
 
     if (authenticated.asData?.value != true) {

@@ -154,7 +154,8 @@ jobs:
           else
             echo "::warning::No KEYSTORE_BASE64 secret — generating a TEMPORARY keystore."
             echo "::warning::APK installs for testing, but set a permanent keystore secret before public release so future updates install over old versions."
-            KS_PASS="deemusiq"; ALIAS="deemusiq"; K_PASS="deemusiq"
+            KS_PASS=$(openssl rand -hex 16); ALIAS="deemusiq"; K_PASS="$KS_PASS"
+            # WARNING: temporary keystore — for testing only. Use repo secrets for production.
             keytool -genkeypair -v -keystore android/app/deemusiq.jks -keyalg RSA -keysize 2048 \
               -validity 10000 -alias "$ALIAS" -storepass "$KS_PASS" -keypass "$K_PASS" \
               -dname "CN=DeeMusiq, OU=DeeMusiq, O=The Dembe Group, L=KwaZulu-Natal, C=ZA"

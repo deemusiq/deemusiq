@@ -248,6 +248,11 @@ class IntegrityService {
     _schedule();
   }
 
+  void stopMonitor() {
+    _timer?.cancel();
+    _timer = null;
+  }
+
   void _schedule() {
     _timer?.cancel();
     final minutes = 1 + _rng.nextInt(10);

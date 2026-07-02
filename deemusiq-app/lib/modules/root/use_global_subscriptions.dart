@@ -16,6 +16,8 @@ import 'package:deemusiq/services/connectivity_adapter.dart';
 import 'package:deemusiq/services/queue/playback_queue.dart';
 import 'package:deemusiq/utils/service_utils.dart';
 
+DateTime? _lastConnectivityToastTime;
+
 void useGlobalSubscriptions(WidgetRef ref) {
   final context = useContext();
   final theme = Theme.of(context);
@@ -107,6 +109,14 @@ void useGlobalSubscriptions(WidgetRef ref) {
         // Show notification for connection related issues
         if (!context.mounted) return;
 
+        final now = DateTime.now();
+        if (_lastConnectivityToastTime != null &&
+            now.difference(_lastConnectivityToastTime!) <
+                const Duration(seconds: 5)) {
+          return;
+        }
+        _lastConnectivityToastTime = now;
+
         showToast(
           context: context,
           location: ToastLocation.bottomCenter,
@@ -184,16 +194,25 @@ class LifecycleWatcher extends WidgetsBindingObserver {
   @override
   Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
     if (state == AppLifecycleState.paused) {
-      final tracks = ref.read(audioPlayerProvider).tracks;
+      final audioState = ref.read(audioPlayerProvider);
+      final tracks = audioState.tracks;
       if (tracks.isNotEmpty) {
-        await PlaybackQueue.saveQueue(ref.read(databaseProvider), tracks);
+        await PlaybackQueue.saveQueue(
+          ref.read(databaseProvider),
+          tracks,
+          currentIndex: audioState.currentIndex,
+        );
       }
     } else if (state == AppLifecycleState.resumed) {
       final currentTracks = ref.read(audioPlayerProvider).tracks;
       if (currentTracks.isEmpty) {
         final saved = await PlaybackQueue.loadQueue(ref.read(databaseProvider));
-        if (saved != null && saved.isNotEmpty) {
-          await ref.read(audioPlayerProvider.notifier).load(saved, autoPlay: true);
+        if (saved != null && saved.tracks.isNotEmpty) {
+          await ref.read(audioPlayerProvider.notifier).load(
+            saved.tracks,
+            initialIndex: saved.currentIndex,
+            autoPlay: true,
+          );
         }
       }
     }

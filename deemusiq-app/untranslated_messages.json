@@ -1,1 +1,320 @@
-{}
+{
+  "ar": [
+    "confirm_age_18",
+    "agree_privacy_policy",
+    "must_confirm_age",
+    "must_agree_privacy_policy",
+    "sign_in_with_google",
+    "continue_with_device_limited",
+    "wallet_sync_failed_retry",
+    "its_a_drop_day"
+  ],
+
+  "bn": [
+    "confirm_age_18",
+    "agree_privacy_policy",
+    "must_confirm_age",
+    "must_agree_privacy_policy",
+    "sign_in_with_google",
+    "continue_with_device_limited",
+    "wallet_sync_failed_retry",
+    "its_a_drop_day"
+  ],
+
+  "ca": [
+    "confirm_age_18",
+    "agree_privacy_policy",
+    "must_confirm_age",
+    "must_agree_privacy_policy",
+    "sign_in_with_google",
+    "continue_with_device_limited",
+    "wallet_sync_failed_retry",
+    "its_a_drop_day"
+  ],
+
+  "cs": [
+    "confirm_age_18",
+    "agree_privacy_policy",
+    "must_confirm_age",
+    "must_agree_privacy_policy",
+    "sign_in_with_google",
+    "continue_with_device_limited",
+    "wallet_sync_failed_retry",
+    "its_a_drop_day"
+  ],
+
+  "de": [
+    "confirm_age_18",
+    "agree_privacy_policy",
+    "must_confirm_age",
+    "must_agree_privacy_policy",
+    "sign_in_with_google",
+    "continue_with_device_limited",
+    "wallet_sync_failed_retry",
+    "its_a_drop_day"
+  ],
+
+  "es": [
+    "confirm_age_18",
+    "agree_privacy_policy",
+    "must_confirm_age",
+    "must_agree_privacy_policy",
+    "sign_in_with_google",
+    "continue_with_device_limited",
+    "wallet_sync_failed_retry",
+    "its_a_drop_day"
+  ],
+
+  "eu": [
+    "confirm_age_18",
+    "agree_privacy_policy",
+    "must_confirm_age",
+    "must_agree_privacy_policy",
+    "sign_in_with_google",
+    "continue_with_device_limited",
+    "wallet_sync_failed_retry",
+    "its_a_drop_day"
+  ],
+
+  "fa": [
+    "confirm_age_18",
+    "agree_privacy_policy",
+    "must_confirm_age",
+    "must_agree_privacy_policy",
+    "sign_in_with_google",
+    "continue_with_device_limited",
+    "wallet_sync_failed_retry",
+    "its_a_drop_day"
+  ],
+
+  "fi": [
+    "confirm_age_18",
+    "agree_privacy_policy",
+    "must_confirm_age",
+    "must_agree_privacy_policy",
+    "sign_in_with_google",
+    "continue_with_device_limited",
+    "wallet_sync_failed_retry",
+    "its_a_drop_day"
+  ],
+
+  "fr": [
+    "confirm_age_18",
+    "agree_privacy_policy",
+    "must_confirm_age",
+    "must_agree_privacy_policy",
+    "sign_in_with_google",
+    "continue_with_device_limited",
+    "wallet_sync_failed_retry",
+    "its_a_drop_day"
+  ],
+
+  "hi": [
+    "confirm_age_18",
+    "agree_privacy_policy",
+    "must_confirm_age",
+    "must_agree_privacy_policy",
+    "sign_in_with_google",
+    "continue_with_device_limited",
+    "wallet_sync_failed_retry",
+    "its_a_drop_day"
+  ],
+
+  "id": [
+    "confirm_age_18",
+    "agree_privacy_policy",
+    "must_confirm_age",
+    "must_agree_privacy_policy",
+    "sign_in_with_google",
+    "continue_with_device_limited",
+    "wallet_sync_failed_retry",
+    "its_a_drop_day"
+  ],
+
+  "it": [
+    "confirm_age_18",
+    "agree_privacy_policy",
+    "must_confirm_age",
+    "must_agree_privacy_policy",
+    "sign_in_with_google",
+    "continue_with_device_limited",
+    "wallet_sync_failed_retry",
+    "its_a_drop_day"
+  ],
+
+  "ja": [
+    "confirm_age_18",
+    "agree_privacy_policy",
+    "must_confirm_age",
+    "must_agree_privacy_policy",
+    "sign_in_with_google",
+    "continue_with_device_limited",
+    "wallet_sync_failed_retry",
+    "its_a_drop_day"
+  ],
+
+  "ka": [
+    "confirm_age_18",
+    "agree_privacy_policy",
+    "must_confirm_age",
+    "must_agree_privacy_policy",
+    "sign_in_with_google",
+    "continue_with_device_limited",
+    "wallet_sync_failed_retry",
+    "its_a_drop_day"
+  ],
+
+  "ko": [
+    "confirm_age_18",
+    "agree_privacy_policy",
+    "must_confirm_age",
+    "must_agree_privacy_policy",
+    "sign_in_with_google",
+    "continue_with_device_limited",
+    "wallet_sync_failed_retry",
+    "its_a_drop_day"
+  ],
+
+  "ne": [
+    "confirm_age_18",
+    "agree_privacy_policy",
+    "must_confirm_age",
+    "must_agree_privacy_policy",
+    "sign_in_with_google",
+    "continue_with_device_limited",
+    "wallet_sync_failed_retry",
+    "its_a_drop_day"
+  ],
+
+  "nl": [
+    "confirm_age_18",
+    "agree_privacy_policy",
+    "must_confirm_age",
+    "must_agree_privacy_policy",
+    "sign_in_with_google",
+    "continue_with_device_limited",
+    "wallet_sync_failed_retry",
+    "its_a_drop_day"
+  ],
+
+  "pl": [
+    "confirm_age_18",
+    "agree_privacy_policy",
+    "must_confirm_age",
+    "must_agree_privacy_policy",
+    "sign_in_with_google",
+    "continue_with_device_limited",
+    "wallet_sync_failed_retry",
+    "its_a_drop_day"
+  ],
+
+  "pt": [
+    "confirm_age_18",
+    "agree_privacy_policy",
+    "must_confirm_age",
+    "must_agree_privacy_policy",
+    "sign_in_with_google",
+    "continue_with_device_limited",
+    "wallet_sync_failed_retry",
+    "its_a_drop_day"
+  ],
+
+  "ru": [
+    "confirm_age_18",
+    "agree_privacy_policy",
+    "must_confirm_age",
+    "must_agree_privacy_policy",
+    "sign_in_with_google",
+    "continue_with_device_limited",
+    "wallet_sync_failed_retry",
+    "its_a_drop_day"
+  ],
+
+  "ta": [
+    "confirm_age_18",
+    "agree_privacy_policy",
+    "must_confirm_age",
+    "must_agree_privacy_policy",
+    "sign_in_with_google",
+    "continue_with_device_limited",
+    "wallet_sync_failed_retry",
+    "its_a_drop_day"
+  ],
+
+  "th": [
+    "confirm_age_18",
+    "agree_privacy_policy",
+    "must_confirm_age",
+    "must_agree_privacy_policy",
+    "sign_in_with_google",
+    "continue_with_device_limited",
+    "wallet_sync_failed_retry",
+    "its_a_drop_day"
+  ],
+
+  "tl": [
+    "confirm_age_18",
+    "agree_privacy_policy",
+    "must_confirm_age",
+    "must_agree_privacy_policy",
+    "sign_in_with_google",
+    "continue_with_device_limited",
+    "wallet_sync_failed_retry",
+    "its_a_drop_day"
+  ],
+
+  "tr": [
+    "confirm_age_18",
+    "agree_privacy_policy",
+    "must_confirm_age",
+    "must_agree_privacy_policy",
+    "sign_in_with_google",
+    "continue_with_device_limited",
+    "wallet_sync_failed_retry",
+    "its_a_drop_day"
+  ],
+
+  "uk": [
+    "confirm_age_18",
+    "agree_privacy_policy",
+    "must_confirm_age",
+    "must_agree_privacy_policy",
+    "sign_in_with_google",
+    "continue_with_device_limited",
+    "wallet_sync_failed_retry",
+    "its_a_drop_day"
+  ],
+
+  "vi": [
+    "confirm_age_18",
+    "agree_privacy_policy",
+    "must_confirm_age",
+    "must_agree_privacy_policy",
+    "sign_in_with_google",
+    "continue_with_device_limited",
+    "wallet_sync_failed_retry",
+    "its_a_drop_day"
+  ],
+
+  "zh": [
+    "confirm_age_18",
+    "agree_privacy_policy",
+    "must_confirm_age",
+    "must_agree_privacy_policy",
+    "sign_in_with_google",
+    "continue_with_device_limited",
+    "wallet_sync_failed_retry",
+    "its_a_drop_day"
+  ],
+
+  "zh_TW": [
+    "confirm_age_18",
+    "agree_privacy_policy",
+    "must_confirm_age",
+    "must_agree_privacy_policy",
+    "sign_in_with_google",
+    "continue_with_device_limited",
+    "wallet_sync_failed_retry",
+    "its_a_drop_day"
+  ]
+}

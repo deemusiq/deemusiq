@@ -34,8 +34,10 @@ class CustomPlayer extends Player {
       : _playerStateStream = StreamController.broadcast() {
     try {
       nativePlayer.setProperty('network-timeout', '300');
-      // Audio-only playback: disable video decoding entirely
       nativePlayer.setProperty('vid', 'no');
+      nativePlayer.setProperty('cache', 'yes');
+      nativePlayer.setProperty('cache-secs', '30');
+      nativePlayer.setProperty('demuxer-readahead-secs', '10');
     } catch (e, stack) {
       AppLogger.log.w('CustomPlayer init setProperty failed: $e');
       AppLogger.reportError(e, stack, 'CustomPlayer init setProperty');
@@ -89,6 +91,19 @@ class CustomPlayer extends Player {
         AppLogger.reportError(e, stack, 'AudioSession init');
       });
     }
+    if (kIsLinux) {
+      Future(() async {
+        try {
+          await nativePlayer.setProperty('ao', 'pulse');
+          await nativePlayer.setProperty('audio-client-name', 'DeeMusiq');
+          await nativePlayer.setProperty('audio-stream-silence', 'no');
+          await nativePlayer.setProperty('audio-fallback-to-null', 'no');
+        } catch (e, stack) {
+          AppLogger.log.w('CustomPlayer: Linux audio init failed: $e');
+          AppLogger.reportError(e, stack, 'CustomPlayer Linux audio init');
+        }
+      });
+    }
   }
 
   Future<void> notifyAudioSessionUpdate(bool active) async {
@@ -112,7 +127,14 @@ class CustomPlayer extends Player {
   Stream<AudioPlaybackState> get playerStateStream => _playerStateStream.stream;
   Stream<String> get userMessageStream => _userMessageStream.stream;
   Stream<bool> get shuffleStream => stream.shuffle;
+  Stream<int>? _cachedIndexStream;
+
   Stream<int> get indexChangeStream {
+    _cachedIndexStream ??= _buildIndexChangeStream();
+    return _cachedIndexStream!;
+  }
+
+  Stream<int> _buildIndexChangeStream() {
     int oldIndex = state.playlist.index;
     return stream.playlist.map((event) => event.index).where((newIndex) {
       if (newIndex != oldIndex) {
@@ -137,6 +159,7 @@ class CustomPlayer extends Player {
 
   @override
   Future<void> dispose() async {
+    _cachedIndexStream = null;
     for (var element in _subscriptions) {
       element.cancel();
     }

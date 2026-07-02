@@ -11,6 +11,33 @@ import 'package:deemusiq/services/wallet/wallet_api.dart';
 import 'package:deemusiq/services/logger/logger.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+String _walletErrorMessage(String code) {
+  switch (code) {
+    case 'insufficient_balance':
+      return 'Not enough tokens. Top up your wallet to continue.';
+    case 'provider_not_configured':
+      return 'Account linking isn\'t available yet — coming soon.';
+    case 'invalid_provider':
+      return 'This provider is not supported.';
+    case 'network_error':
+    case 'Network error':
+      return 'Connection failed. Please check your internet and try again.';
+    case 'already_connected':
+      return 'This account is already linked to another device.';
+    case 'token_expired':
+    case 'unauthorized':
+      return 'Session expired. Please sign in again.';
+    case 'rate_limited':
+      return 'Too many requests. Please wait a moment and try again.';
+    case 'server_error':
+      return 'Something went wrong on our end. Please try again later.';
+    case 'payment_failed':
+      return 'Payment was not completed. Please try again.';
+    default:
+      return 'Something went wrong. Please try again.';
+  }
+}
+
 @RoutePage()
 class LinkedAccountsPage extends HookConsumerWidget {
   static const name = "linked-accounts";
@@ -110,9 +137,7 @@ class _ProviderTile extends ConsumerWidget {
       if (!context.mounted) return;
       showWalletToast(
         context,
-        e.message == "provider_not_configured"
-            ? "${provider.label} linking isn't available yet — coming soon."
-            : e.message,
+        _walletErrorMessage(e.message),
         icon: DeeMusiqIcons.info,
       );
     } catch (e, stack) {
@@ -131,7 +156,7 @@ class _ProviderTile extends ConsumerWidget {
       }
     } on WalletApiException catch (e) {
       if (context.mounted) {
-        showWalletToast(context, e.message, icon: DeeMusiqIcons.info);
+        showWalletToast(context, _walletErrorMessage(e.message), icon: DeeMusiqIcons.info);
       }
     }
   }

@@ -57,7 +57,7 @@ class TrackOptions extends HookConsumerWidget {
             style: ButtonVariance.menu,
             onPressed: () async {
               await trackOptionActions.action(
-                rootNavigatorKey.currentContext!,
+                (rootNavigatorKey.currentContext ?? context),
                 TrackOptionValue.delete,
                 playlistId,
               );
@@ -71,7 +71,7 @@ class TrackOptions extends HookConsumerWidget {
             style: ButtonVariance.menu,
             onPressed: () async {
               await trackOptionActions.action(
-                rootNavigatorKey.currentContext!,
+                (rootNavigatorKey.currentContext ?? context),
                 TrackOptionValue.album,
                 playlistId,
               );
@@ -95,7 +95,7 @@ class TrackOptions extends HookConsumerWidget {
             style: ButtonVariance.menu,
             onPressed: () async {
               await trackOptionActions.action(
-                rootNavigatorKey.currentContext!,
+                (rootNavigatorKey.currentContext ?? context),
                 TrackOptionValue.addToQueue,
                 playlistId,
               );
@@ -108,7 +108,7 @@ class TrackOptions extends HookConsumerWidget {
             style: ButtonVariance.menu,
             onPressed: () async {
               await trackOptionActions.action(
-                rootNavigatorKey.currentContext!,
+                (rootNavigatorKey.currentContext ?? context),
                 TrackOptionValue.playNext,
                 playlistId,
               );
@@ -122,7 +122,7 @@ class TrackOptions extends HookConsumerWidget {
             style: ButtonVariance.menu,
             onPressed: () async {
               await trackOptionActions.action(
-                rootNavigatorKey.currentContext!,
+                (rootNavigatorKey.currentContext ?? context),
                 TrackOptionValue.removeFromQueue,
                 playlistId,
               );
@@ -137,7 +137,7 @@ class TrackOptions extends HookConsumerWidget {
             style: ButtonVariance.menu,
             onPressed: () async {
               await trackOptionActions.action(
-                rootNavigatorKey.currentContext!,
+                (rootNavigatorKey.currentContext ?? context),
                 TrackOptionValue.favorite,
                 playlistId,
               );
@@ -161,7 +161,7 @@ class TrackOptions extends HookConsumerWidget {
             onPressed: () {
               onTapItem?.call();
               showPushSongDialog(
-                rootNavigatorKey.currentContext!,
+                (rootNavigatorKey.currentContext ?? context),
                 songId: track.id,
                 title: track.name,
                 artist:
@@ -182,7 +182,7 @@ class TrackOptions extends HookConsumerWidget {
             style: ButtonVariance.menu,
             onPressed: () async {
               await trackOptionActions.action(
-                rootNavigatorKey.currentContext!,
+                (rootNavigatorKey.currentContext ?? context),
                 TrackOptionValue.startRadio,
                 playlistId,
               );
@@ -195,7 +195,7 @@ class TrackOptions extends HookConsumerWidget {
             style: ButtonVariance.menu,
             onPressed: () async {
               await trackOptionActions.action(
-                rootNavigatorKey.currentContext!,
+                (rootNavigatorKey.currentContext ?? context),
                 TrackOptionValue.addToPlaylist,
                 playlistId,
               );
@@ -210,7 +210,7 @@ class TrackOptions extends HookConsumerWidget {
             style: ButtonVariance.menu,
             onPressed: () async {
               await trackOptionActions.action(
-                rootNavigatorKey.currentContext!,
+                (rootNavigatorKey.currentContext ?? context),
                 TrackOptionValue.removeFromPlaylist,
                 playlistId,
               );
@@ -224,7 +224,7 @@ class TrackOptions extends HookConsumerWidget {
             style: ButtonVariance.menu,
             onPressed: () async {
               await trackOptionActions.action(
-                rootNavigatorKey.currentContext!,
+                (rootNavigatorKey.currentContext ?? context),
                 TrackOptionValue.download,
                 playlistId,
               );
@@ -253,7 +253,7 @@ class TrackOptions extends HookConsumerWidget {
             style: ButtonVariance.menu,
             onPressed: () async {
               await trackOptionActions.action(
-                rootNavigatorKey.currentContext!,
+                (rootNavigatorKey.currentContext ?? context),
                 TrackOptionValue.blacklist,
                 playlistId,
               );
@@ -277,7 +277,7 @@ class TrackOptions extends HookConsumerWidget {
             style: ButtonVariance.menu,
             onPressed: () async {
               await trackOptionActions.action(
-                rootNavigatorKey.currentContext!,
+                (rootNavigatorKey.currentContext ?? context),
                 TrackOptionValue.share,
                 playlistId,
               );
@@ -291,7 +291,7 @@ class TrackOptions extends HookConsumerWidget {
             style: ButtonVariance.menu,
             onPressed: () async {
               await trackOptionActions.action(
-                rootNavigatorKey.currentContext!,
+                (rootNavigatorKey.currentContext ?? context),
                 TrackOptionValue.details,
                 playlistId,
               );

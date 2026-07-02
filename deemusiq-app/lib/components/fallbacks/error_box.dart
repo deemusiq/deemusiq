@@ -9,15 +9,40 @@ import 'package:deemusiq/extensions/context.dart';
 class ErrorBox extends StatelessWidget {
   final Object error;
   final VoidCallback? onRetry;
+  final String? userMessage;
   const ErrorBox({
     super.key,
     required this.error,
     this.onRetry,
+    this.userMessage,
   });
+
+  static String userFriendlyMessage(Object error) {
+    final s = error.toString();
+    if (s.contains('SocketException') ||
+        s.contains('Connection refused') ||
+        s.contains('Network is unreachable')) {
+      return 'Network connection failed. Please check your internet.';
+    }
+    if (s.contains('TimeoutException')) {
+      return 'The request timed out. Please try again.';
+    }
+    if (s.contains('HandshakeException') || s.contains('TlsException')) {
+      return 'Secure connection failed. Please try again.';
+    }
+    if (s.contains('Permission denied')) {
+      return 'Permission denied. Please check app permissions.';
+    }
+    if (s == 'Null check operator used on a null value' ||
+        s.contains('NoSuchMethodError')) {
+      return 'An unexpected error occurred. Please try again.';
+    }
+    return 'Something went wrong. Please try again.';
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Make a monospace error log view. Make sure it's only 4 lines
+    final displayMessage = userMessage ?? userFriendlyMessage(error);
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 400),
       child: Padding(
@@ -38,9 +63,8 @@ class ErrorBox extends StatelessWidget {
                 filled: true,
                 fillColor: context.theme.colorScheme.muted,
                 child: Text(
-                  error.toString(),
+                  displayMessage,
                   style: TextStyle(
-                    // Use monospace
                     fontFamily: 'Ubuntu Mono',
                     color: context.theme.colorScheme.mutedForeground,
                     fontSize: 14,

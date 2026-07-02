@@ -137,6 +137,7 @@ class MobileAudioService extends BaseAudioHandler {
         await PlaybackQueue.saveQueue(
           audioPlayerNotifier.ref.read(databaseProvider),
           audioPlayerNotifier.state.tracks,
+          currentIndex: audioPlayerNotifier.state.currentIndex,
         );
       } catch (_) {}
       await audioPlayerNotifier.stop();

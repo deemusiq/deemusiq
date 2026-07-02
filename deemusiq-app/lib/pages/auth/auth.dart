@@ -8,6 +8,7 @@ import 'package:deemusiq/components/wallet/wallet_common.dart';
 import 'package:deemusiq/provider/wallet/wallet_provider.dart';
 import 'package:deemusiq/services/auth/google_auth.dart';
 import 'package:deemusiq/services/kv_store/kv_store.dart';
+import 'package:deemusiq/l10n/l10n.dart';
 import 'package:deemusiq/services/logger/logger.dart';
 import 'package:deemusiq/services/wallet/wallet_api.dart';
 
@@ -23,14 +24,15 @@ class AuthPage extends HookConsumerWidget {
     final theme = Theme.of(context);
 
     Future<void> handleSignIn({required bool google}) async {
+      final l10n = AppLocalizations.of(context)!;
       if (loading.value) return;
       if (!ageVerified.value) {
-        showWalletToast(context, "You must confirm you are 18 or older.",
+        showWalletToast(context, l10n.must_confirm_age,
             icon: DeeMusiqIcons.error);
         return;
       }
       if (!privacyConsent.value) {
-        showWalletToast(context, "You must agree to the Privacy Policy.",
+        showWalletToast(context, l10n.must_agree_privacy_policy,
             icon: DeeMusiqIcons.error);
         return;
       }
@@ -50,7 +52,7 @@ class AuthPage extends HookConsumerWidget {
         } catch (e) {
           AppLogger.log.w('AuthPage: wallet sync failed: $e');
           if (context.mounted) {
-            showWalletToast(context, "Wallet sync failed. Please try again later.",
+            showWalletToast(context, AppLocalizations.of(context)!.wallet_sync_failed_retry,
                 icon: DeeMusiqIcons.error);
           }
         }
@@ -66,6 +68,8 @@ class AuthPage extends HookConsumerWidget {
         loading.value = false;
       }
     }
+
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       child: SafeArea(
@@ -90,7 +94,7 @@ class AuthPage extends HookConsumerWidget {
                     textAlign: TextAlign.center,
                   ),
                   const Gap(4),
-                  const Text("It's a drop day")
+                  Text(l10n.its_a_drop_day)
                       .muted()
                       .semiBold()
                       .center(),
@@ -106,7 +110,7 @@ class AuthPage extends HookConsumerWidget {
                         child: TextButton(
                           onPressed: () =>
                               ageVerified.value = !ageVerified.value,
-                          child: const Text("I am 18 or older").muted(),
+                          child: Text(l10n.confirm_age_18).muted(),
                         ),
                       ),
                     ],
@@ -123,7 +127,7 @@ class AuthPage extends HookConsumerWidget {
                         child: TextButton(
                           onPressed: () =>
                               privacyConsent.value = !privacyConsent.value,
-                          child: const Text("I agree to the Privacy Policy")
+                          child: Text(l10n.agree_privacy_policy)
                               .muted(),
                         ),
                       ),
@@ -141,15 +145,15 @@ class AuthPage extends HookConsumerWidget {
                           const Icon(DeeMusiqIcons.google,
                               size: 18, color: Colors.white),
                           const Gap(8),
-                          const Text("Sign in with Google",
-                              style: TextStyle(color: Colors.white)),
+                          Text(l10n.sign_in_with_google,
+                              style: const TextStyle(color: Colors.white)),
                         ],
                       ),
                     ),
                     const Gap(8),
                     Button.outline(
                       onPressed: () => handleSignIn(google: false),
-                      child: const Text("Continue with device (limited)"),
+                      child: Text(l10n.continue_with_device_limited),
                     ),
                   ],
                   const Gap(48),

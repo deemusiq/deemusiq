@@ -8,7 +8,8 @@ import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/extensions/context.dart';
 
 class NoDefaultMetadataPlugin extends StatelessWidget {
-  const NoDefaultMetadataPlugin({super.key});
+  final VoidCallback? onRetry;
+  const NoDefaultMetadataPlugin({super.key, this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -28,26 +29,47 @@ class NoDefaultMetadataPlugin extends StatelessWidget {
             style: context.theme.typography.h4,
             maxLines: 1,
           ),
-          Button.primary(
-            leading: const Icon(DeeMusiqIcons.extensions),
-            child: Text(context.l10n.manage_metadata_providers),
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  title: const Text("Metadata Providers"),
-                  content: const Text(
-                    "External plugins have been removed. DeeMusiq uses its native backend for metadata.",
-                  ),
-                  actions: [
-                    Button.primary(
-                      onPressed: () => ctx.maybePop(),
-                      child: const Text("OK"),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 8,
+            children: [
+              Button.primary(
+                leading: const Icon(DeeMusiqIcons.extensions),
+                child: Text(context.l10n.manage_metadata_providers),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text("Metadata Providers"),
+                      content: const Text(
+                        "External plugins have been removed. DeeMusiq uses its native backend for metadata.",
+                      ),
+                      actions: [
+                        if (onRetry != null)
+                          Button.outline(
+                            leading: const Icon(DeeMusiqIcons.refresh),
+                            onPressed: () {
+                              ctx.maybePop();
+                              onRetry?.call();
+                            },
+                            child: const Text("Retry"),
+                          ),
+                        Button.primary(
+                          onPressed: () => ctx.maybePop(),
+                          child: const Text("OK"),
+                        ),
+                      ],
                     ),
-                  ],
+                  );
+                },
+              ),
+              if (onRetry != null)
+                Button.outline(
+                  leading: const Icon(DeeMusiqIcons.refresh),
+                  child: const Text("Retry"),
+                  onPressed: onRetry,
                 ),
-              );
-            },
+            ],
           ),
         ],
       ),

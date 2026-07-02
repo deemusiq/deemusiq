@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
 
 const allowList = [
   "spotify.com",
@@ -91,21 +92,12 @@ class DeeMusiqHttpOverrides extends HttpOverrides {
   HttpClient createHttpClient(SecurityContext? context) {
     return super.createHttpClient(context)
       ..badCertificateCallback = (X509Certificate cert, String host, int port) {
-        // Spotify API workaround: accept self-signed/expired certs.
-        if (allowList.any((h) => host.endsWith(h))) return true;
+        if (kDebugMode && allowList.any((h) => host.endsWith(h))) return true;
 
-        // Backend cert pinning: when DEEMUSIQ_SERVER_CERT_SHA256 is set,
-        // accept ONLY connections where the leaf certificate's SHA-256 matches.
-        // On platforms where this callback fires for every handshake, this is
-        // full cert pinning (replaces PKI). On platforms where it fires only
-        // on PKI failures, it protects against invalid-cert MITM — the secure
-        // channel AES-256-GCM envelope covers payload confidentiality either way.
         if (serverCertPinningEnabled) {
           return validateServerCertSha256(cert);
         }
 
-        // Default: defer to platform PKI validation (return false = let the
-        // platform's own validation result stand).
         return false;
       };
   }

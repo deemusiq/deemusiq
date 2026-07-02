@@ -41,13 +41,14 @@ class EngineFailover {
     required List<YouTubeEngine> engines,
     required Future<T> Function(YouTubeEngine engine) operation,
     void Function(String message, int attempt)? onRetry,
+    String noInternetMessage = 'Sorry, no internet',
   }) async {
     // Check internet first
     final conn = await ConnectionChecker.instance.check();
     if (!conn.hasInternet) {
       AppLogger.log.w('EngineFailover: no internet connection — aborting');
       throw EngineFailoverException(
-        'Sorry, no internet',
+        noInternetMessage,
         isNoInternet: true,
       );
     }

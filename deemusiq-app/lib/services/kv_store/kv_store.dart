@@ -10,7 +10,14 @@ import 'package:uuid/uuid.dart';
 
 abstract class KVStoreService {
   static SharedPreferences? _sharedPreferences;
-  static SharedPreferences get sharedPreferences => _sharedPreferences!;
+  static SharedPreferences get sharedPreferences {
+    if (_sharedPreferences == null) {
+      throw StateError(
+        'KVStoreService not initialized. Call KVStoreService.initialize() first.',
+      );
+    }
+    return _sharedPreferences!;
+  }
   static bool _encryptedReady = false;
 
   static Future<void> initialize() async {

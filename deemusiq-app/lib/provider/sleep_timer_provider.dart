@@ -21,6 +21,12 @@ class SleepTimerNotifier extends StateNotifier<Duration?> {
     state = null;
     _timer?.cancel();
   }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 }
 
 final sleepTimerProvider = StateNotifierProvider<SleepTimerNotifier, Duration?>(

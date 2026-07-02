@@ -35,7 +35,7 @@ class DiscordNotifier extends AsyncNotifier<void> {
           final playback = ref.read(audioPlayerProvider);
           if (playback.activeTrack == null) return;
 
-          await updatePresence(ref.read(audioPlayerProvider).activeTrack!);
+          await updatePresence(playback.activeTrack!);
         } catch (e, stack) {
           AppLogger.reportError(e, stack);
         }
@@ -46,7 +46,7 @@ class DiscordNotifier extends AsyncNotifier<void> {
           if (playback.activeTrack != null) {
             final diff = position.inMilliseconds - lastPosition.inMilliseconds;
             if (diff > 500 || diff < -500) {
-              await updatePresence(ref.read(audioPlayerProvider).activeTrack!);
+              await updatePresence(playback.activeTrack!);
             }
           }
           lastPosition = position;

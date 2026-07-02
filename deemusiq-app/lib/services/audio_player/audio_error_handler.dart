@@ -174,10 +174,6 @@ class AudioErrorHandler {
     final category = _categorize(error);
     final message = userMessageFor(error, category);
 
-    // Always log
-    AppLogger.log.e(
-      '[AudioError] $context — $message (${category.name}) — attempt $attempt/$maxRetries',
-    );
     AppLogger.reportError(
       error,
       stack,

@@ -21,20 +21,22 @@ class AudioPlayerNotifier extends Notifier<AudioPlayerState> {
   BlackListNotifier get _blacklist => ref.read(blacklistProvider.notifier);
 
   void _assertAllowedTracks(Iterable<DeeMusiqTrackObject> tracks) {
-    assert(
-      tracks.every(
-        (track) =>
-            track is DeeMusiqFullTrackObject || track is DeeMusiqLocalTrackObject,
-      ),
-      'All tracks must be either DeeMusiqFullTrackObject or DeeMusiqLocalTrackObject',
-    );
+    if (!tracks.every(
+      (track) =>
+          track is DeeMusiqFullTrackObject || track is DeeMusiqLocalTrackObject,
+    )) {
+      throw ArgumentError(
+        'All tracks must be either DeeMusiqFullTrackObject or DeeMusiqLocalTrackObject',
+      );
+    }
   }
 
-  void _assertAllowedTrack(DeeMusiqTrackObject tracks) {
-    assert(
-      tracks is DeeMusiqFullTrackObject || tracks is DeeMusiqLocalTrackObject,
-      'Track must be either DeeMusiqFullTrackObject or DeeMusiqLocalTrackObject',
-    );
+  void _assertAllowedTrack(DeeMusiqTrackObject track) {
+    if (track is! DeeMusiqFullTrackObject && track is! DeeMusiqLocalTrackObject) {
+      throw ArgumentError(
+        'Track must be a either a local track or a full track object with ISRC. Got: ${track.runtimeType}',
+      );
+    }
   }
 
   Future<void> _syncSavedState() async {
@@ -108,12 +110,16 @@ class AudioPlayerNotifier extends Notifier<AudioPlayerState> {
         .write(companion);
   }
 
+  bool _isStopped = false;
+  bool _isDisposed = false;
+
   @override
   build() {
     _restoreSavedState();
 
     final subscriptions = [
       audioPlayer.playingStream.listen((playing) async {
+        if (ref.read(_isRestoringStateProvider) || _isStopped) return;
         try {
           state = state.copyWith(playing: playing);
 
@@ -127,6 +133,7 @@ class AudioPlayerNotifier extends Notifier<AudioPlayerState> {
         }
       }),
       audioPlayer.loopModeStream.listen((loopMode) async {
+        if (ref.read(_isRestoringStateProvider) || _isStopped) return;
         try {
           state = state.copyWith(loopMode: loopMode);
 
@@ -140,6 +147,7 @@ class AudioPlayerNotifier extends Notifier<AudioPlayerState> {
         }
       }),
       audioPlayer.shuffledStream.listen((shuffled) async {
+        if (ref.read(_isRestoringStateProvider) || _isStopped) return;
         try {
           state = state.copyWith(shuffled: shuffled);
 
@@ -153,6 +161,7 @@ class AudioPlayerNotifier extends Notifier<AudioPlayerState> {
         }
       }),
       audioPlayer.playlistStream.listen((playlist) async {
+        if (ref.read(_isRestoringStateProvider) || _isStopped) return;
         try {
           final tracks =
               playlist.medias.map((e) => DeeMusiqMedia.media(e).track).toList();
@@ -178,6 +187,7 @@ class AudioPlayerNotifier extends Notifier<AudioPlayerState> {
     ];
 
     ref.onDispose(() {
+      _isDisposed = true;
       for (final subscription in subscriptions) {
         subscription.cancel();
       }
@@ -193,9 +203,12 @@ class AudioPlayerNotifier extends Notifier<AudioPlayerState> {
   }
 
   void _restoreSavedState() {
+    if (_isDisposed) return;
     _syncSavedState().then((_) {
+      if (_isDisposed) return;
       ref.read(_isRestoringStateProvider.notifier).state = false;
     }).catchError((e, stack) {
+      if (_isDisposed) return;
       ref.read(_isRestoringStateProvider.notifier).state = false;
       AppLogger.reportError(e, stack, '_restoreSavedState');
     });
@@ -241,6 +254,7 @@ class AudioPlayerNotifier extends Notifier<AudioPlayerState> {
     Iterable<DeeMusiqTrackObject> tracks, {
     bool allowDuplicates = false,
   }) async {
+    _isStopped = false;
     _assertAllowedTracks(tracks);
     if (state.tracks.length == 1) {
       return addTracks(tracks);
@@ -306,12 +320,20 @@ class AudioPlayerNotifier extends Notifier<AudioPlayerState> {
   Future<void> addTracks(Iterable<DeeMusiqTrackObject> tracks) async {
     _assertAllowedTracks(tracks);
 
-    tracks = _blacklist.filter(tracks).toList();
+    final newTracks = _blacklist
+        .filter(tracks)
+        .where(
+          (track) =>
+              !state.tracks.any((existing) => _compareTracks(existing, track)),
+        )
+        .toList();
+    if (newTracks.isEmpty) return;
+
     state = state.copyWith(
-      tracks: [...state.tracks, ...tracks],
+      tracks: [...state.tracks, ...newTracks],
     );
 
-    for (final track in tracks) {
+    for (final track in newTracks) {
       await audioPlayer.addTrack(DeeMusiqMedia(track));
     }
 
@@ -384,6 +406,7 @@ class AudioPlayerNotifier extends Notifier<AudioPlayerState> {
     int initialIndex = 0,
     bool autoPlay = false,
   }) async {
+    _isStopped = false;
     _assertAllowedTracks(tracks);
 
     var serverStarted = false;
@@ -438,7 +461,6 @@ class AudioPlayerNotifier extends Notifier<AudioPlayerState> {
         autoPlay: autoPlay,
       );
     } catch (e, stack) {
-      AppLogger.log.e('Failed to open playlist: $e');
       AppLogger.reportError(e, stack, 'load() openPlaylist');
       AudioErrorHandler.instance.handleError(
         e,
@@ -521,6 +543,7 @@ class AudioPlayerNotifier extends Notifier<AudioPlayerState> {
   }
 
   Future<void> stop() async {
+    _isStopped = true;
     state = state.copyWith(
       tracks: [],
       currentIndex: 0,

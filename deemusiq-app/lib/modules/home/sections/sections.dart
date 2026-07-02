@@ -51,8 +51,13 @@ class HomePageBrowseSection extends HookConsumerWidget {
           errorCode: MetadataPluginErrorCode.noDefaultMetadataPlugin,
           message: _,
         )) {
-      return const SliverFillRemaining(
-        child: Center(child: NoDefaultMetadataPlugin()),
+      return SliverFillRemaining(
+        child: Center(
+          child: NoDefaultMetadataPlugin(
+            onRetry: () =>
+                ref.invalidate(metadataPluginBrowseSectionsProvider),
+          ),
+        ),
       );
     }
 

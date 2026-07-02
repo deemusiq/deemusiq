@@ -14,6 +14,7 @@ import 'package:deemusiq/services/dio/dio.dart';
 import 'package:deemusiq/services/logger/logger.dart';
 import 'package:deemusiq/services/metadata/errors/exceptions.dart';
 
+import 'package:deemusiq/services/content_filter.dart';
 import 'package:deemusiq/services/sourced_track/exceptions.dart';
 import 'package:deemusiq/utils/service_utils.dart';
 
@@ -209,7 +210,10 @@ class SourcedTrack extends BasicSourcedTrack {
       videoResults.addAll(rankResults(searchResults, query));
     }
 
-    return videoResults.toSet().toList();
+    return videoResults
+        .where(ContentFilter.isPlayableMatch)
+        .toSet()
+        .toList();
   }
 
   Future<SourcedTrack> copyWithSibling() async {
@@ -256,24 +260,25 @@ class SourcedTrack extends BasicSourcedTrack {
 
     final database = ref.read(databaseProvider);
 
-    // Delete the old Entry
-    await (database.sourceMatchTable.delete()
-          ..where(
-            (table) =>
-                table.trackId.equals(query.id) &
-                table.sourceType.equals(audioSourceConfig.slug),
-          ))
-        .go();
+    await database.transaction(() async {
+      await (database.sourceMatchTable.delete()
+            ..where(
+              (table) =>
+                  table.trackId.equals(query.id) &
+                  table.sourceType.equals(audioSourceConfig.slug),
+            ))
+          .go();
 
-    await database.into(database.sourceMatchTable).insert(
-          SourceMatchTableCompanion.insert(
-            trackId: query.id,
-            sourceInfo: Value(jsonEncode(sibling)),
-            sourceType: audioSourceConfig.slug,
-            createdAt: Value(DateTime.now()),
-          ),
-          mode: InsertMode.replace,
-        );
+      await database.into(database.sourceMatchTable).insert(
+            SourceMatchTableCompanion.insert(
+              trackId: query.id,
+              sourceInfo: Value(jsonEncode(sibling)),
+              sourceType: audioSourceConfig.slug,
+              createdAt: Value(DateTime.now().toUtc()),
+            ),
+            mode: InsertMode.replace,
+          );
+    });
 
     return SourcedTrack(
       ref: ref,

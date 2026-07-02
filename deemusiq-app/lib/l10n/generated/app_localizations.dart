@@ -2978,6 +2978,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'For audiophiles. Provides high-quality/lossless audio streams. Accurate ISRC based track matching.'**
   String get dab_music_source_description;
+
+  /// No description provided for @confirm_age_18.
+  ///
+  /// In en, this message translates to:
+  /// **'I am 18 or older'**
+  String get confirm_age_18;
+
+  /// No description provided for @agree_privacy_policy.
+  ///
+  /// In en, this message translates to:
+  /// **'I agree to the Privacy Policy'**
+  String get agree_privacy_policy;
+
+  /// No description provided for @must_confirm_age.
+  ///
+  /// In en, this message translates to:
+  /// **'You must confirm you are 18 or older.'**
+  String get must_confirm_age;
+
+  /// No description provided for @must_agree_privacy_policy.
+  ///
+  /// In en, this message translates to:
+  /// **'You must agree to the Privacy Policy.'**
+  String get must_agree_privacy_policy;
+
+  /// No description provided for @sign_in_with_google.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with Google'**
+  String get sign_in_with_google;
+
+  /// No description provided for @continue_with_device_limited.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with device (limited)'**
+  String get continue_with_device_limited;
+
+  /// No description provided for @wallet_sync_failed_retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet sync failed. Please try again later.'**
+  String get wallet_sync_failed_retry;
+
+  /// No description provided for @its_a_drop_day.
+  ///
+  /// In en, this message translates to:
+  /// **'It\'s a drop day'**
+  String get its_a_drop_day;
 }
 
 class _AppLocalizationsDelegate

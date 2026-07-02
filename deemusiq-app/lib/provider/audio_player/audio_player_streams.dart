@@ -23,7 +23,10 @@ class AudioPlayerStreamListeners {
   AudioServices? _notificationService;
   AudioPlayerStreamListeners(this.ref) {
     AudioServices.create(ref, ref.read(audioPlayerProvider.notifier)).then(
-      (value) => _notificationService = value,
+      (value) {
+        _notificationService = value;
+        AppLogger.log.i('AudioServices created and ready');
+      },
     ).catchError((e, stack) {
       AppLogger.log.e('AudioServices.create failed: $e');
       AppLogger.reportError(e, stack, 'AudioServices.create');
@@ -133,10 +136,10 @@ class AudioPlayerStreamListeners {
       if (activeTrack.artists.any((a) => a.images == null)) {
         final metadataPlugin = await ref.read(metadataPluginProvider.future);
         if (metadataPlugin == null) return;
-        final artists = await Future.wait(
-          activeTrack.artists
-              .map((artist) => metadataPlugin.artist.getArtist(artist.id)),
-        );
+        final artists = (await Future.wait(
+          activeTrack.artists.map((artist) =>
+              metadataPlugin.artist.getArtist(artist.id).catchError((_) => null)),
+        )).whereType<DeeMusiqFullArtistObject>().toList();
         activeTrack = activeTrack.copyWith(
           artists: artists
               .map((e) => DeeMusiqSimpleArtistObject.fromJson(e.toJson()))

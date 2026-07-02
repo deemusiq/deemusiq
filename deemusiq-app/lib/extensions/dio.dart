@@ -113,32 +113,36 @@ extension ChunkDownloaderDioExtension on Dio {
       );
 
       final futures = List.generate(connections, (i) async {
-        final start = i * chunkSize;
-        final end = (i + 1) * chunkSize - 1;
-        if (start >= totalLength!) return;
+        try {
+          final start = i * chunkSize;
+          final end = (i + 1) * chunkSize - 1;
+          if (start >= totalLength!) return;
 
-        final resp = await get<ResponseBody>(
-          urlPath,
-          options: Options(
-            responseType: ResponseType.stream,
-            headers: {'Range': 'bytes=$start-$end'},
-          ),
-          queryParameters: queryParameters,
-          cancelToken: cancelToken,
-        );
+          final resp = await get<ResponseBody>(
+            urlPath,
+            options: Options(
+              responseType: ResponseType.stream,
+              headers: {'Range': 'bytes=$start-$end'},
+            ),
+            queryParameters: queryParameters,
+            cancelToken: cancelToken,
+          );
 
-        final file = partFiles[i];
-        if (await file.exists()) await file.delete();
-        await file.create(recursive: true);
-        final sink = file.openWrite();
+          final file = partFiles[i];
+          if (await file.exists()) await file.delete();
+          await file.create(recursive: true);
+          final sink = file.openWrite();
 
-        await for (final chunk in resp.data!.stream) {
-          sink.add(chunk);
-          downloaded += chunk.length;
-          onReceiveProgress?.call(downloaded, totalLength);
+          await for (final chunk in resp.data!.stream) {
+            sink.add(chunk);
+            downloaded += chunk.length;
+            onReceiveProgress?.call(downloaded, totalLength);
+          }
+
+          await sink.close();
+        } catch (_) {
+          return null;
         }
-
-        await sink.close();
       });
 
       await Future.wait(futures);

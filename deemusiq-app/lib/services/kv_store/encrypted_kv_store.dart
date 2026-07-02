@@ -1,7 +1,7 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:deemusiq/services/kv_store/kv_store.dart';
+import 'package:deemusiq/services/logger/logger.dart';
 import 'package:uuid/uuid.dart';
-import 'package:deemusiq/utils/platform.dart';
 
 abstract class EncryptedKvStoreService {
   static const _storage = FlutterSecureStorage(
@@ -18,15 +18,16 @@ abstract class EncryptedKvStoreService {
     _encryptionKeySync = await encryptionKey;
   }
 
-  static String get encryptionKeySync => _encryptionKeySync!;
-
-  static bool get isUnsupportedPlatform =>
-      kIsMacOS || kIsIOS || (kIsLinux && !kIsFlatpak);
+  static String get encryptionKeySync {
+    if (_encryptionKeySync == null) {
+      throw StateError(
+        'EncryptedKvStoreService not initialized. Call EncryptedKvStoreService.initialize() first.',
+      );
+    }
+    return _encryptionKeySync!;
+  }
 
   static Future<String> get encryptionKey async {
-    if (isUnsupportedPlatform) {
-      return KVStoreService.encryptionKey;
-    }
     try {
       final value = await _storage.read(key: 'encryption');
       final key = const Uuid().v4();
@@ -38,19 +39,20 @@ abstract class EncryptedKvStoreService {
 
       return value;
     } catch (e) {
+      AppLogger.log.w(
+        'FlutterSecureStorage unavailable, falling back to SharedPreferences for encryption key',
+      );
       return KVStoreService.encryptionKey;
     }
   }
 
   static Future<void> setEncryptionKey(String key) async {
-    if (isUnsupportedPlatform) {
-      await KVStoreService.setEncryptionKey(key);
-      return;
-    }
-
     try {
       await _storage.write(key: 'encryption', value: key);
     } catch (e) {
+      AppLogger.log.w(
+        'FlutterSecureStorage write failed, falling back to SharedPreferences for encryption key',
+      );
       await KVStoreService.setEncryptionKey(key);
     } finally {
       _encryptionKeySync = key;

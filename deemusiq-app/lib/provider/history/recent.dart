@@ -38,12 +38,22 @@ class RecentlyPlayedItemNotifier extends AsyncNotifier<List<HistoryTableData>> {
     });
 
     final subscription = query.watch().listen((event) async {
-      state = AsyncData(await Future.wait(event));
+      final results = (await Future.wait(
+        event.map((f) async {
+          try { return await f; } catch (_) { return null; }
+        }),
+      )).whereType<HistoryTableData>().toList();
+      state = AsyncData(results);
     });
 
     ref.onDispose(() => subscription.cancel());
 
-    final items = await Future.wait(await query.get());
+    final futures = await query.get();
+    final items = (await Future.wait(
+      futures.map((f) async {
+        try { return await f; } catch (_) { return null; }
+      }),
+    )).whereType<HistoryTableData>().toList();
 
     return items;
   }

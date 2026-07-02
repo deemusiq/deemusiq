@@ -469,5 +469,13 @@
   "scrobbling": "Scrobbling",
   "source": "Source: ",
   "uncompressed": "Uncompressed",
-  "dab_music_source_description": "For audiophiles. Provides high-quality/lossless audio streams. Accurate ISRC based track matching."
+  "dab_music_source_description": "For audiophiles. Provides high-quality/lossless audio streams. Accurate ISRC based track matching.",
+  "confirm_age_18": "I am 18 or older",
+  "agree_privacy_policy": "I agree to the Privacy Policy",
+  "must_confirm_age": "You must confirm you are 18 or older.",
+  "must_agree_privacy_policy": "You must agree to the Privacy Policy.",
+  "sign_in_with_google": "Sign in with Google",
+  "continue_with_device_limited": "Continue with device (limited)",
+  "wallet_sync_failed_retry": "Wallet sync failed. Please try again later.",
+  "its_a_drop_day": "It's a drop day"
 }

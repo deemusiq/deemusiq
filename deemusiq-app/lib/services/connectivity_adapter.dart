@@ -14,14 +14,16 @@ class ConnectionCheckerService with WidgetsBindingObserver {
 
   static ConnectionCheckerService get instance => _instance;
 
-  ConnectionCheckerService._() : dio = Dio() {
-    Timer? timer;
+  Timer? _timer;
+  StreamSubscription<bool>? _connectionSub;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
 
-    onConnectivityChanged.listen((connected) {
+  ConnectionCheckerService._() : dio = Dio() {
+    WidgetsBinding.instance.addObserver(this);
+    _connectionSub = onConnectivityChanged.listen((connected) {
       try {
-        if (!connected && timer == null) {
-          // check every 30 seconds if we are connected when we are not connected
-          timer = Timer.periodic(const Duration(seconds: 30), (timer) async {
+        if (!connected && _timer == null) {
+          _timer = Timer.periodic(const Duration(seconds: 30), (timer) async {
             if (WidgetsBinding.instance.lifecycleState ==
                 AppLifecycleState.paused) {
               return;
@@ -29,17 +31,29 @@ class ConnectionCheckerService with WidgetsBindingObserver {
             await isConnected;
           });
         } else {
-          timer?.cancel();
-          timer = null;
+          _timer?.cancel();
+          _timer = null;
         }
       } catch (e, stack) {
         AppLogger.reportError(e, stack);
       }
     });
 
-    Connectivity().onConnectivityChanged.listen((event) async {
+    _connectivitySub = Connectivity().onConnectivityChanged.listen((event) async {
       await isConnected;
     });
+  }
+
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _timer?.cancel();
+    _timer = null;
+    _connectionSub?.cancel();
+    _connectionSub = null;
+    _connectivitySub?.cancel();
+    _connectivitySub = null;
+    dio.close();
+    _connectionStreamController.close();
   }
 
   @override

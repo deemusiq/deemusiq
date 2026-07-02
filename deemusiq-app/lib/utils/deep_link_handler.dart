@@ -5,7 +5,7 @@ import 'package:deemusiq/collections/routes.dart';
 import 'package:deemusiq/services/logger/logger.dart';
 
 class DeepLinkHandler {
-  static final AppLinks _appLinks = AppLinks();
+  static final AppLinks appLinks = AppLinks();
   static StreamSubscription<Uri>? _uriSubscription;
   static bool _isSetup = false;
 
@@ -13,14 +13,14 @@ class DeepLinkHandler {
     if (_isSetup) return;
     _isSetup = true;
 
-    _uriSubscription = _appLinks.uriLinkStream.listen((uri) {
+    _uriSubscription = appLinks.uriLinkStream.listen((uri) {
       final videoId = _extractYouTubeId(uri);
       if (videoId != null) {
         router.pushNamed('/track/$videoId');
       }
     });
 
-    _appLinks.getInitialLink().then((uri) {
+    appLinks.getInitialLink().then((uri) {
       if (uri != null) {
         final videoId = _extractYouTubeId(uri);
         if (videoId != null) {

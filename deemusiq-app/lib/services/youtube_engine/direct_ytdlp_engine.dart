@@ -138,7 +138,7 @@ class DirectYtDlpEngine implements YouTubeEngine {
   Future<StreamManifest> getStreamManifest(String videoId) async {
     final output = await _run([
       '--print', '%(formats)j',
-      '--no-check-certificate', '--quiet', '--ignore-errors',
+      '--quiet', '--ignore-errors',
       '--remote-components', 'ejs:github',
       'https://www.youtube.com/watch?v=$videoId',
     ]);
@@ -150,7 +150,7 @@ class DirectYtDlpEngine implements YouTubeEngine {
   Future<Video> getVideo(String videoId) async {
     final output = await _run([
       '--print', '%()j', '--skip-download',
-      '--no-check-certificate', '--quiet', '--ignore-errors',
+      '--quiet', '--ignore-errors',
       '--remote-components', 'ejs:github',
       'https://www.youtube.com/watch?v=$videoId',
     ]);
@@ -183,7 +183,7 @@ class DirectYtDlpEngine implements YouTubeEngine {
     if (sanitized.isEmpty) return <Video>[];
     final output = await _run([
       '--print', '%()j',
-      '--skip-download', '--no-check-certificate',
+      '--skip-download',
       '--quiet', '--ignore-errors', '--flat-playlist', '--no-playlist',
       '--remote-components', 'ejs:github',
       'ytsearch10:$sanitized',

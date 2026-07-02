@@ -1535,4 +1535,30 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get dab_music_source_description =>
       '오디오파일을 위한 소스입니다. 고음질/무손실 오디오 스트림을 제공하며 ISRC 기반으로 정확한 트랙 매칭을 지원합니다.';
+
+  @override
+  String get confirm_age_18 => 'I am 18 or older';
+
+  @override
+  String get agree_privacy_policy => 'I agree to the Privacy Policy';
+
+  @override
+  String get must_confirm_age => 'You must confirm you are 18 or older.';
+
+  @override
+  String get must_agree_privacy_policy =>
+      'You must agree to the Privacy Policy.';
+
+  @override
+  String get sign_in_with_google => 'Sign in with Google';
+
+  @override
+  String get continue_with_device_limited => 'Continue with device (limited)';
+
+  @override
+  String get wallet_sync_failed_retry =>
+      'Wallet sync failed. Please try again later.';
+
+  @override
+  String get its_a_drop_day => 'It\'s a drop day';
 }

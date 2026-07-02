@@ -491,8 +491,7 @@ class LocalLibraryPage extends HookConsumerWidget {
                       ),
                     ),
                   ),
-                  error: (error, stackTrace) =>
-                      Text(error.toString() + stackTrace.toString()),
+                  error: (error, _) => Text("Could not load tracks. Pull to retry."),
                 );
               }),
             ],

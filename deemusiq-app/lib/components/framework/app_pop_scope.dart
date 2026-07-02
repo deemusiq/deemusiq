@@ -1,5 +1,4 @@
-import 'dart:io';
-
+import 'package:flutter/widgets.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 
 /// A temporary workaround for [WillPopScope] and [PopScope] not working in GoRouter
@@ -23,7 +22,6 @@ class AppPopScope extends StatefulWidget {
 }
 
 class _AppPopScopeState extends State<AppPopScope> {
-  final bool _enable = Platform.isAndroid;
   ModalRoute? _route;
   BackButtonDispatcher? _parentBackBtnDispatcher;
   ChildBackButtonDispatcher? _backBtnDispatcher;
@@ -63,8 +61,6 @@ class _AppPopScopeState extends State<AppPopScope> {
   }
 
   void _updateBackButtonDispatcher() {
-    if (!_enable) return;
-
     var dispatcher = Router.maybeOf(context)?.backButtonDispatcher;
     if (dispatcher != _parentBackBtnDispatcher) {
       _disposeBackBtnDispatcher();

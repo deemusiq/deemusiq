@@ -98,31 +98,37 @@ final localTracksProvider =
       final List<MetadataFile> filesWithMetadata = await Future.wait(
         entities.map((file) async {
           try {
-            final metadata = await MetadataGod.readMetadata(file: file.path);
+            return await (() async {
+              try {
+                final metadata = await MetadataGod.readMetadata(file: file.path);
 
-            final imageFile = File(
-              join(
-                (await getTemporaryDirectory()).path,
-                "deemusiq",
-                ServiceUtils.sanitizeFilename(
-                        basenameWithoutExtension(file.path)) +
-                    imgMimeToExt[metadata.picture?.mimeType ?? "image/jpeg"]!,
-              ),
-            );
-            if (!await imageFile.exists() && metadata.picture != null) {
-              await imageFile.create(recursive: true);
-              await imageFile.writeAsBytes(
-                metadata.picture?.data ?? [],
-                mode: FileMode.writeOnly,
-              );
-            }
+                final imageFile = File(
+                  join(
+                    (await getTemporaryDirectory()).path,
+                    "deemusiq",
+                    ServiceUtils.sanitizeFilename(
+                            basenameWithoutExtension(file.path)) +
+                        imgMimeToExt[metadata.picture?.mimeType ?? "image/jpeg"]!,
+                  ),
+                );
+                if (!await imageFile.exists() && metadata.picture != null) {
+                  await imageFile.create(recursive: true);
+                  await imageFile.writeAsBytes(
+                    metadata.picture?.data ?? [],
+                    mode: FileMode.writeOnly,
+                  );
+                }
 
-            return (metadata: metadata, file: file, art: imageFile.path);
-          } catch (e, stack) {
-            if (e case FrbException() || TimeoutException()) {
-              return (file: file, metadata: null, art: null);
-            }
-            AppLogger.reportError(e, stack);
+                return (metadata: metadata, file: file, art: imageFile.path);
+              } catch (e, stack) {
+                if (e case FrbException() || TimeoutException()) {
+                  return (file: file, metadata: null, art: null);
+                }
+                AppLogger.reportError(e, stack);
+                return null;
+              }
+            })();
+          } catch (_) {
             return null;
           }
         }),

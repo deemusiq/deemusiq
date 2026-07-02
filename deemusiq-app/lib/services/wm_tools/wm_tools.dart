@@ -1,5 +1,6 @@
-import 'package:shadcn_flutter/shadcn_flutter.dart';
+import 'package:flutter/material.dart';
 import 'package:deemusiq/services/kv_store/kv_store.dart';
+import 'package:deemusiq/services/logger/logger.dart';
 import 'package:deemusiq/utils/platform.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -56,13 +57,24 @@ class WindowManagerTools with WidgetsBindingObserver {
           await windowManager.setSize(Size(savedSize.width, savedSize.height));
         }
 
-        await windowManager.focus();
+        try {
+          await windowManager.focus();
+        } catch (e) {
+          AppLogger.log.w('Window focus failed: $e');
+        }
         await windowManager.show();
       },
     );
   }
 
   Size? _prevSize;
+
+  static void dispose() {
+    if (_instance != null) {
+      WidgetsBinding.instance.removeObserver(_instance!);
+      _instance = null;
+    }
+  }
 
   @override
   void didChangeMetrics() async {

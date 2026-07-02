@@ -1566,4 +1566,30 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get dab_music_source_description =>
       'Para audiófilos. Fornece streams de áudio de alta qualidade/sem perdas. Correspondência precisa de faixas baseada em ISRC.';
+
+  @override
+  String get confirm_age_18 => 'I am 18 or older';
+
+  @override
+  String get agree_privacy_policy => 'I agree to the Privacy Policy';
+
+  @override
+  String get must_confirm_age => 'You must confirm you are 18 or older.';
+
+  @override
+  String get must_agree_privacy_policy =>
+      'You must agree to the Privacy Policy.';
+
+  @override
+  String get sign_in_with_google => 'Sign in with Google';
+
+  @override
+  String get continue_with_device_limited => 'Continue with device (limited)';
+
+  @override
+  String get wallet_sync_failed_retry =>
+      'Wallet sync failed. Please try again later.';
+
+  @override
+  String get its_a_drop_day => 'It\'s a drop day';
 }

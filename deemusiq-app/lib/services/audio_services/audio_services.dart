@@ -1,5 +1,5 @@
 import 'package:audio_service/audio_service.dart';
-import 'package:shadcn_flutter/shadcn_flutter.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:deemusiq/collections/env.dart';
 import 'package:deemusiq/models/metadata/metadata.dart';
@@ -8,6 +8,9 @@ import 'package:deemusiq/services/audio_player/audio_player.dart';
 import 'package:deemusiq/services/audio_services/mobile_audio_service.dart';
 import 'package:deemusiq/services/audio_services/windows_audio_service.dart';
 import 'package:deemusiq/utils/platform.dart';
+
+const _kAndroidNotificationChannelName = 'deemusiq_playback';
+const _kAndroidNotificationChannelDesc = 'DeeMusiq media controls';
 
 class AudioServices with WidgetsBindingObserver {
   final MobileAudioService? mobile;
@@ -34,10 +37,10 @@ class AudioServices with WidgetsBindingObserver {
                 (_, ReleaseChannel.stable) => "za.co.deemusiq.app",
                 (_, ReleaseChannel.nightly) => "za.co.deemusiq.app.nightly",
               },
-              androidNotificationChannelName: 'DeeMusiq',
+              androidNotificationChannelName: _kAndroidNotificationChannelName,
               androidNotificationOngoing: false,
               androidStopForegroundOnPause: false,
-              androidNotificationChannelDescription: "DeeMusiq Media Controls",
+              androidNotificationChannelDescription: _kAndroidNotificationChannelDesc,
             ),
           )
         : null;
@@ -74,18 +77,22 @@ class AudioServices with WidgetsBindingObserver {
     switch (state) {
       case AppLifecycleState.paused:
       case AppLifecycleState.inactive:
-        _wasPlaying = audioPlayer.isPlaying;
-        audioPlayer.pause();
-        deactivateSession();
+        if (kIsMobile) {
+          _wasPlaying = audioPlayer.isPlaying;
+          audioPlayer.pause();
+          deactivateSession();
+        }
         break;
       case AppLifecycleState.detached:
-        _wasPlaying = audioPlayer.isPlaying;
-        audioPlayer.pause();
-        deactivateSession();
+        if (kIsMobile) {
+          _wasPlaying = audioPlayer.isPlaying;
+          audioPlayer.pause();
+          deactivateSession();
+        }
         break;
       case AppLifecycleState.resumed:
         activateSession();
-        if (_wasPlaying) {
+        if (_wasPlaying && kIsMobile) {
           audioPlayer.resume();
           _wasPlaying = false;
         }

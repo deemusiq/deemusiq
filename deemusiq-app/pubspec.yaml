@@ -27,11 +27,13 @@ dependencies:
     git:
       path: packages/desktop_webview_window
       url: https://github.com/KRTirtho/flutter-plugins.git
+      ref: f261ff20e310d05713249b21c199a9fe17a3de6f
   device_info_plus: ^11.1.1
   dio: ^5.4.3+1
   disable_battery_optimization:
     git:
       url: https://github.com/KRTirtho/Disable-Battery-Optimizations.git
+      ref: aa77a61946849fff495091fc13dcc390948cc60b
   draggable_scrollbar:
     git:
       ref: cfd570035bf393de541d32e9b28808b5d7e602df
@@ -88,7 +90,7 @@ dependencies:
   riverpod: ^2.5.1
   scrobblenaut:
     git:
-      ref: dart-3-support
+      ref: d90cb75d71737f3cfa2de4469d48080c0f3eedc2
       url: https://github.com/KRTirtho/scrobblenaut.git
   scroll_to_index: ^3.0.1
   shadcn_flutter: 0.0.47
@@ -123,6 +125,7 @@ dependencies:
   flutter_new_pipe_extractor:
     git:
       url: https://github.com/KRTirtho/flutter_new_pipe_extractor
+      ref: 41cbd821ce49b9343136f67d83d3117e582dad75
   http_parser: ^4.1.2
   collection: any
   archive: ^4.0.7
@@ -137,10 +140,12 @@ dependencies:
     git:
       url: https://github.com/media-kit/media-kit
       path: media_kit
+      ref: d310049f24196250d876efb02b9ff56fa9ef5068
   media_kit_libs_audio:
     git:
       url: https://github.com/media-kit/media-kit
       path: libs/universal/media_kit_libs_audio
+      ref: d310049f24196250d876efb02b9ff56fa9ef5068
   base32: ^2.2.0
 
 dev_dependencies:
@@ -168,6 +173,7 @@ dependency_overrides:
     git:
       url: https://github.com/KRTirtho/Bonsoir.git
       path: packages/bonsoir_android
+      ref: aa5604628ba41e3a7153769f4465a3d375488f2e
   meta: 1.16.0
   web: ^1.1.0
   flutter_svg: ^2.0.17
@@ -183,22 +189,27 @@ dependency_overrides:
     git:
       url: https://github.com/media-kit/media-kit
       path: libs/android/media_kit_libs_android_audio
+      ref: d310049f24196250d876efb02b9ff56fa9ef5068
   media_kit_libs_ios_audio:
     git:
       url: https://github.com/media-kit/media-kit
       path: libs/ios/media_kit_libs_ios_audio
+      ref: d310049f24196250d876efb02b9ff56fa9ef5068
   media_kit_libs_macos_audio:
     git:
       url: https://github.com/media-kit/media-kit
       path: libs/macos/media_kit_libs_macos_audio
+      ref: d310049f24196250d876efb02b9ff56fa9ef5068
   media_kit_libs_windows_audio:
     git:
       url: https://github.com/media-kit/media-kit
       path: libs/windows/media_kit_libs_windows_audio
+      ref: d310049f24196250d876efb02b9ff56fa9ef5068
   media_kit_libs_linux:
     git:
       url: https://github.com/media-kit/media-kit
       path: libs/linux/media_kit_libs_linux
+      ref: d310049f24196250d876efb02b9ff56fa9ef5068
 
 flutter:
   generate: true

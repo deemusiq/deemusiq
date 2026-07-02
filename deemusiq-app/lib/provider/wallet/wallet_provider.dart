@@ -58,7 +58,7 @@ class WalletNotifier extends Notifier<WalletState> {
       id: _uuid.v4(),
       type: TokenTransactionType.topUp,
       tokens: pack.totalTokens,
-      timestamp: DateTime.now(),
+      timestamp: DateTime.now().toUtc(),
       description: "${pack.label} pack · ${pack.totalTokens} tokens",
       fiatAmount: region.localPrice(pack.basePriceZar),
       currencyCode: region.currencyCode,
@@ -75,7 +75,7 @@ class WalletNotifier extends Notifier<WalletState> {
       id: _uuid.v4(),
       type: TokenTransactionType.bonus,
       tokens: tokens,
-      timestamp: DateTime.now(),
+      timestamp: DateTime.now().toUtc(),
       description: reason,
     );
     await _commit(state.copyWith(transactions: _prepend(tx)));
@@ -101,7 +101,7 @@ class WalletNotifier extends Notifier<WalletState> {
       return false;
     }
 
-    final now = DateTime.now();
+    final now = DateTime.now().toUtc();
 
     if (WalletApiClient.instance.isConfigured) {
       // Online: the server is the ledger. Only mutate local state after the
@@ -195,7 +195,7 @@ class WalletNotifier extends Notifier<WalletState> {
       return true;
     }
 
-    final now = DateTime.now();
+    final now = DateTime.now().toUtc();
     final tx = TokenTransaction(
       id: _uuid.v4(),
       type: TokenTransactionType.support,
@@ -315,7 +315,7 @@ class WalletNotifier extends Notifier<WalletState> {
       provider: provider,
       displayName: displayName,
       externalId: externalId,
-      connectedAt: DateTime.now(),
+      connectedAt: DateTime.now().toUtc(),
     ));
     await _commit(state.copyWith(linkedAccounts: accounts));
   }

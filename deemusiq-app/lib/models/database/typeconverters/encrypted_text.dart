@@ -6,28 +6,29 @@ class DecryptedText {
 
   static Encrypter? _encrypter;
 
-  factory DecryptedText.decrypted(String value) {
+  static Encrypter get _getEncrypter {
     _encrypter ??= Encrypter(
       Salsa20(
         Key.fromUtf8(EncryptedKvStoreService.encryptionKeySync),
       ),
     );
+    return _encrypter!;
+  }
 
+  factory DecryptedText.decrypted(String value) {
+    final combined = base64Decode(value);
+    final iv = IV(combined.sublist(0, 8));
+    final encrypted = Encrypted(combined.sublist(8));
     return DecryptedText(
-      _encrypter!.decrypt(
-        Encrypted.fromBase64(value),
-        iv: KVStoreService.ivKey,
-      ),
+      _getEncrypter.decrypt(encrypted, iv: iv),
     );
   }
 
   String encrypt() {
-    _encrypter ??= Encrypter(
-      Salsa20(
-        Key.fromUtf8(EncryptedKvStoreService.encryptionKeySync),
-      ),
-    );
-    return _encrypter!.encrypt(value, iv: KVStoreService.ivKey).base64;
+    final iv = IV.fromSecureRandom(8);
+    final encrypted = _getEncrypter.encrypt(value, iv: iv);
+    final combined = [...iv.bytes, ...encrypted.bytes];
+    return base64Encode(combined);
   }
 }
 

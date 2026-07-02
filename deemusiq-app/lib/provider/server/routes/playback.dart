@@ -516,10 +516,10 @@ class ServerPlaybackRoutes {
 class _CachedUrlEntry {
   final String url;
   final DateTime cachedAt;
-  _CachedUrlEntry(this.url) : cachedAt = DateTime.now();
+  _CachedUrlEntry(this.url) : cachedAt = DateTime.now().toUtc();
 
   bool get isValid =>
-      DateTime.now().difference(cachedAt).inSeconds < 30;
+      DateTime.now().toUtc().difference(cachedAt).inSeconds < 30;
 }
 
 class _CacheFile {

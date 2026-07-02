@@ -3,7 +3,7 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
-import 'package:shadcn_flutter/shadcn_flutter.dart' hide join;
+import 'package:flutter/widgets.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:logger/logger.dart';
 import 'package:path/path.dart';
@@ -120,7 +120,7 @@ class AppLogger {
 
     if (kReleaseMode) {
       await logFile.writeAsString(
-        "[${DateTime.now()}]---------------------\n"
+        "[${DateTime.now().toUtc()}]---------------------\n"
         "$error\n$stackTrace\n"
         "----------------------------------------\n",
         mode: FileMode.writeOnlyAppend,

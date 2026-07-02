@@ -112,36 +112,39 @@ class PlaybackQueue {
     await audioPlayer.skipToPrevious();
   }
 
-  static Future<void> saveQueue(AppDatabase database, List<DeeMusiqTrackObject> tracks) async {
-    final existing =
-        await database.select(database.audioPlayerStateTable).getSingleOrNull();
-    if (existing != null) {
-      await (database.update(database.audioPlayerStateTable)
-            ..where((tb) => tb.id.equals(0)))
-          .write(AudioPlayerStateTableCompanion(
-        tracks: Value(tracks),
-      ));
-    } else {
-      await database.into(database.audioPlayerStateTable).insert(
-            AudioPlayerStateTableCompanion.insert(
-              playing: false,
-              loopMode: audioPlayer.loopMode,
-              shuffled: audioPlayer.isShuffled,
-              collections: const <String>[],
-              tracks: Value(tracks),
-              currentIndex: Value(0),
-              id: const Value(0),
-            ),
-          );
-    }
+  static Future<void> saveQueue(AppDatabase database, List<DeeMusiqTrackObject> tracks, {int currentIndex = 0}) async {
+    await database.transaction(() async {
+      final existing =
+          await database.select(database.audioPlayerStateTable).getSingleOrNull();
+      if (existing != null) {
+        await (database.update(database.audioPlayerStateTable)
+              ..where((tb) => tb.id.equals(0)))
+            .write(AudioPlayerStateTableCompanion(
+          tracks: Value(tracks),
+          currentIndex: Value(currentIndex),
+        ));
+      } else {
+        await database.into(database.audioPlayerStateTable).insert(
+              AudioPlayerStateTableCompanion.insert(
+                playing: false,
+                loopMode: audioPlayer.loopMode,
+                shuffled: audioPlayer.isShuffled,
+                collections: const <String>[],
+                tracks: Value(tracks),
+                currentIndex: Value(currentIndex),
+                id: const Value(0),
+              ),
+            );
+      }
+    });
   }
 
-  static Future<List<DeeMusiqTrackObject>?> loadQueue(AppDatabase database) async {
+  static Future<({List<DeeMusiqTrackObject> tracks, int currentIndex})?> loadQueue(AppDatabase database) async {
     final state = await database
         .select(database.audioPlayerStateTable)
         .getSingleOrNull();
     if (state == null || state.tracks.isEmpty) return null;
-    return state.tracks;
+    return (tracks: state.tracks, currentIndex: state.currentIndex);
   }
 
   static Future<void> clearQueue(AppDatabase database) async {

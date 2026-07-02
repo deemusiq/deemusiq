@@ -4,7 +4,6 @@ import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:deemusiq/collections/routes.gr.dart';
 
 import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/components/fallbacks/error_box.dart';
@@ -71,12 +70,7 @@ class SearchPage extends HookConsumerWidget {
       );
     }
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        context.navigateTo(const HomeRoute());
-      },
-      child: SafeArea(
+    return SafeArea(
         bottom: false,
         child: Scaffold(
           headers: [
@@ -89,7 +83,9 @@ class SearchPage extends HookConsumerWidget {
                   errorCode: MetadataPluginErrorCode.noDefaultMetadataPlugin,
                   message: _
                 )) {
-              return const NoDefaultMetadataPlugin();
+              return NoDefaultMetadataPlugin(
+                onRetry: () => ref.invalidate(metadataPluginSearchChipsProvider),
+              );
             }
 
             if (searchChipSnapshot.hasError) {
@@ -228,7 +224,6 @@ class SearchPage extends HookConsumerWidget {
             );
           }),
         ),
-      ),
     );
   }
 }

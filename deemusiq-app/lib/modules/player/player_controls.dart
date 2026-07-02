@@ -29,6 +29,10 @@ class PlayerControls extends HookConsumerWidget {
 
   static FocusNode focusNode = FocusNode();
 
+  static void dispose() {
+    focusNode.dispose();
+  }
+
   @override
   Widget build(BuildContext context, ref) {
     final shortcuts = useMemoized(

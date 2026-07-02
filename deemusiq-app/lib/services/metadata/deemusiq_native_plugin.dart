@@ -20,6 +20,7 @@ import 'package:youtube_explode_dart/youtube_explode_dart.dart' show Video, Stre
 import 'package:deemusiq/services/audio_player/audio_quality.dart';
 import 'package:deemusiq/services/connectivity/engine_failover.dart';
 import 'package:deemusiq/services/connectivity/connection_checker.dart';
+import 'package:deemusiq/services/content_filter.dart';
 import 'package:deemusiq/services/logger/logger.dart';
 
 /// The built-in "plugin" identity DeeMusiq presents in place of any external
@@ -295,7 +296,12 @@ class _NativeSearch extends MetadataPluginSearchEndpoint {
           AppLogger.log.i('Engine retry: $msg (attempt $attempt)');
         },
       );
-      return videos.map(_videoToTrack).toList();
+      final filtered = videos
+          .where((v) => ContentFilter.isPlayableSong(v))
+          .take(limit)
+          .map(_videoToTrack)
+          .toList();
+      return filtered;
     } catch (e, stack) {
       AppLogger.log.w('YouTube search fallback failed: ${e.toString()}');
       AppLogger.reportError(e, stack);
@@ -444,30 +450,6 @@ class _NativeAlbum extends MetadataPluginAlbumEndpoint {
     );
   }
 
-  /// Searches YouTube for album-shaped results.
-  Future<List<DeeMusiqSimpleAlbumObject>> _youtubeAlbumSearch(
-      String query, int limit) async {
-    if (_allYtEngines == null || _allYtEngines!.isEmpty) return [];
-    try {
-      final videos = await EngineFailover.tryEngines(
-        engines: _allYtEngines!,
-        operation: (engine) async {
-          final results = await engine.searchVideos(query);
-          return results.take(limit).toList();
-        },
-        onRetry: (msg, attempt) {
-          AppLogger.log.i('Engine retry: $msg (attempt $attempt)');
-        },
-      );
-      return videos.map(_videoToSimpleAlbum).toList();
-    } catch (e, stack) {
-      AppLogger.log.w(
-          'YouTube album releases search failed for "$query": ${e.toString()}');
-      AppLogger.reportError(e, stack);
-      return [];
-    }
-  }
-
   @override
   Future<DeeMusiqFullAlbumObject> getAlbum(String id) async {
     try {
@@ -539,20 +521,7 @@ class _NativeAlbum extends MetadataPluginAlbumEndpoint {
       }
     }
 
-    // 2) YouTube fallback with popular SA music queries.
-    const fallbackQueries = [
-      "Amapiano 2026",
-      "South African House 2026",
-      "Afrobeat 2026",
-      "Gqom 2026",
-    ];
-
-    final allAlbums = <DeeMusiqSimpleAlbumObject>[];
-    for (final q in fallbackQueries) {
-      final albums = await _youtubeAlbumSearch(q, 5);
-      allAlbums.addAll(albums);
-    }
-    return _page(allAlbums);
+    return _page([]);
   }
 
   @override
@@ -1005,7 +974,7 @@ class _NativeAudioSource extends MetadataPluginAudioSourceEndpoint {
         },
       );
       if (videos.isEmpty) return const [];
-      return videos.map((video) {
+      return videos.where(ContentFilter.isPlayableSong).map((video) {
         return DeeMusiqAudioSourceMatchObject(
           id: video.id.value,
           title: video.title,

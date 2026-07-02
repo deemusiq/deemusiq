@@ -46,6 +46,9 @@ import 'package:deemusiq/services/kv_store/encrypted_kv_store.dart';
 import 'package:deemusiq/services/kv_store/kv_store.dart';
 import 'package:deemusiq/services/logger/logger.dart';
 import 'package:deemusiq/services/wm_tools/wm_tools.dart';
+import 'package:deemusiq/modules/player/player_controls.dart';
+import 'package:deemusiq/services/ad_roll/ad_roll_service.dart';
+import 'package:deemusiq/services/connectivity_adapter.dart';
 import 'package:deemusiq/utils/deep_link_handler.dart';
 import 'package:deemusiq/utils/migrations/sandbox.dart';
 import 'package:deemusiq/utils/platform.dart';
@@ -71,9 +74,7 @@ Future<void> main(List<String> rawArgs) async {
   AppLogger.runZoned(() async {
     final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
 
-    // Clean up stale deemusiq server sockets from a previous run that may
-    // still be holding ports 8000 or the random streaming port range.
-    if (kIsDesktop) {
+    if (kIsLinux) {
       try {
         final result = await Process.run('bash', [
           '-c',
@@ -91,12 +92,9 @@ Future<void> main(List<String> rawArgs) async {
       } catch (_) {}
     }
 
-    // SECURITY: HttpOverrides with backend TLS certificate pinning.
-    // DeeMusiqHttpOverrides enforces DEEMUSIQ_SERVER_CERT_SHA256 (when set)
-    // for all HTTPS connections to the backend, while preserving the legacy
-    // Spotify bad-certificate workaround scoped to spotify.com hosts only.
-    // Standard PKI validation applies for all other hosts.
-    HttpOverrides.global = DeeMusiqHttpOverrides();
+    if (kDebugMode) {
+      HttpOverrides.global = DeeMusiqHttpOverrides();
+    }
 
     // await registerWindowsScheme("spotify");
 
@@ -234,7 +232,13 @@ class DeeMusiq extends HookConsumerWidget {
     final router = useMemoized(() => AppRouter(ref), []);
     useEffect(() {
       DeepLinkHandler.setup(router);
-      return () => DeepLinkHandler.dispose();
+      return () {
+        DeepLinkHandler.dispose();
+        ConnectionCheckerService.instance.dispose();
+        AdRollService.instance.dispose();
+        PlayerControls.dispose();
+        WindowManagerTools.dispose();
+      };
     }, []);
     final hasTouchSupport = useHasTouch();
 

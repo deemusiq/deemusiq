@@ -1,13 +1,12 @@
-import 'package:app_links/app_links.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:deemusiq/collections/routes.dart';
 import 'package:deemusiq/collections/routes.gr.dart';
 import 'package:deemusiq/provider/wallet/wallet_provider.dart';
 import 'package:deemusiq/services/logger/logger.dart';
+import 'package:deemusiq/utils/deep_link_handler.dart';
 
-final appLinks = AppLinks();
-final linkStream = appLinks.stringLinkStream.asBroadcastStream();
+final linkStream = DeepLinkHandler.appLinks.stringLinkStream.asBroadcastStream();
 
 /// Handles `deemusiq://` deep links. The DeeMusiq backend redirects back into
 /// the app via this scheme after the user completes a hosted-checkout payment

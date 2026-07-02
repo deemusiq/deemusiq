@@ -63,7 +63,12 @@ class UserArtistsPage extends HookConsumerWidget {
           errorCode: MetadataPluginErrorCode.noDefaultMetadataPlugin,
           message: _,
         )) {
-      return const Center(child: NoDefaultMetadataPlugin());
+      return Center(
+        child: NoDefaultMetadataPlugin(
+          onRetry: () =>
+              ref.invalidate(metadataPluginSavedArtistsProvider),
+        ),
+      );
     }
 
     if (authenticated.asData?.value != true) {

@@ -1570,4 +1570,30 @@ class AppLocalizationsKa extends AppLocalizations {
   @override
   String get dab_music_source_description =>
       'აუდიოფილებისთვის. უზრუნველყოფს მაღალი ხარისხის/უკომპრესო აუდიო სტრიმებს. ზუსტი შესაბამისობა ISRC-ის მიხედვით.';
+
+  @override
+  String get confirm_age_18 => 'I am 18 or older';
+
+  @override
+  String get agree_privacy_policy => 'I agree to the Privacy Policy';
+
+  @override
+  String get must_confirm_age => 'You must confirm you are 18 or older.';
+
+  @override
+  String get must_agree_privacy_policy =>
+      'You must agree to the Privacy Policy.';
+
+  @override
+  String get sign_in_with_google => 'Sign in with Google';
+
+  @override
+  String get continue_with_device_limited => 'Continue with device (limited)';
+
+  @override
+  String get wallet_sync_failed_retry =>
+      'Wallet sync failed. Please try again later.';
+
+  @override
+  String get its_a_drop_day => 'It\'s a drop day';
 }
