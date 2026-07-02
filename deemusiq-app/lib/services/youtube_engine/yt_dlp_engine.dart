@@ -11,24 +11,20 @@ import 'package:http_parser/http_parser.dart';
 
 class YtDlpEngine implements YouTubeEngine {
   StreamManifest _parseFormats(List formats, videoId) {
-    if (formats.isEmpty) {
-      AppLogger.log.w('YtDlpEngine: _parseFormats received empty formats list for $videoId');
-      return StreamManifest(const []);
-    }
     final audioOnlyStreams = formats
-        .where((f) => f["resolution"] == "audio only")
-        .sorted((a, b) => a["quality"] > b["quality"] ? 1 : -1)
+        .where((f) => f is Map && f["resolution"] == "audio only")
+        .sorted((a, b) {
+          final aq = a["quality"] ?? 0;
+          final bq = b["quality"] ?? 0;
+          return (aq is num ? aq.toInt() : 0) > (bq is num ? bq.toInt() : 0) ? 1 : -1;
+        })
         .map((f) {
-      // Validate required fields before constructing stream info
       final urlStr = f["url"] as String?;
-      if (urlStr == null || urlStr.isEmpty) {
-        AppLogger.log.w('YtDlpEngine: skipping format with null/empty url for $videoId');
-        return null;
-      }
+      if (urlStr == null || urlStr.isEmpty) return null;
       final filesize = f["filesize"] ?? f["filesize_approx"];
       final containerRaw = (f["container"] as String?)?.replaceAll("_dash", "").replaceAll("m4a", "mp4");
       final containerStr = containerRaw ?? (f["protocol"] == "m3u8_native" ? "m3u8" : "mp4");
-      final abrRaw = (f["abr"] ?? f["tbr"] ?? 0);
+      final abrRaw = f["abr"] ?? f["tbr"] ?? 0;
       final abr = (abrRaw is num) ? abrRaw.toInt() : (int.tryParse(abrRaw.toString()) ?? 0);
       final audioExt = f["audio_ext"] as String? ?? "mp4";
       final codec = f["acodec"] as String? ?? "aac";
@@ -42,9 +38,7 @@ class YtDlpEngine implements YouTubeEngine {
         codec,
         f["format_note"],
         [],
-        MediaType.parse(
-          "audio/$audioExt",
-        ),
+        MediaType.parse("audio/$audioExt"),
         null,
       );
     }).whereType<AudioOnlyStreamInfo>();
@@ -52,36 +46,57 @@ class YtDlpEngine implements YouTubeEngine {
     return StreamManifest(audioOnlyStreams);
   }
 
+  int _safeParseInt(dynamic val) {
+    if (val == null) return 0;
+    if (val is int) return val;
+    if (val is num) return val.toInt();
+    return int.tryParse(val.toString()) ?? 0;
+  }
+
   Video _parseInfo(Map<String, dynamic> info) {
-    final publishDate = info["upload_date"] != null
-        ? DateTime.fromMillisecondsSinceEpoch(
-            int.parse(info["upload_date"]) * 1000,
-          )
-        : DateTime.now();
+    DateTime publishDate;
+    try {
+      final rawDate = info["upload_date"] as String?;
+      if (rawDate != null && rawDate.length == 8) {
+        final year = int.parse(rawDate.substring(0, 4));
+        final month = int.parse(rawDate.substring(4, 6));
+        final day = int.parse(rawDate.substring(6, 8));
+        publishDate = DateTime(year, month, day);
+      } else {
+        publishDate = DateTime.now();
+      }
+    } catch (_) {
+      AppLogger.log.w('YtDlpEngine: failed to parse upload_date: ${info["upload_date"]}');
+      publishDate = DateTime.now();
+    }
+
+    final id = (info["id"] as String?) ?? "";
     return Video(
-      VideoId(info["id"]),
-      info["title"],
-      info["channel"],
-      ChannelId(info["channel_id"]),
+      VideoId(id),
+      (info["title"] as String?) ?? "Unknown",
+      (info["channel"] as String?) ?? "Unknown",
+      ChannelId((info["channel_id"] as String?) ?? id),
       publishDate,
-      info["upload_date"] as String? ?? DateTime.now().toString(),
+      (info["upload_date"] as String?) ?? DateTime.now().toString(),
       publishDate,
-      info["description"] ?? "",
-      Duration(seconds: (info["duration"] as num).toInt()),
-      ThumbnailSet(info["id"]),
-      info["tags"]?.cast<String>() ?? <String>[],
+      (info["description"] as String?) ?? "",
+      Duration(seconds: _safeParseInt(info["duration"])),
+      ThumbnailSet(id),
+      (info["tags"] as List?)?.cast<String>() ?? <String>[],
       Engagement(
-        info["view_count"],
-        info["like_count"],
+        _safeParseInt(info["view_count"]),
+        _safeParseInt(info["like_count"]),
         null,
       ),
       info["is_live"] ?? false,
     );
   }
 
-  static bool get isAvailableForPlatform => kIsDesktop;
+  @override
+  bool get isAvailableForPlatform => kIsDesktop;
 
-  static Future<bool> isInstalled() async {
+  @override
+  Future<bool> isInstalled() async {
     return isAvailableForPlatform &&
         await YtDlp.instance.checkAvailableInPath();
   }
@@ -89,22 +104,15 @@ class YtDlpEngine implements YouTubeEngine {
   @override
   Future<StreamManifest> getStreamManifest(String videoId) async {
     try {
-      final formats = await YtDlp.instance.extractInfo(
+      final result = await YtDlp.instance.extractInfo(
         "https://www.youtube.com/watch?v=$videoId",
         formatSpecifiers: "%(formats)j",
-        extraArgs: [
-          "--no-check-certificate",
-          "--geo-bypass",
-          "--quiet",
-          "--ignore-errors"
-        ],
-      ) as List;
-
-      final manifest = _parseFormats(formats, videoId);
-      AppLogger.log.i('YtDlp: got ${manifest.audioOnly.length} audio streams for $videoId');
-      return manifest;
+        extraArgs: _ytDlpArgs,
+      );
+      final formats = result is List ? result : <dynamic>[];
+      return _parseFormats(formats, videoId);
     } catch (e, stack) {
-      AppLogger.log.w('YtDlpEngine: failed to get stream manifest for $videoId: ${e.toString()}');
+      AppLogger.log.w('YtDlpEngine: getStreamManifest failed for $videoId: $e');
       AppLogger.reportError(e, stack);
       rethrow;
     }
@@ -113,21 +121,15 @@ class YtDlpEngine implements YouTubeEngine {
   @override
   Future<Video> getVideo(String videoId) async {
     try {
-      final info = await YtDlp.instance.extractInfo(
+      final result = await YtDlp.instance.extractInfo(
         "https://www.youtube.com/watch?v=$videoId",
         formatSpecifiers: "%()j",
-        extraArgs: [
-          "--skip-download",
-          "--no-check-certificate",
-          "--geo-bypass",
-          "--quiet",
-          "--ignore-errors",
-        ],
-      ) as Map<String, dynamic>;
-
-      return _parseInfo(info);
+        extraArgs: _ytDlpArgs,
+      );
+      if (result is Map<String, dynamic>) return _parseInfo(result);
+      throw Exception('yt-dlp returned unexpected type: ${result.runtimeType}');
     } catch (e, stack) {
-      AppLogger.log.w('YtDlpEngine: failed to get video for $videoId: ${e.toString()}');
+      AppLogger.log.w('YtDlpEngine: getVideo failed for $videoId: $e');
       AppLogger.reportError(e, stack);
       rethrow;
     }
@@ -136,20 +138,20 @@ class YtDlpEngine implements YouTubeEngine {
   @override
   Future<(Video, StreamManifest)> getVideoWithStreamInfo(String videoId) async {
     try {
-      final info = await YtDlp.instance.extractInfo(
+      final result = await YtDlp.instance.extractInfo(
         "https://www.youtube.com/watch?v=$videoId",
         formatSpecifiers: "%()j",
-        extraArgs: [
-          "--no-check-certificate",
-          "--geo-bypass",
-          "--quiet",
-          "--ignore-errors",
-        ],
-      ) as Map<String, dynamic>;
-
-      return (_parseInfo(info), _parseFormats(info["formats"], videoId));
+        extraArgs: _ytDlpArgs,
+      );
+      if (result is Map<String, dynamic>) {
+        final video = _parseInfo(result);
+        final fmts = result["formats"];
+        final manifest = _parseFormats(fmts is List ? fmts : <dynamic>[], videoId);
+        return (video, manifest);
+      }
+      throw Exception('yt-dlp returned unexpected type: ${result.runtimeType}');
     } catch (e, stack) {
-      AppLogger.log.w('YtDlpEngine: failed to get video+streams for $videoId: ${e.toString()}');
+      AppLogger.log.w('YtDlpEngine: getVideoWithStream failed for $videoId: $e');
       AppLogger.reportError(e, stack);
       rethrow;
     }
@@ -158,31 +160,60 @@ class YtDlpEngine implements YouTubeEngine {
   @override
   Future<List<Video>> searchVideos(String query) async {
     try {
+      final sanitized = query.replaceAll('\n', ' ').replaceAll('\r', '').trim();
+      if (sanitized.isEmpty) return <Video>[];
+
       final stdout = await YtDlp.instance.extractInfoString(
-        "ytsearch10:$query",
+        "ytsearch10:$sanitized",
         formatSpecifiers: "%()j",
-        extraArgs: [
-          "--skip-download",
-          "--no-check-certificate",
-          "--geo-bypass",
-          "--quiet",
-          "--ignore-errors",
-          "--flat-playlist",
-          "--no-playlist",
-        ],
+        extraArgs: _searchArgs,
       );
 
-      final json = jsonDecode(
-        "[${stdout.split("\n").where((s) => s.trim().isNotEmpty).join(",")}]",
-      ) as List;
+      final lines = stdout
+          .split("\n")
+          .where((s) => s.trim().isNotEmpty && s.trim().startsWith('{'))
+          .toList();
+      if (lines.isEmpty) return <Video>[];
 
-      return json.map((e) => _parseInfo(e)).toList();
+      final json = jsonDecode("[${lines.join(",")}]");
+      final list = json is List ? json : <dynamic>[];
+
+      final entries = <Video>[];
+      for (final e in list) {
+        if (e is Map<String, dynamic>) {
+          try {
+            entries.add(_parseInfo(e));
+          } catch (itemErr) {
+            AppLogger.log.d('YtDlp: skipping bad search result: $itemErr');
+          }
+        }
+      }
+      return entries;
     } catch (e, stack) {
-      AppLogger.log.w('YtDlpEngine: search failed for "$query": ${e.toString()}');
+      AppLogger.log.w('YtDlpEngine: searchVideos failed for "$query": $e');
       AppLogger.reportError(e, stack);
       rethrow;
     }
   }
+
+  static const _ytDlpArgs = [
+    "--no-check-certificate",
+    "--quiet",
+    "--ignore-errors",
+    "--remote-components",
+    "ejs:github",
+  ];
+
+  static const _searchArgs = [
+    "--skip-download",
+    "--no-check-certificate",
+    "--quiet",
+    "--ignore-errors",
+    "--flat-playlist",
+    "--no-playlist",
+    "--remote-components",
+    "ejs:github",
+  ];
 
   @override
   void dispose() {}

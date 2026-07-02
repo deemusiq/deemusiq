@@ -40,14 +40,21 @@ class ServerPlaybackRoutes {
   UserPreferences get userPreferences => ref.read(userPreferencesProvider);
   AudioPlayerState get playlist => ref.read(audioPlayerProvider);
   final Dio dio;
+  final Map<String, _CachedUrlEntry> _urlCache = {};
 
-  ServerPlaybackRoutes(this.ref) : dio = Dio();
+  static const _urlCacheTtlSeconds = 30;
+
+  ServerPlaybackRoutes(this.ref) : dio = Dio(BaseOptions(
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 60),
+      sendTimeout: const Duration(seconds: 15),
+  ));
 
   Future<String> _getTrackCacheFilePath(SourcedTrack track) async {
     return join(
       await UserPreferencesNotifier.getMusicCacheDir(),
       ServiceUtils.sanitizeFilename(
-        '${track.query.name} - ${track.query.artists.map((d) => d.name).join(",")} (${track.info.id}).${track.qualityPreset!.getFileExtension()}',
+        '${track.query.name} - ${track.query.artists.map((d) => d.name).join(",")} (${track.info.id}).${track.qualityPreset?.getFileExtension() ?? "mp4"}',
       ),
     );
   }
@@ -56,14 +63,23 @@ class ServerPlaybackRoutes {
     Request request,
     String trackId,
   ) async {
-    final track =
-        playlist.tracks.firstWhere((element) => element.id == trackId);
+    final activeTracks = playlist.tracks;
+    if (activeTracks.isEmpty) return null;
+    final fullTracks = activeTracks.whereType<DeeMusiqFullTrackObject>();
+    final track = fullTracks.cast<DeeMusiqFullTrackObject?>().firstWhere(
+      (element) => element?.id == trackId,
+      orElse: () => null,
+    );
+    if (track == null) return null;
 
     final activeSourcedTrack =
         await ref.read(activeTrackSourcesProvider.future);
 
-    final media = audioPlayer.playlist.medias
-        .firstWhere((e) => e.uri == request.requestedUri.toString());
+    final medias = audioPlayer.playlist.medias;
+    if (medias.isEmpty) return null;
+    final mediaIndex = medias.indexWhere((e) => e.uri == request.requestedUri.toString());
+    final media = mediaIndex >= 0 ? medias[mediaIndex] : medias.firstOrNull;
+    if (media == null) return null;
     final spotubeMedia =
         media is DeeMusiqMedia ? media : DeeMusiqMedia.media(media);
     final sourcedTrack = activeSourcedTrack?.track.id == track.id
@@ -76,7 +92,7 @@ class ServerPlaybackRoutes {
     return sourcedTrack;
   }
 
-  Future<dio_lib.Response> streamTrackInformation(
+  Future<dio_lib.Response?> streamTrackInformation(
     Request request,
     SourcedTrack track,
   ) async {
@@ -93,7 +109,7 @@ class ServerPlaybackRoutes {
       return dio_lib.Response(
         statusCode: 200,
         headers: Headers.fromMap({
-          "content-type": ["audio/${track.qualityPreset!.name}"],
+          "content-type": ["audio/${track.qualityPreset?.name ?? "mp4"}"],
           "content-length": ["$fileLength"],
           "accept-ranges": ["bytes"],
           "content-range": ["bytes 0-$fileLength/$fileLength"],
@@ -102,19 +118,23 @@ class ServerPlaybackRoutes {
       );
     }
 
-    String? url = track.url;
-    if (url == null) {
-      try {
-        final sibling = await ref
+    String? resolvedUrl = track.url;
+    if (resolvedUrl == null) {
+      final cached = _urlCache[track.query.id];
+      if (cached != null && cached.isValid) {
+        resolvedUrl = cached.url;
+      } else {
+        final swapped = await ref
             .read(sourcedTrackProvider(track.query).notifier)
             .swapWithNextSibling();
-        url = sibling.url;
-      } catch (e, stack) {
-        AppLogger.log.w('swapWithNextSibling failed: ${e.toString()}');
-        url = null;
+        resolvedUrl = swapped.url;
+        if (resolvedUrl != null) {
+          _urlCache[track.query.id] = _CachedUrlEntry(resolvedUrl);
+        }
       }
     }
-    if (url == null) return Response.internalServerError(body: 'No audio source available');
+    if (resolvedUrl == null || resolvedUrl.isEmpty) return null;
+    final url = resolvedUrl;
 
     final options = Options(
       headers: {
@@ -131,7 +151,7 @@ class ServerPlaybackRoutes {
     return res;
   }
 
-  Future<dio_lib.Response> streamTrack(
+  Future<dio_lib.Response?> streamTrack(
     Request request,
     SourcedTrack track,
     Map<String, dynamic> headers,
@@ -141,41 +161,86 @@ class ServerPlaybackRoutes {
       "Headers: ${request.headers}",
     );
 
+    // Parse Range header for seeking support
+    final rangeHeader = request.headers['range'] ?? request.headers['Range'];
+    int? rangeStart, rangeEnd;
+    if (rangeHeader != null) {
+      try {
+        final parsed = RangeHeader.parse(rangeHeader);
+        rangeStart = parsed.start;
+        rangeEnd = parsed.end;
+      } catch (e, stack) {
+        AppLogger.reportError(e, stack, 'playback: range header parse failed');
+      }
+    }
+
     final trackCacheFile = File(await _getTrackCacheFilePath(track));
 
     if (await trackCacheFile.exists() && userPreferences.cacheMusic) {
-      final bytes = await trackCacheFile.readAsBytes();
-      final cachedFileLength = bytes.length;
+      final fileLength = await trackCacheFile.length();
 
-      return dio_lib.Response<Uint8List>(
+      if (rangeStart != null) {
+        final end = rangeEnd ?? fileLength - 1;
+        final stream = trackCacheFile.openRead(rangeStart, end + 1);
+        final contentLength = end - rangeStart + 1;
+
+        return dio_lib.Response<Stream<List<int>>>(
+          statusCode: 206,
+          headers: Headers.fromMap({
+            "content-type": ["audio/${track.qualityPreset?.name ?? "mp4"}"],
+            "content-length": ["$contentLength"],
+            "accept-ranges": ["bytes"],
+            "content-range": [
+              ContentRangeHeader(rangeStart, end, fileLength).toString(),
+            ],
+            "connection": ["close"],
+          }),
+          requestOptions: RequestOptions(path: request.requestedUri.toString()),
+          data: stream,
+        );
+      }
+
+      return dio_lib.Response<Stream<List<int>>>(
         statusCode: 200,
         headers: Headers.fromMap({
-          "content-type": ["audio/${track.qualityPreset!.name}"],
-          "content-length": ["${cachedFileLength - 1}"],
+          "content-type": ["audio/${track.qualityPreset?.name ?? "mp4"}"],
+          "content-length": ["$fileLength"],
           "accept-ranges": ["bytes"],
-          "content-range": [
-            "bytes 0-${cachedFileLength - 1}/$cachedFileLength"
-          ],
-          "connection": ["close"],
         }),
         requestOptions: RequestOptions(path: request.requestedUri.toString()),
-        data: bytes,
+        data: trackCacheFile.openRead(),
       );
     }
 
-    String? url = track.url;
-    if (url == null) {
-      try {
-        final sibling = await ref
-            .read(sourcedTrackProvider(track.query).notifier)
-            .swapWithNextSibling();
-        url = sibling.url;
-      } catch (e, stack) {
-        AppLogger.log.w('swapWithNextSibling failed: ${e.toString()}');
-        url = null;
+    AppLogger.log.i('streamTrack: resolving URL for ${track.query.name}');
+    String? resolvedUrl = track.url;
+    if (resolvedUrl == null) {
+      final cached = _urlCache[track.query.id];
+      if (cached != null && cached.isValid) {
+        resolvedUrl = cached.url;
+        AppLogger.log.i('streamTrack: using cached URL for ${track.query.id}');
+      } else {
+        AppLogger.log.i('streamTrack: url is null, trying swapWithNextSibling');
+        try {
+          final swapped = await ref
+              .read(sourcedTrackProvider(track.query).notifier)
+              .swapWithNextSibling();
+          resolvedUrl = swapped.url;
+          if (resolvedUrl != null) {
+            _urlCache[track.query.id] = _CachedUrlEntry(resolvedUrl);
+          }
+          AppLogger.log.i('streamTrack: swapped URL ${resolvedUrl?.substring(0, resolvedUrl?.indexOf('?') ?? 80)}');
+        } catch (e, stack) {
+          AppLogger.log.w('streamTrack: swapWithNextSibling failed: $e');
+          AppLogger.reportError(e, stack, 'streamTrack: swapWithNextSibling');
+        }
       }
     }
-    if (url == null) return Response.internalServerError(body: 'No audio source available');
+    if (resolvedUrl == null || resolvedUrl.isEmpty) {
+      AppLogger.log.e('streamTrack: FATAL no URL resolved for ${track.query.id}');
+      throw Exception('No audio source for ${track.query.id}');
+    }
+    final url = resolvedUrl;
 
     final options = Options(
       headers: {
@@ -201,9 +266,10 @@ class ServerPlaybackRoutes {
           .read(sourcedTrackProvider(track.query).notifier)
           .refreshStreamingUrl();
 
-      url = sourcedTrack.url!;
+      final refreshedUrl = sourcedTrack.url;
+      if (refreshedUrl == null) throw Exception('No audio source after refresh');
 
-      return dio.head(url, options: options);
+      return dio.head(refreshedUrl, options: options);
     });
 
     // Redirect to m3u8 link directly as it handles range requests internally
@@ -233,6 +299,10 @@ class ServerPlaybackRoutes {
       return res;
     }
 
+    if (res.data == null) {
+      AppLogger.log.w('streamTrack: empty response body for ${track.query.id}');
+      throw Exception('Empty response from audio source');
+    }
     final resStream = res.data!.stream.asBroadcastStream();
 
     final trackPartialCacheFile = File("${trackCacheFile.path}.part");
@@ -245,7 +315,7 @@ class ServerPlaybackRoutes {
         trackPartialCacheFile.openWrite(mode: FileMode.writeOnlyAppend);
     final contentRange = res.headers.value("content-range") != null
         ? ContentRangeHeader.parse(res.headers.value("content-range") ?? "")
-        : ContentRangeHeader(0, 0, 0);
+        : ContentRangeHeader(0, 0, -1);
 
     resStream.listen(
       (data) {
@@ -253,16 +323,32 @@ class ServerPlaybackRoutes {
       },
       onError: (e, stack) {
         partialCacheFileSink.close();
+        AppLogger.reportError(e, stack, 'streamTrack write error');
+        trackPartialCacheFile.delete().catchError((_) {});
       },
       onDone: () async {
         await partialCacheFileSink.close();
 
         final fileLength = await trackPartialCacheFile.length();
-        if (fileLength != contentRange.total) return;
+        if (fileLength == 0) {
+          AppLogger.log.w('streamTrack: empty cache file for ${track.query.id}, cleaning up');
+          await trackPartialCacheFile.delete().catchError((_) {});
+          return;
+        }
+        if (contentRange.total > 0 && fileLength < contentRange.total) return;
 
-        await trackPartialCacheFile.rename(trackCacheFile.path);
+        try {
+          await trackPartialCacheFile.rename(trackCacheFile.path);
+        } catch (e, stack) {
+          AppLogger.log.w('streamTrack: rename failed for ${track.query.id}: $e');
+          AppLogger.reportError(e, stack, 'streamTrack rename');
+          await trackPartialCacheFile.delete().catchError((_) {});
+          return;
+        }
 
-        if (track.qualityPreset!.getFileExtension() == "weba") return;
+        await _evictCacheIfNeeded();
+
+        if (track.qualityPreset?.getFileExtension() == "weba") return;
 
         final imageBytes = await ServiceUtils.downloadImage(
           track.query.album.images.asUrlString(
@@ -281,12 +367,59 @@ class ServerPlaybackRoutes {
           AppLogger.reportError(e, stackTrace);
         });
       },
-      cancelOnError: true,
+      cancelOnError: false,
     );
 
     res.data?.stream =
         resStream; // To avoid Stream has been already listened to exception
     return res;
+  }
+
+  static const _maxCacheSizeBytes = 500 * 1024 * 1024;
+
+  Future<void> _evictCacheIfNeeded() async {
+    try {
+      final cacheDir = Directory(await UserPreferencesNotifier.getMusicCacheDir());
+      if (!await cacheDir.exists()) return;
+
+      final files = <FileSystemEntity>[];
+      await for (final entity in cacheDir.list()) {
+        if (entity is File) {
+          if (entity.path.endsWith('.part')) {
+            try { await entity.delete(); } catch (_) {}
+            continue;
+          }
+          files.add(entity);
+        }
+      }
+
+      if (files.isEmpty) return;
+
+      var totalSize = 0;
+      final sizedFiles = <_CacheFile>[];
+      for (final f in files) {
+        try {
+          final stat = await f.stat();
+          totalSize += stat.size;
+          sizedFiles.add(_CacheFile(f.path, stat.modified, stat.size));
+        } catch (_) {}
+      }
+
+      if (totalSize <= _maxCacheSizeBytes) return;
+
+      sizedFiles.sort((a, b) => a.modified.compareTo(b.modified));
+      for (final cf in sizedFiles) {
+        if (totalSize <= _maxCacheSizeBytes * 0.8) break;
+        try {
+          final removedSize = cf.size;
+          await File(cf.path).delete();
+          totalSize -= removedSize;
+          AppLogger.log.d('Cache evicted: ${cf.path}');
+        } catch (_) {}
+      }
+    } catch (e, stack) {
+      AppLogger.reportError(e, stack, '_evictCacheIfNeeded');
+    }
   }
 
   /// @head('/stream/<trackId>')
@@ -302,6 +435,8 @@ class ServerPlaybackRoutes {
         request,
         sourcedTrack,
       );
+
+      if (res == null) return Response.internalServerError();
 
       return Response(
         res.statusCode!,
@@ -327,6 +462,15 @@ class ServerPlaybackRoutes {
         sourcedTrack,
         request.headers,
       );
+
+      if (res == null) return Response.internalServerError();
+
+      if (res.isRedirect) {
+        final location = res.headers.value('location');
+        if (location != null) {
+          return Response.found(location);
+        }
+      }
 
       if (res.data is ResponseBody) {
         return Response(
@@ -367,6 +511,22 @@ class ServerPlaybackRoutes {
     await audioPlayer.skipToNext();
     return Response.ok("Next track");
   }
+}
+
+class _CachedUrlEntry {
+  final String url;
+  final DateTime cachedAt;
+  _CachedUrlEntry(this.url) : cachedAt = DateTime.now();
+
+  bool get isValid =>
+      DateTime.now().difference(cachedAt).inSeconds < 30;
+}
+
+class _CacheFile {
+  final String path;
+  final DateTime modified;
+  final int size;
+  _CacheFile(this.path, this.modified, this.size);
 }
 
 final serverPlaybackRoutesProvider =

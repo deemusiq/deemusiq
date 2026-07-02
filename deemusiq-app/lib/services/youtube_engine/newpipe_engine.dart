@@ -7,7 +7,13 @@ import 'package:http_parser/http_parser.dart';
 import 'package:deemusiq/services/logger/logger.dart';
 
 class NewPipeEngine implements YouTubeEngine {
-  static bool get isAvailableForPlatform => kIsAndroid || kIsDesktop;
+  @override
+  bool get isAvailableForPlatform => kIsAndroid || kIsDesktop;
+
+  @override
+  Future<bool> isInstalled() async {
+    return isAvailableForPlatform;
+  }
 
   AudioOnlyStreamInfo _parseAudioStream(AudioStream stream, String videoId) {
     final mediaFormat = stream.mediaFormat;
@@ -37,12 +43,19 @@ class NewPipeEngine implements YouTubeEngine {
     );
   }
 
-  AudioOnlyStreamInfo _parseVideoStream(VideoStream stream, String videoId) {
+  AudioOnlyStreamInfo? _parseVideoStream(VideoStream stream, String videoId) {
+    final mediaFormat = stream.mediaFormat;
+    if (mediaFormat == null) {
+      AppLogger.log.w(
+        'NewPipeEngine: VideoStream has null mediaFormat for $videoId, skipping',
+      );
+      return null;
+    }
     return AudioOnlyStreamInfo(
       VideoId(videoId),
       stream.itag,
       Uri.parse(stream.content),
-      StreamContainer.parse(stream.mediaFormat!.mimeType.split("/").last),
+      StreamContainer.parse(mediaFormat.mimeType.split("/").last),
       FileSize.unknown,
       Bitrate(stream.bitrate),
       stream.codec,
@@ -52,7 +65,7 @@ class NewPipeEngine implements YouTubeEngine {
         _ => "low",
       },
       [],
-      MediaType.parse(stream.mediaFormat!.mimeType),
+      MediaType.parse(mediaFormat.mimeType),
       null,
     );
   }
@@ -80,7 +93,7 @@ class NewPipeEngine implements YouTubeEngine {
   }
 
   Video _parseVideoResult(VideoSearchResultItem info) {
-    final id = Uri.parse(info.url).queryParameters["v"]!;
+    final id = Uri.parse(info.url).queryParameters["v"] ?? info.url.split("/").last.split("?").first;
     return Video(
       VideoId(id),
       info.name,
@@ -108,7 +121,8 @@ class NewPipeEngine implements YouTubeEngine {
 
       if (streams.isEmpty) {
         final videoStreams = video.videoStreams
-            .map((stream) => _parseVideoStream(stream, videoId));
+            .map((stream) => _parseVideoStream(stream, videoId))
+            .whereType<AudioOnlyStreamInfo>();
         if (videoStreams.isNotEmpty) {
           AppLogger.log.i('NewPipe: no audio streams for $videoId, using ${videoStreams.length} video streams as audio');
           return StreamManifest(videoStreams);
@@ -146,7 +160,8 @@ class NewPipeEngine implements YouTubeEngine {
 
       if (streams.isEmpty) {
         final videoStreams = video.videoStreams
-            .map((stream) => _parseVideoStream(stream, videoId));
+            .map((stream) => _parseVideoStream(stream, videoId))
+            .whereType<AudioOnlyStreamInfo>();
         if (videoStreams.isNotEmpty) {
           return (_parseVideo(video), StreamManifest(videoStreams));
         }

@@ -9,6 +9,7 @@ class DeeMusiqAudioPlayer extends AudioPlayerInterface
       await _mkPlayer.pause();
     } catch (e, stack) {
       AppLogger.reportError(e, stack, 'pause() failed');
+      rethrow;
     }
   }
 
@@ -31,6 +32,7 @@ class DeeMusiqAudioPlayer extends AudioPlayerInterface
       await _mkPlayer.stop();
     } catch (e, stack) {
       AppLogger.reportError(e, stack, 'stop() failed');
+      rethrow;
     }
   }
 
@@ -39,6 +41,7 @@ class DeeMusiqAudioPlayer extends AudioPlayerInterface
       await _mkPlayer.seek(position);
     } catch (e, stack) {
       AppLogger.reportError(e, stack, 'seek() failed');
+      rethrow;
     }
   }
 
@@ -49,6 +52,7 @@ class DeeMusiqAudioPlayer extends AudioPlayerInterface
       await _mkPlayer.setVolume(volume * 100);
     } catch (e, stack) {
       AppLogger.reportError(e, stack, 'setVolume() failed');
+      rethrow;
     }
   }
 
@@ -57,6 +61,17 @@ class DeeMusiqAudioPlayer extends AudioPlayerInterface
       await _mkPlayer.setRate(speed);
     } catch (e, stack) {
       AppLogger.reportError(e, stack, 'setSpeed() failed');
+      rethrow;
+    }
+  }
+
+  Future<void> setPitch(double pitch) async {
+    try {
+      await _mkPlayer.nativePlayer.setProperty('pitch-correction', pitch.toString());
+    } catch (e, stack) {
+      AppLogger.log.w('Error setting pitch: $e');
+      AppLogger.reportError(e, stack, 'setPitch() failed');
+      rethrow;
     }
   }
 
@@ -65,6 +80,7 @@ class DeeMusiqAudioPlayer extends AudioPlayerInterface
       await _mkPlayer.setAudioDevice(device);
     } catch (e, stack) {
       AppLogger.reportError(e, stack, 'setAudioDevice() failed');
+      rethrow;
     }
   }
 
@@ -74,6 +90,7 @@ class DeeMusiqAudioPlayer extends AudioPlayerInterface
       await _mkPlayer.dispose();
     } catch (e, stack) {
       AppLogger.reportError(e, stack, 'dispose() failed');
+      rethrow;
     }
   }
 
@@ -144,6 +161,7 @@ class DeeMusiqAudioPlayer extends AudioPlayerInterface
       await _mkPlayer.next();
     } catch (e, stack) {
       AppLogger.reportError(e, stack, 'skipToNext() failed');
+      rethrow;
     }
   }
 
@@ -152,6 +170,7 @@ class DeeMusiqAudioPlayer extends AudioPlayerInterface
       await _mkPlayer.previous();
     } catch (e, stack) {
       AppLogger.reportError(e, stack, 'skipToPrevious() failed');
+      rethrow;
     }
   }
 
@@ -160,6 +179,7 @@ class DeeMusiqAudioPlayer extends AudioPlayerInterface
       await _mkPlayer.jump(index);
     } catch (e, stack) {
       AppLogger.reportError(e, stack, 'jumpTo($index) failed');
+      rethrow;
     }
   }
 
@@ -168,6 +188,7 @@ class DeeMusiqAudioPlayer extends AudioPlayerInterface
       await _mkPlayer.add(media);
     } catch (e, stack) {
       AppLogger.reportError(e, stack, 'addTrack() failed');
+      rethrow;
     }
   }
 
@@ -176,6 +197,7 @@ class DeeMusiqAudioPlayer extends AudioPlayerInterface
       await _mkPlayer.insert(index, media);
     } catch (e, stack) {
       AppLogger.reportError(e, stack, 'addTrackAt($index) failed');
+      rethrow;
     }
   }
 
@@ -184,6 +206,7 @@ class DeeMusiqAudioPlayer extends AudioPlayerInterface
       await _mkPlayer.remove(index);
     } catch (e, stack) {
       AppLogger.reportError(e, stack, 'removeTrack($index) failed');
+      rethrow;
     }
   }
 
@@ -192,6 +215,7 @@ class DeeMusiqAudioPlayer extends AudioPlayerInterface
       await _mkPlayer.move(from, to);
     } catch (e, stack) {
       AppLogger.reportError(e, stack, 'moveTrack($from, $to) failed');
+      rethrow;
     }
   }
 
@@ -200,6 +224,7 @@ class DeeMusiqAudioPlayer extends AudioPlayerInterface
       await _mkPlayer.stop();
     } catch (e, stack) {
       AppLogger.reportError(e, stack, 'clearPlaylist() failed');
+      rethrow;
     }
   }
 
@@ -208,6 +233,7 @@ class DeeMusiqAudioPlayer extends AudioPlayerInterface
       await _mkPlayer.setShuffle(shuffle);
     } catch (e, stack) {
       AppLogger.reportError(e, stack, 'setShuffle() failed');
+      rethrow;
     }
   }
 
@@ -216,6 +242,7 @@ class DeeMusiqAudioPlayer extends AudioPlayerInterface
       await _mkPlayer.setPlaylistMode(loop);
     } catch (e, stack) {
       AppLogger.reportError(e, stack, 'setLoopMode() failed');
+      rethrow;
     }
   }
 
@@ -224,6 +251,7 @@ class DeeMusiqAudioPlayer extends AudioPlayerInterface
       await _mkPlayer.setAudioNormalization(normalize);
     } catch (e, stack) {
       AppLogger.reportError(e, stack, 'setAudioNormalization() failed');
+      rethrow;
     }
   }
 
@@ -232,6 +260,7 @@ class DeeMusiqAudioPlayer extends AudioPlayerInterface
       await _mkPlayer.setDemuxerBufferSize(sizeInBytes);
     } catch (e, stack) {
       AppLogger.reportError(e, stack, 'setDemuxerBufferSize() failed');
+      rethrow;
     }
   }
 
@@ -242,6 +271,7 @@ class DeeMusiqAudioPlayer extends AudioPlayerInterface
       await _mkPlayer.setCrossfade(duration);
     } catch (e, stack) {
       AppLogger.reportError(e, stack, 'setCrossfade() failed');
+      rethrow;
     }
   }
 
@@ -250,6 +280,7 @@ class DeeMusiqAudioPlayer extends AudioPlayerInterface
       await _mkPlayer.setGaplessPlayback(enabled);
     } catch (e, stack) {
       AppLogger.reportError(e, stack, 'setGaplessPlayback() failed');
+      rethrow;
     }
   }
 
@@ -258,6 +289,7 @@ class DeeMusiqAudioPlayer extends AudioPlayerInterface
       await _mkPlayer.setReplayGain(mode);
     } catch (e, stack) {
       AppLogger.reportError(e, stack, 'setReplayGain() failed');
+      rethrow;
     }
   }
 

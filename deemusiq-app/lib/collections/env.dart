@@ -16,6 +16,11 @@ abstract class Env {
   @EnviedField(varName: 'LASTFM_API_SECRET')
   static final String lastFmApiSecret = _Env.lastFmApiSecret;
 
+  @EnviedField(varName: 'DISCORD_APP_ID', defaultValue: '')
+  static final String _discordAppId = _Env._discordAppId;
+
+  static String get discordAppId => _discordAppId;
+
   @EnviedField(varName: 'HIDE_DONATIONS', defaultValue: "0")
   static final int _hideDonations = _Env._hideDonations;
 
@@ -33,8 +38,6 @@ abstract class Env {
 
   static bool get enableUpdateChecker =>
       kIsFlatpak || _enableUpdateChecker == "1";
-
-  static String discordAppId = "1176718791388975124";
 
   /// GitHub repo for update checks (org/repo format).
   /// Set via --dart-define=DEEMUSIQ_UPDATE_REPO=org/repo

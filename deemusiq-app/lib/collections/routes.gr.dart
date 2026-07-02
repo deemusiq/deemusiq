@@ -14,36 +14,37 @@ import 'package:deemusiq/models/metadata/metadata.dart' as _i50;
 import 'package:deemusiq/pages/account/account.dart' as _i2;
 import 'package:deemusiq/pages/album/album.dart' as _i3;
 import 'package:deemusiq/pages/artist/artist.dart' as _i4;
-import 'package:deemusiq/pages/catalog/catalog.dart' as _i6;
-import 'package:deemusiq/pages/connect/connect.dart' as _i8;
-import 'package:deemusiq/pages/connect/control/control.dart' as _i7;
-import 'package:deemusiq/pages/getting_started/getting_started.dart' as _i10;
-import 'package:deemusiq/pages/home/home.dart' as _i12;
-import 'package:deemusiq/pages/home/sections/section_items.dart' as _i11;
-import 'package:deemusiq/pages/lastfm_login/lastfm_login.dart' as _i13;
-import 'package:deemusiq/pages/library/library.dart' as _i14;
+import 'package:deemusiq/pages/auth/auth.dart' as _i5;
+import 'package:deemusiq/pages/catalog/catalog.dart' as _i7;
+import 'package:deemusiq/pages/connect/connect.dart' as _i9;
+import 'package:deemusiq/pages/connect/control/control.dart' as _i8;
+import 'package:deemusiq/pages/getting_started/getting_started.dart' as _i11;
+import 'package:deemusiq/pages/home/home.dart' as _i13;
+import 'package:deemusiq/pages/home/sections/section_items.dart' as _i12;
+import 'package:deemusiq/pages/lastfm_login/lastfm_login.dart' as _i14;
+import 'package:deemusiq/pages/library/library.dart' as _i15;
 import 'package:deemusiq/pages/library/user_albums.dart' as _i42;
 import 'package:deemusiq/pages/library/user_artists.dart' as _i43;
 import 'package:deemusiq/pages/library/user_downloads.dart' as _i44;
 import 'package:deemusiq/pages/library/user_local_tracks/local_folder.dart'
-    as _i17;
+    as _i18;
 import 'package:deemusiq/pages/library/user_local_tracks/user_local_tracks.dart'
     as _i45;
 import 'package:deemusiq/pages/library/user_playlists.dart' as _i46;
-import 'package:deemusiq/pages/lyrics/lyrics.dart' as _i19;
-import 'package:deemusiq/pages/lyrics/mini_lyrics.dart' as _i20;
-import 'package:deemusiq/pages/player/lyrics.dart' as _i21;
-import 'package:deemusiq/pages/player/queue.dart' as _i22;
-import 'package:deemusiq/pages/player/sources.dart' as _i23;
-import 'package:deemusiq/pages/playlist/liked_playlist.dart' as _i15;
-import 'package:deemusiq/pages/playlist/playlist.dart' as _i24;
-import 'package:deemusiq/pages/profile/profile.dart' as _i25;
-import 'package:deemusiq/pages/root/root_app.dart' as _i27;
-import 'package:deemusiq/pages/search/search.dart' as _i28;
+import 'package:deemusiq/pages/lyrics/lyrics.dart' as _i20;
+import 'package:deemusiq/pages/lyrics/mini_lyrics.dart' as _i21;
+import 'package:deemusiq/pages/player/lyrics.dart' as _i22;
+import 'package:deemusiq/pages/player/queue.dart' as _i23;
+import 'package:deemusiq/pages/player/sources.dart' as _i24;
+import 'package:deemusiq/pages/playlist/liked_playlist.dart' as _i16;
+import 'package:deemusiq/pages/playlist/playlist.dart' as _i25;
+import 'package:deemusiq/pages/profile/profile.dart' as _i26;
+import 'package:deemusiq/pages/root/root_app.dart' as _i28;
+import 'package:deemusiq/pages/search/search.dart' as _i29;
 import 'package:deemusiq/pages/settings/about.dart' as _i1;
-import 'package:deemusiq/pages/settings/blacklist.dart' as _i5;
-import 'package:deemusiq/pages/settings/logs.dart' as _i18;
-import 'package:deemusiq/pages/settings/metadata/metadata_form.dart' as _i29;
+import 'package:deemusiq/pages/settings/blacklist.dart' as _i6;
+import 'package:deemusiq/pages/settings/logs.dart' as _i19;
+import 'package:deemusiq/pages/settings/metadata/metadata_form.dart' as _i30;
 import 'package:deemusiq/pages/settings/scrobbling/scrobbling.dart' as _i32;
 import 'package:deemusiq/pages/settings/settings.dart' as _i31;
 import 'package:deemusiq/pages/stats/albums/albums.dart' as _i33;
@@ -54,9 +55,9 @@ import 'package:deemusiq/pages/stats/playlists/playlists.dart' as _i37;
 import 'package:deemusiq/pages/stats/stats.dart' as _i36;
 import 'package:deemusiq/pages/stats/streams/streams.dart' as _i39;
 import 'package:deemusiq/pages/track/track.dart' as _i41;
-import 'package:deemusiq/pages/wallet/creators_supported.dart' as _i9;
-import 'package:deemusiq/pages/wallet/leaderboard.dart' as _i26;
-import 'package:deemusiq/pages/wallet/linked_accounts.dart' as _i16;
+import 'package:deemusiq/pages/wallet/creators_supported.dart' as _i10;
+import 'package:deemusiq/pages/wallet/leaderboard.dart' as _i27;
+import 'package:deemusiq/pages/wallet/linked_accounts.dart' as _i17;
 import 'package:deemusiq/pages/wallet/token_store.dart' as _i40;
 import 'package:deemusiq/pages/wallet/wallet.dart' as _i47;
 import 'package:flutter/material.dart' as _i49;
@@ -177,7 +178,23 @@ class ArtistRouteArgs {
 }
 
 /// generated route for
-/// [_i5.BlackListPage]
+/// [_i5.AuthPage]
+class Auth extends _i48.PageRouteInfo<void> {
+  const Auth({List<_i48.PageRouteInfo>? children})
+    : super(Auth.name, initialChildren: children);
+
+  static const String name = 'Auth';
+
+  static _i48.PageInfo page = _i48.PageInfo(
+    name,
+    builder: (data) {
+      return const _i5.AuthPage();
+    },
+  );
+}
+
+/// generated route for
+/// [_i6.BlackListPage]
 class BlackListRoute extends _i48.PageRouteInfo<void> {
   const BlackListRoute({List<_i48.PageRouteInfo>? children})
     : super(BlackListRoute.name, initialChildren: children);
@@ -187,13 +204,13 @@ class BlackListRoute extends _i48.PageRouteInfo<void> {
   static _i48.PageInfo page = _i48.PageInfo(
     name,
     builder: (data) {
-      return const _i5.BlackListPage();
+      return const _i6.BlackListPage();
     },
   );
 }
 
 /// generated route for
-/// [_i6.CatalogPage]
+/// [_i7.CatalogPage]
 class CatalogRoute extends _i48.PageRouteInfo<void> {
   const CatalogRoute({List<_i48.PageRouteInfo>? children})
     : super(CatalogRoute.name, initialChildren: children);
@@ -203,13 +220,13 @@ class CatalogRoute extends _i48.PageRouteInfo<void> {
   static _i48.PageInfo page = _i48.PageInfo(
     name,
     builder: (data) {
-      return const _i6.CatalogPage();
+      return const _i7.CatalogPage();
     },
   );
 }
 
 /// generated route for
-/// [_i7.ConnectControlPage]
+/// [_i8.ConnectControlPage]
 class ConnectControlRoute extends _i48.PageRouteInfo<void> {
   const ConnectControlRoute({List<_i48.PageRouteInfo>? children})
     : super(ConnectControlRoute.name, initialChildren: children);
@@ -219,13 +236,13 @@ class ConnectControlRoute extends _i48.PageRouteInfo<void> {
   static _i48.PageInfo page = _i48.PageInfo(
     name,
     builder: (data) {
-      return const _i7.ConnectControlPage();
+      return const _i8.ConnectControlPage();
     },
   );
 }
 
 /// generated route for
-/// [_i8.ConnectPage]
+/// [_i9.ConnectPage]
 class ConnectRoute extends _i48.PageRouteInfo<void> {
   const ConnectRoute({List<_i48.PageRouteInfo>? children})
     : super(ConnectRoute.name, initialChildren: children);
@@ -235,13 +252,13 @@ class ConnectRoute extends _i48.PageRouteInfo<void> {
   static _i48.PageInfo page = _i48.PageInfo(
     name,
     builder: (data) {
-      return const _i8.ConnectPage();
+      return const _i9.ConnectPage();
     },
   );
 }
 
 /// generated route for
-/// [_i9.CreatorsSupportedPage]
+/// [_i10.CreatorsSupportedPage]
 class CreatorsSupportedRoute extends _i48.PageRouteInfo<void> {
   const CreatorsSupportedRoute({List<_i48.PageRouteInfo>? children})
     : super(CreatorsSupportedRoute.name, initialChildren: children);
@@ -251,13 +268,13 @@ class CreatorsSupportedRoute extends _i48.PageRouteInfo<void> {
   static _i48.PageInfo page = _i48.PageInfo(
     name,
     builder: (data) {
-      return const _i9.CreatorsSupportedPage();
+      return const _i10.CreatorsSupportedPage();
     },
   );
 }
 
 /// generated route for
-/// [_i10.GettingStartedPage]
+/// [_i11.GettingStartedPage]
 class GettingStartedRoute extends _i48.PageRouteInfo<void> {
   const GettingStartedRoute({List<_i48.PageRouteInfo>? children})
     : super(GettingStartedRoute.name, initialChildren: children);
@@ -267,13 +284,13 @@ class GettingStartedRoute extends _i48.PageRouteInfo<void> {
   static _i48.PageInfo page = _i48.PageInfo(
     name,
     builder: (data) {
-      return const _i10.GettingStartedPage();
+      return const _i11.GettingStartedPage();
     },
   );
 }
 
 /// generated route for
-/// [_i11.HomeBrowseSectionItemsPage]
+/// [_i12.HomeBrowseSectionItemsPage]
 class HomeBrowseSectionItemsRoute
     extends _i48.PageRouteInfo<HomeBrowseSectionItemsRouteArgs> {
   HomeBrowseSectionItemsRoute({
@@ -298,7 +315,7 @@ class HomeBrowseSectionItemsRoute
     name,
     builder: (data) {
       final args = data.argsAs<HomeBrowseSectionItemsRouteArgs>();
-      return _i11.HomeBrowseSectionItemsPage(
+      return _i12.HomeBrowseSectionItemsPage(
         key: args.key,
         sectionId: args.sectionId,
         section: args.section,
@@ -327,7 +344,7 @@ class HomeBrowseSectionItemsRouteArgs {
 }
 
 /// generated route for
-/// [_i12.HomePage]
+/// [_i13.HomePage]
 class HomeRoute extends _i48.PageRouteInfo<void> {
   const HomeRoute({List<_i48.PageRouteInfo>? children})
     : super(HomeRoute.name, initialChildren: children);
@@ -337,13 +354,13 @@ class HomeRoute extends _i48.PageRouteInfo<void> {
   static _i48.PageInfo page = _i48.PageInfo(
     name,
     builder: (data) {
-      return const _i12.HomePage();
+      return const _i13.HomePage();
     },
   );
 }
 
 /// generated route for
-/// [_i13.LastFMLoginPage]
+/// [_i14.LastFMLoginPage]
 class LastFMLoginRoute extends _i48.PageRouteInfo<void> {
   const LastFMLoginRoute({List<_i48.PageRouteInfo>? children})
     : super(LastFMLoginRoute.name, initialChildren: children);
@@ -353,13 +370,13 @@ class LastFMLoginRoute extends _i48.PageRouteInfo<void> {
   static _i48.PageInfo page = _i48.PageInfo(
     name,
     builder: (data) {
-      return const _i13.LastFMLoginPage();
+      return const _i14.LastFMLoginPage();
     },
   );
 }
 
 /// generated route for
-/// [_i14.LibraryPage]
+/// [_i15.LibraryPage]
 class LibraryRoute extends _i48.PageRouteInfo<void> {
   const LibraryRoute({List<_i48.PageRouteInfo>? children})
     : super(LibraryRoute.name, initialChildren: children);
@@ -369,13 +386,13 @@ class LibraryRoute extends _i48.PageRouteInfo<void> {
   static _i48.PageInfo page = _i48.PageInfo(
     name,
     builder: (data) {
-      return const _i14.LibraryPage();
+      return const _i15.LibraryPage();
     },
   );
 }
 
 /// generated route for
-/// [_i15.LikedPlaylistPage]
+/// [_i16.LikedPlaylistPage]
 class LikedPlaylistRoute extends _i48.PageRouteInfo<LikedPlaylistRouteArgs> {
   LikedPlaylistRoute({
     _i49.Key? key,
@@ -393,7 +410,7 @@ class LikedPlaylistRoute extends _i48.PageRouteInfo<LikedPlaylistRouteArgs> {
     name,
     builder: (data) {
       final args = data.argsAs<LikedPlaylistRouteArgs>();
-      return _i15.LikedPlaylistPage(key: args.key, playlist: args.playlist);
+      return _i16.LikedPlaylistPage(key: args.key, playlist: args.playlist);
     },
   );
 }
@@ -412,7 +429,7 @@ class LikedPlaylistRouteArgs {
 }
 
 /// generated route for
-/// [_i16.LinkedAccountsPage]
+/// [_i17.LinkedAccountsPage]
 class LinkedAccountsRoute extends _i48.PageRouteInfo<void> {
   const LinkedAccountsRoute({List<_i48.PageRouteInfo>? children})
     : super(LinkedAccountsRoute.name, initialChildren: children);
@@ -422,13 +439,13 @@ class LinkedAccountsRoute extends _i48.PageRouteInfo<void> {
   static _i48.PageInfo page = _i48.PageInfo(
     name,
     builder: (data) {
-      return const _i16.LinkedAccountsPage();
+      return const _i17.LinkedAccountsPage();
     },
   );
 }
 
 /// generated route for
-/// [_i17.LocalLibraryPage]
+/// [_i18.LocalLibraryPage]
 class LocalLibraryRoute extends _i48.PageRouteInfo<LocalLibraryRouteArgs> {
   LocalLibraryRoute({
     required String location,
@@ -453,7 +470,7 @@ class LocalLibraryRoute extends _i48.PageRouteInfo<LocalLibraryRouteArgs> {
     name,
     builder: (data) {
       final args = data.argsAs<LocalLibraryRouteArgs>();
-      return _i17.LocalLibraryPage(
+      return _i18.LocalLibraryPage(
         args.location,
         key: args.key,
         isDownloads: args.isDownloads,
@@ -486,7 +503,7 @@ class LocalLibraryRouteArgs {
 }
 
 /// generated route for
-/// [_i18.LogsPage]
+/// [_i19.LogsPage]
 class LogsRoute extends _i48.PageRouteInfo<void> {
   const LogsRoute({List<_i48.PageRouteInfo>? children})
     : super(LogsRoute.name, initialChildren: children);
@@ -496,13 +513,13 @@ class LogsRoute extends _i48.PageRouteInfo<void> {
   static _i48.PageInfo page = _i48.PageInfo(
     name,
     builder: (data) {
-      return const _i18.LogsPage();
+      return const _i19.LogsPage();
     },
   );
 }
 
 /// generated route for
-/// [_i19.LyricsPage]
+/// [_i20.LyricsPage]
 class LyricsRoute extends _i48.PageRouteInfo<void> {
   const LyricsRoute({List<_i48.PageRouteInfo>? children})
     : super(LyricsRoute.name, initialChildren: children);
@@ -512,13 +529,13 @@ class LyricsRoute extends _i48.PageRouteInfo<void> {
   static _i48.PageInfo page = _i48.PageInfo(
     name,
     builder: (data) {
-      return const _i19.LyricsPage();
+      return const _i20.LyricsPage();
     },
   );
 }
 
 /// generated route for
-/// [_i20.MiniLyricsPage]
+/// [_i21.MiniLyricsPage]
 class MiniLyricsRoute extends _i48.PageRouteInfo<MiniLyricsRouteArgs> {
   MiniLyricsRoute({
     _i51.Key? key,
@@ -536,7 +553,7 @@ class MiniLyricsRoute extends _i48.PageRouteInfo<MiniLyricsRouteArgs> {
     name,
     builder: (data) {
       final args = data.argsAs<MiniLyricsRouteArgs>();
-      return _i20.MiniLyricsPage(key: args.key, prevSize: args.prevSize);
+      return _i21.MiniLyricsPage(key: args.key, prevSize: args.prevSize);
     },
   );
 }
@@ -555,7 +572,7 @@ class MiniLyricsRouteArgs {
 }
 
 /// generated route for
-/// [_i21.PlayerLyricsPage]
+/// [_i22.PlayerLyricsPage]
 class PlayerLyricsRoute extends _i48.PageRouteInfo<void> {
   const PlayerLyricsRoute({List<_i48.PageRouteInfo>? children})
     : super(PlayerLyricsRoute.name, initialChildren: children);
@@ -565,13 +582,13 @@ class PlayerLyricsRoute extends _i48.PageRouteInfo<void> {
   static _i48.PageInfo page = _i48.PageInfo(
     name,
     builder: (data) {
-      return const _i21.PlayerLyricsPage();
+      return const _i22.PlayerLyricsPage();
     },
   );
 }
 
 /// generated route for
-/// [_i22.PlayerQueuePage]
+/// [_i23.PlayerQueuePage]
 class PlayerQueueRoute extends _i48.PageRouteInfo<void> {
   const PlayerQueueRoute({List<_i48.PageRouteInfo>? children})
     : super(PlayerQueueRoute.name, initialChildren: children);
@@ -581,13 +598,13 @@ class PlayerQueueRoute extends _i48.PageRouteInfo<void> {
   static _i48.PageInfo page = _i48.PageInfo(
     name,
     builder: (data) {
-      return const _i22.PlayerQueuePage();
+      return const _i23.PlayerQueuePage();
     },
   );
 }
 
 /// generated route for
-/// [_i23.PlayerTrackSourcesPage]
+/// [_i24.PlayerTrackSourcesPage]
 class PlayerTrackSourcesRoute extends _i48.PageRouteInfo<void> {
   const PlayerTrackSourcesRoute({List<_i48.PageRouteInfo>? children})
     : super(PlayerTrackSourcesRoute.name, initialChildren: children);
@@ -597,13 +614,13 @@ class PlayerTrackSourcesRoute extends _i48.PageRouteInfo<void> {
   static _i48.PageInfo page = _i48.PageInfo(
     name,
     builder: (data) {
-      return const _i23.PlayerTrackSourcesPage();
+      return const _i24.PlayerTrackSourcesPage();
     },
   );
 }
 
 /// generated route for
-/// [_i24.PlaylistPage]
+/// [_i25.PlaylistPage]
 class PlaylistRoute extends _i48.PageRouteInfo<PlaylistRouteArgs> {
   PlaylistRoute({
     _i49.Key? key,
@@ -623,7 +640,7 @@ class PlaylistRoute extends _i48.PageRouteInfo<PlaylistRouteArgs> {
     name,
     builder: (data) {
       final args = data.argsAs<PlaylistRouteArgs>();
-      return _i24.PlaylistPage(
+      return _i25.PlaylistPage(
         key: args.key,
         id: args.id,
         playlist: args.playlist,
@@ -648,7 +665,7 @@ class PlaylistRouteArgs {
 }
 
 /// generated route for
-/// [_i25.ProfilePage]
+/// [_i26.ProfilePage]
 class ProfileRoute extends _i48.PageRouteInfo<void> {
   const ProfileRoute({List<_i48.PageRouteInfo>? children})
     : super(ProfileRoute.name, initialChildren: children);
@@ -658,13 +675,13 @@ class ProfileRoute extends _i48.PageRouteInfo<void> {
   static _i48.PageInfo page = _i48.PageInfo(
     name,
     builder: (data) {
-      return const _i25.ProfilePage();
+      return const _i26.ProfilePage();
     },
   );
 }
 
 /// generated route for
-/// [_i26.PushLeaderboardPage]
+/// [_i27.PushLeaderboardPage]
 class PushLeaderboardRoute extends _i48.PageRouteInfo<void> {
   const PushLeaderboardRoute({List<_i48.PageRouteInfo>? children})
     : super(PushLeaderboardRoute.name, initialChildren: children);
@@ -674,13 +691,13 @@ class PushLeaderboardRoute extends _i48.PageRouteInfo<void> {
   static _i48.PageInfo page = _i48.PageInfo(
     name,
     builder: (data) {
-      return const _i26.PushLeaderboardPage();
+      return const _i27.PushLeaderboardPage();
     },
   );
 }
 
 /// generated route for
-/// [_i27.RootAppPage]
+/// [_i28.RootAppPage]
 class RootAppRoute extends _i48.PageRouteInfo<void> {
   const RootAppRoute({List<_i48.PageRouteInfo>? children})
     : super(RootAppRoute.name, initialChildren: children);
@@ -690,13 +707,13 @@ class RootAppRoute extends _i48.PageRouteInfo<void> {
   static _i48.PageInfo page = _i48.PageInfo(
     name,
     builder: (data) {
-      return const _i27.RootAppPage();
+      return const _i28.RootAppPage();
     },
   );
 }
 
 /// generated route for
-/// [_i28.SearchPage]
+/// [_i29.SearchPage]
 class SearchRoute extends _i48.PageRouteInfo<void> {
   const SearchRoute({List<_i48.PageRouteInfo>? children})
     : super(SearchRoute.name, initialChildren: children);
@@ -706,13 +723,13 @@ class SearchRoute extends _i48.PageRouteInfo<void> {
   static _i48.PageInfo page = _i48.PageInfo(
     name,
     builder: (data) {
-      return const _i28.SearchPage();
+      return const _i29.SearchPage();
     },
   );
 }
 
 /// generated route for
-/// [_i29.SettingsMetadataProviderFormPage]
+/// [_i30.SettingsMetadataProviderFormPage]
 class SettingsMetadataProviderFormRoute
     extends _i48.PageRouteInfo<SettingsMetadataProviderFormRouteArgs> {
   SettingsMetadataProviderFormRoute({
@@ -736,7 +753,7 @@ class SettingsMetadataProviderFormRoute
     name,
     builder: (data) {
       final args = data.argsAs<SettingsMetadataProviderFormRouteArgs>();
-      return _i29.SettingsMetadataProviderFormPage(
+      return _i30.SettingsMetadataProviderFormPage(
         key: args.key,
         title: args.title,
         fields: args.fields,

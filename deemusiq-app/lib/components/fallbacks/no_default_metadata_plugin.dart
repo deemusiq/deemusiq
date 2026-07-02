@@ -32,7 +32,21 @@ class NoDefaultMetadataPlugin extends StatelessWidget {
             leading: const Icon(DeeMusiqIcons.extensions),
             child: Text(context.l10n.manage_metadata_providers),
             onPressed: () {
-              // External plugins removed — DeeMusiq uses native backend only
+              showDialog(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text("Metadata Providers"),
+                  content: const Text(
+                    "External plugins have been removed. DeeMusiq uses its native backend for metadata.",
+                  ),
+                  actions: [
+                    Button.primary(
+                      onPressed: () => ctx.maybePop(),
+                      child: const Text("OK"),
+                    ),
+                  ],
+                ),
+              );
             },
           ),
         ],

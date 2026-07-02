@@ -1181,7 +1181,7 @@ class Shape12 extends i0.VersionedTable {
 i1.GeneratedColumn<String> _column_54(String aliasedName) =>
     i1.GeneratedColumn<String>('youtube_client_engine', aliasedName, false,
         type: i1.DriftSqlType.string,
-        defaultValue: Constant(YoutubeClientEngine.youtubeExplode.name));
+        defaultValue: Constant(YoutubeClientEngine.ytDlp.name));
 
 final class Schema5 extends i0.VersionedSchema {
   Schema5({required super.database}) : super(version: 5);

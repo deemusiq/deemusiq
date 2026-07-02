@@ -28,7 +28,7 @@ import 'package:deemusiq/services/youtube_engine/youtube_engine.dart';
 class EngineFailover {
   EngineFailover._();
 
-  static const maxRetries = 5;
+  static const maxRetries = 3;
   static const _backoffBase = Duration(seconds: 1);
 
   /// Tries [operation] on each engine in [engines] sequentially. If an engine
@@ -52,9 +52,31 @@ class EngineFailover {
       );
     }
 
+    // Pre-filter: skip engines that aren't available or installed
+    final availableEngines = <YouTubeEngine>[];
+    for (final engine in engines) {
+      if (!engine.isAvailableForPlatform) {
+        AppLogger.log.d('EngineFailover: skipping ${engine.runtimeType} — not available for platform');
+        continue;
+      }
+      if (!(await engine.isInstalled())) {
+        AppLogger.log.d('EngineFailover: skipping ${engine.runtimeType} — not installed');
+        continue;
+      }
+      availableEngines.add(engine);
+    }
+
+    if (availableEngines.isEmpty) {
+      AppLogger.log.e('EngineFailover: no available engines');
+      throw EngineFailoverException(
+        'No available engines for this platform',
+        errors: ['all engines unavailable or not installed'],
+      );
+    }
+
     final errors = <String>[];
 
-    for (final engine in engines) {
+    for (final engine in availableEngines) {
       AppLogger.log.i('EngineFailover: trying ${engine.runtimeType}...');
       for (var attempt = 1; attempt <= maxRetries; attempt++) {
         try {
@@ -65,11 +87,12 @@ class EngineFailover {
             'EngineFailover: success on ${engine.runtimeType} attempt $attempt',
           );
           return result;
-        } catch (e) {
+        } catch (e, stack) {
           final msg = 'Bad connection, retrying... (attempt $attempt/$maxRetries)';
           AppLogger.log.w(
             'EngineFailover: ${engine.runtimeType} attempt $attempt failed: $e',
           );
+          AppLogger.reportError(e, stack, 'EngineFailover: ${engine.runtimeType} attempt $attempt');
           onRetry?.call(msg, attempt);
 
           if (attempt < maxRetries) {
@@ -88,22 +111,25 @@ class EngineFailover {
     }
 
     // Re-check internet before giving up — maybe it came back
-    // and a retry with the first engine would succeed
+    // and a retry with any engine would succeed. Try all engines again.
+    ConnectionChecker.instance.clearCache();
     final reconnect = await ConnectionChecker.instance.check();
-    if (reconnect.hasInternet && errors.isNotEmpty) {
+    if (reconnect.hasInternet && availableEngines.isNotEmpty) {
       AppLogger.log.w(
-        'EngineFailover: re-checking internet — it came back, trying first engine once more',
+        'EngineFailover: re-checking internet — it came back, retrying all engines',
       );
-      try {
-        final result = await operation(engines.first).timeout(
-          const Duration(seconds: 30),
-        );
-        AppLogger.log.i('EngineFailover: success on reconnect retry');
-        return result;
-      } catch (e) {
-        AppLogger.log.w('EngineFailover: reconnect retry failed: $e');
-        AppLogger.reportError(e, StackTrace.current, 'EngineFailover reconnect retry');
-        errors.add('reconnect-retry: ${_shortError(e)}');
+      for (final engine in availableEngines) {
+        try {
+          final result = await operation(engine).timeout(
+            const Duration(seconds: 30),
+          );
+          AppLogger.log.i('EngineFailover: success on reconnect retry with ${engine.runtimeType}');
+          return result;
+        } catch (e) {
+          AppLogger.log.w('EngineFailover: reconnect retry on ${engine.runtimeType} failed: $e');
+          AppLogger.reportError(e, StackTrace.current, 'EngineFailover reconnect retry ${engine.runtimeType}');
+          errors.add('reconnect-retry-${engine.runtimeType}: ${_shortError(e)}');
+        }
       }
     }
 

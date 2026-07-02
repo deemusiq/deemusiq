@@ -40,8 +40,9 @@ class ConnectionChecker {
         } else {
           results[host] = false;
         }
-      } catch (e) {
+      } catch (e, stack) {
         AppLogger.log.d('ConnectionChecker: DNS lookup failed for $host: $e');
+        AppLogger.reportError(e, stack, 'ConnectionChecker: DNS lookup for $host');
         results[host] = false;
       }
     }

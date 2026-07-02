@@ -23,9 +23,9 @@ enum YoutubeClientEngine {
   bool isAvailableForPlatform() {
     return switch (this) {
       YoutubeClientEngine.youtubeExplode =>
-        YouTubeExplodeEngine.isAvailableForPlatform,
-      YoutubeClientEngine.ytDlp => YtDlpEngine.isAvailableForPlatform,
-      YoutubeClientEngine.newPipe => NewPipeEngine.isAvailableForPlatform,
+        YouTubeExplodeEngine().isAvailableForPlatform,
+      YoutubeClientEngine.ytDlp => YtDlpEngine().isAvailableForPlatform,
+      YoutubeClientEngine.newPipe => NewPipeEngine().isAvailableForPlatform,
     };
   }
 }
@@ -80,7 +80,7 @@ class PreferencesTable extends Table {
       textEnum<ThemeMode>().withDefault(Constant(ThemeMode.system.name))();
   TextColumn get audioSourceId => text().nullable()();
   TextColumn get youtubeClientEngine => textEnum<YoutubeClientEngine>()
-      .withDefault(Constant(YoutubeClientEngine.youtubeExplode.name))();
+      .withDefault(Constant(YoutubeClientEngine.ytDlp.name))();
   BoolColumn get discordPresence =>
       boolean().withDefault(const Constant(true))();
   BoolColumn get endlessPlayback =>
@@ -113,7 +113,7 @@ class PreferencesTable extends Table {
       audioSourceId: null,
       youtubeClientEngine: kIsIOS
           ? YoutubeClientEngine.youtubeExplode
-          : YoutubeClientEngine.newPipe,
+          : YoutubeClientEngine.ytDlp,
       discordPresence: true,
       endlessPlayback: true,
       enableConnect: false,

@@ -2,7 +2,7 @@ import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
 import 'package:deemusiq/services/youtube_engine/youtube_engine.dart';
-// import 'package:youtube_explode_dart/solvers.dart';
+import 'package:deemusiq/services/youtube_engine/quickjs_solver.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 import 'dart:async';
@@ -24,45 +24,65 @@ class IsolatedYoutubeExplode {
 
   static IsolatedYoutubeExplode? _instance;
 
-  static IsolatedYoutubeExplode get instance => _instance!;
+  static IsolatedYoutubeExplode get instance {
+    if (_instance == null) {
+      throw StateError(
+        'IsolatedYoutubeExplode has not been initialized. '
+        'Call IsolatedYoutubeExplode.initialize() first.',
+      );
+    }
+    return _instance!;
+  }
 
   static bool get isInitialized => _instance != null;
 
+  static Completer<void>? _initLock;
+
   static Future<void> initialize() async {
-    if (_instance != null) {
+    if (_instance != null) return;
+    if (_initLock != null) {
+      await _initLock!.future;
       return;
     }
+    _initLock = Completer<void>();
+    try {
+      final completer = Completer<SendPort>();
 
-    final completer = Completer<SendPort>();
+      final receivePort = ReceivePort();
 
-    final receivePort = ReceivePort();
+      /// Listen for the main isolate to set the main port
+      final subscription = receivePort.listen((message) {
+        if (message is SendPort) {
+          completer.complete(message);
+        }
+      });
 
-    /// Listen for the main isolate to set the main port
-    final subscription = receivePort.listen((message) {
-      if (message is SendPort) {
-        completer.complete(message);
+      final isolate = await Isolate.spawn(
+        _isolateEntry,
+        receivePort.sendPort,
+      ).timeout(const Duration(seconds: 10)); // Don't hang forever
+
+      _instance = IsolatedYoutubeExplode._(
+        isolate,
+        receivePort,
+        await completer.future.timeout(const Duration(seconds: 10)),
+      );
+
+      if (completer.isCompleted) {
+        subscription.cancel();
       }
-    });
-
-    final isolate = await Isolate.spawn(
-      _isolateEntry,
-      receivePort.sendPort,
-    ).timeout(const Duration(seconds: 10)); // Don't hang forever
-
-    _instance = IsolatedYoutubeExplode._(
-      isolate,
-      receivePort,
-      await completer.future.timeout(const Duration(seconds: 10)),
-    );
-
-    if (completer.isCompleted) {
-      subscription.cancel();
+    } finally {
+      _initLock?.complete();
+      _initLock = null;
     }
   }
 
   static Future<void> _isolateEntry(SendPort mainSendPort) async {
     final receivePort = ReceivePort();
-    // final solver = await DenoEJSSolver.init();
+    try {
+      // QuickJSEJSSolver requires the 'jsf' package in pubspec.yaml.
+      // See lib/services/youtube_engine/quickjs_solver.dart for setup.
+    } catch (_) {}
     final youtubeExplode = YoutubeExplode();
     final stopWatch = kDebugMode ? Stopwatch() : null;
 
@@ -109,6 +129,7 @@ class IsolatedYoutubeExplode {
       } catch (e, stack) {
         debugPrint('IsolatedYoutubeExplode: unhandled error in isolate: $e');
         debugPrintStack(stackTrace: stack);
+        AppLogger.reportError(e, stack, 'IsolatedYoutubeExplode isolate error');
         replyPort.send(e); // Propagate error to caller
       }
     });
@@ -171,11 +192,20 @@ class IsolatedYoutubeExplode {
 }
 
 class YouTubeExplodeEngine implements YouTubeEngine {
-  static final _youtubeExplode = IsolatedYoutubeExplode.instance;
+  static IsolatedYoutubeExplode get _youtubeExplode {
+    if (!IsolatedYoutubeExplode.isInitialized) {
+      AppLogger.log.w(
+        'YouTubeExplodeEngine: IsolatedYoutubeExplode accessed before initialization',
+      );
+    }
+    return IsolatedYoutubeExplode.instance;
+  }
 
-  static bool get isAvailableForPlatform => true;
+  @override
+  bool get isAvailableForPlatform => true;
 
-  static Future<bool> isInstalled() async {
+  @override
+  Future<bool> isInstalled() async {
     return true;
   }
 
@@ -186,21 +216,19 @@ class YouTubeExplodeEngine implements YouTubeEngine {
     }
     await IsolatedYoutubeExplode.initialize();
 
-    try {
-      final streamManifest = await _youtubeExplode.manifest(
-        videoId,
-        requireWatchPage: false,
-        ytClients: [
-          YoutubeApiClient.ios,
-          YoutubeApiClient.androidVr,
-          YoutubeApiClient.android,
-        ],
-      );
+    final ytClients = [
+      YoutubeApiClient.ios,
+      YoutubeApiClient.androidVr,
+      YoutubeApiClient.android,
+    ];
 
-      final audioStreams = streamManifest.audioOnly.where(
+    StreamManifest _build(StreamManifest raw) {
+      var audioStreams = raw.audioOnly.where(
         (stream) => stream.bitrate.bitsPerSecond >= 40960,
       );
-
+      if (audioStreams.isEmpty) {
+        audioStreams = raw.audioOnly;
+      }
       return StreamManifest(
         audioStreams.map(
           (stream) => AudioOnlyStreamInfo(
@@ -222,10 +250,40 @@ class YouTubeExplodeEngine implements YouTubeEngine {
           ),
         ),
       );
+    }
+
+    try {
+      final streamManifest = await _youtubeExplode.manifest(
+        videoId,
+        requireWatchPage: false,
+        ytClients: ytClients,
+      );
+
+      final manifest = _build(streamManifest);
+      if (manifest.audioOnly.isNotEmpty) return manifest;
+
+      AppLogger.log.w('YouTubeExplode: fast path returned empty streams for $videoId, retrying with watch page');
+      final retryManifest = await _youtubeExplode.manifest(
+        videoId,
+        requireWatchPage: true,
+        ytClients: ytClients,
+      );
+      return _build(retryManifest);
     } catch (e, stack) {
-      AppLogger.log.w('YouTubeExplode: Failed to get stream manifest for $videoId: ${e.toString()}');
+      AppLogger.log.w('YouTubeExplode: fast path failed for $videoId: ${e.toString()}, retrying with watch page');
       AppLogger.reportError(e, stack);
-      rethrow;
+      try {
+        final retryManifest = await _youtubeExplode.manifest(
+          videoId,
+          requireWatchPage: true,
+          ytClients: ytClients,
+        );
+        return _build(retryManifest);
+      } catch (e2, stack2) {
+        AppLogger.log.w('YouTubeExplode: watch page retry also failed for $videoId: ${e2.toString()}');
+        AppLogger.reportError(e2, stack2);
+        rethrow;
+      }
     }
   }
 

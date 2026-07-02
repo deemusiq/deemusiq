@@ -15,6 +15,8 @@ class AudioErrorHandler {
   static final _instance = AudioErrorHandler._();
   static AudioErrorHandler get instance => _instance;
 
+  DateTime? _lastErrorTime;
+
   /// Callback invoked when the user should be shown a message.
   /// Set this from the UI layer (e.g., to show a toast/snackbar).
   void Function(String message, AudioErrorSeverity severity)? onUserMessage;
@@ -161,6 +163,14 @@ class AudioErrorHandler {
     int maxRetries = 3,
     bool canSkipTrack = true,
   }) async {
+    final now = DateTime.now();
+    if (_lastErrorTime != null &&
+        now.difference(_lastErrorTime!) < const Duration(milliseconds: 500)) {
+      AppLogger.log.d('[AudioError] deduplicated — last error <500ms ago');
+      return false;
+    }
+    _lastErrorTime = now;
+
     final category = _categorize(error);
     final message = userMessageFor(error, category);
 

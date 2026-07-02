@@ -713,7 +713,7 @@ class $PreferencesTableTable extends PreferencesTable
               'youtube_client_engine', aliasedName, false,
               type: DriftSqlType.string,
               requiredDuringInsert: false,
-              defaultValue: Constant(YoutubeClientEngine.youtubeExplode.name))
+              defaultValue: Constant(YoutubeClientEngine.ytDlp.name))
           .withConverter<YoutubeClientEngine>(
               $PreferencesTableTable.$converteryoutubeClientEngine);
   static const VerificationMeta _discordPresenceMeta =

@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:deemusiq/components/dialogs/prompt_dialog.dart';
 import 'package:deemusiq/components/dialogs/select_device_dialog.dart';
+import 'package:deemusiq/components/fallbacks/error_box.dart';
 import 'package:deemusiq/components/track_tile/track_tile.dart';
 import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/models/connect/connect.dart';
@@ -21,6 +22,15 @@ class SearchTracksSection extends HookConsumerWidget {
   Widget build(BuildContext context, ref) {
     final searchTerm = ref.watch(searchTermStateProvider);
     final search = ref.watch(metadataPluginSearchAllProvider(searchTerm));
+
+    if (search.hasError) {
+      return ErrorBox(
+        error: search.error!,
+        onRetry: () =>
+            ref.invalidate(metadataPluginSearchAllProvider(searchTerm)),
+      );
+    }
+
     final tracks = search.asData?.value.tracks ?? [];
     final playlistNotifier = ref.watch(audioPlayerProvider.notifier);
     final playlist = ref.watch(audioPlayerProvider);

@@ -1,7 +1,7 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:skeletonizer/skeletonizer.dart';
-import 'package:deemusiq/collections/fake.dart';
+import 'package:deemusiq/components/fallbacks/error_box.dart';
 import 'package:deemusiq/components/horizontal_playbutton_card_view/horizontal_playbutton_card_view.dart';
 import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/models/database/database.dart';
@@ -13,8 +13,14 @@ class HomeRecentlyPlayedSection extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, ref) {
     final history = ref.watch(recentlyPlayedItems);
-    final historyData =
-        history.asData?.value ?? FakeData.historyRecentlyPlayedItems;
+    final historyData = history.asData?.value;
+
+    if (history.hasError) {
+      return ErrorBox(
+        error: history.error!,
+        onRetry: () => ref.invalidate(recentlyPlayedItems),
+      );
+    }
 
     if (history.asData?.value.isEmpty == true) {
       return const SizedBox();
@@ -25,7 +31,7 @@ class HomeRecentlyPlayedSection extends HookConsumerWidget {
       child: HorizontalPlaybuttonCardView(
         title: Text(context.l10n.recently_played),
         items: [
-          for (final item in historyData)
+          for (final item in historyData ?? [])
             if (item.playlist != null)
               item.playlist
             else if (item.album != null)

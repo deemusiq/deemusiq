@@ -360,8 +360,10 @@ class WalletNotifier extends Notifier<WalletState> {
       final txs = (data["transactions"] as List? ?? const [])
           .map((e) {
             final m = Map<String, dynamic>.from(e as Map);
-            // Server field is `createdAt`; the app model expects `timestamp`.
+            // Server fields differ from client model names — remap before
+            // handing off to the code-generated fromJson.
             m["timestamp"] = m["createdAt"] ?? m["timestamp"];
+            m["tokens"] = m["amount"] ?? m["tokens"];
             return TokenTransaction.fromJson(m);
           })
           .toList();

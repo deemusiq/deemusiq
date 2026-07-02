@@ -80,12 +80,21 @@ class AudioPlayerStreamListeners {
         return;
       }
 
+      final trackDuration = audioPlayer.duration;
+      if (trackDuration == Duration.zero) return;
+
       for (final segment in currentSegments!.segments) {
         final seconds = position.inSeconds;
 
         if (seconds < segment.start || seconds >= segment.end) continue;
 
-        await audioPlayer.seek(Duration(seconds: segment.end + 1));
+        final seekTarget = segment.end + 1;
+        final clampedTarget = seekTarget >= trackDuration.inSeconds
+            ? trackDuration.inSeconds - 1
+            : seekTarget;
+        if (clampedTarget < 0) return;
+
+        await audioPlayer.seek(Duration(seconds: clampedTarget));
       }
     } catch (e, stack) {
       AppLogger.reportError(e, stack);

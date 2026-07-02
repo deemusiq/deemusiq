@@ -37,10 +37,15 @@ class SourcedTrack extends BasicSourcedTrack {
   static Future<SourcedTrack> fetchFromTrack({
     required DeeMusiqFullTrackObject query,
     required Ref ref,
+    int retryDepth = 0,
   }) async {
-    final audioSource = await ref.read(audioSourcePluginProvider.future);
+    if (retryDepth >= 3) throw TrackNotFoundError(query);
+
+    final audioSource = await ref.read(audioSourcePluginProvider.future)
+        .timeout(const Duration(seconds: 10), onTimeout: () => null);
     final audioSourceConfig = await ref.read(metadataPluginsProvider
-        .selectAsync((data) => data.defaultAudioSourcePluginConfig));
+        .selectAsync((data) => data.defaultAudioSourcePluginConfig))
+        .timeout(const Duration(seconds: 10), onTimeout: () => null);
     if (audioSource == null || audioSourceConfig == null) {
       throw MetadataPluginException.noDefaultAudioSourcePlugin();
     }
@@ -64,6 +69,8 @@ class SourcedTrack extends BasicSourcedTrack {
         throw TrackNotFoundError(query);
       }
 
+      final manifest = await audioSource.audioSource.streams(siblings.first);
+
       await database.into(database.sourceMatchTable).insert(
             SourceMatchTableCompanion.insert(
               trackId: query.id,
@@ -71,8 +78,6 @@ class SourcedTrack extends BasicSourcedTrack {
               sourceType: audioSourceConfig.slug,
             ),
           );
-
-      final manifest = await audioSource.audioSource.streams(siblings.first);
 
       return SourcedTrack(
         ref: ref,
@@ -88,14 +93,47 @@ class SourcedTrack extends BasicSourcedTrack {
     );
     final manifest = await audioSource.audioSource.streams(item);
 
+    // Try to fetch fresh siblings for fallback if the cached source fails.
+    // Runs in background — if it fails, we still have the cached manifest.
+    List<DeeMusiqAudioSourceMatchObject> freshSiblings = [];
+    try {
+      freshSiblings = await fetchSiblings(ref: ref, query: query)
+          .timeout(const Duration(seconds: 5));
+    } catch (e, stack) {
+      AppLogger.reportError(e, stack, 'SourcedTrack: fresh siblings fetch failed');
+      // siblings fetch failed — keep empty list, fallback won't work but
+      // the primary cached source is still valid
+    }
+
     final sourcedTrack = SourcedTrack(
       ref: ref,
-      siblings: [],
+      siblings: freshSiblings,
       sources: manifest,
       info: item,
       query: query,
       source: audioSourceConfig.slug,
     );
+
+    // Validate cached source URL hasn't expired (quick HEAD check)
+    if (sourcedTrack.url != null && sourcedTrack.url!.isNotEmpty) {
+      try {
+        final headRes = await globalDio.head(sourcedTrack.url!,
+            options: Options(
+                validateStatus: (s) => s != null && s < 500,
+                sendTimeout: const Duration(seconds: 5),
+                receiveTimeout: const Duration(seconds: 5)));
+        if (headRes.statusCode != null && headRes.statusCode! >= 400) {
+          AppLogger.log.w('Cached URL expired for ${query.id}, re-fetching');
+          final stmt = database.delete(database.sourceMatchTable)
+            ..where((s) => s.trackId.equals(query.id));
+          await stmt.go();
+          return fetchFromTrack(query: query, ref: ref, retryDepth: retryDepth + 1);
+        }
+      } catch (e, stack) {
+        AppLogger.reportError(e, stack, 'SourcedTrack: cached URL HEAD check failed');
+        // HEAD failed quickly — keep cached, engine failover handles streaming
+      }
+    }
 
     AppLogger.log.i("${query.name}: ${sourcedTrack.url}");
 
@@ -278,10 +316,11 @@ class SourcedTrack extends BasicSourcedTrack {
         if (statusCode != null && statusCode < 400) {
           validStreams.add(source);
         }
-      } catch (e) {
+      } catch (e, stack) {
         AppLogger.log.w(
           'refreshStream HEAD failed for ${source.url}: $e',
         );
+        AppLogger.reportError(e, stack, 'refreshStream HEAD');
         stringBuffer.writeln(
           "[${query.id}] ERROR ${source.container} ${source.codec} ${source.bitrate}: $e",
         );
@@ -310,11 +349,20 @@ class SourcedTrack extends BasicSourcedTrack {
 
   String? get url {
     final preferences = ref.read(audioSourcePresetsProvider);
-
+    final presets = preferences.presets;
+    if (presets.isEmpty) return null;
+    final index = preferences.selectedStreamingContainerIndex;
+    if (index < 0 || index >= presets.length) return null;
     return getUrlOfQuality(
-      preferences.presets[preferences.selectedStreamingContainerIndex],
+      presets[index],
       preferences.selectedStreamingQualityIndex,
     );
+  }
+
+  static const _audioContainers = {'mp4', 'm4a', 'webm', 'opus', 'ogg', 'aac', 'mp3'};
+
+  bool _isAudioContainer(String container) {
+    return _audioContainers.contains(container.toLowerCase());
   }
 
   /// Returns the URL of the track based on the codec and quality preferences.
@@ -333,7 +381,7 @@ class SourcedTrack extends BasicSourcedTrack {
 
     final exactMatch = sources.firstWhereOrNull(
       (source) {
-        if (source.container != preset.name) return false;
+        if (!_isAudioContainer(source.container)) return false;
 
         if (quality case DeeMusiqAudioLosslessContainerQuality()) {
           return source.sampleRate == quality.sampleRate &&
@@ -349,9 +397,21 @@ class SourcedTrack extends BasicSourcedTrack {
       return exactMatch;
     }
 
-    // Find the preset with closest quality to the supplied quality
+    if (quality case DeeMusiqAudioLossyContainerQuality lossyQuality) {
+      final target = lossyQuality.bitrate;
+      final tolerance = (target * 0.2).round();
+      final toleranceMatch = sources.firstWhereOrNull((source) {
+        if (!_isAudioContainer(source.container)) return false;
+        final srcBitrate = source.bitrate ?? 0;
+        return (srcBitrate - target).abs() <= tolerance;
+      });
+      if (toleranceMatch != null) {
+        return toleranceMatch;
+      }
+    }
+
     final matching = sources.where((source) {
-      return source.container == preset.name;
+      return _isAudioContainer(source.container);
     }).toList();
     if (matching.isEmpty) return null;
     return matching.reduce((prev, curr) {

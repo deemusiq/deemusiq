@@ -1,9 +1,9 @@
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 abstract interface class YouTubeEngine {
-  static bool get isAvailableForPlatform => false;
+  bool get isAvailableForPlatform => false;
 
-  static Future<bool> isInstalled() async {
+  Future<bool> isInstalled() async {
     return false;
   }
 

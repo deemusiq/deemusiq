@@ -26,12 +26,14 @@ class CustomPlayer extends Player {
 
   /// Number of consecutive playback errors. Reset on successful playback.
   int _consecutiveErrors = 0;
+  DateTime? _lastErrorTime;
   static const _maxConsecutiveErrors = 3;
+  static const _errorDecayDuration = Duration(seconds: 30);
 
   CustomPlayer({super.configuration})
       : _playerStateStream = StreamController.broadcast() {
     try {
-      nativePlayer.setProperty('network-timeout', '120');
+      nativePlayer.setProperty('network-timeout', '300');
       // Audio-only playback: disable video decoding entirely
       nativePlayer.setProperty('vid', 'no');
     } catch (e, stack) {
@@ -151,6 +153,12 @@ class CustomPlayer extends Player {
     AppLogger.log.e('[MediaKitError] $event');
     AppLogger.reportError(error, StackTrace.current, '[MediaKitError]');
 
+    final now = DateTime.now();
+    if (_lastErrorTime != null &&
+        now.difference(_lastErrorTime!) > _errorDecayDuration) {
+      _consecutiveErrors = 0;
+    }
+    _lastErrorTime = now;
     _consecutiveErrors++;
     final userMsg = AudioErrorHandler.userMessageFor(
       error,
@@ -158,12 +166,14 @@ class CustomPlayer extends Player {
     );
     _userMessageStream.add(userMsg);
 
-    // If we hit max consecutive errors, signal that the track should be skipped
+    AudioErrorHandler.instance.handleError(
+      error,
+      StackTrace.current,
+      context: 'MediaKit stream',
+      canSkipTrack: _consecutiveErrors >= _maxConsecutiveErrors,
+    );
+
     if (_consecutiveErrors >= _maxConsecutiveErrors) {
-      _userMessageStream.add(
-        'Too many playback errors — skipping to next track...',
-      );
-      AudioErrorHandler.instance.onSkipRequested?.call();
       _consecutiveErrors = 0;
     }
   }
@@ -187,9 +197,17 @@ class CustomPlayer extends Player {
     );
     try {
       await add(media);
-      final mediaAddedIndex = await addedMediaCompleter.future;
-      await move(mediaAddedIndex, index);
+      final mediaAddedIndex = await addedMediaCompleter.future.timeout(
+        const Duration(seconds: 10),
+        onTimeout: () => -1,
+      );
+      if (mediaAddedIndex >= 0) {
+        await move(mediaAddedIndex, index);
+      }
     } finally {
+      if (!addedMediaCompleter.isCompleted) {
+        addedMediaCompleter.complete(-1);
+      }
       playlistStream.cancel();
     }
   }

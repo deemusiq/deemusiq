@@ -101,9 +101,7 @@ class HomeBrowseSectionItemsPage extends HookConsumerWidget {
                       DeeMusiqFullArtistObject() => ArtistCard(item),
                       DeeMusiqSimplePlaylistObject() => PlaylistCard(item),
                       DeeMusiqSimpleAlbumObject() => AlbumCard(item),
-                      _ => throw Exception(
-                          "Unsupported item type: ${item.runtimeType}",
-                        ),
+                      _ => const SizedBox.shrink(),
                     };
                   },
                 ),

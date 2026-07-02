@@ -3,8 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:deemusiq/collections/routes.gr.dart';
-import 'package:deemusiq/provider/metadata_plugin/core/auth.dart';
 import 'package:deemusiq/services/kv_store/kv_store.dart';
+import 'package:deemusiq/services/wallet/wallet_api.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -28,11 +28,11 @@ class AppRouter extends RootStackRouter {
               guards: [
                 AutoRouteGuardCallback(
                   (resolver, router) async {
-                    final authenticated = await ref
-                        .read(metadataPluginAuthenticatedProvider.future);
-
-                    if (!authenticated && !KVStoreService.doneGettingStarted) {
-                      resolver.redirect(const GettingStartedRoute());
+                    if (!KVStoreService.doneGettingStarted) {
+                      resolver.redirect(const Auth());
+                    } else if (WalletApiClient.instance.isConfigured &&
+                        !WalletApiClient.instance.hasToken()) {
+                      resolver.redirect(const Auth());
                     } else {
                       resolver.next(true);
                     }
@@ -240,6 +240,11 @@ class AppRouter extends RootStackRouter {
         AutoRoute(
           path: "/getting-started",
           page: GettingStartedRoute.page,
+          // parentNavigatorKey: rootNavigatorKey,
+        ),
+        AutoRoute(
+          path: "/auth",
+          page: Auth.page,
           // parentNavigatorKey: rootNavigatorKey,
         ),
         AutoRoute(

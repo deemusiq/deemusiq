@@ -54,6 +54,11 @@ final volumeProvider = StateProvider<double>(
 typedef ConnectState = ({WebSocketChannel channel, Stream stream});
 
 class ConnectNotifier extends AsyncNotifier<ConnectState?> {
+  final Map<String, int> _wsMsgCounts = {};
+  final Map<String, int> _wsLastReset = {};
+  static const _wsMaxMsgPerSec = 10;
+  static const _wsMaxMsgSize = 1000000; // 1 MB
+
   @override
   build() async {
     try {
@@ -81,8 +86,31 @@ class ConnectNotifier extends AsyncNotifier<ConnectState?> {
 
       final subscription = stream.listen(
         (message) {
-          final event =
-              WebSocketEvent.fromJson(jsonDecode(message), (data) => data);
+          try {
+            if (message is String && message.length > _wsMaxMsgSize) {
+              AppLogger.log.w('WebSocket message exceeds max size, closing connection');
+              channel.sink.close(status.protocolError);
+              return;
+            }
+
+            final now = DateTime.now().millisecondsSinceEpoch;
+            final clientKey = channel.hashCode.toString();
+            final lastReset = _wsLastReset[clientKey] ?? 0;
+            if (now - lastReset > 1000) {
+              _wsMsgCounts[clientKey] = 0;
+              _wsLastReset[clientKey] = now;
+            }
+            final count = (_wsMsgCounts[clientKey] ?? 0) + 1;
+            _wsMsgCounts[clientKey] = count;
+            if (count > _wsMaxMsgPerSec) {
+              AppLogger.log.w('WebSocket rate limit exceeded, closing connection');
+              channel.sink.close(status.protocolError);
+              return;
+            }
+
+            final decoded = jsonDecode(message as String);
+            final event =
+                WebSocketEvent.fromJson(decoded, (data) => data);
 
           event.onQueue((event) {
             ref.read(queueProvider.notifier).state = event.data;
@@ -143,6 +171,9 @@ class ConnectNotifier extends AsyncNotifier<ConnectState?> {
               }
             }
           });
+          } catch (e, stack) {
+            AppLogger.reportError(e, stack);
+          }
         },
         onError: (error) {
           AppLogger.reportError(error, StackTrace.current);

@@ -5,15 +5,18 @@ import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:deemusiq/provider/audio_player/audio_player.dart';
 import 'package:deemusiq/provider/audio_player/state.dart';
+import 'package:deemusiq/provider/database/database.dart';
 import 'package:deemusiq/services/audio_player/audio_player.dart';
 import 'package:media_kit/media_kit.dart' hide Track;
 import 'package:deemusiq/services/audio_player/playback_state.dart';
 import 'package:deemusiq/services/logger/logger.dart';
+import 'package:deemusiq/services/queue/playback_queue.dart';
 import 'package:deemusiq/utils/platform.dart';
 
 class MobileAudioService extends BaseAudioHandler {
   AudioSession? session;
   final AudioPlayerNotifier audioPlayerNotifier;
+  double _preInterruptionVolume = 1.0;
 
   // ignore: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
   AudioPlayerState get playlist => audioPlayerNotifier.state;
@@ -29,6 +32,7 @@ class MobileAudioService extends BaseAudioHandler {
         if (event.begin) {
           switch (event.type) {
             case AudioInterruptionType.duck:
+              _preInterruptionVolume = audioPlayer.volume;
               await audioPlayer.setVolume(0.5);
               break;
             case AudioInterruptionType.pause:
@@ -42,7 +46,7 @@ class MobileAudioService extends BaseAudioHandler {
         } else {
           switch (event.type) {
             case AudioInterruptionType.duck:
-              await audioPlayer.setVolume(1.0);
+              await audioPlayer.setVolume(_preInterruptionVolume);
               break;
             case AudioInterruptionType.pause when wasPausedByBeginEvent:
             case AudioInterruptionType.unknown when wasPausedByBeginEvent:
@@ -110,6 +114,7 @@ class MobileAudioService extends BaseAudioHandler {
   @override
   Future<void> stop() async {
     await audioPlayerNotifier.stop();
+    await super.stop();
   }
 
   @override
@@ -127,7 +132,16 @@ class MobileAudioService extends BaseAudioHandler {
   @override
   Future<void> onTaskRemoved() async {
     await audioPlayer.pause();
-    if (kIsAndroid) exit(0);
+    if (kIsAndroid) {
+      try {
+        await PlaybackQueue.saveQueue(
+          audioPlayerNotifier.ref.read(databaseProvider),
+          audioPlayerNotifier.state.tracks,
+        );
+      } catch (_) {}
+      await audioPlayerNotifier.stop();
+      exit(0);
+    }
   }
 
   Future<PlaybackState> _transformEvent() async {

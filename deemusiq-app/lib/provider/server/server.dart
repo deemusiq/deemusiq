@@ -20,8 +20,6 @@ final serverProvider = FutureProvider(
     final pipeline = ref.watch(pipelineProvider);
     final router = ref.watch(serverRouterProvider);
 
-    // When connect port is -1, we need to generate a random port
-    // but we shouldn't reset it if it's already been set (caused by a state change)
     if (connectPort == -1) {
       if (DeeMusiqMedia.serverPort == 0) {
         final port = Random().nextInt(17500) + 5000;
@@ -31,13 +29,29 @@ final serverProvider = FutureProvider(
       DeeMusiqMedia.serverPort = connectPort;
     }
 
-    final server = await serve(
-      pipeline.addHandler(router.call),
-      enabledRemoteConnect
-          ? InternetAddress.anyIPv4
-          : InternetAddress.loopbackIPv4,
-      DeeMusiqMedia.serverPort,
-    );
+    HttpServer server;
+    var maxRetries = 10;
+    while (true) {
+      try {
+        server = await serve(
+          pipeline.addHandler(router.call),
+          enabledRemoteConnect
+              ? InternetAddress.anyIPv4
+              : InternetAddress.loopbackIPv4,
+          DeeMusiqMedia.serverPort,
+          shared: true,
+        );
+        break;
+      } on SocketException catch (e, stack) {
+        if (e.osError?.errorCode == 98 && --maxRetries > 0) {
+          AppLogger.log.w('Port ${DeeMusiqMedia.serverPort} in use, retrying...');
+          DeeMusiqMedia.serverPort = Random().nextInt(17500) + 5000;
+          continue;
+        }
+        AppLogger.reportError(e, stack, 'server port bind failed');
+        rethrow;
+      }
+    }
 
     AppLogger.log.t(
       'Playback server at http://${server.address.host}:${server.port}',

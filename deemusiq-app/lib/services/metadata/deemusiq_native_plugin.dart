@@ -16,7 +16,7 @@ import 'package:deemusiq/services/metadata/endpoints/user.dart';
 import 'package:deemusiq/services/wallet/payment_service.dart'
     show PaymentGatewayConfig;
 import 'package:deemusiq/services/youtube_engine/youtube_engine.dart';
-import 'package:youtube_explode_dart/youtube_explode_dart.dart' show Video;
+import 'package:youtube_explode_dart/youtube_explode_dart.dart' show Video, StreamManifest;
 import 'package:deemusiq/services/audio_player/audio_quality.dart';
 import 'package:deemusiq/services/connectivity/engine_failover.dart';
 import 'package:deemusiq/services/connectivity/connection_checker.dart';
@@ -291,6 +291,9 @@ class _NativeSearch extends MetadataPluginSearchEndpoint {
           final results = await engine.searchVideos(query);
           return results.take(limit).toList();
         },
+        onRetry: (msg, attempt) {
+          AppLogger.log.i('Engine retry: $msg (attempt $attempt)');
+        },
       );
       return videos.map(_videoToTrack).toList();
     } catch (e, stack) {
@@ -451,6 +454,9 @@ class _NativeAlbum extends MetadataPluginAlbumEndpoint {
         operation: (engine) async {
           final results = await engine.searchVideos(query);
           return results.take(limit).toList();
+        },
+        onRetry: (msg, attempt) {
+          AppLogger.log.i('Engine retry: $msg (attempt $attempt)');
         },
       );
       return videos.map(_videoToSimpleAlbum).toList();
@@ -778,6 +784,9 @@ class _NativeBrowse extends MetadataPluginBrowseEndpoint {
           final results = await engine.searchVideos(query);
           return results.take(limit).toList();
         },
+        onRetry: (msg, attempt) {
+          AppLogger.log.i('Engine retry: $msg (attempt $attempt)');
+        },
       );
       return videos.map(_videoToSimpleAlbum).toList();
     } catch (e, stack) {
@@ -939,7 +948,10 @@ class _NativeAudioSource extends MetadataPluginAudioSourceEndpoint {
           qualities: [
             DeeMusiqAudioLossyContainerQuality(bitrate: 320000),
             DeeMusiqAudioLossyContainerQuality(bitrate: 160000),
+            DeeMusiqAudioLossyContainerQuality(bitrate: 128000),
             DeeMusiqAudioLossyContainerQuality(bitrate: 96000),
+            DeeMusiqAudioLossyContainerQuality(bitrate: 64000),
+            DeeMusiqAudioLossyContainerQuality(bitrate: 48000),
           ],
         ),
       ];
@@ -988,6 +1000,9 @@ class _NativeAudioSource extends MetadataPluginAudioSourceEndpoint {
           final results = await engine.searchVideos(searchQuery.toString());
           return results.take(5).toList();
         },
+        onRetry: (msg, attempt) {
+          AppLogger.log.i('Engine retry: $msg (attempt $attempt)');
+        },
       );
       if (videos.isEmpty) return const [];
       return videos.map((video) {
@@ -1018,13 +1033,24 @@ class _NativeAudioSource extends MetadataPluginAudioSourceEndpoint {
     if (uri.startsWith(_ytPrefix)) {
       final videoId = uri.substring(_ytPrefix.length);
       try {
-        AppLogger.log.i('Fetching YouTube streams for videoId=$videoId using engine failover...');
-        final manifest = await EngineFailover.tryEngines(
-          engines: allEngines,
-          operation: (engine) => engine.getStreamManifest(videoId),
-        );
+        // Fast path: try primary engine directly first (no failover overhead)
+        StreamManifest manifest;
+        try {
+          manifest = await youtubeEngine.getStreamManifest(videoId)
+              .timeout(const Duration(seconds: 15));
+        } catch (e, stack) {
+          AppLogger.log.i('Primary engine failed for $videoId, trying failover...');
+          AppLogger.reportError(e, stack);
+          manifest = await EngineFailover.tryEngines(
+            engines: allEngines,
+            operation: (engine) => engine.getStreamManifest(videoId),
+            onRetry: (msg, attempt) {
+              AppLogger.log.i('Engine retry: $msg (attempt $attempt)');
+            },
+          );
+        }
         AppLogger.log.i(
-          'Got manifest for $videoId: ${manifest.audioOnly.length} audio streams before filtering',
+          'Got manifest for $videoId: ${manifest.audioOnly.length} audio streams',
         );
         final filteredStreams = YouTubeAudioQualityService.filterStreams(
           manifest.audioOnly,
@@ -1056,6 +1082,31 @@ class _NativeAudioSource extends MetadataPluginAudioSourceEndpoint {
           AppLogger.log.w('Failed to get YouTube streams for $videoId: ${e.toString()}');
         }
         AppLogger.reportError(e, stack);
+
+        // Self-healing: retry once more. The first attempt may have been
+        // killed by yt-dlp component download timeout; the second attempt
+        // succeeds because components are now cached.
+        try {
+          AppLogger.log.i('Retrying stream extraction for $videoId...');
+          final retryManifest = await EngineFailover.tryEngines(
+            engines: allEngines,
+            operation: (eng) => eng.getStreamManifest(videoId),
+          );
+          final retryStreams = YouTubeAudioQualityService.filterStreams(retryManifest.audioOnly);
+          if (retryStreams.isNotEmpty) {
+            AppLogger.log.i('Retry succeeded: ${retryStreams.length} streams for $videoId');
+            return retryStreams
+                .map((s) => DeeMusiqAudioSourceStreamObject(
+                  url: s.url.toString(),
+                  container: s.container.name,
+                  type: DeeMusiqMediaCompressionType.lossy,
+                  bitrate: s.bitrate.bitsPerSecond.toDouble(),
+                ))
+                .toList();
+          }
+        } catch (retryErr) {
+          AppLogger.log.w('Retry also failed for $videoId: $retryErr');
+        }
         return const [];
       }
     }

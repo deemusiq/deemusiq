@@ -1,13 +1,19 @@
 import 'dart:async';
 
+import 'package:flutter/material.dart' hide Theme, Colors;
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/extensions/context.dart';
+import 'package:deemusiq/provider/audio_player/audio_player.dart';
+import 'package:deemusiq/provider/audio_player/state.dart';
+import 'package:deemusiq/provider/database/database.dart';
 import 'package:deemusiq/provider/server/routes/connect.dart';
 import 'package:deemusiq/services/audio_player/audio_player.dart';
+import 'package:deemusiq/services/audio_player/audio_error_handler.dart';
 import 'package:deemusiq/services/connectivity_adapter.dart';
+import 'package:deemusiq/services/queue/playback_queue.dart';
 import 'package:deemusiq/utils/service_utils.dart';
 
 void useGlobalSubscriptions(WidgetRef ref) {
@@ -19,6 +25,46 @@ void useGlobalSubscriptions(WidgetRef ref) {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       ServiceUtils.checkForUpdates(context, ref);
     });
+
+    // Surface audio errors as user-visible toasts so "nothing happens" on
+    // playback failure is actually visible to the user.
+    AudioErrorHandler.instance.onUserMessage =
+        (String message, AudioErrorSeverity severity) {
+      if (!context.mounted) return;
+      final color = severity == AudioErrorSeverity.error
+          ? theme.colorScheme.destructive
+          : severity == AudioErrorSeverity.warning
+              ? Colors.yellow[600]
+              : null;
+      showToast(
+        context: context,
+        location: ToastLocation.topRight,
+        builder: (ctx, overlay) {
+          return SurfaceCard(
+            fillColor: color,
+            filled: color != null,
+            child: Basic(
+              leading: Icon(
+                severity == AudioErrorSeverity.error
+                    ? DeeMusiqIcons.error
+                    : DeeMusiqIcons.info,
+                color: color != null ? Colors.white : null,
+                size: 14,
+              ),
+              title: Text(
+                message,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: color != null ? Colors.white : null,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    };
 
     StreamSubscription? audioPlayerSubscription;
     bool pausedByStream = false;
@@ -118,10 +164,38 @@ void useGlobalSubscriptions(WidgetRef ref) {
       })
     ];
 
+    final lifecycleWatcher = LifecycleWatcher(ref: ref);
+    WidgetsBinding.instance.addObserver(lifecycleWatcher);
+
     return () {
+      WidgetsBinding.instance.removeObserver(lifecycleWatcher);
+      AudioErrorHandler.instance.onUserMessage = null;
       for (final subscription in subscriptions) {
         subscription.cancel();
       }
     };
   }, []);
+}
+
+class LifecycleWatcher extends WidgetsBindingObserver {
+  final WidgetRef ref;
+  LifecycleWatcher({required this.ref});
+
+  @override
+  Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
+    if (state == AppLifecycleState.paused) {
+      final tracks = ref.read(audioPlayerProvider).tracks;
+      if (tracks.isNotEmpty) {
+        await PlaybackQueue.saveQueue(ref.read(databaseProvider), tracks);
+      }
+    } else if (state == AppLifecycleState.resumed) {
+      final currentTracks = ref.read(audioPlayerProvider).tracks;
+      if (currentTracks.isEmpty) {
+        final saved = await PlaybackQueue.loadQueue(ref.read(databaseProvider));
+        if (saved != null && saved.isNotEmpty) {
+          await ref.read(audioPlayerProvider.notifier).load(saved, autoPlay: true);
+        }
+      }
+    }
+  }
 }

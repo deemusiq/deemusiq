@@ -1,8 +1,12 @@
+import 'dart:convert';
+
+import 'package:deemusiq/models/database/database.dart';
 import 'package:deemusiq/models/metadata/metadata.dart';
 import 'package:deemusiq/provider/audio_player/audio_player.dart';
 import 'package:deemusiq/provider/audio_player/state.dart';
 import 'package:deemusiq/services/audio_player/audio_player.dart';
 import 'package:deemusiq/services/logger/logger.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 /// High-level playback queue manager that wraps [AudioPlayerNotifier].
@@ -106,6 +110,50 @@ class PlaybackQueue {
   /// Skip to the previous track in the queue.
   Future<void> skipPrevious() async {
     await audioPlayer.skipToPrevious();
+  }
+
+  static Future<void> saveQueue(AppDatabase database, List<DeeMusiqTrackObject> tracks) async {
+    final existing =
+        await database.select(database.audioPlayerStateTable).getSingleOrNull();
+    if (existing != null) {
+      await (database.update(database.audioPlayerStateTable)
+            ..where((tb) => tb.id.equals(0)))
+          .write(AudioPlayerStateTableCompanion(
+        tracks: Value(tracks),
+      ));
+    } else {
+      await database.into(database.audioPlayerStateTable).insert(
+            AudioPlayerStateTableCompanion.insert(
+              playing: false,
+              loopMode: audioPlayer.loopMode,
+              shuffled: audioPlayer.isShuffled,
+              collections: const <String>[],
+              tracks: Value(tracks),
+              currentIndex: Value(0),
+              id: const Value(0),
+            ),
+          );
+    }
+  }
+
+  static Future<List<DeeMusiqTrackObject>?> loadQueue(AppDatabase database) async {
+    final state = await database
+        .select(database.audioPlayerStateTable)
+        .getSingleOrNull();
+    if (state == null || state.tracks.isEmpty) return null;
+    return state.tracks;
+  }
+
+  static Future<void> clearQueue(AppDatabase database) async {
+    final existing =
+        await database.select(database.audioPlayerStateTable).getSingleOrNull();
+    if (existing != null) {
+      await (database.update(database.audioPlayerStateTable)
+            ..where((tb) => tb.id.equals(0)))
+          .write(const AudioPlayerStateTableCompanion(
+        tracks: Value([]),
+      ));
+    }
   }
 }
 

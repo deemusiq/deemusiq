@@ -31,7 +31,10 @@ mixin PaginatedAsyncNotifierMixin<K>
       state = AsyncData(newState.copyWith(items: <K>[...oldItems, ...items]));
     } catch (e, stack) {
       AppLogger.reportError(e, stack);
-      state = AsyncData(oldState!);
+      // Keep old state on error — fetchMore is best-effort
+      if (oldState != null) {
+        state = AsyncData(oldState);
+      }
     }
   }
 

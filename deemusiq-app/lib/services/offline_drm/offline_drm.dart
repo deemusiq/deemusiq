@@ -41,41 +41,48 @@ class OfflineTrackEncryption {
     if (_cachedKey != null) return _cachedKey!;
 
     final secureStorage = EncryptedKvStoreService.storage;
-    final existing = await secureStorage.read(key: _keyAlias);
-    // 48 raw bytes (32 key + 16 IV) → 64 base64 chars
-    if (existing != null && existing.length >= 64) {
-      try {
-        final decoded = base64Decode(existing);
-        if (decoded.length < 48) {
-          AppLogger.log.w('OfflineDRM: stored key too short (${decoded.length} bytes), regenerating');
-          throw FormatException('Key too short');
+    try {
+      final existing = await secureStorage.read(key: _keyAlias);
+      if (existing != null && existing.length >= 64) {
+        try {
+          final decoded = base64Decode(existing);
+          if (decoded.length < 48) {
+            AppLogger.log.w('OfflineDRM: stored key too short (${decoded.length} bytes), regenerating');
+            throw FormatException('Key too short');
+          }
+          _cachedKey = enc.Key(decoded.sublist(0, 32));
+          _cachedIV = enc.IV(decoded.sublist(32, 48));
+          return _cachedKey!;
+        } catch (e, stack) {
+          AppLogger.reportError(e, stack, 'OfflineDRM: corrupt stored key, regenerating');
+          // Corrupt stored key — regenerate
         }
-        _cachedKey = enc.Key(decoded.sublist(0, 32));
-        _cachedIV = enc.IV(decoded.sublist(32, 48));
-        return _cachedKey!;
-      } catch (_) {
-        // Corrupt stored key — regenerate
       }
+
+      final keyBytes = _secureBytes(32);
+      final ivBytes = _secureBytes(16);
+      _cachedKey = enc.Key(keyBytes);
+      _cachedIV = enc.IV(ivBytes);
+
+      final combined = Uint8List(48);
+      combined.setAll(0, keyBytes);
+      combined.setAll(32, ivBytes);
+      await secureStorage.write(key: _keyAlias, value: base64Encode(combined));
+
+      return _cachedKey!;
+    } catch (e, stack) {
+      AppLogger.log.w('Offline DRM key derivation failed: ${e.toString()}');
+      AppLogger.reportError(e, stack);
+      _cachedIV = null;
+      _cachedKey = null;
+      rethrow;
     }
-
-    // First run: generate a fresh random key + IV
-    final keyBytes = _secureBytes(32);
-    final ivBytes = _secureBytes(16);
-    _cachedKey = enc.Key(keyBytes);
-    _cachedIV = enc.IV(ivBytes);
-
-    final combined = Uint8List(48);
-    combined.setAll(0, keyBytes);
-    combined.setAll(32, ivBytes);
-    await secureStorage.write(key: _keyAlias, value: base64Encode(combined));
-
-    return _cachedKey!;
   }
 
-  Future<enc.IV> _iv() async {
-    if (_cachedIV != null) return _cachedIV!;
-    await _key();
-    return _cachedIV!;
+  static void _zeroBuffer(Uint8List buffer) {
+    for (var i = 0; i < buffer.length; i++) {
+      buffer[i] = 0;
+    }
   }
 
   /// Encrypts [plainBytes] and writes to [outputPath] (appending `.deemusiq`).
@@ -85,10 +92,15 @@ class OfflineTrackEncryption {
   /// The file is always written to the app's download directory.
   Future<String> encryptAndSave(Uint8List plainBytes, String outputPath) async {
     final key = await _key();
-    final iv = await _iv();
+    final iv = enc.IV.fromSecureRandom(12);
 
     final encrypter = enc.Encrypter(enc.AES(key, mode: enc.AESMode.gcm));
     final encrypted = encrypter.encryptBytes(plainBytes, iv: iv);
+
+    final combined = Uint8List(iv.bytes.length + encrypted.bytes.length);
+    combined.setAll(0, iv.bytes);
+    combined.setAll(iv.bytes.length, encrypted.bytes);
+    _zeroBuffer(iv.bytes);
 
     // Sanitize the output path against path traversal: extract only the base
     // filename (basename) and discard any directory components. This prevents
@@ -103,7 +115,7 @@ class OfflineTrackEncryption {
     // accidental writes to unpredictable locations.
     final dir = await getApplicationDocumentsDirectory();
     final fullPath = '${dir.path}/$encodedName';
-    await File(fullPath).writeAsBytes(encrypted.bytes);
+    await File(fullPath).writeAsBytes(combined);
     AppLogger.log.i('Encrypted offline track: $fullPath');
     return fullPath;
   }
@@ -135,7 +147,6 @@ class OfflineTrackEncryption {
   /// [encryptedPath] may be a full path or just a filename; it is sanitized
   /// and resolved relative to the app's documents directory.
   Future<Uint8List> decrypt(String encryptedPath) async {
-    // Sanitize path against traversal — extract only the safe basename
     final safeName = _sanitizeFileName(encryptedPath);
     final dir = await getApplicationDocumentsDirectory();
     final fullPath = '${dir.path}/$safeName';
@@ -151,11 +162,22 @@ class OfflineTrackEncryption {
     }
 
     final key = await _key();
-    final iv = await _iv();
-
     final encrypter = enc.Encrypter(enc.AES(key, mode: enc.AESMode.gcm));
+
     try {
-      final decrypted = encrypter.decryptBytes(enc.Encrypted(raw), iv: iv);
+      if (raw.length >= 28) {
+        final iv = enc.IV(raw.sublist(0, 12));
+        final ciphertext = enc.Encrypted(raw.sublist(12));
+        final decrypted = encrypter.decryptBytes(ciphertext, iv: iv);
+        _zeroBuffer(iv.bytes);
+        return Uint8List.fromList(decrypted);
+      }
+    } catch (_) {}
+
+    await _key();
+    final legacyIv = _cachedIV!;
+    try {
+      final decrypted = encrypter.decryptBytes(enc.Encrypted(raw), iv: legacyIv);
       return Uint8List.fromList(decrypted);
     } catch (e) {
       throw OfflineTrackDecryptException(
@@ -165,13 +187,6 @@ class OfflineTrackEncryption {
   }
 
   bool isEncryptedTrack(String path) => path.endsWith(_encryptedExtension);
-
-  } catch (e, stack) {
-    AppLogger.log.w('Offline DRM key derivation failed: ${e.toString()}');
-    AppLogger.reportError(e, stack);
-    _cachedIV = null;
-    _cachedKey = null;
-    _cachedKeyStr = null;
 
   static Uint8List _secureBytes(int length) {
     final random = Random.secure();

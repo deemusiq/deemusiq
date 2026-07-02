@@ -1,17 +1,21 @@
 import 'dart:convert';
 
 import 'package:encrypt/encrypt.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:deemusiq/models/database/database.dart';
 import 'package:deemusiq/services/wm_tools/wm_tools.dart';
+import 'package:deemusiq/services/kv_store/encrypted_kv_store.dart';
 import 'package:uuid/uuid.dart';
 
 abstract class KVStoreService {
   static SharedPreferences? _sharedPreferences;
   static SharedPreferences get sharedPreferences => _sharedPreferences!;
+  static bool _encryptedReady = false;
 
   static Future<void> initialize() async {
     _sharedPreferences = await SharedPreferences.getInstance();
+    _encryptedReady = true;
   }
 
   static bool get doneGettingStarted =>
@@ -20,16 +24,45 @@ abstract class KVStoreService {
       await sharedPreferences.setBool('doneGettingStarted', value);
 
   /// SA FPB Act compliance: age verification for explicit content.
-  static bool get ageVerified =>
-      sharedPreferences.getBool('ageVerified') ?? false;
+  /// Stored in platform keystore (flutter_secure_storage) — not plain prefs.
+  static bool get ageVerified => _ageVerifiedSync;
+  static bool _ageVerifiedSync = false;
+
+  static Future<bool> _readEncryptedBool(String key) async {
+    if (!_encryptedReady) return false;
+    try {
+      final v = await EncryptedKvStoreService.storage.read(key: key);
+      return v == 'true';
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<void> _writeEncryptedBool(String key, bool value) async {
+    if (!_encryptedReady) return;
+    try {
+      await EncryptedKvStoreService.storage.write(key: key, value: value.toString());
+      if (key == 'ageVerified') _ageVerifiedSync = value;
+    } catch (_) {
+      // fallback to plain prefs if secure storage unavailable
+      await sharedPreferences.setBool(key, value);
+      if (key == 'ageVerified') _ageVerifiedSync = value;
+    }
+  }
+
+  static Future<void> loadEncryptedFlags() async {
+    _ageVerifiedSync = await _readEncryptedBool('ageVerified');
+  }
+
   static Future<void> setAgeVerified(bool value) async =>
-      await sharedPreferences.setBool('ageVerified', value);
+      await _writeEncryptedBool('ageVerified', value);
 
   /// SA POPIA Act compliance: privacy consent.
-  static bool get privacyConsentGiven =>
-      sharedPreferences.getBool('privacyConsentGiven') ?? false;
+  /// Stored in platform keystore — not plain prefs.
+  static Future<bool> get privacyConsentGiven async =>
+      await _readEncryptedBool('privacyConsentGiven');
   static Future<void> setPrivacyConsentGiven(bool value) async =>
-      await sharedPreferences.setBool('privacyConsentGiven', value);
+      await _writeEncryptedBool('privacyConsentGiven', value);
 
   static bool get askedForBatteryOptimization =>
       sharedPreferences.getBool('askedForBatteryOptimization') ?? false;
@@ -39,8 +72,15 @@ abstract class KVStoreService {
   static List<String> get recentSearches =>
       sharedPreferences.getStringList('recentSearches') ?? [];
 
-  static Future<void> setRecentSearches(List<String> value) async =>
-      await sharedPreferences.setStringList('recentSearches', value);
+  static Future<void> setRecentSearches(List<String> value) async {
+    final controlCharPattern = RegExp(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]');
+    final sanitized = value
+        .map((e) => e.replaceAll(controlCharPattern, ''))
+        .map((e) => e.length > 200 ? e.substring(0, 200) : e)
+        .take(50)
+        .toList();
+    await sharedPreferences.setStringList('recentSearches', sanitized);
+  }
 
   static WindowSize? get windowSize {
     final raw = sharedPreferences.getString('windowSize');

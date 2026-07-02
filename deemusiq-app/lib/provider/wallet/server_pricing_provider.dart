@@ -2,6 +2,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:deemusiq/models/wallet/token_pack.dart';
 import 'package:deemusiq/provider/wallet/region_provider.dart';
 import 'package:deemusiq/services/wallet/wallet_api.dart';
+import 'package:deemusiq/services/logger/logger.dart';
 
 /// A token pack as priced by the backend (`GET /pricing`): authoritative,
 /// region-adjusted and possibly live-FX corrected. Mirrors the backend's

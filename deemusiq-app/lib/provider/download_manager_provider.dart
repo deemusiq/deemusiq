@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
+import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:metadata_god/metadata_god.dart';
@@ -166,6 +167,11 @@ class DownloadManagerNotifier extends Notifier<List<DownloadTask>> {
         DownloadStatus.failed) {
       return;
     }
+    // Ensure the cancel token is signaled before updating status to canceled.
+    final task = state.firstWhereOrNull((e) => e.track.id == track.id);
+    if (task != null && !task.cancelToken.isCancelled) {
+      task.cancelToken.cancel();
+    }
     _setStatus(track, DownloadStatus.canceled);
   }
 
@@ -181,7 +187,7 @@ class DownloadManagerNotifier extends Notifier<List<DownloadTask>> {
   void _setStatus(DeeMusiqFullTrackObject track, DownloadStatus status) {
     state = state.map((e) {
       if (e.track.id == track.id) {
-        if ((status == DownloadStatus.canceled) && e.cancelToken.isCancelled) {
+        if ((status == DownloadStatus.canceled) && !e.cancelToken.isCancelled) {
           e.cancelToken.cancel();
         }
 
@@ -271,6 +277,21 @@ class DownloadManagerNotifier extends Notifier<List<DownloadTask>> {
       );
       if (response.statusCode != null && response.statusCode! < 400) {
         _setStatus(track.query, DownloadStatus.completed);
+
+        final downloadedBytes = await savePathFile.readAsBytes();
+        final digest = sha256.convert(downloadedBytes);
+        final actualHash = digest.toString();
+
+        final expectedHash = response.headers.value('x-content-sha256');
+        if (expectedHash != null && actualHash != expectedHash) {
+          await savePathFile.delete();
+          _setStatus(track.query, DownloadStatus.failed);
+          AppLogger.log.w(
+            'Download hash mismatch for ${task.track.name}: '
+            'expected $expectedHash, got $actualHash',
+          );
+          return;
+        }
       } else {
         _setStatus(track.query, DownloadStatus.failed);
         return;

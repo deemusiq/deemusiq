@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:desktop_webview_window/desktop_webview_window.dart';
@@ -45,6 +46,7 @@ import 'package:deemusiq/services/kv_store/encrypted_kv_store.dart';
 import 'package:deemusiq/services/kv_store/kv_store.dart';
 import 'package:deemusiq/services/logger/logger.dart';
 import 'package:deemusiq/services/wm_tools/wm_tools.dart';
+import 'package:deemusiq/utils/deep_link_handler.dart';
 import 'package:deemusiq/utils/migrations/sandbox.dart';
 import 'package:deemusiq/utils/platform.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -54,6 +56,7 @@ import 'package:window_manager/window_manager.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:yt_dlp_dart/yt_dlp_dart.dart';
 import 'package:flutter_new_pipe_extractor/flutter_new_pipe_extractor.dart';
+import 'package:deemusiq/services/youtube_engine/yt_dlp_engine.dart';
 
 Future<void> main(List<String> rawArgs) async {
   if (rawArgs.contains("web_view_title_bar")) {
@@ -67,6 +70,26 @@ Future<void> main(List<String> rawArgs) async {
 
   AppLogger.runZoned(() async {
     final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+
+    // Clean up stale deemusiq server sockets from a previous run that may
+    // still be holding ports 8000 or the random streaming port range.
+    if (kIsDesktop) {
+      try {
+        final result = await Process.run('bash', [
+          '-c',
+          r'''ss -tlnp 2>/dev/null | awk '/:8000|:(1[0-9]{3}|2[0-2][0-9]{2})/{match($0,/pid=([0-9]+)/,a); if(a[1]) print a[1]}' | sort -u''',
+        ]);
+        for (final line in result.stdout.toString().trim().split('\n')) {
+          final pidStr = line.trim();
+          if (pidStr.isNotEmpty) {
+            try {
+              Process.killPid(int.parse(pidStr));
+              AppLogger.log.i('Cleaned up stale server on pid $pidStr');
+            } catch (_) {}
+          }
+        }
+      } catch (_) {}
+    }
 
     // SECURITY: HttpOverrides with backend TLS certificate pinning.
     // DeeMusiqHttpOverrides enforces DEEMUSIQ_SERVER_CERT_SHA256 (when set)
@@ -99,6 +122,22 @@ Future<void> main(List<String> rawArgs) async {
 
     await KVStoreService.initialize();
 
+    if (kIsDesktop || kIsAndroid) {
+      try {
+        final cacheDir = Directory(await UserPreferencesNotifier.getMusicCacheDir());
+        if (await cacheDir.exists()) {
+          await for (final f in cacheDir.list()) {
+            if (f is File && f.path.endsWith('.part')) {
+              try {
+                await f.delete();
+                AppLogger.log.d('Cleaned stale .part file: ${f.path}');
+              } catch (_) {}
+            }
+          }
+        }
+      } catch (_) {}
+    }
+
     // Anti-tamper boot gate (Android, offline): refuse to run a build signed
     // with a certificate other than the pinned release certificate. No-op until
     // a permanent keystore + DEEMUSIQ_CERT_SHA256 are configured (see
@@ -114,12 +153,13 @@ Future<void> main(List<String> rawArgs) async {
       await YtDlp.instance
           .setBinaryLocation(
             KVStoreService.getYoutubeEnginePath(YoutubeClientEngine.ytDlp) ??
-                "yt-dlp${kIsWindows ? '.exe' : ''}",
+                "/usr/bin/yt-dlp",
           )
           .catchError((e, stack) {
             AppLogger.log.w('YtDlp binary location failed: ${e.toString()}');
             AppLogger.reportError(e, stack, 'YtDlp setBinaryLocation');
           });
+
       await FlutterDiscordRPC.initialize(Env.discordAppId);
     }
 
@@ -128,6 +168,27 @@ Future<void> main(List<String> rawArgs) async {
     }
 
     await EncryptedKvStoreService.initialize();
+
+    await KVStoreService.loadEncryptedFlags();
+
+    // Pre-warm yt-dlp: download JS challenge solver components during splash.
+    // Block up to 15s — the native splash screen covers this wait visually.
+    if (kIsDesktop) {
+      try {
+        // Pre-warm yt-dlp by extracting a known-good video during splash.
+        // First call downloads ~2MB JS solver components; subsequent calls are instant.
+        await YtDlp.instance.extractInfoString(
+          "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+          formatSpecifiers: "%(title)s",
+          extraArgs: const [
+            "--no-check-certificate", "--quiet", "--ignore-errors",
+            "--remote-components", "ejs:github",
+          ],
+        ).timeout(const Duration(seconds: 45));
+      } catch (e) {
+        AppLogger.log.w('YtDlp warmup failed (non-critical): $e');
+      }
+    }
 
     final database = AppDatabase();
 
@@ -171,6 +232,10 @@ class DeeMusiq extends HookConsumerWidget {
     final accentMaterialColor =
         ref.watch(userPreferencesProvider.select((s) => s.accentColorScheme));
     final router = useMemoized(() => AppRouter(ref), []);
+    useEffect(() {
+      DeepLinkHandler.setup(router);
+      return () => DeepLinkHandler.dispose();
+    }, []);
     final hasTouchSupport = useHasTouch();
 
     ref.listen(audioPlayerStreamListenersProvider, (_, __) {});
@@ -196,9 +261,10 @@ class DeeMusiq extends HookConsumerWidget {
       }
 
       return () {
-        /// For enabling hot reload for audio player
         if (!kDebugMode) return;
-        audioPlayer.dispose();
+        audioPlayer.dispose().then((_) {
+          MediaKit.ensureInitialized();
+        });
       };
     }, []);
 

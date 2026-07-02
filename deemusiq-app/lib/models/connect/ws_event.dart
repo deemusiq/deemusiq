@@ -22,7 +22,7 @@ enum WsEvent {
   stop;
 
   static WsEvent fromString(String value) {
-    return WsEvent.values.firstWhere((e) => e.name == value);
+    return WsEvent.values.firstWhere((e) => e.name == value, orElse: () => WsEvent.error);
   }
 }
 

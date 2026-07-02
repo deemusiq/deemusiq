@@ -26,6 +26,8 @@ class WalletApiClient {
 
   static const _deviceKey = "deemusiq_device_id";
 
+  static const _validProviders = {'spotify'};
+
   bool get isConfigured => PaymentGatewayConfig.backendBaseUrl.isNotEmpty;
 
   Dio _client() {
@@ -103,6 +105,8 @@ class WalletApiClient {
   void logout() {
     _token = null;
   }
+
+  bool hasToken() => _token != null;
 
   /// Cheap reachability probe. Returns true only when a backend is configured
   /// AND answers `/health` — the single gate for online-only features
@@ -301,9 +305,13 @@ class WalletApiClient {
   /// Disconnects a linked provider on the backend
   /// (`DELETE /link/accounts/:provider`).
   Future<void> unlinkAccount(String provider) async {
+    if (!_validProviders.contains(provider)) {
+      throw WalletApiException('Invalid provider');
+    }
+    final encoded = Uri.encodeComponent(provider);
     try {
       await _client().delete(
-        "/link/accounts/$provider",
+        "/link/accounts/$encoded",
         options: await _authed(),
       );
     } on DioException catch (e) {
@@ -399,9 +407,13 @@ class WalletApiClient {
 
   /// Returns the provider OAuth URL the app should open in a browser.
   Future<String> startLinking(String provider) async {
+    if (!_validProviders.contains(provider)) {
+      throw WalletApiException('Invalid provider');
+    }
+    final encoded = Uri.encodeComponent(provider);
     try {
       final res = await _client().get(
-        "/link/$provider/start",
+        "/link/$encoded/start",
         options: await _authed(),
       );
       return (res.data as Map)["url"] as String;

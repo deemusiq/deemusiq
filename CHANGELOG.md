@@ -5,6 +5,37 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### 2026-07-02 — Audit fixes: security hardening, dependency hygiene, and privacy compliance
+
+#### Backend
+- **Prisma 7 upgrade** — migrated from Prisma 6 to Prisma 7 with updated client generators and schema syntax.
+- **ContentReport model** — added `ContentReport` model to the schema for flagging inappropriate or infringing content.
+- **Artist model** — added `Artist` model with profile metadata, social links, and bio fields.
+- **Rate limiting** — tightened rate limits on auth and payment endpoints to prevent brute-force enumeration.
+- **Public catalog endpoint** — `GET /catalog/public` returns approved tracks without authentication for the marketing site.
+- **Field name fixes** — corrected inconsistent field names across Prisma schema, API routes, and client code.
+
+#### Flutter (deemusiq-app)
+- **4 dead dependencies removed** — dropped `hetu_script`, `hetu_std`, `hetu_otp_util`, and `hetu_spotube_plugin` from the dependency tree entirely.
+- **14 git dependencies pinned to commits** — all git-based dependencies now locked to specific commit hashes for reproducible builds.
+- **2 missing dependencies added** — restored `crypto` and `encrypt` packages that were referenced in code but absent from pubspec.
+- **AES-GCM fix** — offline DRM encryption corrected from CBC to GCM (authenticated encryption) in `offline_drm.dart`.
+- **Age gate hardened** — age-verification dialog now uses a server-authoritative challenge instead of a locally-stored boolean.
+- **Replay protection** — nonce-based replay protection added to wallet push/support requests.
+- **WebSocket rate limiting** — added per-connection message rate limits to prevent WebSocket flooding.
+- **Download hash verification** — APK SHA-256 hash checked against GitHub release assets before allowing downloads.
+- **Cancel state fix** — download cancellation no longer leaks the download stream or leaves orphaned temp files.
+- **Input sanitization** — search queries and playlist names sanitized to prevent injection through catalog API calls.
+- **Provider validation** — payment provider config validated at startup; misconfigured providers show a clear error instead of a silent failure.
+
+#### Site (deemusiq-site)
+- **Google Fonts privacy note** — added `TODO: self-host fonts for privacy` comment above Google Fonts `<link>` tags.
+- **Breach notification section** — added "Data Breach Notification" section to privacy policy (POPIA 72-hour notification commitment, reporting contact).
+
+#### Build
+- **Zero analysis errors** — `flutter analyze` passes clean with no errors or warnings.
+- **Linux binary built** — `deemusiq` Linux binary verified with `--release` profile; `.deb`, `.AppImage`, and `.tar.gz` packages confirmed.
+
 ### 2026-07-01 — Update checker hardening + release integrity
 
 #### Fixed

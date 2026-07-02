@@ -27,13 +27,16 @@ class DeeMusiqMedia extends mk.Media {
           track is DeeMusiqLocalTrackObject || track is DeeMusiqFullTrackObject,
           "Track must be a either a local track or a full track object with ISRC",
         ),
-        // If the track is a local track, use its path, otherwise use the server URL
         super(
           track is DeeMusiqLocalTrackObject
               ? track.path
-              : "http://$_host:$serverPort/stream/${track.id}",
+              : "http://$_host:${serverPort == 0 ? -1 : serverPort}/stream/${track.id}",
           extras: track.toJson(),
-        );
+        ) {
+    if (serverPort == 0 && track is! DeeMusiqLocalTrackObject) {
+      AppLogger.log.w('DeeMusiqMedia: serverPort is 0, using -1');
+    }
+  }
 
   factory DeeMusiqMedia.media(Media media) {
     assert(media.extras != null, "[Media] must have extra metadata set");
@@ -52,16 +55,17 @@ abstract class AudioPlayerInterface {
             async: true,
           ),
         ) {
-    _mkPlayer.stream.error.listen((event) {
-      AppLogger.log.e('AudioPlayer error: $event');
-      AppLogger.reportError(event, StackTrace.current, 'AudioPlayer error');
-      AudioErrorHandler.instance.handleError(
-        event is Exception ? event : Exception(event.toString()),
-        StackTrace.current,
-        context: 'AudioPlayer stream',
-        canSkipTrack: true,
-      );
-    });
+    // Duplicate subscription removed — CustomPlayer._onMediaKitError handles this.
+    // _mkPlayer.stream.error.listen((event) {
+    //   AppLogger.log.e('AudioPlayer error: $event');
+    //   AppLogger.reportError(event, StackTrace.current, 'AudioPlayer error');
+    //   AudioErrorHandler.instance.handleError(
+    //     event is Exception ? event : Exception(event.toString()),
+    //     StackTrace.current,
+    //     context: 'AudioPlayer stream',
+    //     canSkipTrack: true,
+    //   );
+    // });
 
     // Wire up the error handler's retry/skip callbacks to this player
     AudioErrorHandler.instance.onSkipRequested = () {

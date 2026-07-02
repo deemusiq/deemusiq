@@ -12,6 +12,7 @@ import 'package:deemusiq/utils/platform.dart';
 class AudioServices with WidgetsBindingObserver {
   final MobileAudioService? mobile;
   final WindowsAudioService? smtc;
+  bool _wasPlaying = false;
 
   AudioServices(this.mobile, this.smtc) {
     WidgetsBinding.instance.addObserver(this);
@@ -71,9 +72,23 @@ class AudioServices with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     switch (state) {
-      case AppLifecycleState.detached:
-        deactivateSession();
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+        _wasPlaying = audioPlayer.isPlaying;
         audioPlayer.pause();
+        deactivateSession();
+        break;
+      case AppLifecycleState.detached:
+        _wasPlaying = audioPlayer.isPlaying;
+        audioPlayer.pause();
+        deactivateSession();
+        break;
+      case AppLifecycleState.resumed:
+        activateSession();
+        if (_wasPlaying) {
+          audioPlayer.resume();
+          _wasPlaying = false;
+        }
         break;
       default:
         break;

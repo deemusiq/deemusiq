@@ -1,5 +1,6 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
+import 'package:deemusiq/components/fallbacks/error_box.dart';
 import 'package:deemusiq/components/horizontal_playbutton_card_view/horizontal_playbutton_card_view.dart';
 import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/pages/search/search.dart';
@@ -15,6 +16,15 @@ class SearchPlaylistsSection extends HookConsumerWidget {
     final searchTerm = ref.watch(searchTermStateProvider);
     final playlistsQuery =
         ref.watch(metadataPluginSearchAllProvider(searchTerm));
+
+    if (playlistsQuery.hasError) {
+      return ErrorBox(
+        error: playlistsQuery.error!,
+        onRetry: () =>
+            ref.invalidate(metadataPluginSearchAllProvider(searchTerm)),
+      );
+    }
+
     final playlists = playlistsQuery.asData?.value.playlists ?? [];
 
     return HorizontalPlaybuttonCardView(

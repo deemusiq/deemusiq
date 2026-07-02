@@ -176,65 +176,27 @@ class MetadataPluginNotifier extends AsyncNotifier<MetadataPluginState> {
     // backend provider (kDeeMusiqNativePluginConfig). No assets to load.
   }
 
-  Uri _getGithubReleasesUrl(String repoUrl) {
-    final parsedUri = Uri.parse(repoUrl);
-    final uri = parsedUri.replace(
-      host: "api.github.com",
-      pathSegments: [
-        "repos",
-        ...parsedUri.pathSegments,
-        "releases",
-      ],
-      queryParameters: {
-        "per_page": "1",
-        "page": "1",
-      },
-    );
+  // External .smplug plugin system removed — the following methods are dead.
+  // They remain as stubs to avoid breaking imports/compile.
 
-    return uri;
+  Uri _getGithubReleasesUrl(String repoUrl) {
+    throw UnimplementedError('External plugin system removed');
   }
 
   Uri _getCodebergeReleasesUrl(String repoUrl) {
-    final parsedUri = Uri.parse(repoUrl);
-    final uri = parsedUri.replace(
-      pathSegments: [
-        "api",
-        "v1",
-        "repos",
-        ...parsedUri.pathSegments,
-        "releases",
-      ],
-      queryParameters: {
-        "limit": "1",
-        "page": "1",
-      },
-    );
-
-    return uri;
+    throw UnimplementedError('External plugin system removed');
   }
 
   Future<String> _getPluginDownloadUrl(Uri uri) async {
-    AppLogger.log.i("Getting plugin download URL from: $uri");
-    final res = await globalDio.getUri(
-      uri,
-      options: Options(responseType: ResponseType.json),
-    );
+    throw UnimplementedError('External plugin system removed');
+  }
 
-    if (res.statusCode != 200) {
-      throw MetadataPluginException.failedToGetRelease();
-    }
-    final releases = res.data as List;
-    if (releases.isEmpty) {
-      throw MetadataPluginException.noReleasesFound();
-    }
-    final latestRelease = releases.first;
-    final downloadUrl = (latestRelease["assets"] as List).firstWhere(
-      (asset) => (asset["name"] as String).endsWith(".smplug"),
-    )["browser_download_url"];
-    if (downloadUrl == null) {
-      throw MetadataPluginException.assetUrlNotFound();
-    }
-    return downloadUrl;
+  Future<PluginConfiguration> extractPluginArchive(List<int> bytes) async {
+    throw UnimplementedError('External plugin system removed');
+  }
+
+  Future<PluginConfiguration> downloadAndCachePlugin(String url) async {
+    throw UnimplementedError('External plugin system removed');
   }
 
   /// Root directory where all metadata plugins are stored.
@@ -257,82 +219,6 @@ class MetadataPluginNotifier extends AsyncNotifier<MetadataPluginState> {
     return Directory(pluginExtractionDirPath);
   }
 
-  Future<PluginConfiguration> extractPluginArchive(List<int> bytes) async {
-    final archive = ZipDecoder().decodeBytes(bytes);
-    final pluginJson = archive
-        .firstWhereOrNull((file) => file.isFile && file.name == "plugin.json");
-
-    if (pluginJson == null) {
-      throw MetadataPluginException.pluginConfigJsonNotFound();
-    }
-    final pluginConfig = PluginConfiguration.fromJson(
-      jsonDecode(
-        utf8.decode(pluginJson.content as List<int>),
-      ) as Map<String, dynamic>,
-    );
-
-    final pluginDir = await _getPluginRootDir();
-    await pluginDir.create(recursive: true);
-
-    final pluginExtractionDir = await _getPluginExtractionDir(pluginConfig);
-
-    for (final file in archive) {
-      if (file.isFile) {
-        final filename = file.name;
-        final data = file.content as List<int>;
-        final extractedFile = File(join(
-          pluginExtractionDir.path,
-          filename,
-        ));
-        await extractedFile.create(recursive: true);
-        await extractedFile.writeAsBytes(data);
-      }
-    }
-
-    return pluginConfig;
-  }
-
-  /// Downloads, extracts & caches the plugin from the given URL and returns the plugin config.
-  /// If only a text/html URL is provided, it will try to get the latest release from
-  /// the URL for supported websites (github.com, codeberg.org).
-  Future<PluginConfiguration> downloadAndCachePlugin(String url) async {
-    final res = await globalDio.head(url);
-    final isSupportedWebsite =
-        (res.headers["Content-Type"]?.first)?.startsWith("text/html") == true &&
-            allowedDomainsRegex.hasMatch(url);
-    String pluginDownloadUrl = url;
-    if (isSupportedWebsite) {
-      if (url.contains("github.com")) {
-        final uri = _getGithubReleasesUrl(url);
-        pluginDownloadUrl = await _getPluginDownloadUrl(uri);
-      } else if (url.contains("codeberg.org")) {
-        final uri = _getCodebergeReleasesUrl(url);
-        pluginDownloadUrl = await _getPluginDownloadUrl(uri);
-      } else {
-        throw MetadataPluginException.unsupportedPluginDownloadWebsite();
-      }
-    }
-
-    // Now let's download, extract and cache the plugin
-    final pluginDir = await _getPluginRootDir();
-    await pluginDir.create(recursive: true);
-
-    final pluginRes = await globalDio.get(
-      pluginDownloadUrl,
-      options: Options(
-        responseType: ResponseType.bytes,
-        followRedirects: true,
-        receiveTimeout: const Duration(seconds: 30),
-      ),
-    );
-
-    if ((pluginRes.statusCode ?? 500) > 299) {
-      throw MetadataPluginException.pluginDownloadFailed();
-    }
-
-    return await extractPluginArchive(pluginRes.data);
-  }
-
   bool validatePluginApiCompatibility(PluginConfiguration plugin) {
     final configPluginApiVersion = Version.parse(plugin.pluginApiVersion);
     final appPluginApiVersion = MetadataPlugin.pluginApiVersion;
@@ -351,86 +237,11 @@ class MetadataPluginNotifier extends AsyncNotifier<MetadataPluginState> {
   }
 
   Future<void> addPlugin(PluginConfiguration plugin) async {
-    _assertPluginApiCompatibility(plugin);
-
-    final pluginRes = await (database.pluginsTable.select()
-          ..where(
-            (tbl) =>
-                tbl.name.equals(plugin.name) & tbl.author.equals(plugin.author),
-          )
-          ..limit(1))
-        .get();
-
-    if (pluginRes.isNotEmpty) {
-      throw MetadataPluginException.duplicatePlugin();
-    }
-
-    await database.pluginsTable.insertOne(
-      PluginsTableCompanion.insert(
-        name: plugin.name,
-        author: plugin.author,
-        description: plugin.description,
-        version: plugin.version,
-        entryPoint: plugin.entryPoint,
-        apis: plugin.apis.map((e) => e.name).toList(),
-        abilities: plugin.abilities.map((e) => e.name).toList(),
-        pluginApiVersion: Value(plugin.pluginApiVersion),
-        repository: Value(plugin.repository),
-        // Setting the very first plugin as the default plugin
-        selectedForMetadata: Value(
-          (state.valueOrNull?.plugins
-                      .where(
-                          (d) => d.abilities.contains(PluginAbilities.metadata))
-                      .isEmpty ??
-                  true) &&
-              plugin.abilities.contains(PluginAbilities.metadata),
-        ),
-        selectedForAudioSource: Value(
-          (state.valueOrNull?.plugins
-                      .where((d) =>
-                          d.abilities.contains(PluginAbilities.audioSource))
-                      .isEmpty ??
-                  true) &&
-              plugin.abilities.contains(PluginAbilities.audioSource),
-        ),
-      ),
-    );
+    throw UnimplementedError('External plugin system removed');
   }
 
   Future<void> removePlugin(PluginConfiguration plugin) async {
-    final pluginExtractionDir = await _getPluginExtractionDir(plugin);
-
-    if (pluginExtractionDir.existsSync()) {
-      await pluginExtractionDir.delete(recursive: true);
-    }
-    await database.pluginsTable.deleteWhere((tbl) =>
-        tbl.name.equals(plugin.name) & tbl.author.equals(plugin.author));
-
-    // Same here, if the removed plugin is the default plugin
-    // set the first available plugin as the default plugin
-    // only when there is 1 remaining plugin
-    if (state.valueOrNull?.defaultMetadataPluginConfig == plugin) {
-      final remainingPlugins = state.valueOrNull?.plugins.where(
-            (p) =>
-                p != plugin && p.abilities.contains(PluginAbilities.metadata),
-          ) ??
-          [];
-      if (remainingPlugins.length == 1) {
-        await setDefaultMetadataPlugin(remainingPlugins.first);
-      }
-    }
-
-    if (state.valueOrNull?.defaultAudioSourcePluginConfig == plugin) {
-      final remainingPlugins = state.valueOrNull?.plugins.where(
-            (p) =>
-                p != plugin &&
-                p.abilities.contains(PluginAbilities.audioSource),
-          ) ??
-          [];
-      if (remainingPlugins.length == 1) {
-        await setDefaultAudioSourcePlugin(remainingPlugins.first);
-      }
-    }
+    throw UnimplementedError('External plugin system removed');
   }
 
   Future<bool> isPluginUpdate(PluginConfiguration newPlugin) async {
@@ -458,28 +269,7 @@ class MetadataPluginNotifier extends AsyncNotifier<MetadataPluginState> {
     PluginConfiguration plugin,
     PluginUpdateAvailable update,
   ) async {
-    final isDefaultMetadata =
-        plugin == state.valueOrNull?.defaultMetadataPluginConfig;
-    final isDefaultAudioSource =
-        plugin == state.valueOrNull?.defaultAudioSourcePluginConfig;
-    final pluginUpdatedConfig =
-        await downloadAndCachePlugin(update.downloadUrl);
-
-    if (pluginUpdatedConfig.name != plugin.name &&
-        pluginUpdatedConfig.author != plugin.author) {
-      throw MetadataPluginException.invalidPluginConfiguration();
-    }
-    _assertPluginApiCompatibility(pluginUpdatedConfig);
-
-    await removePlugin(plugin);
-    await addPlugin(pluginUpdatedConfig);
-
-    if (isDefaultMetadata) {
-      await setDefaultMetadataPlugin(pluginUpdatedConfig);
-    }
-    if (isDefaultAudioSource) {
-      await setDefaultAudioSourcePlugin(pluginUpdatedConfig);
-    }
+    throw UnimplementedError('External plugin system removed');
   }
 
   Future<void> setDefaultMetadataPlugin(PluginConfiguration plugin) async {

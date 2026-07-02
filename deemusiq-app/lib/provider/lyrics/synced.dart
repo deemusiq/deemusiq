@@ -21,70 +21,81 @@ class SyncedLyricsNotifier
   Future<SubtitleSimple> getLRCLibLyrics() async {
     final packageInfo = await PackageInfo.fromPlatform();
 
-    final res = await globalDio.getUri(
-      Uri(
-        scheme: "https",
-        host: "lrclib.net",
-        path: "/api/get",
-        queryParameters: {
-          "artist_name": _track.artists.first.name,
-          "track_name": _track.name,
-          "album_name": _track.album.name,
-          if (_track.durationMs > 0)
-            "duration": (_track.durationMs / 1000).toInt().toString(),
-        },
-      ),
-      options: Options(
-        headers: {
-          "User-Agent":
-              "DeeMusiq v${packageInfo.version} (https://github.com/deemusiq/deemusiq)"
-        },
-        responseType: ResponseType.json,
-      ),
-    );
+    try {
+      final res = await globalDio.getUri(
+        Uri(
+          scheme: "https",
+          host: "lrclib.net",
+          path: "/api/get",
+          queryParameters: {
+            "artist_name": _track.artists.first.name,
+            "track_name": _track.name,
+            "album_name": _track.album.name,
+            if (_track.durationMs > 0)
+              "duration": (_track.durationMs / 1000).toInt().toString(),
+          },
+        ),
+        options: Options(
+          headers: {
+            "User-Agent":
+                "DeeMusiq v${packageInfo.version} (https://github.com/deemusiq/deemusiq)"
+          },
+          responseType: ResponseType.json,
+          validateStatus: (s) => s != null && s < 500,
+        ),
+      );
 
-    if (res.statusCode != 200) {
+      if (res.statusCode != 200 || res.data == null) {
+        return SubtitleSimple(
+          lyrics: [],
+          name: _track.name,
+          uri: res.realUri,
+          rating: 0,
+          provider: "LRCLib",
+        );
+      }
+
+      final json = res.data as Map<String, dynamic>;
+
+      final syncedLyricsRaw = json["syncedLyrics"] as String?;
+      final syncedLyrics = syncedLyricsRaw?.isNotEmpty == true
+          ? Lrc.parse(syncedLyricsRaw!)
+              .lyrics
+              .map(LyricSlice.fromLrcLine)
+              .toList()
+          : null;
+
+      if (syncedLyrics?.isNotEmpty == true) {
+        return SubtitleSimple(
+          lyrics: syncedLyrics!,
+          name: _track.name,
+          uri: res.realUri,
+          rating: 100,
+          provider: "LRCLib",
+        );
+      }
+
+      final plainLyrics = (json["plainLyrics"] as String)
+          .split("\n")
+          .map((line) => LyricSlice(text: line, time: Duration.zero))
+          .toList();
+
       return SubtitleSimple(
-        lyrics: [],
+        lyrics: plainLyrics,
         name: _track.name,
         uri: res.realUri,
         rating: 0,
         provider: "LRCLib",
       );
-    }
-
-    final json = res.data as Map<String, dynamic>;
-
-    final syncedLyricsRaw = json["syncedLyrics"] as String?;
-    final syncedLyrics = syncedLyricsRaw?.isNotEmpty == true
-        ? Lrc.parse(syncedLyricsRaw!)
-            .lyrics
-            .map(LyricSlice.fromLrcLine)
-            .toList()
-        : null;
-
-    if (syncedLyrics?.isNotEmpty == true) {
+    } catch (_) {
       return SubtitleSimple(
-        lyrics: syncedLyrics!,
+        lyrics: [],
         name: _track.name,
-        uri: res.realUri,
-        rating: 100,
+        uri: Uri.parse('lrclib.net'),
+        rating: 0,
         provider: "LRCLib",
       );
     }
-
-    final plainLyrics = (json["plainLyrics"] as String)
-        .split("\n")
-        .map((line) => LyricSlice(text: line, time: Duration.zero))
-        .toList();
-
-    return SubtitleSimple(
-      lyrics: plainLyrics,
-      name: _track.name,
-      uri: res.realUri,
-      rating: 0,
-      provider: "LRCLib",
-    );
   }
 
   @override
@@ -93,7 +104,13 @@ class SyncedLyricsNotifier
       final database = ref.watch(databaseProvider);
 
       if (track == null) {
-        throw "No track currently";
+        return SubtitleSimple(
+          lyrics: [],
+          name: 'No track',
+          uri: Uri.parse('lrclib.net'),
+          rating: 0,
+          provider: "LRCLib",
+        );
       }
 
       final cachedLyrics = await (database.select(database.lyricsTable)
@@ -110,7 +127,13 @@ class SyncedLyricsNotifier
       }
 
       if (lyrics.lyrics.isEmpty) {
-        throw Exception("Unable to find lyrics");
+        return SubtitleSimple(
+          lyrics: [],
+          name: track.name,
+          uri: Uri.parse('lrclib.net'),
+          rating: 0,
+          provider: "LRCLib",
+        );
       }
 
       if (cachedLyrics == null || cachedLyrics.lyrics.isEmpty) {
@@ -126,7 +149,13 @@ class SyncedLyricsNotifier
       return lyrics;
     } catch (e, stackTrace) {
       AppLogger.reportError(e, stackTrace);
-      rethrow;
+      return SubtitleSimple(
+        lyrics: [],
+        name: _track.name,
+        uri: Uri.parse('lrclib.net'),
+        rating: 0,
+        provider: "LRCLib",
+      );
     }
   }
 }

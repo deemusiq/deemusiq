@@ -76,6 +76,11 @@ class YouTubeAudioQualityService {
       'Quality filter (${q.label}): ${filtered.length}/${streams.length} streams pass '
       '(${q.minBitrate}–${q.maxBitrate} bps)',
     );
+
+    if (filtered.isEmpty && streams.isNotEmpty) {
+      AppLogger.log.w('Quality filter (${q.label}) eliminated all streams — falling back to best available');
+      return streams;
+    }
     return filtered;
   }
 }

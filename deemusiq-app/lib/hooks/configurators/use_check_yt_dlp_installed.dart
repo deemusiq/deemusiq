@@ -24,7 +24,7 @@ void useCheckYtDlpInstalled(WidgetRef ref) {
           KVStoreService.getYoutubeEnginePath(YoutubeClientEngine.ytDlp);
 
       if (youtubeEngine == YoutubeClientEngine.ytDlp &&
-          !await YtDlpEngine.isInstalled() &&
+          !await YtDlpEngine().isInstalled() &&
           (customPath == null || !await File(customPath).exists()) &&
           context.mounted) {
         await showDialog(

@@ -1,5 +1,5 @@
 INNO_VERSION=6.2.0
-TEMP_DIR=/tmp/spotube-tar
+TEMP_DIR=/tmp/deemusiq-tar
 USR_SHARE=deb-struct/usr/share
 BUNDLE_DIR=build/linux/${ARCH}/release/bundle
 MIRRORLIST=${PWD}/build/mirrorlist
@@ -7,10 +7,10 @@ MIRRORLIST=${PWD}/build/mirrorlist
 tar:
 		mkdir -p $(TEMP_DIR)\
 		&& cp -r $(BUNDLE_DIR)/* $(TEMP_DIR)\
-		&& cp linux/spotube.desktop $(TEMP_DIR)\
-		&& cp assets/branding/spotube-logo.png $(TEMP_DIR)\
-		&& cp linux/com.github.KRTirtho.Spotube.appdata.xml $(TEMP_DIR)\
-		&& tar -cJf build/spotube-linux-${VERSION}-${PKG_ARCH}.tar.xz -C $(TEMP_DIR) .\
+		&& cp linux/deemusiq.desktop $(TEMP_DIR)\
+		&& cp assets/branding/deemusiq-logo.png $(TEMP_DIR)\
+		&& cp linux/com.deemusiq.deemusiq.appdata.xml $(TEMP_DIR)\
+		&& tar -cJf build/deemusiq-linux-${VERSION}-${PKG_ARCH}.tar.xz -C $(TEMP_DIR) .\
 		&& rm -rf $(TEMP_DIR)
 
 aursrcinfo:
@@ -18,10 +18,10 @@ aursrcinfo:
 
 publishaur: 
 					 echo '[Warning!]: you need SSH paired with AUR'\
-					 && rm -rf build/spotube\
-					 && git clone ssh://aur@aur.archlinux.org/spotube-bin.git build/spotube\
-					 && cp aur-struct/PKGBUILD aur-struct/.SRCINFO build/spotube\
-					 && cd build/spotube\
+					 && rm -rf build/deemusiq\
+					 && git clone ssh://aur@aur.archlinux.org/deemusiq-bin.git build/deemusiq\
+					 && cp aur-struct/PKGBUILD aur-struct/.SRCINFO build/deemusiq\
+					 && cd build/deemusiq\
 					 && git add .\
 					 && git commit -m "${MSG}"\
 					 && git push
@@ -35,11 +35,11 @@ inno:
 		 powershell .\build\iscc\iscc.exe scripts\windows-setup-creator.iss
 
 choco:
-			powershell cp dist\Spotube-windows-x86_64-setup.exe choco-struct\tools
-			powershell choco pack .\choco-struct\spotube.nuspec  --outputdirectory dist
+			powershell cp dist\DeeMusiq-windows-x86_64-setup.exe choco-struct\tools
+			powershell choco pack .\choco-struct\deemusiq.nuspec  --outputdirectory dist
 
 apk:
-		mv build/app/outputs/apk/release/app-release.apk build/Spotube-android-all-arch.apk
+		mv build/app/outputs/apk/release/app-release.apk build/DeeMusiq-android-all-arch.apk
 
 gensums:
 				sh -c scripts/gensums.sh
@@ -49,10 +49,10 @@ migrate:
 
 dmg:
 		flutter build macos &&\
-		if [ -f dist/Spotube-macos-universal.dmg ];\
-		then rm dist/Spotube-macos-universal.dmg;\
+		if [ -f dist/DeeMusiq-macos-universal.dmg ];\
+		then rm dist/DeeMusiq-macos-universal.dmg;\
 		fi &&\
-		appdmg appdmg.json dist/Spotube-macos-universal.dmg
+		appdmg appdmg.json dist/DeeMusiq-macos-universal.dmg
 
 changelog:
 	git-cliff --unreleased

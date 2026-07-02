@@ -10,6 +10,7 @@ import 'package:deemusiq/components/wallet/wallet_common.dart';
 import 'package:deemusiq/provider/wallet/wallet_provider.dart';
 import 'package:deemusiq/services/wallet/wallet_api.dart';
 import 'package:deemusiq/services/auth/google_auth.dart';
+import 'package:deemusiq/services/logger/logger.dart';
 import 'package:deemusiq/models/wallet/linked_account.dart';
 
 /// Account & security: email/password sign-in, 2FA (TOTP) enrollment, recovery,
@@ -32,18 +33,18 @@ class AccountPage extends HookConsumerWidget {
             Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 640),
-                child: const Column(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _EmailPasswordCard(),
-                    Gap(12),
-                    _GoogleSignInCard(),
-                    Gap(12),
-                    _TotpCard(),
-                    Gap(12),
-                    _RecoveryCard(),
-                    Gap(12),
-                    _SecurityActionsCard(),
+                    // _EmailPasswordCard(),
+                    const Gap(12),
+                    const _GoogleSignInCard(),
+                    const Gap(12),
+                    const _TotpCard(),
+                    const Gap(12),
+                    const _RecoveryCard(),
+                    const Gap(12),
+                    const _SecurityActionsCard(),
                   ],
                 ),
               ),

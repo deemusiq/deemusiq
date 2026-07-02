@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import 'package:deemusiq/services/logger/logger.dart';
 import 'package:deemusiq/services/wallet/payment_service.dart'
     show PaymentGatewayConfig;
 import 'package:deemusiq/services/wallet/wallet_api.dart';
@@ -75,9 +76,10 @@ class IntegrityService {
     try {
       final v = await _channel.invokeMethod<String>("certSha256");
       return v == null ? null : _normalizeHash(v);
-    } catch (e) {
-      // Native cert hash unavailable on this platform — expected
-      _certSha256 = '';
+    } catch (e, stack) {
+      AppLogger.log.e('IntegrityService: failed to read cert hash: $e');
+      AppLogger.reportError(e, stack, 'IntegrityService certHash');
+      rethrow;
     }
   }
 
@@ -86,9 +88,10 @@ class IntegrityService {
     try {
       final v = await _channel.invokeMethod<String>("apkSha256");
       return v == null ? null : _normalizeHash(v);
-    } catch (e) {
-      // Native cert hash unavailable on this platform — expected
-      _certSha256 = '';
+    } catch (e, stack) {
+      AppLogger.log.e('IntegrityService: failed to read APK hash: $e');
+      AppLogger.reportError(e, stack, 'IntegrityService apkHash');
+      rethrow;
     }
   }
 
@@ -105,22 +108,68 @@ class IntegrityService {
   /// build always starts.
   Future<bool> bootCheckPassed() async {
     if (!kIsAndroid || expectedCertSha256.isEmpty) return true;
-    final cert = await _certHash();
-    if (cert == null) return true; // can't read -> don't brick on a maybe
-    if (cert == expectedCertSha256) return true;
-    verdict.value = IntegrityVerdict.bricked;
-    // Fire-and-forget: the app is about to refuse to start.
-    } catch (e) {
-      // Hash comparison failed — assume mismatch
-      return false;
+
+    const maxRetries = 3;
+    const retryDelay = Duration(seconds: 1);
+
+    for (int attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        final cert = await _certHash();
+        if (cert == null) {
+          AppLogger.log.w(
+            'IntegrityService: cert hash unavailable '
+            '(attempt $attempt/$maxRetries)',
+          );
+          return true;
+        }
+        if (cert == expectedCertSha256) return true;
+
+        AppLogger.log.e(
+          'IntegrityService: cert hash mismatch — '
+          'expected $expectedCertSha256, got $cert',
+        );
+        verdict.value = IntegrityVerdict.bricked;
+        return false;
+      } catch (e, stack) {
+        AppLogger.log.w(
+          'IntegrityService: cert hash check error '
+          '(attempt $attempt/$maxRetries): $e',
+        );
+        if (attempt == maxRetries) {
+          AppLogger.log.e(
+            'IntegrityService: cert hash check failed after '
+            '$maxRetries attempts — bricking app',
+          );
+          AppLogger.reportError(
+            e,
+            stack,
+            'IntegrityService bootCheckPassed exhausted retries',
+          );
+          verdict.value = IntegrityVerdict.bricked;
+          return false;
+        }
+        await Future.delayed(retryDelay);
+      }
     }
+
+    verdict.value = IntegrityVerdict.bricked;
+    return false;
+  }
 
   /// Runtime check (after boot and on the random interval). Re-confirms the
   /// certificate and compares the on-disk APK against the published hash.
   Future<void> runCheck() async {
     if (!kIsAndroid) return;
 
-    final cert = await _certHash();
+    String? cert;
+    try {
+      cert = await _retryHash(() => _certHash(), 'certHash');
+    } catch (e, stack) {
+      AppLogger.log.w('IntegrityService: runtime cert check failed: $e');
+      AppLogger.reportError(e, stack, 'IntegrityService runCheck cert');
+      return;
+    }
+
     if (expectedCertSha256.isNotEmpty &&
         cert != null &&
         cert != expectedCertSha256) {
@@ -129,17 +178,65 @@ class IntegrityService {
       return;
     }
 
-    final published = await _fetchPublishedHash();
-    if (published == null) return; // offline / GitHub down -> don't lock
-    final apk = await _apkHash();
+    String? published;
+    try {
+      published = await _retryHash(() => _fetchPublishedHash(), 'publishedHash');
+    } catch (e, stack) {
+      AppLogger.log.w(
+        'IntegrityService: runtime published hash fetch failed: $e',
+      );
+      AppLogger.reportError(
+        e,
+        stack,
+        'IntegrityService runCheck publishedHash',
+      );
+      return;
+    }
+    if (published == null) return;
+
+    String? apk;
+    try {
+      apk = await _retryHash(() => _apkHash(), 'apkHash');
+    } catch (e, stack) {
+      AppLogger.log.w('IntegrityService: runtime APK hash check failed: $e');
+      AppLogger.reportError(e, stack, 'IntegrityService runCheck apk');
+      return;
+    }
     if (apk == null) return;
 
     if (apk != published) {
       verdict.value = IntegrityVerdict.walletLocked;
       await _report(certSha: cert, apkSha: apk, reason: "apk_mismatch");
     } else if (verdict.value == IntegrityVerdict.walletLocked) {
-      // Recovered (e.g. the genuine APK was reinstalled).
       verdict.value = IntegrityVerdict.ok;
+    }
+  }
+
+  Future<T?> _retryHash<T>(
+    Future<T?> Function() fn,
+    String label,
+  ) async {
+    const maxRetries = 3;
+    const retryDelay = Duration(seconds: 1);
+
+    for (int attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await fn();
+      } catch (e, stack) {
+        AppLogger.log.w(
+          'IntegrityService: $label failed '
+          '(attempt $attempt/$maxRetries): $e',
+        );
+        if (attempt == maxRetries) {
+          AppLogger.reportError(
+            e,
+            stack,
+            'IntegrityService _retryHash $label exhausted',
+          );
+          rethrow;
+        }
+        await Future.delayed(retryDelay);
+      }
     }
   }
 
@@ -153,7 +250,7 @@ class IntegrityService {
 
   void _schedule() {
     _timer?.cancel();
-    final minutes = 1 + _rng.nextInt(10); // 1..10 inclusive
+    final minutes = 1 + _rng.nextInt(10);
     _timer = Timer(Duration(minutes: minutes), () async {
       await runCheck();
       _schedule();
@@ -174,13 +271,19 @@ class IntegrityService {
           .timeout(const Duration(seconds: 12));
       final body = res.data;
       if (body == null || body.isEmpty) return null;
-      // The .sha256 file is "<hash>  DeeMusiq.apk" or just "<hash>".
       final first = body.trim().split(RegExp(r'\s+')).first;
       final norm = _normalizeHash(first);
       return norm.length == 64 ? norm : null;
-    } catch (e) {
-      // Native cert hash unavailable on this platform — expected
-      _certSha256 = '';
+    } catch (e, stack) {
+      AppLogger.log.w(
+        'IntegrityService: failed to fetch published hash: $e',
+      );
+      AppLogger.reportError(
+        e,
+        stack,
+        'IntegrityService fetchPublishedHash',
+      );
+      return null;
     }
   }
 
@@ -206,9 +309,8 @@ class IntegrityService {
           receiveTimeout: const Duration(seconds: 8),
         ),
       );
-    } catch (e) {
-      // Native cert hash unavailable on this platform — expected
-      _certSha256 = '';
+    } catch (_) {
+      // silently fail — integrity reporting is best-effort
     }
   }
 }

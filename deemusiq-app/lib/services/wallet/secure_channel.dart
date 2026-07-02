@@ -15,12 +15,23 @@ import 'package:deemusiq/services/wallet/payment_service.dart'
 /// plain HTTP, so a raw `http://IP:port` backend is safe, and stacks under
 /// TLS/HTTP-3 when available (defence in depth).
 ///
+/// Replay protection: every sealed envelope includes a monotonic `seq` counter.
+/// The backend must reject any message whose `seq` is <= the last seen seq for
+/// that device. The counter resets when a new channel key is negotiated.
+///
 /// Wire format (matches the backend `util/secureChannel.ts`; the `encrypt`
 /// package appends the 16-byte GCM tag to the ciphertext):
-///   { "v": 1, "iv": base64(12-byte nonce), "ct": base64(ciphertext || tag) }
+///   { "v": 1, "iv": base64(12-byte nonce), "ct": base64(ciphertext || tag), "seq": <uint> }
 abstract class SecureChannel {
   static const _header = "X-DM-Enc";
   static String get headerName => _header;
+
+  static int _seq = 0;
+
+  /// Reset the replay counter (e.g. after key rotation).
+  static void resetSeq() {
+    _seq = 0;
+  }
 
   /// True when a valid 32-byte key is configured.
   static bool get enabled {
@@ -53,7 +64,8 @@ abstract class SecureChannel {
     try {
       final iv = enc.IV.fromSecureRandom(12);
       final encrypted = _encrypter().encryptBytes(utf8.encode(plainJson), iv: iv);
-      return {"v": 1, "iv": iv.base64, "ct": encrypted.base64};
+      _seq++;
+      return {"v": 1, "iv": iv.base64, "ct": encrypted.base64, "seq": _seq};
     } catch (e, stack) {
       AppLogger.log.e('SecureChannel: seal failed: $e');
       AppLogger.reportError(e, stack);

@@ -8,6 +8,7 @@ import 'package:deemusiq/components/wallet/wallet_common.dart';
 import 'package:deemusiq/models/wallet/linked_account.dart';
 import 'package:deemusiq/provider/wallet/wallet_provider.dart';
 import 'package:deemusiq/services/wallet/wallet_api.dart';
+import 'package:deemusiq/services/logger/logger.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 @RoutePage()
@@ -117,12 +118,7 @@ class _ProviderTile extends ConsumerWidget {
     } catch (e, stack) {
       AppLogger.log.w('Linked accounts load failed: ${e.toString()}');
       showWalletToast(context, 'Failed to load linked accounts',
-      if (!context.mounted) return;
-      showWalletToast(
-        context,
-        "Couldn't open your browser — try again",
-        icon: DeeMusiqIcons.info,
-      );
+          icon: DeeMusiqIcons.info);
     }
   }
 

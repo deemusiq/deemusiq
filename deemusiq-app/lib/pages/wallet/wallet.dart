@@ -11,6 +11,7 @@ import 'package:deemusiq/models/wallet/token_transaction.dart';
 import 'package:deemusiq/provider/wallet/region_provider.dart';
 import 'package:deemusiq/provider/wallet/wallet_provider.dart';
 import 'package:deemusiq/services/integrity/integrity_service.dart';
+import 'package:deemusiq/services/logger/logger.dart';
 
 @RoutePage()
 class WalletPage extends HookConsumerWidget {
@@ -23,12 +24,63 @@ class WalletPage extends HookConsumerWidget {
     final wallet = ref.watch(walletProvider);
     final region = ref.watch(regionTierProvider);
 
+    final isLoading = useState(false);
+    final error = useState<String?>(null);
+
     // When a backend is configured, refresh authoritative state on open.
     // No-op (returns immediately) in the default local-only build.
     useEffect(() {
-      ref.read(walletProvider.notifier).syncFromBackend();
+      isLoading.value = true;
+      try {
+        ref.read(walletProvider.notifier).syncFromBackend();
+      } catch (e) {
+        AppLogger.log.w('Wallet sync failed: $e');
+        error.value = e.toString();
+      } finally {
+        isLoading.value = false;
+      }
       return null;
     }, const []);
+
+    if (isLoading.value) {
+      return const SafeArea(
+        bottom: false,
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (error.value != null) {
+      return SafeArea(
+        bottom: false,
+        child: Center(
+          child: Card(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text("Failed to load wallet").semiBold(),
+                const Gap(8),
+                Text(error.value!).muted().small(),
+                const Gap(12),
+                Button.primary(
+                  onPressed: () {
+                    error.value = null;
+                    isLoading.value = true;
+                    ref.read(walletProvider.notifier).syncFromBackend().then(
+                          (_) => isLoading.value = false,
+                        ).catchError((e) {
+                      isLoading.value = false;
+                      error.value = e.toString();
+                    });
+                  },
+                  child: const Text("Retry"),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     final recent = wallet.transactions.take(8).toList();
 

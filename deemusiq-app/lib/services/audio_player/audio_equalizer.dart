@@ -1,6 +1,7 @@
 
 import 'package:deemusiq/services/logger/logger.dart';
 import 'package:deemusiq/services/kv_store/kv_store.dart';
+import 'package:media_kit/media_kit.dart';
 
 /// VLC-style audio equalizer with named presets, backed by libmpv's `af`
 /// (audio filter) graph. Each preset maps to an mpv `equalizer` filter string
@@ -25,7 +26,7 @@ class AudioEqualizer {
 
   /// The mpv `NativePlayer` instance — set by the audio player on init.
   /// When null, equalizer commands are silently dropped (safe no-op).
-  dynamic _nativePlayer;
+  NativePlayer? _nativePlayer;
 
   bool _enabled = false;
   String _preset = 'Flat';
@@ -34,7 +35,7 @@ class AudioEqualizer {
   String get activePreset => _preset;
 
   /// Wire this to the CustomPlayer's nativePlayer after the player is created.
-  void attach(dynamic nativePlayer) {
+  void attach(NativePlayer nativePlayer) {
     _nativePlayer = nativePlayer;
     // Re-apply current preset after re-attach (e.g. player re-init).
     if (_enabled && _preset != 'Flat') {
@@ -101,7 +102,7 @@ class AudioEqualizer {
 
     final filter = 'equalizer=${parts.join(':')}';
     try {
-      _nativePlayer.setProperty('af', filter);
+      _nativePlayer?.setProperty('af', filter);
     } catch (e) {
       AppLogger.log.w('Equalizer apply failed: $filter — ${e.toString()}');
       AppLogger.reportError(e, StackTrace.current, 'Equalizer apply failed: $filter');
@@ -111,7 +112,7 @@ class AudioEqualizer {
   void _clearFilter() {
     if (_nativePlayer == null) return;
     try {
-      _nativePlayer.setProperty('af', '');
+      _nativePlayer?.setProperty('af', '');
     } catch (e, stack) {
       AppLogger.reportError(e, stack, 'Equalizer clear filter failed');
     }

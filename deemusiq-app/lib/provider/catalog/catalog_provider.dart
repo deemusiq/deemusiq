@@ -46,7 +46,7 @@ final catalogProvider =
         artists: [artist],
         duration: Duration(milliseconds: durationMs),
         thumbnail: cover,
-        externalUri: ytUri,
+        externalUri: "ytsource:$youtubeId",
       );
       await db.into(db.sourceMatchTable).insert(
             SourceMatchTableCompanion.insert(
@@ -62,7 +62,7 @@ final catalogProvider =
       DeeMusiqTrackObject.full(
         id: id,
         name: title,
-        externalUri: ytUri,
+        externalUri: "ytsource:$youtubeId",
         artists: [
           DeeMusiqSimpleArtistObject(
             id: (s["artistId"] as String?) ?? artist,

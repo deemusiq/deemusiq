@@ -34,7 +34,12 @@ class ConnectClientsNotifier extends AsyncNotifier<ConnectClientsState> {
   build() async {
     final discovery = BonsoirDiscovery(type: '_spotube._tcp');
     final deviceId = await DeviceInfoService.instance.deviceId();
-    await discovery.ready;
+    try {
+      await discovery.ready;
+    } catch (e) {
+      AppLogger.log.d('Bonsoir discovery unavailable (Avahi/mDNS not running): $e');
+      return ConnectClientsState(services: const [], discovery: discovery, resolvedService: null);
+    }
 
     final subscription = discovery.eventStream?.listen((event) {
       // ignore device itself

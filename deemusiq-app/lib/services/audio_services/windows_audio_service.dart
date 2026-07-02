@@ -76,9 +76,7 @@ class WindowsAudioService {
   }
 
   Future<void> addTrack(DeeMusiqTrackObject track) async {
-    if (!smtc.enabled) {
-      await smtc.enableSmtc();
-    }
+    await smtc.enableSmtc();
     await smtc.updateMetadata(
       MusicMetadata(
         title: track.name,

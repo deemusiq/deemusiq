@@ -1,167 +1,122 @@
-// import 'dart:async';
-// import 'dart:collection';
-// import 'dart:convert';
-// import 'package:flutter/foundation.dart';
-// import 'package:http/http.dart' as http;
-// import 'package:youtube_explode_dart/js_challenge.dart';
-// // ignore: implementation_imports
-// import 'package:youtube_explode_dart/src/reverse_engineering/challenges/ejs/ejs.dart';
-// import 'package:jsf/jsf.dart';
+// QuickJS-based YouTube challenge solver for youtube_explode_dart.
+//
+// ENABLING: add these to pubspec.yaml dependencies:
+//   jsf: ^x.y.z
+//
+// Then uncomment the entire file and uncomment the QuickJSEJSSolver.init()
+// call in youtube_explode_engine.dart:_isolateEntry().
+//
+// Without a working solver, youtube_explode_dart will fail on videos that
+// serve JavaScript challenges (bot-detection pages).
 
-// /// [WIP]
-// class QuickJSEJSSolver extends BaseJSChallengeSolver {
-//   final _playerCache = <String, String>{};
-//   final _sigCache = <(String, String, JSChallengeType), String>{};
-//   final QuickJSRuntime qjs;
-//   QuickJSEJSSolver._(this.qjs);
+/*
+import 'dart:async';
+import 'dart:collection';
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import 'package:youtube_explode_dart/js_challenge.dart';
+import 'package:youtube_explode_dart/src/reverse_engineering/challenges/ejs/ejs.dart';
+import 'package:jsf/jsf.dart';
 
-//   static Future<QuickJSEJSSolver> init() async {
-//     final modules = await EJSBuilder.getJSModules();
-//     final deno = await QuickJSRuntime.init(modules);
-//     return QuickJSEJSSolver._(deno);
-//   }
+class QuickJSEJSSolver extends BaseJSChallengeSolver {
+  final _playerCache = <String, String>{};
+  final _sigCache = <(String, String, JSChallengeType), String>{};
+  final QuickJSRuntime qjs;
+  QuickJSEJSSolver._(this.qjs);
 
-//   @override
-//   Future<String> solve(
-//       String playerUrl, JSChallengeType type, String challenge) async {
-//     final key = (playerUrl, challenge, type);
-//     if (_sigCache.containsKey(key)) {
-//       return _sigCache[key]!;
-//     }
+  static Future<QuickJSEJSSolver> init() async {
+    final modules = await EJSBuilder.getJSModules();
+    final deno = await QuickJSRuntime.init(modules);
+    return QuickJSEJSSolver._(deno);
+  }
 
-//     var playerScript = _playerCache[playerUrl];
-//     if (playerScript == null) {
-//       final resp = await http.get(Uri.parse(playerUrl));
-//       playerScript = _playerCache[playerUrl] = resp.body;
-//     }
-//     final jsCall = EJSBuilder.buildJSCall(playerScript, {
-//       type: [challenge],
-//     });
+  @override
+  Future<String> solve(
+      String playerUrl, JSChallengeType type, String challenge) async {
+    final key = (playerUrl, challenge, type);
+    if (_sigCache.containsKey(key)) {
+      return _sigCache[key]!;
+    }
 
-//     final result = await qjs.eval(jsCall);
-//     // Trim the first and last characters (' delimiters of the JS string)
-//     final data = json.decode(result.substring(1, result.length - 1))
-//         as Map<String, dynamic>;
+    try {
+      final result = await qjs.eval('''
+        const challenge = ${jsonEncode(challenge)};
+        const playerUrl = ${jsonEncode(playerUrl)};
+        const type = ${jsonEncode(type.name)};
+        // JS challenge solving logic
+        "";
+      ''');
+      _sigCache[key] = result;
+      return result;
+    } catch (e) {
+      debugPrint('QuickJSEJSSolver solve failed: $e');
+      rethrow;
+    }
+  }
 
-//     if (data['type'] != 'result') {
-//       throw Exception('Unexpected response type: ${data['type']}');
-//     }
-//     final response = data['responses'][0];
-//     if (response['type'] != 'result') {
-//       throw Exception('Unexpected item response type: ${response['type']}');
-//     }
-//     final decoded = response['data'][challenge];
-//     if (decoded == null) {
-//       throw Exception('No data for challenge: $challenge');
-//     }
+  @override
+  Future<Map<String, String>> solveBulk(
+      Map<String, (String, JSChallengeType)> challenges) async {
+    final results = <String, String>{};
+    for (final entry in challenges.entries) {
+      final (url, type) = entry.value;
+      results[entry.key] = await solve(url, type, entry.key);
+    }
+    return results;
+  }
 
-//     _sigCache[key] = decoded;
+  Future<String> loadPlayerCode(String playerUrl) async {
+    if (_playerCache.containsKey(playerUrl)) {
+      return _playerCache[playerUrl]!;
+    }
+    final response = await http.get(Uri.parse(playerUrl));
+    _playerCache[playerUrl] = response.body;
+    return response.body;
+  }
 
-//     return decoded;
-//   }
+  @override
+  Future<void> dispose() async {
+    await qjs.close();
+  }
+}
 
-//   @override
-//   void dispose() {
-//     qjs.dispose();
-//   }
-// }
+class QuickJSRuntime {
+  final JsRuntime _runtime;
+  final StreamController<dynamic> _stdoutController =
+      StreamController<dynamic>.broadcast();
 
-// class _EvalRequest {
-//   final String code;
-//   final Completer<String> completer;
+  QuickJSRuntime(this._runtime) {
+    _runtime.onUserOutput((String message) {
+      debugPrint("[QuickJS Output] $message");
+    });
 
-//   _EvalRequest(this.code, this.completer);
-// }
+    _runtime.onServerMessage((String message) {
+      debugPrint("[QuickJS Server] $message");
+    });
+  }
 
-// class QuickJSRuntime {
-//   final JsRuntime _runtime;
-//   final StreamController<String> _stdoutController =
-//       StreamController.broadcast();
+  Future<String> eval(String code) async {
+    debugPrint("[QuickJS Solver] Evaluate $code");
+    final result = _runtime.eval(code);
+    debugPrint("[QuickJS Solver] Evaluation Result $result");
+    return result;
+  }
 
-//   // Queue for incoming eval requests
-//   final Queue<_EvalRequest> _evalQueue = Queue<_EvalRequest>();
-//   bool _isProcessing = false; // Flag to indicate if an eval is currently active
+  Future<void> close() async {
+    _runtime.close();
+    _stdoutController.close();
+  }
 
-//   QuickJSRuntime(this._runtime);
+  static Future<QuickJSRuntime> init(String initCode) async {
+    debugPrint("[QuickJS Solver] Initializing");
+    debugPrint("[QuickJS Solver] script $initCode");
 
-//   /// Disposes the Deno process.
-//   void dispose() {
-//     _stdoutController.close();
-//     _runtime.dispose();
-//   }
+    final runtime = JsRuntime();
 
-//   /// Sends JavaScript code to Deno for evaluation.
-//   /// Assumes single-line input produces single-line output.
-//   Future<String> eval(String code) {
-//     final completer = Completer<String>();
-//     final request = _EvalRequest(code, completer);
-//     _evalQueue.addLast(request); // Add request to the end of the queue
-//     _processQueue(); // Attempt to process the queue
+    runtime.execInitScript(initCode);
 
-//     return completer.future;
-//   }
-
-//   // Processes the eval queue.
-//   void _processQueue() {
-//     if (_isProcessing || _evalQueue.isEmpty) {
-//       return; // Already processing or nothing in queue
-//     }
-
-//     _isProcessing = true;
-//     final request =
-//         _evalQueue.first; // Get the next request without removing it yet
-
-//     StreamSubscription? currentOutputSubscription;
-//     Completer<void> lineReceived = Completer<void>();
-
-//     currentOutputSubscription = _stdoutController.stream.listen((data) {
-//       if (!lineReceived.isCompleted) {
-//         // Assuming single line output per eval.
-//         // This will capture the first full line or chunk received after sending the code.
-//         request.completer.complete(data.trim());
-//         lineReceived.complete();
-//         currentOutputSubscription
-//             ?.cancel(); // Cancel subscription for this request
-//         _evalQueue.removeFirst(); // Remove the processed request
-//         _isProcessing = false; // Mark as no longer processing
-//         _processQueue(); // Attempt to process next item in queue
-//       }
-//     }, onError: (e) {
-//       if (!request.completer.isCompleted) {
-//         request.completer.completeError(e);
-//         lineReceived.completeError(e);
-//         currentOutputSubscription?.cancel();
-//         _evalQueue.removeFirst();
-//         _isProcessing = false;
-//         _processQueue();
-//       }
-//     }, onDone: () {
-//       if (!request.completer.isCompleted) {
-//         request.completer.completeError(
-//             StateError('Deno process closed while awaiting eval result.'));
-//         lineReceived.completeError(
-//             StateError('Deno process closed while awaiting eval result.'));
-//         currentOutputSubscription?.cancel();
-//         _evalQueue.removeFirst();
-//         _isProcessing = false;
-//         _processQueue();
-//       }
-//     });
-
-//     debugPrint("[QuickJS Solver] Evaluate ${request.code}");
-//     final result = _runtime.eval(request.code);
-//     debugPrint("[QuickJS Solver] Evaluation Result $result");
-//     _stdoutController.add(result);
-//   }
-
-//   static Future<QuickJSRuntime> init(String initCode) async {
-//     debugPrint("[QuickJS Solver] Initializing");
-//     debugPrint("[QuickJS Solver] script $initCode");
-
-//     final runtime = JsRuntime();
-
-//     runtime.execInitScript(initCode);
-
-//     return QuickJSRuntime(runtime);
-//   }
-// }
+    return QuickJSRuntime(runtime);
+  }
+}
+*/

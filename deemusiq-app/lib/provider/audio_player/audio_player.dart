@@ -12,6 +12,7 @@ import 'package:deemusiq/provider/blacklist_provider.dart';
 import 'package:deemusiq/provider/database/database.dart';
 import 'package:deemusiq/provider/discord_provider.dart';
 import 'package:deemusiq/provider/server/sourced_track_provider.dart';
+import 'package:deemusiq/provider/server/server.dart';
 import 'package:deemusiq/services/audio_player/audio_player.dart';
 import 'package:deemusiq/services/audio_player/audio_error_handler.dart';
 import 'package:deemusiq/services/logger/logger.dart';
@@ -109,6 +110,8 @@ class AudioPlayerNotifier extends Notifier<AudioPlayerState> {
 
   @override
   build() {
+    _restoreSavedState();
+
     final subscriptions = [
       audioPlayer.playingStream.listen((playing) async {
         try {
@@ -174,8 +177,6 @@ class AudioPlayerNotifier extends Notifier<AudioPlayerState> {
       }),
     ];
 
-    _syncSavedState();
-
     ref.onDispose(() {
       for (final subscription in subscriptions) {
         subscription.cancel();
@@ -189,6 +190,15 @@ class AudioPlayerNotifier extends Notifier<AudioPlayerState> {
       tracks: [],
       collections: [],
     );
+  }
+
+  void _restoreSavedState() {
+    _syncSavedState().then((_) {
+      ref.read(_isRestoringStateProvider.notifier).state = false;
+    }).catchError((e, stack) {
+      ref.read(_isRestoringStateProvider.notifier).state = false;
+      AppLogger.reportError(e, stack, '_restoreSavedState');
+    });
   }
 
   // Collection related methods
@@ -245,8 +255,15 @@ class AudioPlayerNotifier extends Notifier<AudioPlayerState> {
         )
         .toList();
 
+    final ci = max(state.currentIndex, 0);
+    final insertIndex = ci + 1;
+
     state = state.copyWith(
-      tracks: [...addableTracks, ...state.tracks],
+      tracks: [
+        ...state.tracks.sublist(0, insertIndex),
+        ...addableTracks,
+        ...state.tracks.sublist(insertIndex),
+      ],
     );
 
     for (int i = 0; i < addableTracks.length; i++) {
@@ -254,7 +271,7 @@ class AudioPlayerNotifier extends Notifier<AudioPlayerState> {
 
       await audioPlayer.addTrackAt(
         DeeMusiqMedia(track),
-        max(state.currentIndex, 0) + i + 1,
+        insertIndex + i,
       );
     }
 
@@ -328,7 +345,9 @@ class AudioPlayerNotifier extends Notifier<AudioPlayerState> {
   Future<void> removeTracks(Iterable<String> trackIds) async {
     final trackIndexes = state.tracks
         .where((element) => trackIds.any((trackId) => trackId == element.id))
-        .mapIndexed((index, element) => index);
+        .mapIndexed((index, element) => index)
+        .toList()
+      ..sort((a, b) => b.compareTo(a));
 
     final tracks = state.tracks.where(
       (element) => !trackIds.contains(element.id),
@@ -366,6 +385,25 @@ class AudioPlayerNotifier extends Notifier<AudioPlayerState> {
     bool autoPlay = false,
   }) async {
     _assertAllowedTracks(tracks);
+
+    var serverStarted = false;
+    for (var attempt = 0; attempt < 10; attempt++) {
+      try {
+        ref.invalidate(serverProvider);
+        final result = await ref.read(serverProvider.future)
+            .timeout(const Duration(seconds: 5));
+        if (result.port > 0) {
+          serverStarted = true;
+          break;
+        }
+      } catch (_) {}
+      if (attempt < 9) {
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
+    }
+    if (!serverStarted) {
+      throw Exception('Streaming server failed to start — playback unavailable');
+    }
 
     final medias = _blacklist
         .filter(tracks)
@@ -442,7 +480,7 @@ class AudioPlayerNotifier extends Notifier<AudioPlayerState> {
         collections: oldState.collections,
         loopMode: oldState.loopMode,
         playing: oldState.playing,
-        shuffled: false,
+        shuffled: oldState.shuffled,
       );
       await audioPlayer.setLoopMode(oldState.loopMode);
       await _updatePlayerState(
@@ -510,3 +548,9 @@ final audioPlayerProvider =
     NotifierProvider<AudioPlayerNotifier, AudioPlayerState>(
   () => AudioPlayerNotifier(),
 );
+
+final _isRestoringStateProvider = StateProvider<bool>((ref) => true);
+
+final isAudioPlayerRestoringProvider = Provider<bool>((ref) {
+  return ref.watch(_isRestoringStateProvider);
+});
