@@ -228,8 +228,13 @@ class ServerPlaybackRoutes {
           resolvedUrl = swapped.url;
           if (resolvedUrl != null) {
             _urlCache[track.query.id] = _CachedUrlEntry(resolvedUrl);
+            final query = resolvedUrl.indexOf('?');
+            final end = query >= 0
+                ? query
+                : (resolvedUrl.length < 80 ? resolvedUrl.length : 80);
+            AppLogger.log
+                .i('streamTrack: swapped URL ${resolvedUrl.substring(0, end)}');
           }
-          AppLogger.log.i('streamTrack: swapped URL ${resolvedUrl?.substring(0, resolvedUrl?.indexOf('?') ?? 80)}');
         } catch (e, stack) {
           AppLogger.log.w('streamTrack: swapWithNextSibling failed: $e');
           AppLogger.reportError(e, stack, 'streamTrack: swapWithNextSibling');
@@ -324,7 +329,7 @@ class ServerPlaybackRoutes {
       onError: (e, stack) {
         partialCacheFileSink.close();
         AppLogger.reportError(e, stack, 'streamTrack write error');
-        trackPartialCacheFile.delete().catchError((_) {});
+        trackPartialCacheFile.delete().catchError((_) => trackPartialCacheFile);
       },
       onDone: () async {
         await partialCacheFileSink.close();
@@ -332,7 +337,7 @@ class ServerPlaybackRoutes {
         final fileLength = await trackPartialCacheFile.length();
         if (fileLength == 0) {
           AppLogger.log.w('streamTrack: empty cache file for ${track.query.id}, cleaning up');
-          await trackPartialCacheFile.delete().catchError((_) {});
+          await trackPartialCacheFile.delete().catchError((_) => trackPartialCacheFile);
           return;
         }
         if (contentRange.total > 0 && fileLength < contentRange.total) return;
@@ -342,7 +347,7 @@ class ServerPlaybackRoutes {
         } catch (e, stack) {
           AppLogger.log.w('streamTrack: rename failed for ${track.query.id}: $e');
           AppLogger.reportError(e, stack, 'streamTrack rename');
-          await trackPartialCacheFile.delete().catchError((_) {});
+          await trackPartialCacheFile.delete().catchError((_) => trackPartialCacheFile);
           return;
         }
 
@@ -519,7 +524,8 @@ class _CachedUrlEntry {
   _CachedUrlEntry(this.url) : cachedAt = DateTime.now().toUtc();
 
   bool get isValid =>
-      DateTime.now().toUtc().difference(cachedAt).inSeconds < 30;
+      DateTime.now().toUtc().difference(cachedAt).inSeconds <
+      ServerPlaybackRoutes._urlCacheTtlSeconds;
 }
 
 class _CacheFile {

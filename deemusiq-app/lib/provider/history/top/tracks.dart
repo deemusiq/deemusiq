@@ -64,7 +64,10 @@ class HistoryTopTracksNotifier extends FamilyPaginatedAsyncNotifier<
 
     final artists = (await Future.wait([
       for (final id in artistIds)
-        ref.read(metadataPluginArtistProvider(id).future).catchError((_) => null),
+        ref
+            .read(metadataPluginArtistProvider(id).future)
+            .then<DeeMusiqFullArtistObject?>((artist) => artist)
+            .catchError((_) => null),
     ])).whereType<DeeMusiqFullArtistObject>().toList();
 
     final imagedArtistTracks = nonImageArtistTracks.map((e) {

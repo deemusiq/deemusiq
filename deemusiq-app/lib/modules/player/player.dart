@@ -10,8 +10,10 @@ import 'package:deemusiq/collections/routes.gr.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/components/framework/app_pop_scope.dart';
 import 'package:deemusiq/models/metadata/metadata.dart';
+import 'package:deemusiq/modules/player/ad_overlay.dart';
 import 'package:deemusiq/modules/player/player_actions.dart';
 import 'package:deemusiq/modules/player/player_controls.dart';
+import 'package:deemusiq/services/ad_roll/ad_roll_service.dart';
 import 'package:deemusiq/modules/player/volume_slider.dart';
 import 'package:deemusiq/components/dialogs/track_details_dialog.dart';
 import 'package:deemusiq/components/links/artist_link.dart';
@@ -126,139 +128,154 @@ class PlayerView extends HookConsumerWidget {
               ),
             ),
           ],
-          child: SingleChildScrollView(
-            controller: scrollController,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                children: [
-                  Container(
-                    margin: const EdgeInsets.all(8),
-                    constraints:
-                        const BoxConstraints(maxHeight: 300, maxWidth: 300),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withAlpha(100),
-                          spreadRadius: 2,
-                          blurRadius: 10,
-                          offset: Offset.zero,
+          child: StreamBuilder<bool>(
+            stream: AdRollService.instance.adStateStream,
+            initialData: AdRollService.instance.isAdPlaying,
+            builder: (context, snapshot) {
+              final isAdPlaying = snapshot.data ?? false;
+
+              if (isAdPlaying) {
+                return const AdOverlay();
+              }
+
+              return SingleChildScrollView(
+                controller: scrollController,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.all(8),
+                        constraints:
+                            const BoxConstraints(maxHeight: 300, maxWidth: 300),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withAlpha(100),
+                              spreadRadius: 2,
+                              blurRadius: 10,
+                              offset: Offset.zero,
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: UniversalImage(
-                        path: albumArt,
-                        placeholder: Assets.images.albumPlaceholder.path,
-                        fit: BoxFit.cover,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: UniversalImage(
+                            path: albumArt,
+                            placeholder: Assets.images.albumPlaceholder.path,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 60),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    alignment: Alignment.centerLeft,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        AutoSizeText(
-                          currentActiveTrack?.name ?? context.l10n.not_playing,
-                          style: const TextStyle(fontSize: 22),
-                          maxFontSize: 22,
-                          maxLines: 1,
-                          textAlign: TextAlign.start,
-                        ),
-                        if (isLocalTrack)
-                          Text(
-                            currentActiveTrack.artists.asString(),
-                            style: theme.typography.normal
-                                .copyWith(fontWeight: FontWeight.bold),
-                          )
-                        else
-                          ArtistLink(
-                            artists: currentActiveTrack?.artists ?? [],
-                            textStyle: theme.typography.normal
-                                .copyWith(fontWeight: FontWeight.bold),
-                            onRouteChange: (route) {
-                              panelController.close();
-                              context.router.navigateNamed(route);
-                            },
-                            onOverflowArtistClick: () => context.navigateTo(
-                              TrackRoute(
-                                trackId: currentActiveTrack!.id,
+                      const SizedBox(height: 60),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        alignment: Alignment.centerLeft,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            AutoSizeText(
+                              currentActiveTrack?.name ??
+                                  context.l10n.not_playing,
+                              style: const TextStyle(fontSize: 22),
+                              maxFontSize: 22,
+                              maxLines: 1,
+                              textAlign: TextAlign.start,
+                            ),
+                            if (isLocalTrack)
+                              Text(
+                                currentActiveTrack.artists.asString(),
+                                style: theme.typography.normal
+                                    .copyWith(fontWeight: FontWeight.bold),
+                              )
+                            else
+                              ArtistLink(
+                                artists: currentActiveTrack?.artists ?? [],
+                                textStyle: theme.typography.normal
+                                    .copyWith(fontWeight: FontWeight.bold),
+                                onRouteChange: (route) {
+                                  panelController.close();
+                                  context.router.navigateNamed(route);
+                                },
+                                onOverflowArtistClick: () => context.navigateTo(
+                                  TrackRoute(
+                                    trackId: currentActiveTrack!.id,
+                                  ),
+                                ),
                               ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      const PlayerControls(),
+                      const SizedBox(height: 25),
+                      const PlayerActions(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        showQueue: false,
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: OutlineButton(
+                              leading: const Icon(DeeMusiqIcons.queue),
+                              child: Text(context.l10n.queue),
+                              onPressed: () {
+                                context.pushRoute(const PlayerQueueRoute());
+                              },
                             ),
                           ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  const PlayerControls(),
-                  const SizedBox(height: 25),
-                  const PlayerActions(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    showQueue: false,
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: OutlineButton(
-                          leading: const Icon(DeeMusiqIcons.queue),
-                          child: Text(context.l10n.queue),
-                          onPressed: () {
-                            context.pushRoute(const PlayerQueueRoute());
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: OutlineButton(
+                              leading: const Icon(DeeMusiqIcons.music),
+                              child: Text(context.l10n.lyrics),
+                              onPressed: () {
+                                context.pushRoute(const PlayerLyricsRoute());
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                        ],
+                      ),
+                      const SizedBox(height: 25),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Consumer(builder: (context, ref, _) {
+                          final volume = ref.watch(volumeProvider);
+                          return VolumeSlider(
+                            fullWidth: true,
+                            value: volume,
+                            onChanged: (value) {
+                              ref
+                                  .read(volumeProvider.notifier)
+                                  .setVolume(value);
+                            },
+                          );
+                        }),
+                      ),
+                      const Gap(25),
+                      OutlineBadge(
+                        style: const ButtonStyle.outline(
+                          size: ButtonSize.normal,
+                          density: ButtonDensity.dense,
+                          shape: ButtonShape.rectangle,
+                        ).copyWith(
+                          textStyle: (context, states, value) {
+                            return value.copyWith(fontWeight: FontWeight.w500);
                           },
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: OutlineButton(
-                          leading: const Icon(DeeMusiqIcons.music),
-                          child: Text(context.l10n.lyrics),
-                          onPressed: () {
-                            context.pushRoute(const PlayerLyricsRoute());
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 10),
+                        leading: const Icon(DeeMusiqIcons.lightningOutlined),
+                        child: Text(qualityLabel),
+                      )
                     ],
                   ),
-                  const SizedBox(height: 25),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Consumer(builder: (context, ref, _) {
-                      final volume = ref.watch(volumeProvider);
-                      return VolumeSlider(
-                        fullWidth: true,
-                        value: volume,
-                        onChanged: (value) {
-                          ref.read(volumeProvider.notifier).setVolume(value);
-                        },
-                      );
-                    }),
-                  ),
-                  const Gap(25),
-                  OutlineBadge(
-                    style: const ButtonStyle.outline(
-                      size: ButtonSize.normal,
-                      density: ButtonDensity.dense,
-                      shape: ButtonShape.rectangle,
-                    ).copyWith(
-                      textStyle: (context, states, value) {
-                        return value.copyWith(fontWeight: FontWeight.w500);
-                      },
-                    ),
-                    leading: const Icon(DeeMusiqIcons.lightningOutlined),
-                    child: Text(qualityLabel),
-                  )
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           ),
         ),
       ),

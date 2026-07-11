@@ -36,7 +36,7 @@ class AccountPage extends HookConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // _EmailPasswordCard(),
+                    const _EmailPasswordCard(),
                     const Gap(12),
                     const _GoogleSignInCard(),
                     const Gap(12),
@@ -71,7 +71,7 @@ Future<void> _guard(
     if (context.mounted) {
       showWalletToast(context, e.message, icon: DeeMusiqIcons.error);
     }
-  } catch (e, stack) {
+  } catch (e) {
     AppLogger.log.w('Account op failed: ${e.toString()}');
     if (context.mounted) {
       showWalletToast(context, "Something went wrong.", icon: DeeMusiqIcons.error);
@@ -324,9 +324,19 @@ class _GoogleSignInCard extends HookConsumerWidget {
     }, []);
 
     Future<void> handleGoogleSignIn() => _guard(context, loading, () async {
-          final token = await GoogleAuthService.instance.signIn();
+          final result = await GoogleAuthService.instance.signIn();
           signedIn.value = true;
-          await ref.read(walletProvider.notifier).syncFromBackend();
+          final wallet = ref.read(walletProvider.notifier);
+          // Only record a Google link when the full OAuth flow ran — the
+          // device-based fallback has no Google profile to link.
+          if (result.displayName != null || result.email != null) {
+            await wallet.linkAccount(
+              LinkedProvider.google,
+              displayName: result.displayName ?? result.email ?? 'Google User',
+              externalId: result.email,
+            );
+          }
+          await wallet.syncFromBackend();
         }, "Signed in with Google.");
 
     Future<void> handleSignOut() => _guard(context, loading, () async {
@@ -380,10 +390,9 @@ class _GoogleSignInCard extends HookConsumerWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(DeeMusiqIcons.google, size: 18, color: Colors.white),
+                  const Icon(DeeMusiqIcons.google, size: 18),
                   const Gap(8),
-                  const Text("Sign in with Google",
-                      style: TextStyle(color: Colors.white)),
+                  const Text("Sign in with Google"),
                 ],
               ),
             ),

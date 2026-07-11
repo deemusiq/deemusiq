@@ -59,7 +59,6 @@ import 'package:window_manager/window_manager.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:yt_dlp_dart/yt_dlp_dart.dart';
 import 'package:flutter_new_pipe_extractor/flutter_new_pipe_extractor.dart';
-import 'package:deemusiq/services/youtube_engine/yt_dlp_engine.dart';
 
 Future<void> main(List<String> rawArgs) async {
   if (rawArgs.contains("web_view_title_bar")) {
@@ -120,9 +119,12 @@ Future<void> main(List<String> rawArgs) async {
 
     await KVStoreService.initialize();
 
+    await AdRollService.instance.init();
+
     if (kIsDesktop || kIsAndroid) {
       try {
-        final cacheDir = Directory(await UserPreferencesNotifier.getMusicCacheDir());
+        final cacheDir =
+            Directory(await UserPreferencesNotifier.getMusicCacheDir());
         if (await cacheDir.exists()) {
           await for (final f in cacheDir.list()) {
             if (f is File && f.path.endsWith('.part')) {
@@ -150,13 +152,13 @@ Future<void> main(List<String> rawArgs) async {
       await windowManager.setPreventClose(true);
       await YtDlp.instance
           .setBinaryLocation(
-            KVStoreService.getYoutubeEnginePath(YoutubeClientEngine.ytDlp) ??
-                "/usr/bin/yt-dlp",
-          )
+        KVStoreService.getYoutubeEnginePath(YoutubeClientEngine.ytDlp) ??
+            "/usr/bin/yt-dlp",
+      )
           .catchError((e, stack) {
-            AppLogger.log.w('YtDlp binary location failed: ${e.toString()}');
-            AppLogger.reportError(e, stack, 'YtDlp setBinaryLocation');
-          });
+        AppLogger.log.w('YtDlp binary location failed: ${e.toString()}');
+        AppLogger.reportError(e, stack, 'YtDlp setBinaryLocation');
+      });
 
       await FlutterDiscordRPC.initialize(Env.discordAppId);
     }
@@ -179,8 +181,11 @@ Future<void> main(List<String> rawArgs) async {
           "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
           formatSpecifiers: "%(title)s",
           extraArgs: const [
-            "--no-check-certificate", "--quiet", "--ignore-errors",
-            "--remote-components", "ejs:github",
+            "--no-check-certificate",
+            "--quiet",
+            "--ignore-errors",
+            "--remote-components",
+            "ejs:github",
           ],
         ).timeout(const Duration(seconds: 45));
       } catch (e) {

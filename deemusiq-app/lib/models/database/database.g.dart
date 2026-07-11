@@ -4123,6 +4123,478 @@ class PluginsTableCompanion extends UpdateCompanion<PluginsTableData> {
   }
 }
 
+class $FavoritesTableTable extends FavoritesTable
+    with TableInfo<$FavoritesTableTable, FavoritesTableData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $FavoritesTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _trackIdMeta =
+      const VerificationMeta('trackId');
+  @override
+  late final GeneratedColumn<String> trackId = GeneratedColumn<String>(
+      'track_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _trackNameMeta =
+      const VerificationMeta('trackName');
+  @override
+  late final GeneratedColumn<String> trackName = GeneratedColumn<String>(
+      'track_name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _artistNameMeta =
+      const VerificationMeta('artistName');
+  @override
+  late final GeneratedColumn<String> artistName = GeneratedColumn<String>(
+      'artist_name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _albumNameMeta =
+      const VerificationMeta('albumName');
+  @override
+  late final GeneratedColumn<String> albumName = GeneratedColumn<String>(
+      'album_name', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _thumbnailUrlMeta =
+      const VerificationMeta('thumbnailUrl');
+  @override
+  late final GeneratedColumn<String> thumbnailUrl = GeneratedColumn<String>(
+      'thumbnail_url', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _sourceUriMeta =
+      const VerificationMeta('sourceUri');
+  @override
+  late final GeneratedColumn<String> sourceUri = GeneratedColumn<String>(
+      'source_uri', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _durationMsMeta =
+      const VerificationMeta('durationMs');
+  @override
+  late final GeneratedColumn<int> durationMs = GeneratedColumn<int>(
+      'duration_ms', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        trackId,
+        trackName,
+        artistName,
+        albumName,
+        thumbnailUrl,
+        sourceUri,
+        durationMs,
+        createdAt
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'favorites_table';
+  @override
+  VerificationContext validateIntegrity(Insertable<FavoritesTableData> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('track_id')) {
+      context.handle(_trackIdMeta,
+          trackId.isAcceptableOrUnknown(data['track_id']!, _trackIdMeta));
+    } else if (isInserting) {
+      context.missing(_trackIdMeta);
+    }
+    if (data.containsKey('track_name')) {
+      context.handle(_trackNameMeta,
+          trackName.isAcceptableOrUnknown(data['track_name']!, _trackNameMeta));
+    } else if (isInserting) {
+      context.missing(_trackNameMeta);
+    }
+    if (data.containsKey('artist_name')) {
+      context.handle(
+          _artistNameMeta,
+          artistName.isAcceptableOrUnknown(
+              data['artist_name']!, _artistNameMeta));
+    } else if (isInserting) {
+      context.missing(_artistNameMeta);
+    }
+    if (data.containsKey('album_name')) {
+      context.handle(_albumNameMeta,
+          albumName.isAcceptableOrUnknown(data['album_name']!, _albumNameMeta));
+    }
+    if (data.containsKey('thumbnail_url')) {
+      context.handle(
+          _thumbnailUrlMeta,
+          thumbnailUrl.isAcceptableOrUnknown(
+              data['thumbnail_url']!, _thumbnailUrlMeta));
+    }
+    if (data.containsKey('source_uri')) {
+      context.handle(_sourceUriMeta,
+          sourceUri.isAcceptableOrUnknown(data['source_uri']!, _sourceUriMeta));
+    }
+    if (data.containsKey('duration_ms')) {
+      context.handle(
+          _durationMsMeta,
+          durationMs.isAcceptableOrUnknown(
+              data['duration_ms']!, _durationMsMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  FavoritesTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return FavoritesTableData(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      trackId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}track_id'])!,
+      trackName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}track_name'])!,
+      artistName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}artist_name'])!,
+      albumName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}album_name']),
+      thumbnailUrl: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}thumbnail_url']),
+      sourceUri: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}source_uri']),
+      durationMs: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}duration_ms']),
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+    );
+  }
+
+  @override
+  $FavoritesTableTable createAlias(String alias) {
+    return $FavoritesTableTable(attachedDatabase, alias);
+  }
+}
+
+class FavoritesTableData extends DataClass
+    implements Insertable<FavoritesTableData> {
+  final int id;
+  final String trackId;
+  final String trackName;
+  final String artistName;
+  final String? albumName;
+  final String? thumbnailUrl;
+  final String? sourceUri;
+  final int? durationMs;
+  final DateTime createdAt;
+  const FavoritesTableData(
+      {required this.id,
+      required this.trackId,
+      required this.trackName,
+      required this.artistName,
+      this.albumName,
+      this.thumbnailUrl,
+      this.sourceUri,
+      this.durationMs,
+      required this.createdAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['track_id'] = Variable<String>(trackId);
+    map['track_name'] = Variable<String>(trackName);
+    map['artist_name'] = Variable<String>(artistName);
+    if (!nullToAbsent || albumName != null) {
+      map['album_name'] = Variable<String>(albumName);
+    }
+    if (!nullToAbsent || thumbnailUrl != null) {
+      map['thumbnail_url'] = Variable<String>(thumbnailUrl);
+    }
+    if (!nullToAbsent || sourceUri != null) {
+      map['source_uri'] = Variable<String>(sourceUri);
+    }
+    if (!nullToAbsent || durationMs != null) {
+      map['duration_ms'] = Variable<int>(durationMs);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  FavoritesTableCompanion toCompanion(bool nullToAbsent) {
+    return FavoritesTableCompanion(
+      id: Value(id),
+      trackId: Value(trackId),
+      trackName: Value(trackName),
+      artistName: Value(artistName),
+      albumName: albumName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(albumName),
+      thumbnailUrl: thumbnailUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(thumbnailUrl),
+      sourceUri: sourceUri == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceUri),
+      durationMs: durationMs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(durationMs),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory FavoritesTableData.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return FavoritesTableData(
+      id: serializer.fromJson<int>(json['id']),
+      trackId: serializer.fromJson<String>(json['trackId']),
+      trackName: serializer.fromJson<String>(json['trackName']),
+      artistName: serializer.fromJson<String>(json['artistName']),
+      albumName: serializer.fromJson<String?>(json['albumName']),
+      thumbnailUrl: serializer.fromJson<String?>(json['thumbnailUrl']),
+      sourceUri: serializer.fromJson<String?>(json['sourceUri']),
+      durationMs: serializer.fromJson<int?>(json['durationMs']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'trackId': serializer.toJson<String>(trackId),
+      'trackName': serializer.toJson<String>(trackName),
+      'artistName': serializer.toJson<String>(artistName),
+      'albumName': serializer.toJson<String?>(albumName),
+      'thumbnailUrl': serializer.toJson<String?>(thumbnailUrl),
+      'sourceUri': serializer.toJson<String?>(sourceUri),
+      'durationMs': serializer.toJson<int?>(durationMs),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  FavoritesTableData copyWith(
+          {int? id,
+          String? trackId,
+          String? trackName,
+          String? artistName,
+          Value<String?> albumName = const Value.absent(),
+          Value<String?> thumbnailUrl = const Value.absent(),
+          Value<String?> sourceUri = const Value.absent(),
+          Value<int?> durationMs = const Value.absent(),
+          DateTime? createdAt}) =>
+      FavoritesTableData(
+        id: id ?? this.id,
+        trackId: trackId ?? this.trackId,
+        trackName: trackName ?? this.trackName,
+        artistName: artistName ?? this.artistName,
+        albumName: albumName.present ? albumName.value : this.albumName,
+        thumbnailUrl:
+            thumbnailUrl.present ? thumbnailUrl.value : this.thumbnailUrl,
+        sourceUri: sourceUri.present ? sourceUri.value : this.sourceUri,
+        durationMs: durationMs.present ? durationMs.value : this.durationMs,
+        createdAt: createdAt ?? this.createdAt,
+      );
+  FavoritesTableData copyWithCompanion(FavoritesTableCompanion data) {
+    return FavoritesTableData(
+      id: data.id.present ? data.id.value : this.id,
+      trackId: data.trackId.present ? data.trackId.value : this.trackId,
+      trackName: data.trackName.present ? data.trackName.value : this.trackName,
+      artistName:
+          data.artistName.present ? data.artistName.value : this.artistName,
+      albumName: data.albumName.present ? data.albumName.value : this.albumName,
+      thumbnailUrl: data.thumbnailUrl.present
+          ? data.thumbnailUrl.value
+          : this.thumbnailUrl,
+      sourceUri: data.sourceUri.present ? data.sourceUri.value : this.sourceUri,
+      durationMs:
+          data.durationMs.present ? data.durationMs.value : this.durationMs,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FavoritesTableData(')
+          ..write('id: $id, ')
+          ..write('trackId: $trackId, ')
+          ..write('trackName: $trackName, ')
+          ..write('artistName: $artistName, ')
+          ..write('albumName: $albumName, ')
+          ..write('thumbnailUrl: $thumbnailUrl, ')
+          ..write('sourceUri: $sourceUri, ')
+          ..write('durationMs: $durationMs, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, trackId, trackName, artistName, albumName,
+      thumbnailUrl, sourceUri, durationMs, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FavoritesTableData &&
+          other.id == this.id &&
+          other.trackId == this.trackId &&
+          other.trackName == this.trackName &&
+          other.artistName == this.artistName &&
+          other.albumName == this.albumName &&
+          other.thumbnailUrl == this.thumbnailUrl &&
+          other.sourceUri == this.sourceUri &&
+          other.durationMs == this.durationMs &&
+          other.createdAt == this.createdAt);
+}
+
+class FavoritesTableCompanion extends UpdateCompanion<FavoritesTableData> {
+  final Value<int> id;
+  final Value<String> trackId;
+  final Value<String> trackName;
+  final Value<String> artistName;
+  final Value<String?> albumName;
+  final Value<String?> thumbnailUrl;
+  final Value<String?> sourceUri;
+  final Value<int?> durationMs;
+  final Value<DateTime> createdAt;
+  const FavoritesTableCompanion({
+    this.id = const Value.absent(),
+    this.trackId = const Value.absent(),
+    this.trackName = const Value.absent(),
+    this.artistName = const Value.absent(),
+    this.albumName = const Value.absent(),
+    this.thumbnailUrl = const Value.absent(),
+    this.sourceUri = const Value.absent(),
+    this.durationMs = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  FavoritesTableCompanion.insert({
+    this.id = const Value.absent(),
+    required String trackId,
+    required String trackName,
+    required String artistName,
+    this.albumName = const Value.absent(),
+    this.thumbnailUrl = const Value.absent(),
+    this.sourceUri = const Value.absent(),
+    this.durationMs = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  })  : trackId = Value(trackId),
+        trackName = Value(trackName),
+        artistName = Value(artistName);
+  static Insertable<FavoritesTableData> custom({
+    Expression<int>? id,
+    Expression<String>? trackId,
+    Expression<String>? trackName,
+    Expression<String>? artistName,
+    Expression<String>? albumName,
+    Expression<String>? thumbnailUrl,
+    Expression<String>? sourceUri,
+    Expression<int>? durationMs,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (trackId != null) 'track_id': trackId,
+      if (trackName != null) 'track_name': trackName,
+      if (artistName != null) 'artist_name': artistName,
+      if (albumName != null) 'album_name': albumName,
+      if (thumbnailUrl != null) 'thumbnail_url': thumbnailUrl,
+      if (sourceUri != null) 'source_uri': sourceUri,
+      if (durationMs != null) 'duration_ms': durationMs,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  FavoritesTableCompanion copyWith(
+      {Value<int>? id,
+      Value<String>? trackId,
+      Value<String>? trackName,
+      Value<String>? artistName,
+      Value<String?>? albumName,
+      Value<String?>? thumbnailUrl,
+      Value<String?>? sourceUri,
+      Value<int?>? durationMs,
+      Value<DateTime>? createdAt}) {
+    return FavoritesTableCompanion(
+      id: id ?? this.id,
+      trackId: trackId ?? this.trackId,
+      trackName: trackName ?? this.trackName,
+      artistName: artistName ?? this.artistName,
+      albumName: albumName ?? this.albumName,
+      thumbnailUrl: thumbnailUrl ?? this.thumbnailUrl,
+      sourceUri: sourceUri ?? this.sourceUri,
+      durationMs: durationMs ?? this.durationMs,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (trackId.present) {
+      map['track_id'] = Variable<String>(trackId.value);
+    }
+    if (trackName.present) {
+      map['track_name'] = Variable<String>(trackName.value);
+    }
+    if (artistName.present) {
+      map['artist_name'] = Variable<String>(artistName.value);
+    }
+    if (albumName.present) {
+      map['album_name'] = Variable<String>(albumName.value);
+    }
+    if (thumbnailUrl.present) {
+      map['thumbnail_url'] = Variable<String>(thumbnailUrl.value);
+    }
+    if (sourceUri.present) {
+      map['source_uri'] = Variable<String>(sourceUri.value);
+    }
+    if (durationMs.present) {
+      map['duration_ms'] = Variable<int>(durationMs.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FavoritesTableCompanion(')
+          ..write('id: $id, ')
+          ..write('trackId: $trackId, ')
+          ..write('trackName: $trackName, ')
+          ..write('artistName: $artistName, ')
+          ..write('albumName: $albumName, ')
+          ..write('thumbnailUrl: $thumbnailUrl, ')
+          ..write('sourceUri: $sourceUri, ')
+          ..write('durationMs: $durationMs, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -4141,6 +4613,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $HistoryTableTable historyTable = $HistoryTableTable(this);
   late final $LyricsTableTable lyricsTable = $LyricsTableTable(this);
   late final $PluginsTableTable pluginsTable = $PluginsTableTable(this);
+  late final $FavoritesTableTable favoritesTable = $FavoritesTableTable(this);
   late final Index uniqueBlacklist = Index('unique_blacklist',
       'CREATE UNIQUE INDEX unique_blacklist ON blacklist_table (element_type, element_id)');
   @override
@@ -4158,6 +4631,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         historyTable,
         lyricsTable,
         pluginsTable,
+        favoritesTable,
         uniqueBlacklist
       ];
 }
@@ -6289,6 +6763,235 @@ typedef $$PluginsTableTableProcessedTableManager = ProcessedTableManager<
     ),
     PluginsTableData,
     PrefetchHooks Function()>;
+typedef $$FavoritesTableTableCreateCompanionBuilder = FavoritesTableCompanion
+    Function({
+  Value<int> id,
+  required String trackId,
+  required String trackName,
+  required String artistName,
+  Value<String?> albumName,
+  Value<String?> thumbnailUrl,
+  Value<String?> sourceUri,
+  Value<int?> durationMs,
+  Value<DateTime> createdAt,
+});
+typedef $$FavoritesTableTableUpdateCompanionBuilder = FavoritesTableCompanion
+    Function({
+  Value<int> id,
+  Value<String> trackId,
+  Value<String> trackName,
+  Value<String> artistName,
+  Value<String?> albumName,
+  Value<String?> thumbnailUrl,
+  Value<String?> sourceUri,
+  Value<int?> durationMs,
+  Value<DateTime> createdAt,
+});
+
+class $$FavoritesTableTableFilterComposer
+    extends Composer<_$AppDatabase, $FavoritesTableTable> {
+  $$FavoritesTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get trackId => $composableBuilder(
+      column: $table.trackId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get trackName => $composableBuilder(
+      column: $table.trackName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get artistName => $composableBuilder(
+      column: $table.artistName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get albumName => $composableBuilder(
+      column: $table.albumName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get thumbnailUrl => $composableBuilder(
+      column: $table.thumbnailUrl, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get sourceUri => $composableBuilder(
+      column: $table.sourceUri, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get durationMs => $composableBuilder(
+      column: $table.durationMs, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$FavoritesTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $FavoritesTableTable> {
+  $$FavoritesTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get trackId => $composableBuilder(
+      column: $table.trackId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get trackName => $composableBuilder(
+      column: $table.trackName, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get artistName => $composableBuilder(
+      column: $table.artistName, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get albumName => $composableBuilder(
+      column: $table.albumName, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get thumbnailUrl => $composableBuilder(
+      column: $table.thumbnailUrl,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get sourceUri => $composableBuilder(
+      column: $table.sourceUri, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get durationMs => $composableBuilder(
+      column: $table.durationMs, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$FavoritesTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $FavoritesTableTable> {
+  $$FavoritesTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get trackId =>
+      $composableBuilder(column: $table.trackId, builder: (column) => column);
+
+  GeneratedColumn<String> get trackName =>
+      $composableBuilder(column: $table.trackName, builder: (column) => column);
+
+  GeneratedColumn<String> get artistName => $composableBuilder(
+      column: $table.artistName, builder: (column) => column);
+
+  GeneratedColumn<String> get albumName =>
+      $composableBuilder(column: $table.albumName, builder: (column) => column);
+
+  GeneratedColumn<String> get thumbnailUrl => $composableBuilder(
+      column: $table.thumbnailUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get sourceUri =>
+      $composableBuilder(column: $table.sourceUri, builder: (column) => column);
+
+  GeneratedColumn<int> get durationMs => $composableBuilder(
+      column: $table.durationMs, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$FavoritesTableTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $FavoritesTableTable,
+    FavoritesTableData,
+    $$FavoritesTableTableFilterComposer,
+    $$FavoritesTableTableOrderingComposer,
+    $$FavoritesTableTableAnnotationComposer,
+    $$FavoritesTableTableCreateCompanionBuilder,
+    $$FavoritesTableTableUpdateCompanionBuilder,
+    (
+      FavoritesTableData,
+      BaseReferences<_$AppDatabase, $FavoritesTableTable, FavoritesTableData>
+    ),
+    FavoritesTableData,
+    PrefetchHooks Function()> {
+  $$FavoritesTableTableTableManager(
+      _$AppDatabase db, $FavoritesTableTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$FavoritesTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$FavoritesTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$FavoritesTableTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<String> trackId = const Value.absent(),
+            Value<String> trackName = const Value.absent(),
+            Value<String> artistName = const Value.absent(),
+            Value<String?> albumName = const Value.absent(),
+            Value<String?> thumbnailUrl = const Value.absent(),
+            Value<String?> sourceUri = const Value.absent(),
+            Value<int?> durationMs = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+          }) =>
+              FavoritesTableCompanion(
+            id: id,
+            trackId: trackId,
+            trackName: trackName,
+            artistName: artistName,
+            albumName: albumName,
+            thumbnailUrl: thumbnailUrl,
+            sourceUri: sourceUri,
+            durationMs: durationMs,
+            createdAt: createdAt,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required String trackId,
+            required String trackName,
+            required String artistName,
+            Value<String?> albumName = const Value.absent(),
+            Value<String?> thumbnailUrl = const Value.absent(),
+            Value<String?> sourceUri = const Value.absent(),
+            Value<int?> durationMs = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+          }) =>
+              FavoritesTableCompanion.insert(
+            id: id,
+            trackId: trackId,
+            trackName: trackName,
+            artistName: artistName,
+            albumName: albumName,
+            thumbnailUrl: thumbnailUrl,
+            sourceUri: sourceUri,
+            durationMs: durationMs,
+            createdAt: createdAt,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$FavoritesTableTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $FavoritesTableTable,
+    FavoritesTableData,
+    $$FavoritesTableTableFilterComposer,
+    $$FavoritesTableTableOrderingComposer,
+    $$FavoritesTableTableAnnotationComposer,
+    $$FavoritesTableTableCreateCompanionBuilder,
+    $$FavoritesTableTableUpdateCompanionBuilder,
+    (
+      FavoritesTableData,
+      BaseReferences<_$AppDatabase, $FavoritesTableTable, FavoritesTableData>
+    ),
+    FavoritesTableData,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -6313,4 +7016,6 @@ class $AppDatabaseManager {
       $$LyricsTableTableTableManager(_db, _db.lyricsTable);
   $$PluginsTableTableTableManager get pluginsTable =>
       $$PluginsTableTableTableManager(_db, _db.pluginsTable);
+  $$FavoritesTableTableTableManager get favoritesTable =>
+      $$FavoritesTableTableTableManager(_db, _db.favoritesTable);
 }

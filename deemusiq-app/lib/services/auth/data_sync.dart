@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:deemusiq/services/wallet/wallet_api.dart';
-import 'package:deemusiq/services/wallet/secure_channel.dart';
 import 'package:deemusiq/services/wallet/payment_service.dart'
     show PaymentGatewayConfig;
 import 'package:crypto/crypto.dart' as crypto;

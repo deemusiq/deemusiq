@@ -140,7 +140,7 @@ class _ProviderTile extends ConsumerWidget {
         _walletErrorMessage(e.message),
         icon: DeeMusiqIcons.info,
       );
-    } catch (e, stack) {
+    } catch (e) {
       AppLogger.log.w('Linked accounts load failed: ${e.toString()}');
       showWalletToast(context, 'Failed to load linked accounts',
           icon: DeeMusiqIcons.info);

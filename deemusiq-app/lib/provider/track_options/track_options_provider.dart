@@ -15,6 +15,7 @@ import 'package:deemusiq/models/metadata/metadata.dart';
 import 'package:deemusiq/provider/audio_player/audio_player.dart';
 import 'package:deemusiq/provider/blacklist_provider.dart';
 import 'package:deemusiq/provider/download_manager_provider.dart';
+import 'package:deemusiq/provider/local_favorites/local_favorites_provider.dart';
 import 'package:deemusiq/provider/local_tracks/local_tracks_provider.dart';
 import 'package:deemusiq/provider/metadata_plugin/core/auth.dart';
 import 'package:deemusiq/provider/metadata_plugin/library/playlists.dart';
@@ -202,15 +203,20 @@ class TrackOptionsActions {
         }
         break;
       case TrackOptionValue.favorite:
-        final isLikedTrack = await ref.read(
-          metadataPluginIsSavedTrackProvider(track.id).future,
-        );
+        final localFavorites = ref.read(localFavoritesProvider.notifier);
+        // Plugin state is best-effort — fall back to the local table so the
+        // toggle keeps working when the metadata plugin is unreachable.
+        final isLikedTrack = await ref
+                .read(metadataPluginIsSavedTrackProvider(track.id).future)
+                .catchError((_) => false) ||
+            await localFavorites.isFavorite(track.id);
 
-        if (isLikedTrack) {
-          await favoriteTracks.removeFavorite([track]);
-        } else {
-          await favoriteTracks.addFavorite([track]);
-        }
+        await toggleTrackFavorite(
+          localFavorites: localFavorites,
+          savedTracks: favoriteTracks,
+          track: track,
+          isLiked: isLikedTrack,
+        );
         break;
       case TrackOptionValue.addToPlaylist:
         actionAddToPlaylist(context, playlistId);

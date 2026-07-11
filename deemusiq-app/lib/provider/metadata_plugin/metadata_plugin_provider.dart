@@ -1,8 +1,6 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
-import 'package:dio/dio.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter/services.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -12,13 +10,10 @@ import 'package:deemusiq/models/database/database.dart';
 import 'package:deemusiq/models/metadata/metadata.dart';
 import 'package:deemusiq/provider/database/database.dart';
 import 'package:deemusiq/provider/youtube_engine/youtube_engine.dart';
-import 'package:deemusiq/services/dio/dio.dart';
-import 'package:deemusiq/services/logger/logger.dart';
 import 'package:deemusiq/services/metadata/errors/exceptions.dart';
 import 'package:deemusiq/services/metadata/metadata.dart';
 import 'package:deemusiq/services/metadata/deemusiq_native_plugin.dart';
 import 'package:deemusiq/utils/service_utils.dart';
-import 'package:archive/archive.dart';
 import 'package:pub_semver/pub_semver.dart';
 
 final allowedDomainsRegex = RegExp(
@@ -176,20 +171,8 @@ class MetadataPluginNotifier extends AsyncNotifier<MetadataPluginState> {
     // backend provider (kDeeMusiqNativePluginConfig). No assets to load.
   }
 
-  // External .smplug plugin system removed — the following methods are dead.
-  // They remain as stubs to avoid breaking imports/compile.
-
-  Uri _getGithubReleasesUrl(String repoUrl) {
-    throw UnimplementedError('External plugin system removed');
-  }
-
-  Uri _getCodebergeReleasesUrl(String repoUrl) {
-    throw UnimplementedError('External plugin system removed');
-  }
-
-  Future<String> _getPluginDownloadUrl(Uri uri) async {
-    throw UnimplementedError('External plugin system removed');
-  }
+  // External .smplug plugin system removed — the public methods below remain
+  // as throwing stubs because callers still reference them.
 
   Future<PluginConfiguration> extractPluginArchive(List<int> bytes) async {
     throw UnimplementedError('External plugin system removed');
@@ -228,12 +211,6 @@ class MetadataPluginNotifier extends AsyncNotifier<MetadataPluginState> {
       return false;
     }
     return configPluginApiVersion >= appPluginApiVersion;
-  }
-
-  void _assertPluginApiCompatibility(PluginConfiguration plugin) {
-    if (!validatePluginApiCompatibility(plugin)) {
-      throw MetadataPluginException.pluginApiVersionMismatch();
-    }
   }
 
   Future<void> addPlugin(PluginConfiguration plugin) async {

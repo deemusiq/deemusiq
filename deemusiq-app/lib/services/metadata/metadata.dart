@@ -1,6 +1,5 @@
 import 'package:pub_semver/pub_semver.dart';
 
-import 'package:deemusiq/models/metadata/metadata.dart';
 import 'package:deemusiq/services/metadata/deemusiq_native_plugin.dart';
 import 'package:deemusiq/services/metadata/endpoints/album.dart';
 import 'package:deemusiq/services/metadata/endpoints/artist.dart';

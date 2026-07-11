@@ -52,7 +52,7 @@ class MetadataPluginPlaylistNotifier
         state = AsyncValue.data(playlist);
       }
       ref.invalidate(metadataPluginSavedPlaylistsProvider);
-    } catch (e, stack) {
+    } catch (e) {
       AppLogger.log.w('Failed to create playlist: ${e.toString()}');
       onError?.call(e);
       rethrow;
@@ -95,7 +95,7 @@ class MetadataPluginPlaylistNotifier
       await ref
           .read(metadataPluginSavedPlaylistsProvider.notifier)
           .addTracks(arg, trackIds);
-    } catch (e, stack) {
+    } catch (e) {
       AppLogger.log.w('Failed to add tracks to playlist: ${e.toString()}');
       onError?.call(e);
       rethrow;
@@ -110,7 +110,7 @@ class MetadataPluginPlaylistNotifier
       await ref
           .read(metadataPluginSavedPlaylistsProvider.notifier)
           .removeTracks(arg, trackIds);
-    } catch (e, stack) {
+    } catch (e) {
       AppLogger.log.w('Failed to remove tracks from playlist: ${e.toString()}');
       onError?.call(e);
       rethrow;

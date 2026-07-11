@@ -4,7 +4,6 @@ import 'package:skeletonizer/skeletonizer.dart';
 import 'package:deemusiq/components/fallbacks/error_box.dart';
 import 'package:deemusiq/components/horizontal_playbutton_card_view/horizontal_playbutton_card_view.dart';
 import 'package:deemusiq/extensions/context.dart';
-import 'package:deemusiq/models/database/database.dart';
 import 'package:deemusiq/provider/history/recent.dart';
 
 class HomeRecentlyPlayedSection extends HookConsumerWidget {

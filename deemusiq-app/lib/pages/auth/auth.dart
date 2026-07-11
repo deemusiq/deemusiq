@@ -5,12 +5,12 @@ import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/collections/routes.gr.dart';
 import 'package:deemusiq/components/wallet/wallet_common.dart';
+import 'package:deemusiq/models/wallet/linked_account.dart';
 import 'package:deemusiq/provider/wallet/wallet_provider.dart';
 import 'package:deemusiq/services/auth/google_auth.dart';
 import 'package:deemusiq/services/kv_store/kv_store.dart';
 import 'package:deemusiq/l10n/l10n.dart';
 import 'package:deemusiq/services/logger/logger.dart';
-import 'package:deemusiq/services/wallet/wallet_api.dart';
 
 @RoutePage(name: "auth")
 class AuthPage extends HookConsumerWidget {
@@ -42,7 +42,17 @@ class AuthPage extends HookConsumerWidget {
         await KVStoreService.setPrivacyConsentGiven(true);
 
         if (google) {
-          await GoogleAuthService.instance.signIn();
+          final result = await GoogleAuthService.instance.signIn();
+          // Only record a Google link when the full OAuth flow ran — the
+          // device-based fallback has no Google profile to link.
+          if (result.displayName != null || result.email != null) {
+            await ref.read(walletProvider.notifier).linkAccount(
+                  LinkedProvider.google,
+                  displayName:
+                      result.displayName ?? result.email ?? 'Google User',
+                  externalId: result.email,
+                );
+          }
         }
 
         await KVStoreService.setDoneGettingStarted(true);
@@ -143,10 +153,9 @@ class AuthPage extends HookConsumerWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const Icon(DeeMusiqIcons.google,
-                              size: 18, color: Colors.white),
+                              size: 18),
                           const Gap(8),
-                          Text(l10n.sign_in_with_google,
-                              style: const TextStyle(color: Colors.white)),
+                          Text(l10n.sign_in_with_google),
                         ],
                       ),
                     ),

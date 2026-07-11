@@ -1,6 +1,7 @@
 
 import 'package:media_kit/media_kit.dart' hide Track;
 import 'package:deemusiq/models/metadata/metadata.dart';
+import 'package:deemusiq/services/ad_roll/ad_roll_service.dart';
 import 'package:deemusiq/services/logger/logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:deemusiq/services/audio_player/custom_player.dart';

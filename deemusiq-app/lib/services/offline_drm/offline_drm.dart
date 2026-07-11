@@ -5,7 +5,6 @@ import 'dart:typed_data';
 
 import 'package:path_provider/path_provider.dart';
 import 'package:encrypt/encrypt.dart' as enc;
-import 'package:deemusiq/services/kv_store/kv_store.dart';
 import 'package:deemusiq/services/kv_store/encrypted_kv_store.dart';
 import 'package:deemusiq/services/logger/logger.dart';
 

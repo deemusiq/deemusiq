@@ -2,7 +2,9 @@ import 'package:auto_route/auto_route.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:deemusiq/collections/routes.gr.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
+import 'package:deemusiq/collections/assets.gen.dart';
 import 'package:deemusiq/l10n/l10n.dart';
+import 'package:deemusiq/models/metadata/metadata.dart';
 
 class SideBarTiles {
   final IconData icon;
@@ -73,6 +75,32 @@ List<SideBarTiles> getSidebarTileList(AppLocalizations l10n) => [
     ];
 
 List<SideBarTiles> getSidebarLibraryTileList(AppLocalizations l10n) => [
+      SideBarTiles(
+        id: "favorites",
+        pathPrefix: "/liked-tracks",
+        title: l10n.liked_tracks,
+        route: LikedPlaylistRoute(
+          playlist: DeeMusiqSimplePlaylistObject(
+            id: "user-liked-tracks",
+            name: l10n.liked_tracks,
+            description: l10n.liked_tracks_description,
+            externalUri: "",
+            owner: DeeMusiqUserObject(
+              id: "",
+              name: "DeeMusiq",
+              externalUri: "",
+            ),
+            images: [
+              DeeMusiqImageObject(
+                url: Assets.images.likedTracks.path,
+                width: 300,
+                height: 300,
+              ),
+            ],
+          ),
+        ),
+        icon: DeeMusiqIcons.heart,
+      ),
       SideBarTiles(
         id: "playlists",
         pathPrefix: "/library/playlists",

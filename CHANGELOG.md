@@ -5,6 +5,177 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### 2026-07-11 — Feature completion: ad-roll, local favorites, full auth backend
+
+#### Backend — every app API endpoint now implemented (`backend/src/index.ts`)
+- **Device auth (Ed25519 challenge–response)** — new `POST /auth/device/challenge`; `POST /auth/device/login` verifies the device signature (incl. `challenge|cert|apk` attestation binding), binds the device key on first login (atomic, guarded on `publicKey == null` so concurrent first-logins can't both bind) and rejects mismatched keys afterwards. Legacy unsigned login only allowed while no key is bound. Trust-on-first-use is documented; `REQUIRE_DEVICE_ATTESTATION=true` forces every first-bind to carry a valid cert/apk attestation (closing the leaked-deviceId hijack window flagged in review), and a rejected bind never leaves a garbage user/wallet behind.
+- **Email + password auth** — `POST /auth/register` (scrypt hashes, 409 on duplicate email), `POST /auth/login` (rate-limited), `POST /auth/forgot-password` (never reveals account existence), `POST /auth/reset-password` (single-use tokens, revokes all sessions), `POST /auth/request-verify`, `GET /auth/verify-email`.
+- **TOTP 2FA** — `POST /auth/totp/setup|enable|recover` (RFC 6238 via node:crypto, ±1 step drift, otpauth URI for authenticator apps).
+- **Sessions & account** — `POST /auth/logout-all` (tokenVersion bump revokes every outstanding JWT; auth middleware validates the version), `POST /auth/delete-account` (POPIA/GDPR cascade delete of all user data).
+- **Google auth hardened** — refuses to run without `GOOGLE_CLIENT_ID` (previously accepted unverified tokens); an already-linked Google identity signs into its existing user so the wallet follows the account across devices. The client-supplied `deviceId` is **no longer trusted to select a wallet** (fixing an account-takeover flagged in review: signing in with an attacker's own Google token but a victim's deviceId grafted the attacker onto the victim's wallet). Unlinked sign-in now resolves to a deterministic Google-owned user; merging into an existing device wallet requires an authenticated device session, and collisions with an already-linked account return 409.
+- **Linked accounts** — `GET /link/accounts`, `DELETE /link/accounts/:provider`, `GET /link/:provider/start` (Spotify OAuth URL when configured, 503 otherwise).
+- **Payments** — `POST /payments/checkout` (PaymentIntent records; signed PayFast redirect when merchant creds configured, `requires_config` otherwise; crypto deposit option; ZA-only gate) + `POST /webhooks/payfast` ITN handler that credits the wallet exactly once per intent. The ITN is only honoured when it is cryptographically attributable to PayFast — MD5 signature verified against the merchant passphrase (no passphrase → refuses to credit), source IP checked against PayFast netblocks, and gross amount matched — closing an unauthenticated token-minting path flagged in review.
+- **Recommendations** — `POST /recommendations/like|unlike`, `GET /recommendations/liked`, `GET /recommendations/for-you`, `POST /recommendations/refresh` (popularity-based from the push catalog, excludes already-liked tracks).
+- **Sync API matched to the app** — `POST /sync/liked` accepts the app's hash-only anonymous payload; `DELETE /sync/liked?songHash=…` query-param variant; playlists accept `songHashes` string arrays end-to-end.
+- **Secure channel** — AES-256-GCM envelope middleware mirroring the app's `SecureChannel` (`SECURE_CHANNEL_KEY`), with request unsealing + response sealing and `X-DM-Enc` negotiation.
+- **Catalog** — `q`/`limit`/`cursor` query support.
+- **Schema** — User gains email/passwordHash/emailVerified/totpSecret/totpEnabled/tokenVersion/publicKey/certSha256/apkSha256; new `TrackLike`, `AuthActionToken`, `PaymentIntent` models.
+- **Tests** — new `node:test` suite (20 tests) covering device-key binding + replay, email + TOTP flows, session revocation, account deletion, wallet push/overdraft, sync payload compat, recommendations, ad rotation/budget accounting, checkout gating, and webhook idempotency. `npm test` builds, provisions a fresh SQLite test DB and runs green.
+
+#### App — ad-roll finished end-to-end
+- **Auth + accounting** — `/ads/next` is now called with the device JWT (was unauthenticated → always 401); skips and completions are reported to `/ads/skip` / `/ads/complete`; `durationSec` from the backend is honoured (was hardcoded 15 s).
+- **Ad breaks at track boundaries** — listened songs are counted at the scrobble threshold, but the break itself triggers on the next track change (previously the hook fired mid-song at 50% playback). Playback pauses for the interstitial and resumes when the ad ends or is skipped.
+- **Service-owned countdown** — `AdRollService` runs the ad timer itself, so a break completes even when the player sheet (and its overlay) is closed; the `AdOverlay` is purely presentational and shows correct progress when reopened mid-ad.
+- **Skip pressure** — every 3 consecutive track skips add one song credit toward the next ad break; `AdRollService.init()` moved out of a debug-only dispose closure in `main.dart` into real startup.
+
+#### App — local favorites finished
+- **Shared local-first toggle** — heart button and track-options menu now go through one `toggleTrackFavorite` helper: the Drift `FavoritesTable` (schema v11) is the offline source of truth, the metadata plugin and the anonymous backend sync (`DataSyncService`, previously dead code) are best-effort. A dead plugin or unreachable backend can no longer break likes.
+- **Heart state fallback** — `isLiked` also reflects local favorites, so hearts stay filled when the metadata plugin is down; Liked Tracks page falls back to local favorites.
+- **Provider hygiene** — favorites stream subscription cancelled on dispose; duplicate rows prevented.
+- **Migrations** — `drift_schema_v11.json` exported and `database.steps.dart` + drift migration tests regenerated via `make-migrations` (with the documented hand-patches for serialized enum defaults).
+
+#### App — auth polish
+- **Device fallback fixed** — Google-less sign-in posted an empty body to `/auth/device/login` (always failed); it now runs the proper Ed25519 challenge flow via `WalletApiClient.deviceLogin()`.
+- **Email/password card enabled** — `_EmailPasswordCard` on the Account page was commented out pending backend support; it is now live against `/auth/register` + `/auth/login`.
+- **Consistent Google linking** — both the Auth page and Account page record the linked Google account (only when the full OAuth flow ran, not the device fallback), then sync from the backend.
+
+#### Code quality
+- **Zero analyzer issues at error/warning level** — fixed all 12 errors and 69 warnings on the branch: unused imports/fields/elements, `catchError` handlers with wrong return types (incl. a latent `substring(0, -1)` crash in `playback.dart` URL logging), protected-member access in `mobile_audio_service.dart`, URL-cache TTL constant now actually enforced, and dead `.smplug` plugin stubs removed.
+- **pubspec** — removed unresolvable `test: any` dev-dependency (new-SDK solver conflict with `auto_route_generator`); `simple_icons` bumped `^10.1.3` → `^16.23.0` (10.x extends `IconData`, final on newer Flutter).
+- **Toolchain note** — the project pins **Flutter 3.38.5** (CI `FLUTTER_VERSION`); the machine's `~/flutter` was replaced by a fresh 3.44.4 clone, under which `shadcn_flutter 0.0.47` and `flutter_feather_icons` no longer compile (`RepeatMode` export collision, final `IconData`). A pinned SDK worktree was added at `~/flutter-3.38.5` (via `git worktree` in the SDK checkout) — use it for `pub get`/`analyze`/`test`/`run` until the UI kit is upgraded for 3.44+.
+
+### 2026-07-03 — Multi-agent sprint: Linux audio, content filter, 140+ fixes across 6 rounds
+
+#### Linux audio — "click to play" resolved
+- **Lifecycle observer gated** — `didChangeAppLifecycleState` no longer pauses audio on desktop (`kIsMobile` guard on `inactive`/`paused`/`detached` states). Window focus loss on Linux/macOS/Windows no longer stops music playback.
+- **Linux mpv audio output** — explicit `ao=pulse`, `audio-client-name=DeeMusiq`, `audio-stream-silence=no`, `audio-fallback-to-null=no` properties added to `custom_player.dart`. PipeWire/PulseAudio now correctly identifies the stream and allows background playback.
+- **Window focus resilience** — `windowManager.focus()` wrapped in try-catch with warning log; failure to grab focus no longer blocks app startup.
+
+#### Content filter — blocks non-song YouTube content (Spotube parity)
+- **New: `lib/services/content_filter.dart`** — centralized `ContentFilter.isPlayableSong(Video)` utility.
+- **Duration filter** — rejects tracks <30s (shorts, ringtones, previews), >15min (podcasts, episodes, albums), and zero-duration (live streams).
+- **Live/premiere filter** — `video.isLive` field (already parsed by yt-dlp, NewPipe, youtube_explode) now checked — live streams, premieres, upcoming streams are blocked.
+- **Title keyword blocklist** — 29 blocked keywords: `podcast`, `interview`, `talk show`, `lecture`, `webinar`, `ASMR`, `audiobook`, `speech`, `press conference`, `meditation`, `sleep music`, `white noise`, `nature sounds`, `ambience`, `news`, `trailer`, `reaction`, `unboxing`, `review`, `guided`, `hypnosis`, `compilation`, `full album`, `mix`, `mixtape`. Plus regex patterns: `episode \d+`, `ep.\s*\d+`, `#shorts`.
+- **Integration points** — YouTube search (`_youtubeTrackSearch`), audio source matching (`_NativeAudioSource.matches`), sourced track fetching (`fetchSiblings`).
+
+#### Audio engine — 46 critical/high/medium fixes (Round 1)
+- **Server port 0 race** — streaming proxy server start retried 10× with 500ms backoff; throws on total failure instead of silently producing port-0 URIs.
+- **CacheFirstEngine port 0** — resolved via `_resolvePort()` reading `DeeMusiqMedia.serverPort`.
+- **Quality preset container mismatch** — `getStreamOfQuality` now loosely matches known audio containers (`mp4`, `m4a`, `webm`, `opus`, `ogg`, `aac`, `mp3`) instead of exact `"Audio"` match. Added ±20% bitrate tolerance.
+- **Offline DRM GCM IV reuse** — random 12-byte IV per encryption via `IV.fromSecureRandom(12)`, prepended to ciphertext. Backward-compatible decrypt.
+- **Integrity bootCheckPassed transient errors** — retry loop with 3 attempts + logging before bricking.
+- **NewPipe null mediaFormat** — `_parseVideoStream` now returns null with warning log instead of crashing.
+- **IsolatedYoutubeExplode null instance** — `StateError` thrown with descriptive message instead of raw null assertion.
+- **upload_date parsing** — yt-dlp YYYYMMDD string properly parsed (year/month/day substring); `DirectYtDlpEngine` `_parseUploadDate()` helper added.
+- **Hardcoded /usr/bin/yt-dlp** — `_findYtDlpPath()` with `which` + 4 common path fallbacks.
+- **Deep link handler leak** — `StreamSubscription` stored + `dispose()`; guard against multiple `setup()` calls.
+- **Wallet sync silent failure** — replaced empty `catch (_) {}` with `AppLogger.log.w()` + user toast.
+- **removeTracks stale indices** — sorted descending before removal.
+- **Queue insert position** — `addTracksAtFirst` inserts after `currentIndex+1` instead of index 0.
+- **swapActiveSource shuffle reset** — preserved `oldState.shuffled`.
+- **MobileAudioService.stop() notification** — `await super.stop()` added.
+- **onTaskRemoved cleanup** — saves queue + calls `audioPlayerNotifier.stop()` before `exit(0)`.
+- **Search silent failure** — `searchVideos()` now `rethrow`s instead of returning `[]`.
+- **Volume restore** — stored `_preInterruptionVolume` and restored after ducking.
+- **Engine failover filtering** — pre-checks `isAvailableForPlatform` + `isInstalled()`.
+- **Engine failover reconnect** — retries all available engines instead of just the first.
+- **URL caching** — 30s TTL in-memory cache for sibling-swapped URLs (prevents re-swapping on every HTTP request).
+- **JS solver re-enabled** — uncommented QuickJS solver (requires `jsf` package in pubspec.yaml; documented in `quickjs_solver.dart`).
+- **requireWatchPage fallback** — fast path (`false`) falls back to `true` when streams are empty.
+- **--geo-bypass removed** — deprecated flag stripped from all yt-dlp argument lists.
+- **Catalog externalUri** — `ytsource:youtubeId` prefix instead of full YouTube URL.
+- **.part file rename** — error handling added; Content-Range fallback uses -1; stale .part files cleaned.
+- **Cache eviction** — 500MB limit with LRU-based cleanup of stale `.part` files.
+- **_syncSavedState UI flash** — added `isAudioPlayerRestoringProvider` loading state.
+- **Quality preset bitrates** — added 128/64/48kbps presets matching YouTube reality.
+- **Double error handling** — deduplication guard in `AudioErrorHandler.handleError()` (500ms window).
+- **Hot reload dispose** — MediaKit re-initialized after audioPlayer dispose in debug mode.
+- **Hardcoded dev path** — `/home/kali/.deno/bin` removed from yt-dlp PATH environment.
+- **Queue dual persistence** — migrated from SharedPreferences to Drift; `saveQueue`/`loadQueue` use `AppDatabase`.
+- **HEAD check timeout** — increased from 2s to 5s.
+- **Sponsor skip clamp** — seek target clamped to `trackDuration - 1`.
+- **CustomPlayer.insert() Completer** — completed in `finally` block.
+- **Error handler time decay** — `_lastErrorTime` field with 30s window.
+- **Low-bitrate fallback** — all streams returned when filter eliminates everything.
+- **AudioEqualizer type safety** — `dynamic` → `NativePlayer?`.
+- **Discord app ID** — moved to envied variable (empty default).
+- **cliff.toml + Makefile** — repo URL and filename references updated from `spotube`/`Spotube` → `deemusiq`/`DeeMusiq`.
+- **Root-level junk assets** — 16 image/doc files removed.
+
+#### Security — 6 critical/high fixes (Round 2)
+- **Salsa20 IV reuse** — `EncryptedTextConverter` now generates random 8-byte IV per encryption, prepended to ciphertext.
+- **Encryption key storage** — flutter_secure_storage now primary; SharedPreferences fallback logs warning.
+- **Spotify cert bypass** — `badCertificateCallback` gated behind `kDebugMode`; `HttpOverrides.global` only in debug builds.
+- **CI keystore password** — `openssl rand -hex 16` generates random temp password instead of hardcoded `deemusiq`.
+- **Git dependency pins** — 12 git dependencies locked to specific commit hashes from pubspec.lock (`media_kit` x6, `bonsoir_android`, `desktop_webview_window`, `disable_battery_optimization`, `scrobblenaut`, `flutter_new_pipe_extractor`).
+- **--no-check-certificate removed** — 3 instances stripped from yt-dlp argument lists.
+
+#### Logic flaws — 8 fixes (Round 2)
+- **_restoreSavedState race** — all stream listeners check `_isRestoring` flag before mutating state.
+- **stop() guard** — `_isStopped` flag prevents pending stream events overwriting stopped state.
+- **Lifecycle saveQueue currentIndex** — saved and restored on pause/resume.
+- **Database transactions** — `swapWithSibling` and `saveQueue` wrapped in `database.transaction()`.
+- **DatabaseProvider singleton** — lazy `_singleton ??= AppDatabase()` prevents new connections per read.
+- **EngineFailover localization** — optional `noInternetMessage` parameter for caller-provided localized strings.
+- **DateTime.now() UTC** — all storage/audit timestamps changed to `.toUtc()` in `wallet_provider.dart`, `playback.dart`, `logger.dart`, `sourced_track.dart`.
+- **addTracks dedup** — bulk `addTracks()` now filters duplicates via `_compareTracks`.
+
+#### Widget lifecycle — 3 fixes (Round 2)
+- **KVStoreService null assertion** — `StateError` with descriptive message instead of raw `!`.
+- **Discord provider activeTrack** — null guard added before `updatePresence`.
+- **rootNavigatorKey.currentContext** — 14 occurrences replaced with `(currentContext ?? context)` fallback.
+
+#### Performance — 11 fixes (Round 2)
+- **Memory leaks** — `ConnectionCheckerService`, `AdRollService`, `PlayerControls` now have `dispose()` methods; wired into `main.dart` cleanup. `DeepLinkHandler` dual `AppLinks` instances consolidated. `indexChangeStream` cached.
+- **Excessive rebuilds** — `PresentationList` and `PlayerOverlay` use `ref.watch(provider.select(...))` instead of full provider watches.
+- **Blocking I/O** — `readAsBytesSync()` → `await readAsBytes()` (async).
+- **mpv buffer config** — `cache=yes`, `cache-secs=30`, `demuxer-readahead-secs=10` added.
+
+#### UI/UX — 8 fixes (Round 2)
+- **User-friendly errors** — `ErrorBox` maps `SocketException`, `TimeoutException`, etc. to readable messages. `local_folder.dart` error replaced with "Pull to retry".
+- **NoDefaultMetadataPlugin retry** — retry button with provider invalidation callback; all 5 callers updated.
+- **Wallet error codes** — `_walletErrorMessage()` maps backend codes to user-facing strings.
+- **Search back button** — removed `PopScope(canPop: false, ...)` that force-navigated to Home.
+- **Notification channel** — constants extracted; no longer hardcoded English.
+- **Connectivity toast debounce** — 5-second throttle to prevent spam on unstable connections.
+
+#### Code quality — 10 fixes (Round 2)
+- **Dead code removed** — 120 lines commented-out `just_audio` fallbacks, 600+ lines commented-out languages in `language_codes.dart`, dead `registerWindowsScheme` function.
+- **Tight coupling** — `logger.dart`, `wm_tools.dart`, `audio_services.dart` imports downgraded from `shadcn_flutter` → `flutter/widgets` (or `flutter/material`).
+- **AppPopScope** — Android-only gate removed; `BackButtonDispatcher` logic runs on all platforms.
+- **Stale socket cleanup** — `kIsDesktop` → `kIsLinux` gate (Linux-specific `ss`/`awk` commands).
+- **L10n** — 8 new auth page keys added to `app_en.arb`; `flutter gen-l10n` regenerated all locale files: `confirm_age_18`, `agree_privacy_policy`, `must_confirm_age`, `must_agree_privacy_policy`, `sign_in_with_google`, `continue_with_device_limited`, `wallet_sync_failed_retry`, `its_a_drop_day`.
+
+#### deemusiq-site — 5 fixes (Round 2)
+- **Download links** — populated with GitHub release URLs; empty platforms show "Coming soon" instead of redirecting to contact.
+- **Social links** — Facebook/X dead `#` replaced with `facebook.com/deemusiq` and `x.com/deemusiq`.
+- **Contact form** — clipboard fallback added when `mailto:` fails (no email client on device).
+- **Service worker** — new `sw.js` with cache-first strategy; registered in `main.js` for offline PWA support.
+- **robots.txt** — decoy sitemaps (Cloudflare/Google) removed.
+
+#### Critical bugs — 5 fixes (Round 3)
+- **saveQueue currentIndex** — `mobile_audio_service.dart` now passes `currentIndex` parameter (was always saving 0).
+- **Duplicate _youtubeAlbumSearch** — removed first (unreachable) definition; kept second.
+- **SleepTimerNotifier dispose** — `_timer?.cancel()` added; prevents delayed `exit(0)` after provider disposal.
+- **_isDisposed guard** — `_restoreSavedState` checks flag before accessing `ref` in async closure.
+- **assert → runtime checks** — `_assertAllowedTrack`/`_assertAllowedTracks` now throw `ArgumentError` in release builds (was debug-only assert).
+
+#### High bugs — 3 fixes (Round 3)
+- **Future.wait error resilience** — 6 sites wrapped per-future in try-catch returning null; results filtered.
+- **ConnectionCheckerService observer** — `WidgetsBindingObserver` mixin now properly registered + removed.
+- **IntegrityService stopMonitor** — `stopMonitor()` method cancels persistent timer.
+
+#### Medium bugs — 5 fixes (Round 3)
+- **Dio close** — `ConnectionCheckerService.dispose()` now closes Dio instance.
+- **wm_tools dispose** — `removeObserver` + null instance; wired into `main.dart` cleanup.
+- **Audio error dedup** — removed duplicate `AppLogger.log.e` calls before `reportError` in pipeline.
+- **IntegrityService log dedup** — removed duplicate log from `_certHash`/`_apkHash` catch blocks.
+
+#### Build
+- **Zero analysis errors** — `flutter analyze --no-fatal-infos` passes with 0 errors, 0 warnings across all three rounds.
+- **All 29 tests pass** — `flutter test` green across all rounds.
+- **Linux binary verified** — `flutter run -d linux --release` builds and launches clean, media_kit registered, no audio errors.
+
 ### 2026-07-02 — Audit fixes: security hardening, dependency hygiene, and privacy compliance
 
 #### Backend

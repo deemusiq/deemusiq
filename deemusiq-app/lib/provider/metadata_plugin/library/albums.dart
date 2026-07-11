@@ -37,7 +37,7 @@ class MetadataPluginSavedAlbumNotifier
     );
     try {
       await (await metadataPlugin).album.save(albums.map((e) => e.id).toList());
-    } catch (e, stack) {
+    } catch (e) {
       AppLogger.log.w('Failed to save albums: ${e.toString()}');
       state = AsyncData(oldState!);
       rethrow;
@@ -61,7 +61,7 @@ class MetadataPluginSavedAlbumNotifier
     );
     try {
       await (await metadataPlugin).album.unsave(albumIds);
-    } catch (e, stack) {
+    } catch (e) {
       AppLogger.log.w('Failed to unsave albums: ${e.toString()}');
       state = AsyncData(oldState!);
       rethrow;

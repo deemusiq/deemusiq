@@ -66,9 +66,9 @@ class WalletPage extends HookConsumerWidget {
                   onPressed: () {
                     error.value = null;
                     isLoading.value = true;
-                    ref.read(walletProvider.notifier).syncFromBackend().then(
-                          (_) => isLoading.value = false,
-                        ).catchError((e) {
+                    ref.read(walletProvider.notifier).syncFromBackend().then((_) {
+                      isLoading.value = false;
+                    }).catchError((e) {
                       isLoading.value = false;
                       error.value = e.toString();
                     });

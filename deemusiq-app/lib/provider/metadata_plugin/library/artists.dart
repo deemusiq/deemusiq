@@ -41,7 +41,7 @@ class MetadataPluginSavedArtistNotifier
       await (await metadataPlugin)
           .artist
           .save(artists.map((e) => e.id).toList());
-    } catch (e, stack) {
+    } catch (e) {
       AppLogger.log.w('Failed to save artists: ${e.toString()}');
       state = AsyncData(oldState!);
       rethrow;
@@ -66,7 +66,7 @@ class MetadataPluginSavedArtistNotifier
 
     try {
       await (await metadataPlugin).artist.unsave(artistIds);
-    } catch (e, stack) {
+    } catch (e) {
       AppLogger.log.w('Failed to unsave artists: ${e.toString()}');
       state = AsyncData(oldState!);
       rethrow;

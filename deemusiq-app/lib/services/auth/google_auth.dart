@@ -1,11 +1,7 @@
-import 'package:dio/dio.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:deemusiq/services/wallet/wallet_api.dart';
 import 'package:deemusiq/services/wallet/payment_service.dart'
     show PaymentGatewayConfig;
-import 'package:deemusiq/services/wallet/device_identity.dart';
-import 'package:deemusiq/services/kv_store/kv_store.dart';
-import 'package:deemusiq/services/integrity/integrity_service.dart';
 import 'package:deemusiq/services/logger/logger.dart';
 
 /// Google OAuth sign-in flow for DeeMusiq.
@@ -20,8 +16,6 @@ import 'package:deemusiq/services/logger/logger.dart';
 class GoogleAuthService {
   GoogleAuthService._();
   static final GoogleAuthService instance = GoogleAuthService._();
-
-  static const _webClientIdKey = 'GOOGLE_WEB_CLIENT_ID';
 
   /// The Google Web Client ID must be set via dart-define or environment.
   /// This is the OAuth 2.0 client ID from Google Cloud Console (Web application).
@@ -66,30 +60,29 @@ class GoogleAuthService {
   /// 1. Gets device identity (Ed25519 keypair)
   /// 2. POST /auth/device/login with signed challenge
   /// 3. Backend returns a JWT
-  Future<String> signIn() async {
+  Future<({String token, String? displayName, String? email, String? photoUrl})> signIn() async {
     if (!isConfigured) {
       throw GoogleAuthException('Sign-in is not configured.');
     }
 
-    // Fallback: device-based auth when no Google client ID is set
+    // No Google client ID configured → device-based sign-in via the wallet
+    // client's Ed25519 challenge–response flow (sends deviceId + signature,
+    // unlike a bare POST which the backend rejects).
     if (_webClientId.isEmpty) {
-      final res = await Dio().post(
-        '${PaymentGatewayConfig.backendBaseUrl}/auth/device/login',
-        data: {},
-      );
-      if (res.data?['token'] == null) throw GoogleAuthException('Device login failed.');
-      return res.data['token'] as String;
+      try {
+        final token = await WalletApiClient.instance.deviceLogin();
+        return (token: token, displayName: null, email: null, photoUrl: null);
+      } on WalletApiException catch (e) {
+        throw GoogleAuthException('Device login failed: ${e.message}');
+      }
     }
 
-    // Full Google OAuth flow
-    // Sign out first to force account selection.
     try {
       await _client.signOut();
-    } catch (e, stack) {
+    } catch (e) {
       AppLogger.log.w('Google sign-out during signIn flow failed: ${e.toString()}');
     }
 
-    // Trigger the Google Sign-In dialog.
     final GoogleSignInAccount? googleUser;
     try {
       googleUser = await _client.signIn();
@@ -101,7 +94,10 @@ class GoogleAuthService {
       throw GoogleAuthException('Sign-in was cancelled.');
     }
 
-    // Obtain the ID token.
+    final displayName = googleUser.displayName;
+    final email = googleUser.email;
+    final photoUrl = googleUser.photoUrl;
+
     final GoogleSignInAuthentication googleAuth;
     try {
       googleAuth = await googleUser.authentication;
@@ -114,13 +110,12 @@ class GoogleAuthService {
       throw GoogleAuthException('No ID token received from Google.');
     }
 
-    // Send the ID token to the DeeMusiq backend for server-side verification.
     try {
       final token = await WalletApiClient.instance.authWithGoogle(
         idToken: idToken,
         deviceId: WalletApiClient.instance.deviceId,
       );
-      return token;
+      return (token: token, displayName: displayName, email: email, photoUrl: photoUrl);
     } on WalletApiException catch (e) {
       throw GoogleAuthException(e.message);
     }
@@ -130,7 +125,7 @@ class GoogleAuthService {
   Future<void> signOut() async {
     try {
       await _client.signOut();
-    } catch (e, stack) {
+    } catch (e) {
       AppLogger.log.w('Google sign-out failed: ${e.toString()}');
     }
     WalletApiClient.instance.logout();
@@ -140,7 +135,7 @@ class GoogleAuthService {
   Future<void> disconnect() async {
     try {
       await _client.disconnect();
-    } catch (e, stack) {
+    } catch (e) {
       AppLogger.log.w('Google disconnect failed: ${e.toString()}');
     }
     WalletApiClient.instance.logout();

@@ -26,14 +26,10 @@ class ContentFilter {
     'review',
     'guided',
     'hypnosis',
-    'compilation',
-    'full album',
-    'mix',
-    'mixtape',
   ];
 
   static final _blockedPatterns = [
-    RegExp(r'episode\s+\d+', caseSensitive: false),
+    RegExp(r'\bepisode\s+\d+', caseSensitive: false),
     RegExp(r'ep\.\s*\d+', caseSensitive: false),
     RegExp(r'#shorts', caseSensitive: false),
   ];

@@ -60,7 +60,7 @@ class MetadataPluginSavedPlaylistsNotifier
 
     try {
       await (await metadataPlugin).playlist.save(playlist.id);
-    } catch (e, stack) {
+    } catch (e) {
       AppLogger.log.w('Failed to save playlist: ${e.toString()}');
       state = AsyncData(oldState!);
       rethrow;
@@ -79,7 +79,7 @@ class MetadataPluginSavedPlaylistsNotifier
 
     try {
       await (await metadataPlugin).playlist.unsave(playlist.id);
-    } catch (e, stack) {
+    } catch (e) {
       AppLogger.log.w('Failed to unsave playlist: ${e.toString()}');
       state = AsyncData(oldState!);
       rethrow;
@@ -95,7 +95,7 @@ class MetadataPluginSavedPlaylistsNotifier
       ref.invalidateSelf();
       ref.invalidate(metadataPluginIsSavedPlaylistProvider(playlistId));
       ref.invalidate(metadataPluginPlaylistTracksProvider(playlistId));
-    } catch (e, stack) {
+    } catch (e) {
       AppLogger.log.w('Failed to delete playlist: ${e.toString()}');
       state = oldState;
       rethrow;

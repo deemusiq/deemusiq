@@ -1,8 +1,6 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:deemusiq/collections/env.dart';
-import 'package:deemusiq/collections/routes.gr.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/modules/getting_started/blur_card.dart';
 import 'package:deemusiq/extensions/context.dart';

@@ -44,7 +44,7 @@ extension ChunkDownloaderDioExtension on Dio {
             followRedirects: true,
           ),
         );
-      } catch (e, stack) {
+      } catch (e) {
         // Some servers reject HEAD -> ignore, but log for diagnostics
         AppLogger.log.d('HEAD request failed (non-critical): $urlPath — ${e.toString()}');
       }
@@ -161,7 +161,7 @@ extension ChunkDownloaderDioExtension on Dio {
         statusCode: 200,
         statusMessage: 'Chunked download completed ($connections connections)',
       );
-    } catch (e, stack) {
+    } catch (e) {
       AppLogger.log.w('Chunk download failed: $urlPath — ${e.toString()}');
       if (deleteOnError) {
         if (await targetFile.exists()) await targetFile.delete();

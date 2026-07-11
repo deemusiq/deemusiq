@@ -210,10 +210,15 @@ class SourcedTrack extends BasicSourcedTrack {
       videoResults.addAll(rankResults(searchResults, query));
     }
 
-    return videoResults
+    final filtered = videoResults
         .where(ContentFilter.isPlayableMatch)
         .toSet()
         .toList();
+    if (filtered.isEmpty && videoResults.isNotEmpty) {
+      AppLogger.log.w('ContentFilter removed all matches — retrying unfiltered');
+      return videoResults.toSet().toList();
+    }
+    return filtered;
   }
 
   Future<SourcedTrack> copyWithSibling() async {

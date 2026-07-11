@@ -7,7 +7,6 @@ import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/provider/audio_player/audio_player.dart';
-import 'package:deemusiq/provider/audio_player/state.dart';
 import 'package:deemusiq/provider/database/database.dart';
 import 'package:deemusiq/provider/server/routes/connect.dart';
 import 'package:deemusiq/services/audio_player/audio_player.dart';

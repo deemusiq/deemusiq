@@ -19,7 +19,6 @@ import 'package:deemusiq/services/youtube_engine/youtube_engine.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart' show Video, StreamManifest;
 import 'package:deemusiq/services/audio_player/audio_quality.dart';
 import 'package:deemusiq/services/connectivity/engine_failover.dart';
-import 'package:deemusiq/services/connectivity/connection_checker.dart';
 import 'package:deemusiq/services/content_filter.dart';
 import 'package:deemusiq/services/logger/logger.dart';
 
@@ -235,9 +234,8 @@ List<Map> _list(dynamic v) =>
 
 class _NativeSearch extends MetadataPluginSearchEndpoint {
   final _CatalogApi api;
-  final YouTubeEngine _youtubeEngine;
   final List<YouTubeEngine> _allEngines;
-  _NativeSearch(this.api, this._youtubeEngine, this._allEngines) : super();
+  _NativeSearch(this.api, this._allEngines) : super();
 
   @override
   List<String> get chips => const ["all", "tracks", "artists", "albums", "playlists"];
@@ -317,13 +315,13 @@ class _NativeSearch extends MetadataPluginSearchEndpoint {
         final d = await api.search(query, "all", 20);
         if (d != null) {
           final tracks = _list(d["tracks"]).map(_track).toList();
-          // If backend returned tracks with sources, use those
-          if (tracks.isNotEmpty && tracks.any((t) => t.externalUri.isNotEmpty)) {
+          final validTracks = tracks.where((t) => t.externalUri.isNotEmpty).toList();
+          if (validTracks.isNotEmpty) {
             return DeeMusiqSearchResponseObject(
               albums: _list(d["albums"]).map(_simpleAlbum).toList(),
               artists: _list(d["artists"]).map(_fullArtist).toList(),
               playlists: _list(d["playlists"]).map(_simplePlaylist).toList(),
-              tracks: tracks,
+              tracks: validTracks,
             );
           }
         }
@@ -398,8 +396,9 @@ class _NativeSearch extends MetadataPluginSearchEndpoint {
         final d = await api.search(query, "track", lim);
         if (d != null) {
           final tracks = _list(d["tracks"]).map(_track).toList();
-          if (tracks.isNotEmpty && tracks.any((t) => t.externalUri.isNotEmpty)) {
-            return _page(tracks);
+          final validTracks = tracks.where((t) => t.externalUri.isNotEmpty).toList();
+          if (validTracks.isNotEmpty) {
+            return _page(validTracks);
           }
         }
       } catch (e, stack) {
@@ -416,39 +415,8 @@ class _NativeSearch extends MetadataPluginSearchEndpoint {
 
 class _NativeAlbum extends MetadataPluginAlbumEndpoint {
   final _CatalogApi api;
-  YouTubeEngine? _ytEngine;
-  List<YouTubeEngine>? _allYtEngines;
 
   _NativeAlbum(this.api) : super();
-
-  /// Injected by [DeeMusiqNativeEndpoints] after construction so that the
-  /// album endpoint can fall back to YouTube when the backend is empty.
-  void injectYouTube(YouTubeEngine engine, List<YouTubeEngine> allEngines) {
-    _ytEngine = engine;
-    _allYtEngines = allEngines;
-  }
-
-  /// Converts a YouTube [Video] into a [DeeMusiqSimpleAlbumObject].
-  DeeMusiqSimpleAlbumObject _videoToSimpleAlbum(Video video) {
-    return DeeMusiqSimpleAlbumObject(
-      id: video.id.value,
-      name: video.title,
-      externalUri: "deemusiq:album:${video.id.value}",
-      artists: video.author.isNotEmpty
-          ? [
-              DeeMusiqSimpleArtistObject(
-                id: video.author,
-                name: video.author,
-                externalUri: "deemusiq:artist:${video.author}",
-              )
-            ]
-          : const [],
-      images: video.thumbnails.highResUrl.isNotEmpty
-          ? [DeeMusiqImageObject(url: video.thumbnails.highResUrl)]
-          : const [],
-      albumType: DeeMusiqAlbumType.single,
-    );
-  }
 
   @override
   Future<DeeMusiqFullAlbumObject> getAlbum(String id) async {
@@ -676,24 +644,8 @@ class _NativeTrack extends MetadataPluginTrackEndpoint {
       return _track(t);
     } catch (e, stack) {
       AppLogger.log.w('Failed to fetch track $id: ${e.toString()}');
-      AppLogger.reportError(e, stack);
-      return DeeMusiqTrackObject.full(
-        id: id,
-        name: "Unknown Track",
-        externalUri: "",
-        artists: const [],
-        album: DeeMusiqSimpleAlbumObject(
-          id: "",
-          name: "",
-          externalUri: "",
-          artists: const [],
-          images: const [],
-          albumType: DeeMusiqAlbumType.album,
-        ),
-        durationMs: 0,
-        isrc: "",
-        explicit: false,
-      ) as DeeMusiqFullTrackObject;
+      AppLogger.reportError(e, stack, 'NativeTrack.getTrack $id');
+      rethrow;
     }
   }
 
@@ -707,15 +659,13 @@ class _NativeTrack extends MetadataPluginTrackEndpoint {
 
 class _NativeBrowse extends MetadataPluginBrowseEndpoint {
   final _CatalogApi api;
-  YouTubeEngine? _ytEngine;
   List<YouTubeEngine>? _allYtEngines;
 
   _NativeBrowse(this.api) : super();
 
   /// Injected by [DeeMusiqNativeEndpoints] after construction so that
   /// the browse endpoint can fall back to YouTube when the backend is empty.
-  void injectYouTube(YouTubeEngine engine, List<YouTubeEngine> allEngines) {
-    _ytEngine = engine;
+  void injectYouTube(List<YouTubeEngine> allEngines) {
     _allYtEngines = allEngines;
   }
 
@@ -957,7 +907,10 @@ class _NativeAudioSource extends MetadataPluginAudioSourceEndpoint {
         ),
       ];
     }
-    // Fallback: search YouTube for the track by name + first artist
+    if (track.name.isEmpty) {
+      AppLogger.log.w('Cannot search YouTube: track has no name (id: ${track.id})');
+      return const [];
+    }
     final searchQuery = StringBuffer(track.name);
     if (track.artists.isNotEmpty) {
       searchQuery.write(' ${track.artists.first.name}');
@@ -1110,14 +1063,12 @@ class DeeMusiqNativeEndpoints {
 
   DeeMusiqNativeEndpoints(YouTubeEngine youtubeEngine, List<YouTubeEngine> allEngines) {
     audioSource = _NativeAudioSource(youtubeEngine, allEngines);
-    search = _NativeSearch(_api, youtubeEngine, allEngines);
+    search = _NativeSearch(_api, allEngines);
 
-    final a = _NativeAlbum(_api);
-    a.injectYouTube(youtubeEngine, allEngines);
-    album = a;
+    album = _NativeAlbum(_api);
 
     final b = _NativeBrowse(_api);
-    b.injectYouTube(youtubeEngine, allEngines);
+    b.injectYouTube(allEngines);
     browse = b;
   }
 }

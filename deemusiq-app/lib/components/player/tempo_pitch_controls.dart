@@ -18,7 +18,7 @@ class TempoPitchControls extends HookWidget {
         min: 0.5,
         max: 2.0,
         onChanged: (v) {
-          final val = v is SliderValue ? v.value : (v as double);
+          final val = v.value;
           speed.value = val.toDouble();
           audioPlayer.setSpeed(speed.value);
         },
@@ -30,7 +30,7 @@ class TempoPitchControls extends HookWidget {
         min: 0.5,
         max: 2.0,
         onChanged: (v) {
-          final val = v is SliderValue ? v.value : (v as double);
+          final val = v.value;
           pitch.value = val.toDouble();
           audioPlayer.setPitch(pitch.value);
         },

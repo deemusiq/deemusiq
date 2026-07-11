@@ -158,6 +158,7 @@ class DeeMusiqAudioPlayer extends AudioPlayerInterface
 
   Future<void> skipToNext() async {
     try {
+      AdRollService.instance.onTrackSkipped();
       await _mkPlayer.next();
     } catch (e, stack) {
       AppLogger.reportError(e, stack, 'skipToNext() failed');
@@ -167,6 +168,7 @@ class DeeMusiqAudioPlayer extends AudioPlayerInterface
 
   Future<void> skipToPrevious() async {
     try {
+      AdRollService.instance.onTrackSkipped();
       await _mkPlayer.previous();
     } catch (e, stack) {
       AppLogger.reportError(e, stack, 'skipToPrevious() failed');

@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/drift.dart';
+// ignore: experimental_member_use
 import 'package:drift/remote.dart';
 import 'package:encrypt/encrypt.dart';
 import 'package:media_kit/media_kit.dart' hide Track;
@@ -15,7 +16,6 @@ import 'package:deemusiq/models/lyrics.dart';
 import 'package:deemusiq/models/metadata/market.dart';
 import 'package:deemusiq/models/metadata/metadata.dart';
 import 'package:deemusiq/services/kv_store/encrypted_kv_store.dart';
-import 'package:deemusiq/services/kv_store/kv_store.dart';
 import 'package:flutter/widgets.dart' hide Table, Key, View;
 import 'package:deemusiq/modules/settings/color_scheme_picker_dialog.dart';
 import 'package:drift/native.dart';
@@ -39,6 +39,7 @@ part 'tables/audio_player_state.dart';
 part 'tables/history.dart';
 part 'tables/lyrics.dart';
 part 'tables/metadata_plugins.dart';
+part 'tables/favorites.dart';
 
 part 'typeconverters/color.dart';
 part 'typeconverters/locale.dart';
@@ -60,13 +61,19 @@ part 'typeconverters/subtitle.dart';
     HistoryTable,
     LyricsTable,
     PluginsTable,
+    FavoritesTable,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
+  /// Opens the database over a caller-supplied executor. Used by the drift
+  /// migration tests, which drive migrations against an in-memory executor.
+  @visibleForTesting
+  AppDatabase.forTesting(super.executor);
+
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration {
@@ -236,6 +243,9 @@ class AppDatabase extends _$AppDatabase {
           await m
               .dropColumn(schema.sourceMatchTable, "source_id")
               .catchError((e, stack) => AppLogger.reportError(e, stack));
+        },
+        from10To11: (m, schema) async {
+          await m.createTable(schema.favoritesTable);
         },
       ),
     );

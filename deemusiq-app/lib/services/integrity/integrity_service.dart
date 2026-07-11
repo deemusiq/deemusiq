@@ -238,6 +238,7 @@ class IntegrityService {
         await Future.delayed(retryDelay);
       }
     }
+    return null; // unreachable — the last attempt rethrows
   }
 
   /// Start the runtime monitor: one check now, then again at a random interval

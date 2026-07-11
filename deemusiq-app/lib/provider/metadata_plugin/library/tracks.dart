@@ -44,7 +44,7 @@ class MetadataPluginSavedTracksNotifier
 
     try {
       await (await metadataPlugin).track.save(tracks.map((e) => e.id).toList());
-    } catch (e, stack) {
+    } catch (e) {
       AppLogger.log.w('Failed to save tracks: ${e.toString()}');
       state = AsyncData(oldState!);
       rethrow;
@@ -71,7 +71,7 @@ class MetadataPluginSavedTracksNotifier
       await (await metadataPlugin)
           .track
           .unsave(tracks.map((e) => e.id).toList());
-    } catch (e, stack) {
+    } catch (e) {
       AppLogger.log.w('Failed to unsave tracks: ${e.toString()}');
       state = AsyncData(oldState!);
       rethrow;

@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:deemusiq/models/database/database.dart';
 import 'package:deemusiq/models/metadata/metadata.dart';
 import 'package:deemusiq/provider/audio_player/audio_player.dart';

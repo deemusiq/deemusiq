@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
+// ignore: experimental_member_use
 import 'package:drift/extensions/json1.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:deemusiq/models/database/database.dart';

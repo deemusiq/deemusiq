@@ -26,7 +26,7 @@ class WalletApiClient {
 
   static const _deviceKey = "deemusiq_device_id";
 
-  static const _validProviders = {'spotify'};
+  static const _validProviders = {'spotify', 'google'};
 
   bool get isConfigured => PaymentGatewayConfig.backendBaseUrl.isNotEmpty;
 
@@ -105,6 +105,10 @@ class WalletApiClient {
   void logout() {
     _token = null;
   }
+
+  /// Signs in as this device (Ed25519 challenge–response) and returns the
+  /// backend JWT. Used as the Google-less sign-in fallback.
+  Future<String> deviceLogin() => _authToken();
 
   bool hasToken() => _token != null;
 
@@ -425,6 +429,12 @@ class WalletApiClient {
   // ── Google Sign-In ────────────────────────────────────────────────────────
 
   /// Authenticate with a Google ID token. Returns a backend JWT.
+  ///
+  /// When this device already holds a session token, it is sent so the backend
+  /// merges the Google identity into THIS device's wallet (an authenticated
+  /// link). Without it the backend resolves to a standalone Google-owned wallet
+  /// — the deviceId in the body is never trusted to graft onto an existing
+  /// account (that would be an account-takeover vector).
   Future<String> authWithGoogle({
     required String idToken,
     required String deviceId,
@@ -433,10 +443,61 @@ class WalletApiClient {
       final res = await _client().post(
         "/auth/google",
         data: {"idToken": idToken, "deviceId": deviceId},
+        options: _token != null
+            ? Options(headers: {"Authorization": "Bearer $_token"})
+            : null,
       );
       final token = (res.data as Map)["token"] as String;
       _token = token;
       return token;
+    } on DioException catch (e) {
+      throw WalletApiException(_message(e));
+    }
+  }
+
+  // ── Ad roll ───────────────────────────────────────────────────────────────
+
+  /// Next eligible ad for this user, or null when the backend has no
+  /// inventory. Sends already-heard ad ids so the backend rotates ads.
+  Future<Map<String, dynamic>?> fetchNextAd({
+    List<String> excludeIds = const [],
+  }) async {
+    try {
+      final res = await _client().get(
+        "/ads/next",
+        queryParameters: {
+          if (excludeIds.isNotEmpty) "exclude": excludeIds.join(","),
+        },
+        options: await _authed(),
+      );
+      final ad = (res.data as Map)["ad"];
+      return ad is Map ? Map<String, dynamic>.from(ad) : null;
+    } on DioException catch (e) {
+      throw WalletApiException(_message(e));
+    }
+  }
+
+  /// Report that the user skipped an ad (impression accounting).
+  Future<void> reportAdSkip(String adId) async {
+    try {
+      await _client().post(
+        "/ads/skip",
+        data: {"adId": adId},
+        options: await _authed(),
+      );
+    } on DioException catch (e) {
+      throw WalletApiException(_message(e));
+    }
+  }
+
+  /// Report that an ad played to completion (campaign spend accounting).
+  Future<void> reportAdComplete(String adId) async {
+    try {
+      await _client().post(
+        "/ads/complete",
+        data: {"adId": adId},
+        options: await _authed(),
+      );
     } on DioException catch (e) {
       throw WalletApiException(_message(e));
     }

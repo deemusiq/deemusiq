@@ -15,6 +15,7 @@ import 'package:deemusiq/provider/scrobbler/scrobbler.dart';
 import 'package:deemusiq/provider/user_preferences/user_preferences_provider.dart';
 import 'package:deemusiq/services/audio_player/audio_player.dart';
 import 'package:deemusiq/services/audio_player/audio_error_handler.dart';
+import 'package:deemusiq/services/ad_roll/ad_roll_service.dart';
 import 'package:deemusiq/services/audio_services/audio_services.dart';
 import 'package:deemusiq/services/logger/logger.dart';
 
@@ -46,6 +47,8 @@ class AudioPlayerStreamListeners {
       positionSub,
       subscribeToPlayerError(),
       subscribeToUserMessages(),
+      subscribeToTrackChangeForAds(),
+      subscribeToAdState(),
     ];
 
     ref.onDispose(() {
@@ -70,6 +73,33 @@ class AudioPlayerStreamListeners {
         discord.updatePresence(audioPlayerState.activeTrack!);
       } catch (e, stack) {
         AppLogger.reportError(e, stack);
+      }
+    });
+  }
+
+  /// Ad breaks happen at track boundaries: when the index changes and enough
+  /// songs have been listened, pause playback and start the ad interstitial.
+  StreamSubscription subscribeToTrackChangeForAds() {
+    return audioPlayer.currentIndexChangedStream.listen((_) async {
+      try {
+        final ad = await AdRollService.instance.takeAdBreakIfDue();
+        if (ad == null) return;
+        await audioPlayer.pause();
+        AdRollService.instance.markAdStarted();
+      } catch (e, stack) {
+        AppLogger.reportError(e, stack, 'ad break at track boundary');
+      }
+    });
+  }
+
+  /// Resume playback when an ad break ends (skip or natural completion).
+  StreamSubscription subscribeToAdState() {
+    return AdRollService.instance.adStateStream.listen((adPlaying) async {
+      if (adPlaying) return;
+      try {
+        await audioPlayer.resume();
+      } catch (e, stack) {
+        AppLogger.reportError(e, stack, 'resume after ad break');
       }
     });
   }
@@ -137,9 +167,13 @@ class AudioPlayerStreamListeners {
         final metadataPlugin = await ref.read(metadataPluginProvider.future);
         if (metadataPlugin == null) return;
         final artists = (await Future.wait(
-          activeTrack.artists.map((artist) =>
-              metadataPlugin.artist.getArtist(artist.id).catchError((_) => null)),
-        )).whereType<DeeMusiqFullArtistObject>().toList();
+          activeTrack.artists.map((artist) => metadataPlugin.artist
+              .getArtist(artist.id)
+              .then<DeeMusiqFullArtistObject?>((a) => a)
+              .catchError((_) => null)),
+        ))
+            .whereType<DeeMusiqFullArtistObject>()
+            .toList();
         activeTrack = activeTrack.copyWith(
           artists: artists
               .map((e) => DeeMusiqSimpleArtistObject.fromJson(e.toJson()))
@@ -148,6 +182,8 @@ class AudioPlayerStreamListeners {
       }
 
       await history.addTrack(activeTrack);
+
+      AdRollService.instance.onTrackListened();
     } catch (e, stack) {
       AppLogger.reportError(e, stack);
     }
@@ -160,8 +196,7 @@ class AudioPlayerStreamListeners {
     try {
       if (percentProgress < 80 ||
           audioPlayerState.currentIndex == -1 ||
-          audioPlayerState.currentIndex ==
-              audioPlayerState.tracks.length - 1) {
+          audioPlayerState.currentIndex == audioPlayerState.tracks.length - 1) {
         return;
       }
       final nextTrack = audioPlayerState.tracks
