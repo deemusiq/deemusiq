@@ -16,6 +16,12 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 - **Tests** — 5 new `node:test` cases (checkout via a stubbed provider seam, `requires_config`, unsigned/tampered/wrong-price/underpaid/in-flight rejections, finished-credits-once, replay idempotency, failed-marks-intent). `npm test` green at 29/29.
 - **No app changes** — the client already shows the deposit and re-syncs `GET /wallet`; settlement is 100% backend-driven per `DEEMUSIQ_WALLET.md`.
 
+#### Backend — deployment / go-live readiness
+- **Containerised** — `backend/Dockerfile` (multi-stage, `node:22-slim` so `@libsql/client` uses its prebuilt binary); the container runs `prisma db push` then serves. Verified end to end: image builds, boots in production, creates the schema on a fresh volume, `/health` → 200, and `/webhooks/crypto` fails closed (503) without its IPN secret.
+- **`fly.toml`** (JNB region, persistent volume for SQLite, `/health` check, `force_https`), **`.dockerignore`**, and **`.env.example`** documenting every env var (no real values).
+- **`DEPLOY.md`** — full go-live runbook: Fly deploy, custom domain `api.deemusiq.co.za`, NOWPayments IPN URL + receiving wallets, the app `DEEMUSIQ_BACKEND_URL` dart-define, a sandbox smoke test, and Render/Railway/VPS alternatives.
+- **`trust proxy` hardening** — the backend now honours `TRUST_PROXY` so `req.ip` reflects the real client behind a load balancer; this is load-bearing for the PayFast source-IP allowlist, the per-IP rate limiters, and secure-channel replay tracking. Default off keeps local/test behaviour unchanged.
+
 ### 2026-07-11 — Feature completion: ad-roll, local favorites, full auth backend
 
 #### Backend — every app API endpoint now implemented (`backend/src/index.ts`)
