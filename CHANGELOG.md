@@ -5,6 +5,17 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### 2026-07-11 — Crypto payment verification (NOWPayments)
+
+#### Backend — crypto top-ups now settle end to end (`backend/src/index.ts`)
+- **Checkout routing fixed** — the app sends the coin name as `method` (`bitcoin`/`ethereum`/`monero`/`usdt`), but `/payments/checkout` only branched on the literal `'crypto'`, so those requests silently fell through to the PayFast card branch and never produced a deposit. Routing is now explicit: crypto coins → NOWPayments; `payfastCard`/`card`/`eft` → PayFast; anything unrecognised → `unavailable` (no more accidental PayFast fall-through).
+- **NOWPayments create-payment** — for a crypto method, checkout calls NOWPayments (`x-api-key`, `price_currency: zar`) to mint a **per-payment deposit address + exact coin amount**, persists `provider`/`providerPaymentId`/`payCurrency`/`payAmount`/`payAddress` on the `PaymentIntent`, and returns them in the `{status:'crypto', deposit:{asset,network,address,amountLabel}}` shape the app already renders. Unset `NOWPAYMENTS_API_KEY` → `requires_config`; provider/API error → `unavailable` (no detail leak). Monero is covered — it can't be verified from a public explorer, so a processor is the only secure option.
+- **New `POST /webhooks/crypto`** — verifies the NOWPayments IPN like the PayFast ITN: refuses to credit without `NOWPAYMENTS_IPN_SECRET` (503), validates the `x-nowpayments-sig` HMAC-SHA512 over the key-sorted JSON body (`crypto.timingSafeEqual`), credits **only** on `payment_status === 'finished'`, is idempotent (unique `providerPaymentId` + pending-intent guard so replays never double-credit), and defends the amount (signed `price_amount`/`price_currency` must match the intent's ZAR total and `actually_paid` must cover the quote). Terminal `failed`/`expired`/`refunded` mark the intent without crediting. The credit is the same atomic `paid + wallet.balance += tokens + purchase Transaction` used by PayFast.
+- **Schema** — `PaymentIntent` gains nullable `provider`, `providerPaymentId @unique`, `payCurrency`, `payAmount`, `payAddress`.
+- **Env** — `NOWPAYMENTS_API_KEY`, `NOWPAYMENTS_IPN_SECRET`, `NOWPAYMENTS_API_URL` (default prod, sandbox-overridable), `CRYPTO_USDT_CURRENCY` (default `usdttrc20`); reuses `BACKEND_PUBLIC_URL` for the IPN callback.
+- **Tests** — 5 new `node:test` cases (checkout via a stubbed provider seam, `requires_config`, unsigned/tampered/wrong-price/underpaid/in-flight rejections, finished-credits-once, replay idempotency, failed-marks-intent). `npm test` green at 29/29.
+- **No app changes** — the client already shows the deposit and re-syncs `GET /wallet`; settlement is 100% backend-driven per `DEEMUSIQ_WALLET.md`.
+
 ### 2026-07-11 — Feature completion: ad-roll, local favorites, full auth backend
 
 #### Backend — every app API endpoint now implemented (`backend/src/index.ts`)
