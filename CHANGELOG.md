@@ -22,6 +22,14 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 - **`DEPLOY.md`** — full go-live runbook: Fly deploy, custom domain `api.deemusiq.co.za`, NOWPayments IPN URL + receiving wallets, the app `DEEMUSIQ_BACKEND_URL` dart-define, a sandbox smoke test, and Render/Railway/VPS alternatives.
 - **`trust proxy` hardening** — the backend now honours `TRUST_PROXY` so `req.ip` reflects the real client behind a load balancer; this is load-bearing for the PayFast source-IP allowlist, the per-IP rate limiters, and secure-channel replay tracking. Default off keeps local/test behaviour unchanged.
 
+#### Backend — application-layer security / WAF (`backend/src/index.ts`)
+- **Security headers** on every response (hand-rolled, no new deps) — `Content-Security-Policy: default-src 'none'` (safe: pure JSON API), `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, COOP/CORP, `Permissions-Policy`, HSTS; `X-Powered-By` disabled.
+- **WAF filter** (runs before body parsing) — rejects, with a brief repeat-offender IP ban, the patterns a fixed-route JSON API never legitimately sees: scanner user-agents (sqlmap/nikto/nuclei/gobuster/…), probe paths (`.env`, `.git`, `.aws`, `.ssh`, `wp-*`, `.php`, `phpmyadmin`, `/actuator`, `/cgi-bin/`, …), path traversal (`../`, `%2e%2e`), null bytes, and over-long URLs. Auto-ban is skipped under test.
+- **Global per-IP rate limit** in front of every route (default 300/min, `RATE_LIMIT_GLOBAL_MAX`/`RATE_LIMIT_WINDOW_MS`), on top of the existing stricter auth/wallet limiters.
+- **CORS allowlist** via `CORS_ORIGINS` (default allow-all — safe for a Bearer-token API with no cookies), and a **128 KB request-body cap**.
+- **Tests** — added header/WAF/rate-limit cases; `npm test` green at 32/32.
+- **Note**: a network-edge WAF/CDN (Cloudflare, or Fly's built-in) still complements this; the app-layer rules are the portable, always-on baseline.
+
 ### 2026-07-11 — Feature completion: ad-roll, local favorites, full auth backend
 
 #### Backend — every app API endpoint now implemented (`backend/src/index.ts`)
