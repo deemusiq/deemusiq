@@ -5,6 +5,23 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### 2026-07-12 — Creator mode, yearly artist leaderboard, Google-carried favorites
+
+#### Backend (`backend/src/index.ts`, `prisma/schema.prisma`)
+- **Yearly artist leaderboard** (cron-free) — `GET /leaderboard/artists?year` ranks artists by tokens received within a calendar year (the query window IS the annual reset); `GET /leaderboard/artists/hall-of-fame` lazily freezes each completed year's "Best Artist" into an `ArtistOfYear` cache. Backed by a new indexed `Transaction.artistId` so the ranking is one `groupBy`.
+- **Boost an artist** — `POST /artists/:id/boost` (atomic wallet debit, rate-limited); `/wallet/push` and `/wallet/support` now stamp `artistId` when the target is a real DeeMusiq artist, so both feed the race and the existing `supportedCreators` aggregation.
+- **Creator mode** (gated by `requireGoogleLinked` — the link was RS256-verified server-side) — `POST/GET /creator/artist` (name-unique profile claim), `POST/GET/PATCH/DELETE /creator/songs` (ownership-checked, `youtubeId` regex-validated), `GET /creator/songs/:id/stats`. New `CreatorSong` model (YouTube-link songs) + `Artist.bio`.
+- **Discoverability** — `/catalog` now serves published creator songs in the exact shape the app's `catalogProvider` already maps to playable tracks; new `/metadata/search`, `/metadata/artist/:id`, `/metadata/track/:id` surface creator content to the native plugin (YouTube source → playable).
+- **Favorites carry-over** — `GET /sync/favorites` returns full `{trackId,title,artist}` from `TrackLike` so a signed-in device can rebuild its local likes.
+- **Tests** — 5 new suites (creator gating + CRUD + ownership, boost + leaderboard, yearly window + hall-of-fame, favorites round-trip, catalog). `npm test` green at 37/37.
+
+#### App (`deemusiq-app/`)
+- **Artists of the Year page** — current-year ranking with a leader banner + Hall of Fame of past winners; **Boost** buttons throughout.
+- **Creator Studio page** — Google-gated; claim an artist profile, submit/hide/remove songs, and see per-song stats (pushes, tokens, likes).
+- **Boost button on the artist page** header; a reusable token-chip boost dialog.
+- **Google-carried favorites** — after a Google sign-in the app pulls `/sync/favorites` and merges it into local likes; the heart toggle now also writes a reversible account-tied like so favorites follow the account across devices.
+- New API client methods + Riverpod providers; new sidebar tiles + routes.
+
 ### 2026-07-11 — Crypto payment verification (NOWPayments)
 
 #### Backend — crypto top-ups now settle end to end (`backend/src/index.ts`)
