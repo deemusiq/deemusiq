@@ -125,9 +125,13 @@ android {
         }
     }
 
-    // Remove applicationIdSuffix for stable+playstore combo (the canonical build)
+    // Remove applicationIdSuffix for stable+playstore combo (the canonical build).
+    // NOTE: this is a Groovy build script, so use kotlin.Pair — the `a to b`
+    // infix is Kotlin-only and fails at configuration time (blocking every build).
     androidComponents {
-        onVariants(selector().withFlavor("store" to "playstore", "default" to "stable")) { variant ->
+        onVariants(selector()
+                .withFlavor(new kotlin.Pair("store", "playstore"))
+                .withFlavor(new kotlin.Pair("default", "stable"))) { variant ->
             variant.applicationId = "za.co.deemusiq.app"
         }
     }
