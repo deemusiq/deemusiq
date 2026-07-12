@@ -182,6 +182,14 @@ class AppRouter extends RootStackRouter {
               page: PushLeaderboardRoute.page,
             ),
             AutoRoute(
+              path: "wallet/artists-of-the-year",
+              page: ArtistLeaderboardRoute.page,
+            ),
+            AutoRoute(
+              path: "creator-studio",
+              page: CreatorStudioRoute.page,
+            ),
+            AutoRoute(
               path: "stats",
               page: StatsRoute.page,
             ),

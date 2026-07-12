@@ -7,6 +7,7 @@ import 'package:shadcn_flutter/shadcn_flutter_extension.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/components/titlebar/titlebar.dart';
 import 'package:deemusiq/components/wallet/wallet_common.dart';
+import 'package:deemusiq/provider/local_favorites/local_favorites_provider.dart';
 import 'package:deemusiq/provider/wallet/wallet_provider.dart';
 import 'package:deemusiq/services/wallet/wallet_api.dart';
 import 'package:deemusiq/services/auth/google_auth.dart';
@@ -337,6 +338,10 @@ class _GoogleSignInCard extends HookConsumerWidget {
             );
           }
           await wallet.syncFromBackend();
+          // Pull account-carried favorites down onto this device.
+          await syncFavoritesFromBackend(
+            ref.read(localFavoritesProvider.notifier),
+          );
         }, "Signed in with Google.");
 
     Future<void> handleSignOut() => _guard(context, loading, () async {

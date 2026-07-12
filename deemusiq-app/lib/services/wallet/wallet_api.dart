@@ -409,6 +409,159 @@ class WalletApiClient {
     }
   }
 
+  // ── Artist boosts & the yearly leaderboard ────────────────────────────────
+
+  /// Boost an artist with tokens. Returns the new wallet balance.
+  Future<int> boostArtist({required String artistId, required int tokens}) async {
+    try {
+      final encoded = Uri.encodeComponent(artistId);
+      final res = await _client().post(
+        "/artists/$encoded/boost",
+        data: {"tokens": tokens},
+        options: await _authed(),
+      );
+      return ((res.data as Map)["balance"] as num).toInt();
+    } on DioException catch (e) {
+      throw WalletApiException(_message(e));
+    }
+  }
+
+  /// The artist leaderboard for a calendar [year] (defaults to the current year).
+  /// Returns `{year, isCurrentYear, entries:[...]}`.
+  Future<Map<String, dynamic>> fetchArtistLeaderboard({int? year}) async {
+    try {
+      final res = await _client().get(
+        "/leaderboard/artists",
+        queryParameters: year != null ? {"year": year} : null,
+      );
+      return Map<String, dynamic>.from(res.data as Map);
+    } on DioException catch (e) {
+      throw WalletApiException(_message(e));
+    }
+  }
+
+  /// Past years' "Best Artist" winners. Returns the `winners` list.
+  Future<List<dynamic>> fetchHallOfFame() async {
+    try {
+      final res = await _client().get("/leaderboard/artists/hall-of-fame");
+      return (res.data as Map)["winners"] as List<dynamic>;
+    } on DioException catch (e) {
+      throw WalletApiException(_message(e));
+    }
+  }
+
+  // ── Creator mode ──────────────────────────────────────────────────────────
+
+  /// Create/update the caller's artist profile (requires a linked Google account).
+  Future<Map<String, dynamic>> createArtist({
+    required String name,
+    String? bio,
+    String? imageUrl,
+  }) async {
+    try {
+      final res = await _client().post(
+        "/creator/artist",
+        data: {
+          "name": name,
+          if (bio != null) "bio": bio,
+          if (imageUrl != null) "imageUrl": imageUrl,
+        },
+        options: await _authed(),
+      );
+      return Map<String, dynamic>.from((res.data as Map)["artist"] as Map);
+    } on DioException catch (e) {
+      throw WalletApiException(_message(e));
+    }
+  }
+
+  /// The caller's artist profile + stats, or `{artist: null}` if not a creator yet.
+  Future<Map<String, dynamic>> fetchMyArtist() async {
+    try {
+      final res = await _client().get("/creator/artist", options: await _authed());
+      return Map<String, dynamic>.from(res.data as Map);
+    } on DioException catch (e) {
+      throw WalletApiException(_message(e));
+    }
+  }
+
+  Future<Map<String, dynamic>> submitSong({
+    required String title,
+    required String youtubeId,
+    String? coverUrl,
+    String? description,
+  }) async {
+    try {
+      final res = await _client().post(
+        "/creator/songs",
+        data: {
+          "title": title,
+          "youtubeId": youtubeId,
+          if (coverUrl != null) "coverUrl": coverUrl,
+          if (description != null) "description": description,
+        },
+        options: await _authed(),
+      );
+      return Map<String, dynamic>.from((res.data as Map)["song"] as Map);
+    } on DioException catch (e) {
+      throw WalletApiException(_message(e));
+    }
+  }
+
+  /// The caller's songs, each with a `stats` object.
+  Future<List<dynamic>> fetchMySongs() async {
+    try {
+      final res = await _client().get("/creator/songs", options: await _authed());
+      return (res.data as Map)["songs"] as List<dynamic>;
+    } on DioException catch (e) {
+      throw WalletApiException(_message(e));
+    }
+  }
+
+  Future<void> updateSong({
+    required String songId,
+    String? title,
+    String? coverUrl,
+    String? description,
+    String? status,
+  }) async {
+    try {
+      await _client().patch(
+        "/creator/songs/${Uri.encodeComponent(songId)}",
+        data: {
+          if (title != null) "title": title,
+          if (coverUrl != null) "coverUrl": coverUrl,
+          if (description != null) "description": description,
+          if (status != null) "status": status,
+        },
+        options: await _authed(),
+      );
+    } on DioException catch (e) {
+      throw WalletApiException(_message(e));
+    }
+  }
+
+  Future<void> deleteSong(String songId) async {
+    try {
+      await _client().delete(
+        "/creator/songs/${Uri.encodeComponent(songId)}",
+        options: await _authed(),
+      );
+    } on DioException catch (e) {
+      throw WalletApiException(_message(e));
+    }
+  }
+
+  /// Full account-carried favorites (`[{trackId,title,artist}]`), used to rebuild
+  /// local likes after signing in on a new device.
+  Future<List<dynamic>> fetchFavorites() async {
+    try {
+      final res = await _client().get("/sync/favorites", options: await _authed());
+      return (res.data as Map)["favorites"] as List<dynamic>;
+    } on DioException catch (e) {
+      throw WalletApiException(_message(e));
+    }
+  }
+
   /// Returns the provider OAuth URL the app should open in a browser.
   Future<String> startLinking(String provider) async {
     if (!_validProviders.contains(provider)) {
@@ -676,12 +829,18 @@ class WalletApiClient {
     }
   }
 
-  /// Like a track (for recommendations + liked songs playlist).
-  Future<void> likeTrack(String trackId) async {
+  /// Like a track (for recommendations + account-carried favorites). Passing
+  /// [title]/[artist] makes the like reversible so it can be pulled back and
+  /// rebuilt as a local favorite on another device.
+  Future<void> likeTrack(String trackId, {String? title, String? artist}) async {
     try {
       await _client().post(
         "/recommendations/like",
-        data: {"trackId": trackId},
+        data: {
+          "trackId": trackId,
+          if (title != null) "title": title,
+          if (artist != null) "artist": artist,
+        },
         options: await _authed(),
       );
     } on DioException catch (e) {

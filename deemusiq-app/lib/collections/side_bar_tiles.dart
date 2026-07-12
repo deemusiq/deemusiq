@@ -66,6 +66,20 @@ List<SideBarTiles> getSidebarTileList(AppLocalizations l10n) => [
         title: "Wallet",
       ),
       SideBarTiles(
+        id: "artists-of-the-year",
+        pathPrefix: "/wallet/artists-of-the-year",
+        route: const ArtistLeaderboardRoute(),
+        icon: DeeMusiqIcons.trophy,
+        title: "Artists of the Year",
+      ),
+      SideBarTiles(
+        id: "creator-studio",
+        pathPrefix: "/creator-studio",
+        route: const CreatorStudioRoute(),
+        icon: DeeMusiqIcons.upload,
+        title: "Creator Studio",
+      ),
+      SideBarTiles(
         id: "settings",
         pathPrefix: "/settings",
         route: const SettingsRoute(),

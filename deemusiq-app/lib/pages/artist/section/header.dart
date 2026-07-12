@@ -6,6 +6,9 @@ import 'package:skeletonizer/skeletonizer.dart';
 import 'package:deemusiq/collections/fake.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/components/image/universal_image.dart';
+import 'package:deemusiq/components/wallet/boost_artist_dialog.dart';
+import 'package:deemusiq/components/wallet/wallet_common.dart';
+import 'package:deemusiq/services/wallet/wallet_api.dart';
 import 'package:deemusiq/extensions/constrains.dart';
 import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/models/database/database.dart';
@@ -80,6 +83,21 @@ class ArtistPageHeader extends HookConsumerWidget {
               },
             ),
           const SizedBox(width: 5),
+          if (WalletApiClient.instance.isConfigured)
+            Tooltip(
+              tooltip: TooltipContainer(
+                child: const Text("Boost this artist with tokens"),
+              ).call,
+              child: IconButton.ghost(
+                icon: const Icon(DeeMusiqIcons.boost, color: deeMusiqOrange),
+                onPressed: () => showBoostArtistDialog(
+                  context,
+                  ref,
+                  artistId: artist.id,
+                  artistName: artist.name,
+                ),
+              ),
+            ),
           Tooltip(
             tooltip: TooltipContainer(
               child: Text(context.l10n.add_artist_to_blacklist),

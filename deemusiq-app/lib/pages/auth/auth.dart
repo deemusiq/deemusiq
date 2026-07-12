@@ -6,6 +6,7 @@ import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/collections/routes.gr.dart';
 import 'package:deemusiq/components/wallet/wallet_common.dart';
 import 'package:deemusiq/models/wallet/linked_account.dart';
+import 'package:deemusiq/provider/local_favorites/local_favorites_provider.dart';
 import 'package:deemusiq/provider/wallet/wallet_provider.dart';
 import 'package:deemusiq/services/auth/google_auth.dart';
 import 'package:deemusiq/services/kv_store/kv_store.dart';
@@ -53,6 +54,10 @@ class AuthPage extends HookConsumerWidget {
                   externalId: result.email,
                 );
           }
+          // Pull account-carried favorites down onto this device.
+          await syncFavoritesFromBackend(
+            ref.read(localFavoritesProvider.notifier),
+          );
         }
 
         await KVStoreService.setDoneGettingStarted(true);

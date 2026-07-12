@@ -8,6 +8,7 @@ import 'package:deemusiq/provider/database/database.dart';
 import 'package:deemusiq/provider/metadata_plugin/library/tracks.dart';
 import 'package:deemusiq/services/auth/data_sync.dart';
 import 'package:deemusiq/services/logger/logger.dart';
+import 'package:deemusiq/services/wallet/wallet_api.dart';
 
 final localFavoritesProvider =
     StateNotifierProvider.autoDispose<LocalFavoritesNotifier,
@@ -70,6 +71,39 @@ class LocalFavoritesNotifier extends StateNotifier<List<FavoritesTableData>> {
         .get();
     return result.isNotEmpty;
   }
+
+  /// Merge account-carried favorites (`[{trackId,title,artist}]`) pulled from the
+  /// backend into the local table, skipping ones already present. Used after a
+  /// Google sign-in so likes follow the account onto a new device.
+  Future<void> mergeRemoteFavorites(List<Map<String, dynamic>> favorites) async {
+    for (final f in favorites) {
+      final trackId = (f['trackId'] ?? '').toString();
+      if (trackId.isEmpty || await isFavorite(trackId)) continue;
+      await _database.into(_database.favoritesTable).insert(
+            FavoritesTableCompanion.insert(
+              trackId: trackId,
+              trackName: (f['title'] ?? '').toString(),
+              artistName: (f['artist'] ?? '').toString(),
+            ),
+            mode: InsertMode.insertOrIgnore,
+          );
+    }
+  }
+}
+
+/// Pull the signed-in account's favorites and merge them into local likes.
+/// Best-effort — a no-backend/offline device just keeps its local favorites.
+Future<void> syncFavoritesFromBackend(LocalFavoritesNotifier localFavorites) async {
+  if (!WalletApiClient.instance.isConfigured) return;
+  try {
+    final favs = await WalletApiClient.instance.fetchFavorites();
+    await localFavorites.mergeRemoteFavorites(
+      favs.map((e) => Map<String, dynamic>.from(e as Map)).toList(),
+    );
+  } catch (e, stack) {
+    AppLogger.log.w('Favorites pull-on-sign-in failed: ${e.toString()}');
+    AppLogger.reportError(e, stack, 'syncFavoritesFromBackend');
+  }
 }
 
 /// Local-first like toggle shared by the heart button and the track options
@@ -88,6 +122,11 @@ Future<bool> toggleTrackFavorite({
     unawaited(DataSyncService.instance.unlikeSong(track.id).catchError((e) {
       AppLogger.log.d('Liked-song backend sync failed: ${e.toString()}');
     }));
+    if (WalletApiClient.instance.isConfigured) {
+      unawaited(WalletApiClient.instance.unlikeTrack(track.id).catchError((e) {
+        AppLogger.log.d('Account favorite unlike failed: ${e.toString()}');
+      }));
+    }
     try {
       await savedTracks.removeFavorite([track]);
     } catch (e, stack) {
@@ -100,6 +139,19 @@ Future<bool> toggleTrackFavorite({
     unawaited(DataSyncService.instance.likeSong(track.id).catchError((e) {
       AppLogger.log.d('Liked-song backend sync failed: ${e.toString()}');
     }));
+    // Reversible account-carried like (title/artist) so favorites follow the
+    // account onto other devices — see [syncFavoritesFromBackend].
+    if (WalletApiClient.instance.isConfigured) {
+      unawaited(WalletApiClient.instance
+          .likeTrack(
+            track.id,
+            title: track.name,
+            artist: track.artists.map((a) => a.name).join(', '),
+          )
+          .catchError((e) {
+        AppLogger.log.d('Account favorite like failed: ${e.toString()}');
+      }));
+    }
     try {
       await savedTracks.addFavorite([track]);
     } catch (e, stack) {
