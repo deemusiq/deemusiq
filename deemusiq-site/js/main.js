@@ -4,11 +4,6 @@
 (function () {
   "use strict";
 
-  /* ---------- service worker ---------- */
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js');
-  }
-
   /* ----------------------------------------------------------
      DOWNLOAD CONFIG  ← edit these when the DeeMusiq app builds
      are published as a GitHub Release. Leave a value empty ('')
@@ -17,9 +12,9 @@
      ---------------------------------------------------------- */
   var DOWNLOADS = {
     android: "https://github.com/deemusiq/deemusiq/releases/latest/download/DeeMusiq.apk",
-    windows: "https://github.com/deemusiq/deemusiq/releases/latest/download/DeeMusiq-setup.exe",
-    linux:   "https://github.com/deemusiq/deemusiq/releases/latest/download/DeeMusiq.AppImage",
-    macos:   "https://github.com/deemusiq/deemusiq/releases/latest/download/DeeMusiq.dmg"
+    windows: "", // e.g. ".../DeeMusiq-setup.exe"
+    linux:   "", // e.g. ".../DeeMusiq.AppImage"
+    macos:   ""  // e.g. ".../DeeMusiq.dmg"
   };
   var CONTACT_EMAIL = "deemusiq@protonmail.com";
 
@@ -102,10 +97,15 @@
         var note = document.getElementById("dlNote");
         if (note) {
           note.style.color = "var(--orange-2)";
-          note.textContent = "Builds for " + p + " are coming soon. Check back shortly.";
           note.scrollIntoView({ behavior: "smooth", block: "center" });
           setTimeout(function () { note.style.color = ""; }, 4000);
         }
+        var topic = document.getElementById("cf-topic");
+        var msg = document.getElementById("cf-msg");
+        if (topic) topic.value = "Listener / customer";
+        if (msg) msg.value = "I'd like early access to the DeeMusiq app for " + p + ".";
+        var contactEl = document.getElementById("contact");
+        if (contactEl) contactEl.scrollIntoView({ behavior: "smooth" });
       });
     }
   });
@@ -138,29 +138,16 @@
       var emailVal = (emailField.value || "").trim();
       var topicVal = topicField.value || "";
       var messageVal = (messageField.value || "").trim();
-      var subject = "[DeeMusiq] " + topicVal + " \u2014 " + nameVal;
+      var subject = "[DeeMusiq] " + topicVal + " — " + nameVal;
       var body =
         "Name: " + nameVal + "\n" +
         "Email: " + emailVal + "\n" +
         "I am a: " + topicVal + "\n\n" +
         messageVal + "\n";
-      var mailto =
+      window.location.href =
         "mailto:" + CONTACT_EMAIL +
         "?subject=" + encodeURIComponent(subject) +
         "&body=" + encodeURIComponent(body);
-      window.location.href = mailto;
-
-      setTimeout(function () {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(CONTACT_EMAIL).then(function () {
-            alert("No email client detected. Email address copied to clipboard: " + CONTACT_EMAIL);
-          }).catch(function () {
-            alert("No email client detected. You can reach us at: " + CONTACT_EMAIL);
-          });
-        } else {
-          alert("No email client detected. You can reach us at: " + CONTACT_EMAIL);
-        }
-      }, 800);
     });
   }
 })();
