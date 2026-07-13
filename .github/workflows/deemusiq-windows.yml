@@ -13,8 +13,11 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  FLUTTER_VERSION: "3.35.2"
-  FLUTTER_CHANNEL: "master"
+  # Pinned stable (matches Android/Linux). The old 3.35.2/master build defaulted
+  # its CMake generator to "Visual Studio 16 2019", which the windows-latest
+  # runner (VS 2022 only) cannot find — 3.38.5/stable auto-detects VS 2022.
+  FLUTTER_VERSION: "3.38.5"
+  FLUTTER_CHANNEL: "stable"
 
 defaults:
   run:

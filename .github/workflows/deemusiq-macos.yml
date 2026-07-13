@@ -13,8 +13,10 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  FLUTTER_VERSION: "3.35.2"
-  FLUTTER_CHANNEL: "master"
+  # Pinned stable (matches Android/Linux) instead of a floating master
+  # pre-release, so macOS builds against the same reliable SDK.
+  FLUTTER_VERSION: "3.38.5"
+  FLUTTER_CHANNEL: "stable"
 
 defaults:
   run:
