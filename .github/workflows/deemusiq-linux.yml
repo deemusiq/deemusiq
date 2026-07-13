@@ -13,8 +13,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  FLUTTER_VERSION: "3.35.2"
-  FLUTTER_CHANNEL: "master"
+  FLUTTER_VERSION: "3.38.5"
+  FLUTTER_CHANNEL: "stable"
 
 defaults:
   run:
@@ -70,7 +70,8 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y clang cmake ninja-build pkg-config \
             libgtk-3-dev liblzma-dev libmpv-dev mpv \
-            libappindicator3-dev libnotify-dev \
+            libappindicator3-dev libnotify-dev libsecret-1-dev \
+            libwebkit2gtk-4.0-dev \
             file fakeroot dpkg-dev
 
       - name: Enable Linux desktop support
