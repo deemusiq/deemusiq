@@ -178,8 +178,13 @@ jobs:
           # refuses to run if signed with any other key (anti-repackaging).
           # Empty (temp keystore) = check is informational only.
           DEEMUSIQ_CERT_SHA256: ${{ secrets.DEEMUSIQ_CERT_SHA256 }}
+        # `stableFdroid`: the app has two flavor dimensions (default × store), so
+        # a build variant needs one flavor from each. `stableFdroid` is the FOSS
+        # combo (no Google Play Services / no google-services.json needed) — the
+        # right choice for this sideload APK. Plain `--flavor stable` cannot
+        # resolve the `store` dimension and fails at the assemble task.
         run: >
-          flutter build apk --release --flavor stable
+          flutter build apk --release --flavor stableFdroid
           --dart-define=DEEMUSIQ_BACKEND_URL="${DEEMUSIQ_BACKEND_URL}"
           --dart-define=DEEMUSIQ_CHANNEL_KEY="${DEEMUSIQ_CHANNEL_KEY}"
           --dart-define=DEEMUSIQ_CERT_SHA256="${DEEMUSIQ_CERT_SHA256}"
@@ -188,7 +193,7 @@ jobs:
         run: |
           mkdir -p dist
           # Prefer the flavored release APK; fall back deterministically.
-          src=$(find build -name "app-stable-release.apk" -print -quit)
+          src=$(find build -name "app-stablefdroid-release.apk" -print -quit)
           [ -z "$src" ] && src=$(find build -name "*-release.apk" -print -quit)
           [ -z "$src" ] && src=$(find build -name "*.apk" -print -quit)
           if [ -z "$src" ]; then echo "::error::No APK found under build/"; exit 1; fi
