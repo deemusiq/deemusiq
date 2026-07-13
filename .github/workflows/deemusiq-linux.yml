@@ -71,8 +71,14 @@ jobs:
           sudo apt-get install -y clang cmake ninja-build pkg-config \
             libgtk-3-dev liblzma-dev libmpv-dev mpv \
             libappindicator3-dev libnotify-dev libsecret-1-dev \
-            libwebkit2gtk-4.0-dev libsoup-3.0-dev \
+            libwebkit2gtk-4.1-dev libsoup-3.0-dev \
             file fakeroot dpkg-dev
+          # NOTE: webkit2gtk-4.1 (NOT 4.0) is required. The desktop_webview_window
+          # plugin's CMake prefers webkit2gtk-4.1 + libsoup-3.0, where
+          # soup_cookie_get_expires() returns GDateTime* (matches
+          # g_date_time_get_seconds). webkit2gtk-4.0 pairs with libsoup-2.4, whose
+          # soup_cookie_get_expires() returns SoupDate* → compile error at
+          # webview_window.cc:322 ("no matching function for g_date_time_get_seconds").
 
       - name: Enable Linux desktop support
         run: flutter config --enable-linux-desktop
