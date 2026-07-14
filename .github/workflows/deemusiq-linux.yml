@@ -198,6 +198,14 @@ jobs:
           Categories=AudioVideo;
           DESKTOP
 
+          # appimagetool REQUIRES an icon named after the .desktop Icon= entry
+          # (deemusiq) at the AppDir root, plus a .DirIcon, or it aborts with
+          # "you could put a 256x256 pixel png into .../deemusiq.png".
+          if [ -f assets/branding/deemusiq-logo.png ]; then
+            cp assets/branding/deemusiq-logo.png "${APPDIR}/deemusiq.png"
+            cp assets/branding/deemusiq-logo.png "${APPDIR}/.DirIcon"
+          fi
+
           # Download and run appimagetool
           wget -q -O /tmp/appimagetool "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
           chmod +x /tmp/appimagetool

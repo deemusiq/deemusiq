@@ -112,7 +112,12 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist
+          # NSIS's File command needs a real Windows path with backslashes; the
+          # forward-slash relative form gave "no files found". Resolve to an
+          # absolute path (fall back to the pre-arch layout just in case).
           $buildDir = "build/windows/x64/runner/Release"
+          if (-not (Test-Path $buildDir)) { $buildDir = "build/windows/runner/Release" }
+          $buildDir = (Resolve-Path $buildDir).Path
           $version = (Select-String -Path pubspec.yaml -Pattern '^version:').Line -replace 'version:\s*', ''
 
           # Create NSIS installer script
