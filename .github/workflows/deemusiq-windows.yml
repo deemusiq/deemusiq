@@ -118,13 +118,17 @@ jobs:
           $buildDir = "build/windows/x64/runner/Release"
           if (-not (Test-Path $buildDir)) { $buildDir = "build/windows/runner/Release" }
           $buildDir = (Resolve-Path $buildDir).Path
+          # Absolute OutFile path: NSIS resolves a relative OutFile against the
+          # .nsi script's own directory (which is already dist/), so "dist\..."
+          # became dist\dist\... -> "Can't open output file".
+          $outFile = Join-Path (Resolve-Path dist).Path 'DeeMusiq-windows-x86_64-setup.exe'
           $version = (Select-String -Path pubspec.yaml -Pattern '^version:').Line -replace 'version:\s*', ''
 
           # Create NSIS installer script
           $nsis = @"
           !include "MUI2.nsh"
           Name "DeeMusiq"
-          OutFile "dist\DeeMusiq-windows-x86_64-setup.exe"
+          OutFile "$outFile"
           InstallDir `"`$PROGRAMFILES64\DeeMusiq`"
           RequestExecutionLevel admin
           !insertmacro MUI_PAGE_WELCOME
