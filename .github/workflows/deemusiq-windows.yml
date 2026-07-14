@@ -58,7 +58,11 @@ jobs:
   windows:
     needs: check
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
-    runs-on: windows-latest
+    # Pin VS 2022. `windows-latest` now maps to windows-2025 with VS 2026, whose
+    # MSVC 14.51 promotes the <experimental/coroutine> deprecation to a hard error
+    # (STL1011) that breaks flutter_inappwebview_windows. VS 2022's toolchain still
+    # accepts it (deprecation warning only).
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2.18.0
@@ -95,6 +99,10 @@ jobs:
         env:
           DEEMUSIQ_BACKEND_URL: ${{ vars.DEEMUSIQ_BACKEND_URL }}
           DEEMUSIQ_CHANNEL_KEY: ${{ secrets.DEEMUSIQ_CHANNEL_KEY }}
+          # cl.exe honours the CL env var: define this so a newer MSVC toolchain
+          # (should the runner move to VS 2026) treats <experimental/coroutine> as
+          # a warning again instead of the STL1011 hard error. Harmless on VS 2022.
+          CL: "/D_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS"
         run: |
           flutter build windows --release `
             --dart-define=DEEMUSIQ_BACKEND_URL="$env:DEEMUSIQ_BACKEND_URL" `

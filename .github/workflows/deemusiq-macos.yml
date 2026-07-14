@@ -126,11 +126,17 @@ jobs:
           hdiutil create -volname "DeeMusiq" -srcfolder "$DMG_DIR" \
             -ov -format UDZO "$DMG_NAME"
           
-          # Also create a .zip for direct distribution
-          cd "$DMG_DIR"
-          zip -r "../../../dist/DeeMusiq-macos-universal.zip" "DeeMusiq.app" 2>/dev/null || \
-          zip -r "../../../dist/DeeMusiq-macos-universal.zip" "Runner.app"
-          cd ../../../
+          # Also create a .zip for direct distribution. Zip from inside the staging
+          # dir (subshell) so the .app sits at the archive root, and write to an
+          # ABSOLUTE dist path — the old "../../../dist" was one level too high
+          # (working dir is deemusiq-app, so dist/dmg_staging → ../../dist), which
+          # made zip fail with "Could not create output file".
+          DIST_ABS="$(cd dist && pwd)"
+          (
+            cd "$DMG_DIR"
+            zip -r "$DIST_ABS/DeeMusiq-macos-universal.zip" "DeeMusiq.app" 2>/dev/null || \
+            zip -r "$DIST_ABS/DeeMusiq-macos-universal.zip" "Runner.app"
+          )
 
           rm -rf "$DMG_DIR"
           ls -la dist/
