@@ -1,0 +1,71 @@
+# ─── DRAFT — flathub manifest for DeeMusiq ───────────────────────────────────
+# Flatpak ID intentionally NOT rebranded: com.github.KRTirtho.Spotube is baked
+# into linux/my_application.cc (my_application_id) and the appstream file
+# linux/com.deemusiq.deemusiq.appdata.xml — see AGENTS.md. Keep this filename.
+#
+# USER MUST FILL BEFORE SUBMITTING:
+#   * <TARBALL_SHA256>     — sha256 of the linux release tarball
+#     (or run: python3 scripts/update_flathub_version.py 1.1.0 from a checkout
+#      containing this file — that script rewrites modules[-1].sources[0]
+#      url+sha256 for you; it expects exactly this layout)
+#   * Verify the tarball URL matches the real GitHub Releases asset:
+#     deemusiq-linux-1.1.0-x86_64.tar.xz
+#   * Finish the flutter SDK module source (git tag/commit pin) below.
+# ──────────────────────────────────────────────────────────────────────────────
+app-id: com.github.KRTirtho.Spotube
+runtime: org.freedesktop.Platform
+runtime-version: "24.08"
+sdk: org.freedesktop.Sdk
+command: deemusiq
+separate-locales: false
+
+finish-args:
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --share=ipc
+  - --socket=pulseaudio          # audio playback
+  - --share=network              # streaming + DeeMusiq backend API
+  - --filesystem=xdg-download    # downloaded tracks land in ~/Downloads
+  - --device=dri                 # hardware accel for the Flutter renderer
+  - --talk-name=org.freedesktop.Notifications
+  - --talk-name=org.kde.StatusNotifierWatcher   # tray icon
+
+modules:
+  # Flutter SDK — PIN the exact version used by CI (3.38.5) so the flatpak
+  # build matches what GitHub Releases ships.
+  - name: flutter
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /app/flutter
+      - cp -r . /app/flutter/
+    sources:
+      - type: git
+        url: https://github.com/flutter/flutter.git
+        tag: 3.38.5
+        # DRAFT: add the commit hash for the 3.38.5 tag here after verifying:
+        # commit: <FLUTTER_3.38.5_COMMIT>
+
+  - name: deemusiq
+    buildsystem: simple
+    build-commands:
+      # DRAFT: adjust to the real tarball layout once v1.1.0 linux assets are
+      # published (CI names it deemusiq-linux-<version>-x86_64.tar.xz).
+      - install -Dm755 deemusiq /app/bin/deemusiq
+      - cp -r lib /app/bin/ || true          # flutter bundle data, if present
+      - cp -r data /app/bin/ || true
+      - install -Dm644 com.github.KRTirtho.Spotube.desktop
+          /app/share/applications/com.github.KRTirtho.Spotube.desktop
+      - install -Dm644 com.deemusiq.deemusiq.appdata.xml
+          /app/share/metainfo/com.github.KRTirtho.Spotube.appdata.xml
+      - install -Dm644 assets/brand/logo-foreGround.png
+          /app/share/icons/hicolor/512x512/apps/com.github.KRTirtho.Spotube.png
+    sources:
+      - type: archive
+        url: https://github.com/deemusiq/deemusiq/releases/download/v1.1.0/deemusiq-linux-1.1.0-x86_64.tar.xz
+        sha256: <TARBALL_SHA256>   # DRAFT — fill in (see header)
+      # These ship inside the repo; adjust paths to where the build drops them.
+      - type: file
+        path: linux/deemusiq.desktop
+        dest-filename: com.github.KRTirtho.Spotube.desktop
+      - type: file
+        path: linux/com.deemusiq.deemusiq.appdata.xml

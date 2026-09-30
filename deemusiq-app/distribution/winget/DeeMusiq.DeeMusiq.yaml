@@ -1,0 +1,11 @@
+# Created using wingetcreate — DRAFT for DeeMusiq 1.1.0
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.version.1.6.0.schema.json
+#
+# USER MUST FILL: InstallerSha256 in DeeMusiq.DeeMusiq.installer.yaml, and
+# confirm the InstallerUrl matches the real GitHub Releases asset.
+
+PackageIdentifier: DeeMusiq.DeeMusiq
+PackageVersion: 1.1.0
+DefaultLocale: en-US
+ManifestType: version
+ManifestVersion: 1.6.0

@@ -1,0 +1,39 @@
+Android App Links — assetlinks.json
+===================================
+
+`assetlinks.json` in this directory declares that https://deemusiq.co.za may be
+opened by the DeeMusiq Android app. Two package ids are listed, matching the
+real `applicationId`s in `android/app/build.gradle`:
+
+- `za.co.deemusiq.app` — canonical stable/playstore build
+- `za.co.deemusiq.app.fdroid` — the fdroid-flavor APK shipped by CI
+
+(`oss.krtirtho.spotube` is only the Kotlin source package, NOT the
+applicationId — do not use it here.)
+
+BEFORE DEPLOYING you must replace the REPLACE_ME placeholder in
+`sha256_cert_fingerprints` with the SHA-256 fingerprint of the RELEASE signing
+certificate, otherwise App Links verification will fail and links will open in
+the browser instead of the app.
+
+Get the fingerprint from the release keystore:
+
+    keytool -list -v -keystore /path/to/deemusiq-release.keystore -alias <alias>
+
+Copy the "SHA256:" value (colon-separated hex, e.g.
+"AB:CD:EF:...") and paste it in place of the REPLACE_ME placeholder. Keep the
+JSON valid — comments are not allowed in the served file.
+
+If the APK is signed with Google Play App Signing, use the "App signing
+certificate" fingerprint from the Play Console (Release > Setup > App signing)
+instead of the upload key fingerprint.
+
+Verify after deploy:
+
+    curl https://deemusiq.co.za/.well-known/assetlinks.json
+    # then check https://digitalassetlinks.googleapis.com/v1/statements:list?source.web.site=https://deemusiq.co.za&relation=delegate_permission/common.handle_all_urls
+
+Notes for the static host:
+- The file must be served as application/json, over HTTPS, with no redirect.
+- This directory name starts with a dot; some hosts ignore dotfiles.
+  On Cloudflare Pages, `.well-known/` is served as-is.

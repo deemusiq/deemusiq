@@ -1,0 +1,8 @@
+DeeMusiq 1.1.0 (47)
+
+- DeeMusiq rebrand of the open-source Spotube engine (BSD-4-Clause)
+- Africa-first catalog: South African and continental artists front and centre
+- Token wallet: top up, support artists, transparent payouts
+- Artist dashboard with plays, earnings and payout history
+- Anonymous/guest listening, time-synced lyrics, offline downloads
+- No ads, no telemetry, low data usage

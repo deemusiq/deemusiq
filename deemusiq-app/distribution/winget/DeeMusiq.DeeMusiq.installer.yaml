@@ -1,0 +1,24 @@
+# Created using wingetcreate — DRAFT for DeeMusiq 1.1.0
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.6.0.schema.json
+#
+# USER MUST FILL:
+#   * InstallerSha256 — sha256 of DeeMusiq-windows-x86_64-setup.exe from the
+#     v1.1.0 GitHub Release (CI workflow deemusiq-windows.yml builds this NSIS
+#     installer; get the hash with: certutil -hashfile <file> SHA256)
+#   * Confirm InstallerUrl against the real published release asset.
+
+PackageIdentifier: DeeMusiq.DeeMusiq
+PackageVersion: 1.1.0
+InstallerLocale: en-US
+InstallerType: nullsoft
+Scope: machine
+InstallModes:
+  - interactive
+  - silent
+UpgradeBehavior: install
+Installers:
+  - Architecture: x64
+    InstallerUrl: https://github.com/deemusiq/deemusiq/releases/download/v1.1.0/DeeMusiq-windows-x86_64-setup.exe
+    InstallerSha256: 0000000000000000000000000000000000000000000000000000000000000000
+ManifestType: installer
+ManifestVersion: 1.6.0

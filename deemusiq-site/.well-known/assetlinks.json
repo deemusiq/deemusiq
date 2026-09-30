@@ -1,0 +1,22 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "za.co.deemusiq.app",
+      "sha256_cert_fingerprints": [
+        "REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME"
+      ]
+    }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "za.co.deemusiq.app.fdroid",
+      "sha256_cert_fingerprints": [
+        "REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME:REPLACE_ME"
+      ]
+    }
+  }
+]

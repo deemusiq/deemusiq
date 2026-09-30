@@ -2,7 +2,8 @@
 
 > *It's a drop day.* Africa's home-grown music platform — stream & download, artists own their work.
 
-A fast, single-page, fully static website (no build step). Drop it on **GitHub Pages**, Netlify, or any web host.
+A fast, single-page, fully static website (no build step). Production deploys to
+**Cloudflare Pages**; it also works on any static web host.
 
 ---
 
@@ -14,38 +15,24 @@ deemusiq-site/
 ├── css/styles.css          # all styling (dark / honeycomb / orange theme)
 ├── js/main.js              # nav, scroll reveals, contact form, download buttons
 ├── assets/img/             # logo, favicons + your own artwork
-├── .nojekyll               # tells GitHub Pages to serve the css/ & js/ folders as-is
+├── cloudflare/             # Pages config + /downloads/* proxy worker + release docs
+├── _headers                # security headers (CSP/HSTS) applied by the host
+├── sw.js                   # service worker (bump CACHE_VERSION on markup changes)
 └── README.md               # this file
 ```
 
 ---
 
-## 🚀 Deploy to GitHub Pages (free)
+## 🚀 Deploy
 
-You don't need any coding for this. Two ways:
+The site deploys to Cloudflare Pages (no build step, output = this directory) and
+app downloads are proxied same-origin through a Cloudflare Worker bound to
+`/downloads/*`, so visitors never see where the build files are hosted.
 
-### A) Drag-and-drop (easiest)
-1. Go to <https://github.com> and sign in (create a free account if needed).
-2. Click **New repository** → name it `deemusiq` → set it **Public** → **Create repository**.
-3. On the repo page click **uploading an existing file**.
-4. Drag **everything inside this `deemusiq-site` folder** (the `index.html`, the `css`, `js`, `assets` folders and `.nojekyll`) into the upload box → **Commit changes**.
-5. Go to **Settings → Pages**.
-6. Under *Build and deployment* → *Source* choose **Deploy from a branch**, branch **main**, folder **/(root)** → **Save**.
-7. Wait ~1 minute. Your site is live at:
-   **`https://<your-username>.github.io/deemusiq/`**
-
-### B) Command line (if you use git)
-```bash
-cd "deemusiq-site"
-git init
-git add .
-git commit -m "DeeMusiq website"
-git branch -M main
-# create the repo on github.com first, then:
-git remote add origin https://github.com/<your-username>/deemusiq.git
-git push -u origin main
-# then enable Pages under Settings → Pages (branch: main, folder: /root)
-```
+Full instructions — DNS/TLS, Pages project, worker deploy, cache rules — live in
+[`cloudflare/README.md`](cloudflare/README.md). Release publishing steps are in
+[`cloudflare/RELEASE.md`](cloudflare/RELEASE.md). `DEPLOY.md` is a legacy
+quick-start kept for reference.
 
 ---
 
@@ -55,23 +42,25 @@ git push -u origin main
 |------|-------|---------------|
 | Contact email | `index.html` (mailto link) **and** `js/main.js` (`CONTACT_EMAIL`) | `deemusiq@protonmail.com` ✅ from client docs |
 | Phone / WhatsApp | `index.html` → search `+27 73 725 3454` | `+27 73 725 3454` ✅ from client docs |
-| Social links | `index.html` → `contact__socials` (the `href="#"`) | `#` — add your real handles |
-| Download links | `js/main.js` → the `DOWNLOADS` object | empty (routes to contact) |
+| Social links | `index.html` → `contact__socials` | real handles |
+| Download links | `js/main.js` → the `DOWNLOADS` object | same-origin `/downloads/<platform>` |
 
 ### Wiring up the app downloads
-When the **DeeMusiq app** (your rebranded Spotube build) is published as a GitHub
-Release, paste the file URLs into `js/main.js`:
+Download buttons point at same-origin paths served by the worker — no file-host
+URLs ever appear in shipped HTML/JS:
 
 ```js
 var DOWNLOADS = {
-  android: "https://github.com/<you>/deemusiq/releases/latest/download/DeeMusiq.apk",
-  windows: "https://github.com/<you>/deemusiq/releases/latest/download/DeeMusiq-setup.exe",
-  linux:   "https://github.com/<you>/deemusiq/releases/latest/download/DeeMusiq.AppImage",
-  macos:   "https://github.com/<you>/deemusiq/releases/latest/download/DeeMusiq.dmg"
+  android: "/downloads/android",
+  windows: "/downloads/windows",
+  linux:   "/downloads/linux",
+  macos:   "/downloads/macos"
 };
 ```
-Any button left as `""` automatically sends visitors to the contact form to
-request early access — so the page is never broken while you wait for a build.
+The worker maps each platform to the current release file via its `DOWNLOADS`
+env var (see `cloudflare/wrangler.toml`). Any button left as `""` automatically
+sends visitors to the contact form to request early access — so the page is
+never broken while you wait for a build.
 
 ---
 
@@ -89,16 +78,15 @@ For a hosted form that lands in your inbox:
 
 ---
 
-## 🌐 Custom domain (e.g. deemusiq.co.za)
-1. Buy the domain (e.g. from a South African registrar).
-2. In the repo: **Settings → Pages → Custom domain** → enter `deemusiq.co.za` → Save.
-3. At your domain registrar, add the DNS records GitHub shows you (4 × A records + a CNAME).
-4. Tick **Enforce HTTPS** once it's verified.
+## 🌐 Custom domain
+
+`deemusiq.co.za` (apex + www) is attached to the Cloudflare Pages project — see
+`cloudflare/README.md` §1 for DNS, TLS and HSTS settings.
 
 ---
 
 ## Credits & licensing
 - Brand, artwork and content © DeeMusiq / The Dembe Group.
-- The companion **DeeMusiq app** is a rebrand of [Spotube](https://github.com/KRTirtho/spotube),
-  open-source under the **BSD-4-Clause** license. Keep Spotube's `LICENSE` and copyright
-  notices in the app distribution (see the app folder's README).
+- The companion **DeeMusiq app** is open source under the **BSD-4-Clause**
+  license. Keep the bundled `LICENSE` and copyright notices in the app
+  distribution (see the app folder's README); attributions are in `LICENSE`.

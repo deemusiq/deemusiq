@@ -1,0 +1,21 @@
+{
+  "apps": [
+    {
+      "id": "za.co.deemusiq.app",
+      "url": "https://github.com/deemusiq/deemusiq",
+      "author": "DeeMusiq",
+      "name": "DeeMusiq",
+      "installedVersion": null,
+      "latestVersion": "1.1.0",
+      "apkUrls": "[[\"DeeMusiq.apk\", \"https://github.com/deemusiq/deemusiq/releases/download/v1.1.0/DeeMusiq.apk\"]]",
+      "preferredApkIndex": 0,
+      "additionalSettings": "{\"includePrereleases\": false, \"filterReleaseTitlesByRegEx\": \"\", \"filterReleaseAssetsByRegEx\": \"^DeeMusiq\\\\.apk$\", \"skipVersionDetectionWithPattern\": \"\", \"versionDetection\": true, \"apkFilterRegEx\": \"^DeeMusiq\\\\.apk$\", \"invertAPKFilter\": false, \"autoApkFilterByArch\": true, \"appName\": \"DeeMusiq\", \"excerpt\": \"African music streaming — it's a drop day. Artists keep ownership and get paid fairly.\", \"about\": \"Official DeeMusiq releases from GitHub. APK is identical to the one proxied at https://deemusiq.co.za/downloads/.\", \"releaseDateAsVersion\": false, \"trackOnly\": false, \"versionExtractRegEx\": \"^v?(.+)$\"}",
+      "lastUpdateCheck": 0,
+      "pinned": false,
+      "categories": ["multimedia"],
+      "changeLog": "https://github.com/deemusiq/deemusiq/releases",
+      "overrideSource": null,
+      "allowIdChange": false
+    }
+  ]
+}

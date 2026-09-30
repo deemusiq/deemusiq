@@ -1,0 +1,115 @@
+# F-Droid inclusion metadata for DeeMusiq — fdroiddata merge request file.
+#
+# ┌─────────────────────────────────────────────────────────────────────────┐
+# │ IMPORTANT — PACKAGE NAME (read before opening the fdroiddata MR)        │
+# │                                                                         │
+# │ The file name MUST equal the APK's applicationId. DeeMusiq's real       │
+# │ applicationId (android/app/build.gradle, defaultConfig) is:             │
+# │                                                                         │
+# │     za.co.deemusiq.app                                                  │
+# │                                                                         │
+# │ and the F-Droid store flavor adds `applicationIdSuffix ".fdroid"`, so   │
+# │ the APK F-Droid will build and sign is:                                 │
+# │                                                                         │
+# │     za.co.deemusiq.app.fdroid     ←  this file's name, and `fdroid build`│
+# │                                   target below                          │
+# │                                                                         │
+# │ `oss.krtirtho.spotube` is ONLY the Kotlin source-code package of the    │
+# │ upstream Spotube engine (deliberately kept, see AGENTS.md) — it is NOT  │
+# │ the applicationId and must NOT be used as the F-Droid package name.     │
+# │ If the project ever decides to ship the un-suffixed id on F-Droid,      │
+# │ rename this file to za.co.deemusiq.app.yml and drop the flavor suffix.  │
+# └─────────────────────────────────────────────────────────────────────────┘
+#
+# Place this file in your fdroiddata fork as:
+#   metadata/za.co.deemusiq.app.fdroid.yml
+
+Categories:
+  - Multimedia
+License: BSD-4-Clause
+AuthorName: The Dembe Group
+AuthorEmail: deemusiq@protonmail.com
+WebSite: https://deemusiq.co.za
+SourceCode: https://github.com/deemusiq/deemusiq
+IssueTracker: https://github.com/deemusiq/deemusiq/issues
+Changelog: https://github.com/deemusiq/deemusiq/releases
+
+AutoName: DeeMusiq
+
+Summary: African music streaming — artists keep ownership and get paid fairly
+Description: |-
+    DeeMusiq is a South African, Africa-first music streaming and download
+    platform — "It's a drop day." Artists keep ownership of their work and get
+    paid fairly through a built-in token wallet with transparent payouts.
+
+    DeeMusiq is free and open source (BSD-4-Clause), built on the open-source
+    Spotube engine — DeeMusiq is a rebrand and continuation of that codebase.
+
+    Features:
+
+    * No ads, no telemetry, no user data collection
+    * African catalog spotlighting artists from across the continent
+    * Token wallet: top up, support artists directly, track payouts
+    * Artist dashboard: plays, earnings and payout history
+    * Stream and download tracks for offline listening
+    * Anonymous/guest login — no account required to listen
+    * Time-synced lyrics, small size, low data usage
+    * Native performance; playback control happens locally on your device
+
+RepoType: git
+Repo: https://github.com/deemusiq/deemusiq.git
+
+# AntiFeatures — disclosed honestly, do NOT remove:
+AntiFeatures:
+  - NonFreeNet   # Audio streams come from YouTube/YouTube Music (non-free
+                 # network service). The African catalog, wallet and payouts
+                 # run on DeeMusiq's own first-party hosted backend
+                 # (api.deemusiq.co.za). No Google/YouTube account needed.
+
+# ────────────────────────────────────────────────────────────────────────────
+# BUILD BLOCK — skeleton. Reproducible Flutter builds require the EXACT
+# Flutter SDK pinned below; CI builds release APKs with Flutter 3.38.5
+# (see root .github/workflows/deemusiq-android.yml). Do not bump this without
+# verifying a local `fdroid build` reproduces the published APK.
+#
+# Notes for the F-Droid build recipe (needs verification on fdroidserver —
+# treat as a starting point, not a working recipe):
+#
+# Builds:
+#   - versionName: 1.1.0
+#     versionCode: 47
+#     commit: v1.1.0            # git tag MUST match pubspec.yaml version 1.1.0+47
+#     subdir: deemusiq-app      # app lives in a monorepo subdirectory
+#     sudo:
+#       # Flutter 3.38.5 stable, OpenJDK 17 (Zulu), Rust toolchain —
+#       # install here or via init/prebuild. Android builds also need:
+#       #   dart cli/cli.dart install-dependencies
+#     init:
+#       - flutter pub get
+#       # .env is REQUIRED — envied codegen aborts without it. Minimal:
+#       #   LASTFM_API_KEY= / LASTFM_API_SECRET= / ENABLE_UPDATE_CHECK=1
+#       #   RELEASE_CHANNEL=stable / HIDE_DONATIONS=1
+#       - dart run build_runner build --delete-conflicting-outputs
+#     gradle:
+#       - stableFdroid          # flavor: stable track + fdroid store
+#     output: build/app/outputs/flutter-apk/app-stableFdroid-release.apk
+#     prebuild:
+#       # git-sourced deps via dependency_overrides in pubspec.yaml
+#       # (media_kit, bonsoir, flutter_secure_storage_linux, ...) must
+#       # resolve offline-friendly for the F-Droid buildserver — check
+#       # whether they need srclibs entries.
+#     scanignore: []            # expect findings: prebuilt Flutter engine
+#                               # binaries — standard for Flutter apps
+#     ndk: r27                  # verify against CI Flutter 3.38.5 toolchain
+#
+# AutoUpdateMode / UpdateCheckMode: use tags (`Version %v` from `v*` tags),
+# once the build above reproduces the GitHub Releases APK bit-for-bit.
+# ────────────────────────────────────────────────────────────────────────────
+
+MaintainerNotes: |-
+    DeeMusiq is a rebrand of Spotube (oss.krtirtho.spotube → za.co.deemusiq.app).
+    The upstream Kotlin source package names and the Linux flatpak ID
+    (com.github.KRTirtho.Spotube) are deliberately kept for ecosystem
+    compatibility; only user-facing strings are rebranded. NonFreeNet is
+    declared for YouTube Music audio streams and the first-party DeeMusiq
+    backend. The fdroid flavor strips all Google Play Services dependencies.

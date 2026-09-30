@@ -1,0 +1,34 @@
+# Created using wingetcreate — DRAFT for DeeMusiq 1.1.0
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
+
+PackageIdentifier: DeeMusiq.DeeMusiq
+PackageVersion: 1.1.0
+PackageLocale: en-US
+Publisher: DeeMusiq
+PublisherUrl: https://deemusiq.co.za
+PublisherSupportUrl: https://github.com/deemusiq/deemusiq/issues
+PrivacyUrl: https://deemusiq.co.za/privacy.html
+Author: The Dembe Group
+PackageName: DeeMusiq
+PackageUrl: https://deemusiq.co.za
+License: BSD-4-Clause
+LicenseUrl: https://github.com/deemusiq/deemusiq/blob/master/deemusiq-app/LICENSE
+Copyright: Copyright (c) The Dembe Group
+ShortDescription: African music streaming — it's a drop day. Artists keep ownership and get paid fairly.
+Description: |-
+  DeeMusiq is a South African, Africa-first music streaming and download
+  platform, built on the open-source Spotube engine (BSD-4-Clause). Stream and
+  download the sound of the continent while artists keep ownership of their
+  work and get paid fairly through a built-in token wallet. No ads, no
+  telemetry, time-synced lyrics, offline downloads, native performance.
+Moniker: deemusiq
+Tags:
+  - music
+  - streaming
+  - african-music
+  - spotube
+  - flutter
+  - foss
+ReleaseNotesUrl: https://github.com/deemusiq/deemusiq/releases/tag/v1.1.0
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0

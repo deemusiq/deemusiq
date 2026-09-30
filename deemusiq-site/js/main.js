@@ -5,16 +5,18 @@
   "use strict";
 
   /* ----------------------------------------------------------
-     DOWNLOAD CONFIG  ← edit these when the DeeMusiq app builds
-     are published as a GitHub Release. Leave a value empty ('')
+     DOWNLOAD CONFIG — same-origin, proxied by the Cloudflare
+     worker on /downloads/* (see cloudflare/worker.js). The real
+     release URLs live ONLY in worker env vars, so clients can
+     never see where builds are hosted. Leave a value empty ('')
      and that button will route users to the contact form to
      request early access.
      ---------------------------------------------------------- */
   var DOWNLOADS = {
-    android: "https://github.com/deemusiq/deemusiq/releases/latest/download/DeeMusiq.apk",
-    windows: "", // e.g. ".../DeeMusiq-setup.exe"
-    linux:   "", // e.g. ".../DeeMusiq.AppImage"
-    macos:   ""  // e.g. ".../DeeMusiq.dmg"
+    android: "/downloads/android",
+    windows: "/downloads/windows",
+    linux:   "/downloads/linux",
+    macos:   "/downloads/macos"
   };
   var CONTACT_EMAIL = "deemusiq@protonmail.com";
 

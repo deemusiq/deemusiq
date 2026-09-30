@@ -1,0 +1,22 @@
+# DeeMusiq download proxy — deploy with `wrangler deploy` from this directory.
+# Route binds ONLY /downloads/* so Cloudflare Pages keeps serving the static
+# site while downloads stream through the worker (GitHub releases origin is
+# never exposed to clients).
+name = "deemusiq-downloads"
+main = "worker.js"
+compatibility_date = "2024-09-01"
+
+routes = [
+  { pattern = "deemusiq.co.za/downloads/*", zone_name = "deemusiq.co.za" },
+  { pattern = "www.deemusiq.co.za/downloads/*", zone_name = "deemusiq.co.za" }
+]
+
+[vars]
+# Prefer secrets in production:
+#   npx wrangler secret put GITHUB_REPO
+#   npx wrangler secret put DOWNLOADS
+GITHUB_REPO = "deemusiq/deemusiq"
+DOWNLOADS = '{"android":"DeeMusiq.apk","windows":"DeeMusiq-setup.exe","linux":"DeeMusiq.AppImage","macos":"DeeMusiq.dmg"}'
+# Latest version per platform for /downloads/version.json (update check).
+# VERSIONS must bump with each app release (keep in sync with deemusiq-app/pubspec.yaml).
+VERSIONS = '{"android":"1.1.0","windows":"1.1.0","linux":"1.1.0","macos":"1.1.0"}'

@@ -1,0 +1,31 @@
+DeeMusiq — African music streaming and download platform. It's a drop day.
+
+DeeMusiq is a South African, Africa-first music app: stream and download the sound of the continent while the artists who made it keep ownership of their work and get paid fairly through a built-in token wallet with transparent payouts. Built in South Africa, for Africa first — and open to the world.
+
+DeeMusiq is free and open source software (BSD-4-Clause), built on the open-source Spotube engine. If you have used Spotube before, you will feel at home: DeeMusiq is a rebrand and continuation of that codebase, with the internal engine names deliberately kept so the ecosystem keeps working. What is new is the African catalog, the artist-first economics, and the wallet.
+
+FEATURES
+
+* No ads — public and free music metadata providers plus YouTube Music APIs
+* Stream and download tracks for offline listening
+* African catalog spotlighting artists from across the continent
+* Token wallet: top up, support artists directly, track payouts
+* Artist dashboard: plays, earnings and payout history
+* Cross-platform: Android, Linux, Windows and macOS
+* Small download size and low data usage — made for real African networks
+* Anonymous/guest login — no account required to listen
+* Time-synced lyrics
+* No telemetry, no diagnostics, no user data collection
+* Native performance — playback control happens locally on your device, not on a server
+
+A NOTE ON NETWORK SOURCES (honesty section)
+
+DeeMusiq is open source, but it is not fully network-free: audio is streamed from YouTube/YouTube Music (a non-free network service), and the African catalog, wallet and payouts run on DeeMusiq's own first-party hosted backend. You do not need a Google or YouTube account. F-Droid users will see this declared as the NonFreeNet anti-feature — we believe in telling you exactly what talks to what.
+
+FOR ARTISTS
+
+Keep 100% ownership of your music. Upload to the DeeMusiq catalog, get paid per play in tokens, and withdraw on a fair, transparent schedule. Contact deemusiq@protonmail.com to get listed.
+
+Source code, issues and releases: https://github.com/deemusiq/deemusiq
+Privacy policy: https://deemusiq.co.za/privacy.html
+Contact: deemusiq@protonmail.com

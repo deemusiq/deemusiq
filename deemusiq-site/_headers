@@ -1,0 +1,22 @@
+# Cloudflare Pages `_headers` — security headers for the static site.
+# The /downloads/* Worker sets its own headers (see cloudflare/worker.js).
+# CSP script-src: the two 'sha256-…' hashes cover the inline JSON-LD blocks in
+# index.html. If you edit those <script type="application/ld+json"> blocks,
+# recompute the hashes (sha256 of the exact bytes between the tags, base64)
+# and update this line, or the structured data will be blocked.
+/*
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-rWRwtxA29pFvTVdZ2zDApPB8tPZYQkKxDwNTFx8a3To=' 'sha256-tHpwTawQWyxSyhx63MKahElDUoOC5y/vZlYnyXWLDpU='; style-src 'self'; font-src 'self'; img-src 'self' data: https:; connect-src 'self'; form-action 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
+  Cache-Control: public, max-age=3600
+/assets/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+/assets/img/*
+  Cache-Control: public, max-age=86400
+# robots.txt Disallow only asks crawlers not to fetch — it does not stop
+# indexing of URLs discovered elsewhere. Send noindex on the bait/admin paths.
+/admin*
+  X-Robots-Tag: noindex, nofollow

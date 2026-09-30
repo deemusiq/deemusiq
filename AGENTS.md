@@ -12,9 +12,15 @@
 │   ├── build.yaml        # build_runner config (auto_route, json_serializable, drift)
 │   ├── l10n.yaml         # ARB-based localisation → lib/l10n/generated
 │   ├── .github/workflows/
-│   │   └── deemusiq-android.yml  # Only workflow present in this checkout
+│   │   └── deemusiq-android.yml  # App-only copy; dormant in the monorepo (see CI below)
+│   ├── metadata/android/en-US/  # Fastlane/F-Droid listing copy (title, descriptions, changelogs)
+│   ├── fdroid/             # F-Droid official-inclusion prep (metadata yml + SUBMISSION.md)
+│   ├── distribution/       # Self-hosted F-Droid repo guide, Obtainium config, desktop store manifests
 │   └── website/          # Astro docs/marketing site (pnpm)
 ├── deemusiq-site/        # Static HTML/CSS/JS site — no build step
+│   ├── .well-known/assetlinks.json  # Android App Links (REPLACE_ME fingerprint until release)
+│   ├── llms.txt            # AI-answer-engine summary
+│   └── press/              # Self-serve press kit (bio, fact sheet, pitch template)
 ├── backend/              # Nested git repo — gitignored, see s-b-repo/deemusiq-backend
 ├── AUDIT_REPORT.md       # POPIA/security audit
 └── ANTI_FRAUD.md
@@ -23,12 +29,12 @@
 ## Key facts
 
 - **DeeMusiq is a Spotube rebrand** (BSD-4-Clause). `README.md` is upstream's. DeeMusiq-specific docs are in `README.DEEMUSIQ.md`.
-- **Internal "spotube" names deliberately kept**: l10n keys, Kotlin package (`oss.krtirtho.spotube`), plugin IDs, bonsoir service type, flatpak ID. Changing these breaks builds/ecosystem.
+- **Internal "spotube" names deliberately kept**: l10n keys, Kotlin source package (`oss.krtirtho.spotube`), plugin IDs, bonsoir service type, flatpak ID. Changing these breaks builds/ecosystem. **But the Android `applicationId` is `za.co.deemusiq.app`** (`android/app/build.gradle:64`; the fdroid flavor adds suffix `.fdroid`, playstore/stable combo strips suffixes) — use the applicationId, not the Kotlin package, for store listings and `assetlinks.json`.
 - **Hetu scripting removed** — DeeMusiq uses only native Dart backend plugin.
 - **Anti-tamper**: (1) cert SHA256 pin (offline brick), (2) published APK hash check (online, locks wallet).
 - **Versioning**: `x.y.z+N` in `pubspec.yaml` must match git tag `vx.y.z`. Build number always increments.
 - **Backend is a separate project** at `backend/` (nested git, ignored by root `.gitignore`). Node/Express/Prisma/SQLite. All API routes in `src/index.ts`.
-- **CI only for Android** in this checkout. Other platform workflows (`deemusiq-linux.yml`, etc.) exist in the upstream repo but aren't here.
+- **CI lives in root `.github/workflows/`**: `deemusiq-android.yml`, `deemusiq-linux.yml`, `deemusiq-macos.yml`, `deemusiq-windows.yml` (Flutter-app builds, `working-directory: deemusiq-app`) and `deploy-site.yml` (site deploy). `deemusiq-app/.github/` holds a copy of the Android workflow for the "upload only `deemusiq-app/` as its own repo" case; GitHub only auto-discovers root workflows, so the app copy never runs in this checkout.
 
 ## Developer commands
 
@@ -104,6 +110,5 @@ The `android` job builds APK only on `v*` tags or manual dispatch, after `check`
 ## Gotchas
 
 - `flutter analyze --no-fatal-infos` needed — there are known info-level lints (e.g. `avoid_print` in `lib/services/cli/cli.dart`).
-- CI workflow comments note these workflows are designed for when **only `deemusiq-app/` is uploaded as its own repo**. In the full monorepo the root `.github/workflows/` is empty — CI lives under `deemusiq-app/.github/`.
-- `cliff.toml` still points to `KRTirtho/spotube` — update repo URL before running `git-cliff`.
+- The Android workflow exists twice on purpose: the root `.github/workflows/deemusiq-android.yml` (monorepo, `working-directory: deemusiq-app` — the one GitHub runs here) and `deemusiq-app/.github/workflows/deemusiq-android.yml` (for when **only `deemusiq-app/` is uploaded as its own repo**). Keep them in sync; they are not a conflict.
 - `NOTICE.md` lists DeeMusiq-specific additions vs upstream (offline DRM, multi-engine extraction, Play Store/F-Droid flavors, iOS, native catalog, wallet).

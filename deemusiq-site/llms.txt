@@ -1,0 +1,32 @@
+# DeeMusiq
+
+> DeeMusiq is Africa's home-grown music platform, built in South Africa.
+> Listeners stream and download African music while artists publish on their
+> own accounts, keep ownership of their work, and get paid fairly.
+> Tagline: "It's a drop day."
+
+DeeMusiq is a South African music streaming and download app (open source,
+BSD-4-Clause) built Africa-first. The pitch in
+one paragraph: for too long African artists have been squeezed by piracy sites
+that pay nothing and faraway platforms that take the lion's share — DeeMusiq
+flips the model so artists keep their masters, set their own prices, and draw
+their royalties when they choose. The app is free, runs on Android, Linux,
+Windows and macOS, works offline by default, and is light enough for everyday
+devices and everyday connections. Current release: v1.1.0.
+
+## Key pages
+
+- [Home](https://deemusiq.co.za/): Product overview, mission, features, artist onboarding, downloads.
+- [Privacy Policy](https://deemusiq.co.za/privacy.html): Offline-by-default data handling, POPIA rights.
+- [Terms of Service](https://deemusiq.co.za/terms.html): Tokens, acceptable use, South African governing law.
+- [Press Kit](https://deemusiq.co.za/press/): Brand bio, fact sheet, logos and screenshots, press contact.
+- [Downloads](https://deemusiq.co.za/downloads/android): App downloads per platform — /downloads/android, /downloads/windows, /downloads/linux, /downloads/macos (served via a download gateway).
+
+## Facts
+
+- Product: DeeMusiq — music streaming & download app
+- Version: 1.1.0 (build 47)
+- Platforms: Android (APK), Linux (.deb / AppImage), Windows (.exe), macOS (.dmg)
+- Licence: app is open source (BSD-4-Clause); website/brand assets proprietary
+- Based in: KwaZulu-Natal, South Africa
+- Contact: deemusiq@protonmail.com

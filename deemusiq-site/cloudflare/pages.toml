@@ -1,0 +1,24 @@
+# Cloudflare Pages — DeeMusiq static marketing site
+#
+# Primary production origin for https://deemusiq.co.za (apex + www).
+# A legacy static mirror (deploy-site.yml) remains as a backup — do not
+# attach the custom domain there if Pages owns apex/www (single-origin
+# avoids DNS races).
+#
+# Deploy (from this directory or repo root):
+#   npx wrangler login
+#   npx wrangler pages deploy ../  --project-name=deemusiq-site
+#
+# Or connect the repo in Cloudflare Pages dashboard:
+#   Build command: (none)
+#   Output directory: .          # when root = deemusiq-site
+#
+# Coexists with the downloads Worker: route deemusiq.co.za/downloads/* is
+# bound to the Worker (see wrangler.toml), everything else hits Pages.
+
+name = "deemusiq-site"
+compatibility_date = "2024-09-01"
+pages_build_output_dir = "."
+
+# When deploying the worker from this folder, routes stay zone-scoped:
+#   npx wrangler deploy   → downloads Worker only (see wrangler.toml)

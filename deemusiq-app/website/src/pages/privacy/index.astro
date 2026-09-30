@@ -1,0 +1,91 @@
+---
+import RootLayout from "~/layouts/RootLayout.astro";
+
+const metadata = {
+  title: "Privacy & POPIA — DeeMusiq",
+  description:
+    "DeeMusiq's privacy stance: what data we collect (account, device id, payment metadata), how we comply with South Africa's POPIA, and how to export or delete your data self-serve.",
+  keywords:
+    "DeeMusiq privacy, POPIA compliance, music app data privacy, South Africa data protection, export delete account data",
+};
+---
+
+<RootLayout metadata={metadata}>
+  <section class="p-4 md:p-16 max-w-4xl">
+    <h1 class="h1">Privacy &amp; POPIA</h1>
+    <br />
+    <p class="text-surface-500">
+      DeeMusiq is a South African app, and we treat South Africa's Protection
+      of Personal Information Act (POPIA) as the floor, not the ceiling. This
+      page explains what we collect, why, and how you stay in control.
+    </p>
+    <br /><br />
+
+    <h2 class="h2">What we collect</h2>
+    <br />
+    <p>We keep data collection narrow — only what the app needs to work:</p>
+    <br />
+    <ul class="list-disc ps-6 flex flex-col gap-2">
+      <li>
+        <strong>Account details</strong> — the basics needed to sign you in
+        and keep your library and wallet in sync across devices.
+      </li>
+      <li>
+        <strong>Device identifier</strong> — used to protect your account,
+        secure offline downloads, and spot abuse like account sharing or
+        fraud.
+      </li>
+      <li>
+        <strong>Payment metadata</strong> — transaction records for wallet
+        top-ups and
+        <a href="/artist-payouts" class="underline">artist payouts</a> (amounts,
+        timestamps, references). Card and banking details are handled by the
+        payment provider, not stored by us.
+      </li>
+    </ul>
+    <br />
+    <p>
+      We don't sell your data, and we don't build advertising profiles from
+      your listening.
+    </p>
+    <br />
+
+    <h2 class="h2">POPIA compliance posture</h2>
+    <br />
+    <p>
+      As a South African service we process personal information in line with
+      POPIA: lawful, minimal, and purpose-bound. Data is collected for the
+      specific reasons above, kept only as long as it's needed, and protected
+      with appropriate technical and organisational safeguards. You have the
+      right to know what we hold about you, correct it, and object to
+      processing.
+    </p>
+    <br />
+
+    <h2 class="h2">Export and delete, self-serve</h2>
+    <br />
+    <p>
+      Your data is yours. From inside the app you can export a copy of your
+      account data or delete your account entirely — no support tickets, no
+      dark patterns. Deleting your account removes your personal information
+      from our systems, subject only to records we're legally required to keep
+      (such as payment audit trails).
+    </p>
+    <br />
+
+    <h2 class="h2">Open by default</h2>
+    <br />
+    <p>
+      DeeMusiq is built on the open-source
+      <a href="/spotube-alternative" class="underline">Spotube project</a>, so
+      our approach to your device and your data can be inspected, not just
+      trusted. Questions about privacy? Reach us via
+      <a href="https://deemusiq.co.za" target="_blank" class="underline">deemusiq.co.za</a>.
+    </p>
+    <br /><br />
+
+    <a href="/downloads" class="btn preset-filled-primary-300-700">
+      Download DeeMusiq
+    </a>
+  </section>
+</RootLayout>

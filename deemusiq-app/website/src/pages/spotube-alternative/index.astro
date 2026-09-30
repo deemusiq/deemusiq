@@ -1,0 +1,76 @@
+---
+import RootLayout from "~/layouts/RootLayout.astro";
+
+const metadata = {
+  title: "A Spotube Alternative with Artist Payouts — DeeMusiq",
+  description:
+    "DeeMusiq is built on the open-source Spotube project (BSD-4-Clause) and adds a native African catalog, token wallet, fair artist payouts and offline DRM. Credit where it's due.",
+  keywords:
+    "Spotube alternative, Spotube rebrand, open source music app, music streaming with artist payouts, DeeMusiq vs Spotube",
+};
+---
+
+<RootLayout metadata={metadata}>
+  <section class="p-4 md:p-16 max-w-4xl">
+    <h1 class="h1">A Spotube Alternative with Artist Payouts</h1>
+    <br />
+    <p class="text-surface-500">
+      DeeMusiq is built on Spotube — and proud of it. We took the fast,
+      open-source, cross-platform music player and grew it into an Africa-first
+      streaming platform where artists get paid fairly.
+    </p>
+    <br /><br />
+
+    <h2 class="h2">Credit where it's due</h2>
+    <br />
+    <p>
+      Spotube is the excellent open-source music client created by
+      <a href="https://github.com/KRTirtho" target="_blank" class="underline">Kingkor Roy Tirtho</a>
+      and its community of contributors, released under the BSD-4-Clause
+      license. DeeMusiq is a rebrand and continuation of that codebase, and
+      we're upfront about it: the lightweight Flutter core, the no-Electron
+      philosophy, and the extensible architecture all come from upstream.
+    </p>
+    <br />
+
+    <h2 class="h2">What DeeMusiq adds</h2>
+    <br />
+    <ul class="list-disc ps-6 flex flex-col gap-2">
+      <li>
+        <strong>Native African catalog</strong> — first-class discovery for
+        <a href="/stream-amapiano-gqom-afrobeats" class="underline">amapiano, gqom, afrobeats</a>
+        and more South African sounds.
+      </li>
+      <li>
+        <strong>Token wallet</strong> — fans top up artists directly in the
+        app; no middlemen skimming the stream.
+      </li>
+      <li>
+        <strong>Fair artist payouts</strong> — artists keep ownership and
+        withdraw earnings via South African payment rails. Read
+        <a href="/artist-payouts" class="underline">how payouts work</a>.
+      </li>
+      <li>
+        <strong>Offline DRM</strong> — protected downloads keep working
+        offline while keeping artists' rights intact.
+      </li>
+    </ul>
+    <br />
+
+    <h2 class="h2">Same spirit, same platforms</h2>
+    <br />
+    <p>
+      Like Spotube, DeeMusiq is a native app on Android, Windows, macOS, Linux
+      and iOS — no Electron, no web wrapper, no bloat. If you loved Spotube,
+      you'll feel at home; if you're new, the
+      <a href="/downloads" class="underline">downloads page</a> has a build
+      for your device. And because we handle accounts and payments, we publish
+      a clear <a href="/privacy" class="underline">privacy and POPIA stance</a>.
+    </p>
+    <br /><br />
+
+    <a href="/downloads" class="btn preset-filled-primary-300-700">
+      Download DeeMusiq
+    </a>
+  </section>
+</RootLayout>
