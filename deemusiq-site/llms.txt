@@ -20,6 +20,7 @@ devices and everyday connections. Current release: v1.1.0.
 - [Privacy Policy](https://deemusiq.co.za/privacy.html): Offline-by-default data handling, POPIA rights.
 - [Terms of Service](https://deemusiq.co.za/terms.html): Tokens, acceptable use, South African governing law.
 - [Security & Data Breach Notice](https://deemusiq.co.za/security.html): Safeguards (POPIA s.19), breach notification commitments (s.22), liability limits, responsible disclosure.
+- [PAIA Manual](https://deemusiq.co.za/paia.html): How to request access to records under PAIA s.51; records held, procedure, fees, remedies.
 - [Press Kit](https://deemusiq.co.za/press/): Brand bio, fact sheet, logos and screenshots, press contact.
 - [Downloads](https://deemusiq.co.za/downloads/android): App downloads per platform — /downloads/android, /downloads/windows, /downloads/linux, /downloads/macos (served via a download gateway).
 
