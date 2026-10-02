@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  DeeMusiq network security config.
+
+  Cleartext HTTP is denied app-wide. The ONLY exception is loopback: the
+  embedded playback server serves audio/manifests to the local player engine
+  and the home-screen widget over http://127.0.0.1 (it never leaves the
+  device). All remote traffic (backend API, metadata, artwork) must use TLS.
+-->
+<network-security-config>
+  <base-config cleartextTrafficPermitted="false" />
+  <domain-config cleartextTrafficPermitted="true">
+    <domain includeSubdomains="false">127.0.0.1</domain>
+    <domain includeSubdomains="false">localhost</domain>
+  </domain-config>
+</network-security-config>

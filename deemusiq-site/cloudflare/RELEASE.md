@@ -88,5 +88,8 @@ JSON-LD) don't need it.
 - Edge cache: 200s are cached 1 h at the edge; 404s 60 s; 5xx 30 s
   (`cacheTtlByStatus` in `worker.js`). A botched release upload therefore
   self-heals within a minute — just fix the release assets.
-- The worker never buffers the APK, so there is no size limit concern on the
-  proxy path; range/resume is passed straight through from the origin.
+- The worker never buffers the APK unless the platform is pinned via
+  `KNOWN_GOOD_SHA256` (full-buffer verification disables streaming for those
+  platforms — see the comment in `worker.js`), so there is no size limit
+  concern on the default proxy path; range/resume is passed straight through
+  from the origin.

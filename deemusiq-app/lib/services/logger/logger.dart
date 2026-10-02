@@ -25,8 +25,16 @@ final _loggingToLoggerLevel = {
 };
 
 class AppLogger {
-  static late final Logger log;
-  static late final File logFile;
+  // Lazily self-initializing: any error reported before initialize() (early
+  // startup, unit tests) must not crash with LateInitializationError — the
+  // error reporter itself throwing masks the real failure (seen live: a
+  // persistence error in WalletPersistence.save surfaced only as
+  // "Field 'log' has not been initialized").
+  static Logger? _logInstance;
+  static Logger get log =>
+      _logInstance ??= Logger(level: kDebugMode ? Level.all : Level.info);
+  static set log(Logger value) => _logInstance = value;
+  static File? logFile;
 
   static initialize(bool verbose) {
     log = Logger(
@@ -91,10 +99,10 @@ class AppLogger {
   }
 
   static Future<File> getLogsPath() async {
+    // Internal app-private storage on every mobile platform — logs contain
+    // stack traces and must never land on shared external storage where any
+    // app with storage permission could read them.
     String dir = (await getApplicationDocumentsDirectory()).path;
-    if (kIsAndroid) {
-      dir = (await getExternalStorageDirectory())?.path ?? "";
-    }
 
     if (kIsMacOS) {
       dir = join((await getLibraryDirectory()).path, "Logs");
@@ -118,8 +126,9 @@ class AppLogger {
   ]) async {
     log.e(message, error: error, stackTrace: stackTrace);
 
-    if (kReleaseMode) {
-      await logFile.writeAsString(
+    final file = logFile;
+    if (kReleaseMode && file != null) {
+      await file.writeAsString(
         "[${DateTime.now().toUtc()}]---------------------\n"
         "$error\n$stackTrace\n"
         "----------------------------------------\n",
@@ -129,15 +138,12 @@ class AppLogger {
   }
 
   static String _getXdgStateHome() {
-    // path_provider seems does not support XDG_STATE_HOME,
-    // which is the specification to store application logs on Linux.
+    // path_provider has no XDG_STATE_HOME support, so resolve the freedesktop
+    // state directory directly from the runtime environment.
     // See https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
-    // TODO: Use path_provider once it supports XDG_STATE_HOME
-    if (const bool.hasEnvironment("XDG_STATE_HOME")) {
-      String xdgStateHomeRaw = Platform.environment["XDG_STATE_HOME"] ?? "";
-      if (xdgStateHomeRaw.isNotEmpty) {
-        return xdgStateHomeRaw;
-      }
+    final xdgStateHome = Platform.environment["XDG_STATE_HOME"];
+    if (xdgStateHome != null && xdgStateHome.isNotEmpty) {
+      return xdgStateHome;
     }
     return join(Platform.environment["HOME"] ?? "", ".local", "state");
   }

@@ -1,5 +1,16 @@
 name: Deploy website (GitHub Pages)
 
+# ╔══════════════════════════════════════════════════════════════════════╗
+# ║ WARNING — this mirror serves NO security headers.                    ║
+# ║ GitHub Pages IGNORES `deemusiq-site/_headers`, so the site deployed  ║
+# ║ here has no CSP and no X-Frame-Options (pages are framable).         ║
+# ║ PRODUCTION traffic (deemusiq.co.za apex + www) MUST come from the    ║
+# ║ Cloudflare Pages project `deemusiq-site`, where `_headers` and       ║
+# ║ `functions/_middleware.js` apply the full security-header set.       ║
+# ║ Keep this GitHub Pages mirror UNLINKED from the custom domain —      ║
+# ║ it is a backup/staging mirror only.                                  ║
+# ╚══════════════════════════════════════════════════════════════════════╝
+
 # Publishes deemusiq-site/ to https://deemusiq.github.io/deemusiq/
 # Runs only on the public brand repo — the private dev copy (s-b-repo)
 # can't serve Pages on a free plan, so the job is skipped there.
@@ -30,6 +41,17 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+
+      # Launch blocker, made loud: Android App Links cannot verify while the
+      # assetlinks.json fingerprints are REPLACE_ME placeholders. Fail the
+      # deploy instead of silently shipping a broken statement file.
+      - name: Guard — assetlinks.json must not contain placeholder fingerprints
+        run: |
+          if grep -q "REPLACE_ME" deemusiq-site/.well-known/assetlinks.json; then
+            echo "::error::deemusiq-site/.well-known/assetlinks.json still contains REPLACE_ME sha256_cert_fingerprints."
+            echo "::error::Android App Links will NOT verify. Paste the release-keystore SHA-256 fingerprint first — see deemusiq-site/.well-known/assetlinks.README.txt."
+            exit 1
+          fi
 
       - name: Configure Pages (auto-enables on first run)
         uses: actions/configure-pages@v5

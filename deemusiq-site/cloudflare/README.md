@@ -19,9 +19,12 @@ Goals:
 
 1. `deemusiq.co.za` zone on Cloudflare.
 2. **Pages project** `deemusiq-site` → custom domains `@` and `www`
-   (build command empty; output = site root). A legacy static mirror
-   (`deploy-site.yml`) stays as a backup — do **not** also attach the
-   custom domain there.
+   (build command empty; output = site root). **This attachment is
+   mandatory, not optional**: GitHub Pages ignores `_headers`, so the
+   security headers (CSP, X-Frame-Options, COOP/CORP, …) only exist when
+   traffic hits Cloudflare Pages — `_headers` plus `functions/_middleware.js`
+   set them there. A legacy static mirror (`deploy-site.yml`) stays as a
+   backup — do **not** also attach the custom domain there.
 3. Tunnel hostnames auto-create proxied `api` / `admin` records.
 4. R2 bucket custom domain → `media.deemusiq.co.za` (proxied).
 5. **SSL/TLS → Overview**: **Full (strict)**. Never "Flexible".
@@ -46,6 +49,21 @@ npx wrangler pages deploy .. --project-name=deemusiq-site
 # Worker (only /downloads/*):
 npx wrangler secret put GITHUB_REPO      # e.g. deemusiq/deemusiq
 npx wrangler deploy
+```
+
+Optional worker hardening (both are secrets; unset = feature off):
+
+```bash
+# Pin expected release digests: JSON map platform → lowercase hex sha256.
+# Pinned platforms are fully buffered + verified before any byte is sent
+# (mismatch → 502); unpinned platforms stream through as before.
+npx wrangler secret put KNOWN_GOOD_SHA256  # e.g. {"android":"<64 hex>"}
+
+# Ed25519 release-signing seed (hex-encoded 32-byte seed). When set, the
+# .sha256 sidecar and version.json responses carry an X-Body-Signature
+# header (hex Ed25519 signature over the exact raw body bytes), which the
+# app verifies on update checks.
+npx wrangler secret put RELEASE_ED25519_SECRET_KEY
 ```
 
 The route binding means only `/downloads/*` hits the worker; everything else

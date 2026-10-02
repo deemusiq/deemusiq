@@ -16,8 +16,9 @@ deemusiq-site/
 ├── js/main.js              # nav, scroll reveals, contact form, download buttons
 ├── assets/img/             # logo, favicons + your own artwork
 ├── cloudflare/             # Pages config + /downloads/* proxy worker + release docs
-├── _headers                # security headers (CSP/HSTS) applied by the host
-├── sw.js                   # service worker (bump CACHE_VERSION on markup changes)
+├── functions/_middleware.js # Pages Functions: sets the security headers in code
+├── _headers                # security headers (CSP/HSTS) — Cloudflare Pages only; GH Pages ignores it
+├── sw.js                   # service worker: network-first HTML, cache-first static assets
 └── README.md               # this file
 ```
 

@@ -6,6 +6,14 @@
 > [`cloudflare/RELEASE.md`](cloudflare/RELEASE.md) for publishing app releases.
 > This file is kept only as a minimal generic-static-host fallback.
 
+> **Security headers require Cloudflare Pages.** The GitHub Pages mirror
+> (`.github/workflows/deploy-site.yml`) **ignores `_headers`** — no CSP, no
+> X-Frame-Options. Production traffic (apex `deemusiq.co.za` + `www`) MUST be
+> attached to the Cloudflare Pages project, where `_headers` and
+> `functions/_middleware.js` apply the full security-header set. The GitHub
+> Pages mirror must stay **unlinked from the custom domain** (backup/staging
+> only).
+
 ## Generic static host fallback
 
 The site is fully static (no build step). To host it anywhere:

@@ -124,6 +124,61 @@
     if (dlBtn) dlBtn.classList.add("dl--active");
   }
 
+  /* ---------- download checksums ----------
+     The worker serves a "<asset>.sha256" sidecar at the same-origin URL
+     /downloads/<platform>.sha256 — display it next to each download button
+     so visitors can verify their download (see security.html). textContent
+     only; any failure hides the checksum line silently. */
+  document.querySelectorAll(".dl-hash[data-platform]").forEach(function (el) {
+    var p = el.getAttribute("data-platform");
+    if (!p || !DOWNLOADS[p]) return;
+    fetch(DOWNLOADS[p] + ".sha256")
+      .then(function (res) {
+        if (!res.ok) throw new Error("sidecar unavailable");
+        return res.text();
+      })
+      .then(function (text) {
+        var m = text.match(/\b([0-9a-fA-F]{64})\b/);
+        if (!m) throw new Error("no digest in sidecar");
+        var hex = m[1].toLowerCase();
+        el.textContent = "SHA-256: " + hex.slice(0, 12) + "…" + hex.slice(-4);
+        el.setAttribute("title", hex);
+        el.hidden = false;
+      })
+      .catch(function () {
+        // No sidecar published for this platform — degrade silently.
+        el.hidden = true;
+      });
+  });
+
+  /* ---------- service worker: register + update flow ---------- */
+  if ("serviceWorker" in navigator) {
+    var swReloading = false;
+    // A new worker took control — reload once so the page and its assets
+    // come from the same deploy. Guarded so it can never loop.
+    navigator.serviceWorker.addEventListener("controllerchange", function () {
+      if (swReloading) return;
+      swReloading = true;
+      window.location.reload();
+    });
+    navigator.serviceWorker.register("/sw.js").then(function (reg) {
+      // A worker waiting from a previous visit is an update — activate it.
+      if (reg.waiting) reg.waiting.postMessage({ type: "SKIP_WAITING" });
+      reg.addEventListener("updatefound", function () {
+        var nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener("statechange", function () {
+          // "installed" with an existing controller = update, not first run.
+          if (nw.state === "installed" && navigator.serviceWorker.controller) {
+            nw.postMessage({ type: "SKIP_WAITING" });
+          }
+        });
+      });
+    }).catch(function () {
+      /* offline or blocked — the site works fully without the SW */
+    });
+  }
+
   /* ---------- contact form → mailto ---------- */
   var form = document.getElementById("contactForm");
   if (form) {

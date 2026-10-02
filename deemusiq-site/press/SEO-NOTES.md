@@ -14,8 +14,8 @@ Last updated: 2026-09-30.
   with `lastmod`, `changefreq`, `priority`; `xmlns:image` with the OG image on the
   homepage entry.
 - `robots.txt`: already references the sitemap.
-- `.well-known/assetlinks.json`: Android App Links statement for package
-  `oss.krtirtho.spotube`. **PLACEHOLDER** — see below.
+- `.well-known/assetlinks.json`: Android App Links statement for applicationId
+  `za.co.deemusiq.app` (plus the `.fdroid` flavor). **PLACEHOLDER** fingerprints — see below.
 - `llms.txt`: LLM-facing site summary at the site root.
 - `site.webmanifest`: full icon set (32 / 180 / 192 / 256 / 512), `display: standalone`.
 - `press/`: self-serve press kit linked from the footer and the sitemap.

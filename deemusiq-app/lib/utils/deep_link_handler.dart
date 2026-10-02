@@ -38,14 +38,20 @@ class DeepLinkHandler {
     _isSetup = false;
   }
 
+  /// Exact/suffix host matching — `contains()` would also match attacker
+  /// hosts like `evil-youtube.com.evil.example` or `notyoutube.com`.
+  static bool _isYouTubeHost(String host) =>
+      host == 'youtube.com' || host.endsWith('.youtube.com');
+
+  static bool _isYouTubeShortHost(String host) =>
+      host == 'youtu.be' || host.endsWith('.youtu.be');
+
   static String? _extractYouTubeId(Uri uri) {
-    if (uri.host.contains('youtube.com') || uri.host.contains('youtu.be')) {
-      if (uri.pathSegments.isNotEmpty && uri.host.contains('youtu.be')) {
-        return uri.pathSegments.first;
-      }
-      return uri.queryParameters['v'];
+    final host = uri.host.toLowerCase();
+    if (_isYouTubeShortHost(host)) {
+      return uri.pathSegments.isNotEmpty ? uri.pathSegments.first : null;
     }
-    if (uri.host.contains('music.youtube.com')) {
+    if (_isYouTubeHost(host)) {
       return uri.queryParameters['v'];
     }
     return null;

@@ -15,6 +15,16 @@
  *                 e.g. {"android":"1.4.0","windows":"1.4.0",...}
  *                 Served at /downloads/version.json so the app's update check
  *                 never touches GitHub directly.
+ *   KNOWN_GOOD_SHA256   (optional) JSON map platform→expected lowercase hex
+ *                 sha256 of the release binary. Platforms in the map are
+ *                 fully buffered and hash-verified before any byte is sent
+ *                 (mismatch → generic 502, nothing of the body); platforms
+ *                 absent from the map stream through as before.
+ *   RELEASE_ED25519_SECRET_KEY   (optional) hex-encoded 32-byte Ed25519
+ *                 seed (RFC 8032). When set, the .sha256 sidecar and
+ *                 version.json responses carry an `X-Body-Signature` header:
+ *                 hex Ed25519 signature over the exact raw response-body
+ *                 bytes, which the app verifies on update checks.
  */
 
 const SECURITY_HEADERS = {
@@ -79,6 +89,96 @@ async function fetchExpectedSha256(url) {
   }
 }
 
+function hexToBytes(hex) {
+  const out = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < out.length; i++) out[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+  return out;
+}
+
+function bytesToHex(buf) {
+  return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+// Fixed-length, non-short-circuiting hex compare — both inputs are validated
+// sha256 hex digests (64 chars), so this never leaks a matching prefix.
+function hexEqual(a, b) {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+// KNOWN_GOOD_SHA256: optional operator pin, JSON map platform → expected
+// lowercase hex sha256. Presence of a platform switches it to full-buffer
+// verification (see the download path below).
+function knownGoodSha256(env, platform) {
+  let map = {};
+  try {
+    map = JSON.parse(env.KNOWN_GOOD_SHA256 || "{}");
+  } catch {
+    map = {};
+  }
+  const v = map[platform];
+  return typeof v === "string" && /^[0-9a-f]{64}$/i.test(v) ? v.toLowerCase() : null;
+}
+
+// Parse a single "bytes=…" Range against a known body length.
+// Returns {start,end} inclusive, {unsatisfiable:true} for a well-formed but
+// out-of-bounds range, or null when there is no usable range (caller then
+// serves the full body, which RFC 7233 permits).
+function sliceByteRange(header, total) {
+  const m = /^bytes=(\d*)-(\d*)$/.exec(header.trim());
+  if (!m || (m[1] === "" && m[2] === "")) return null;
+  let start, end;
+  if (m[1] === "") {
+    const n = parseInt(m[2], 10); // suffix form: last N bytes
+    if (!n) return { unsatisfiable: true };
+    start = Math.max(total - n, 0);
+    end = total - 1;
+  } else {
+    start = parseInt(m[1], 10);
+    end = m[2] === "" ? total - 1 : Math.min(parseInt(m[2], 10), total - 1);
+    if (start > end || start >= total) return { unsatisfiable: true };
+  }
+  return { start, end };
+}
+
+// PKCS#8 v1 envelope prefix for an Ed25519 seed (RFC 8410): wrapping the raw
+// 32-byte seed in this DER header is what lets WebCrypto import it as a
+// private key via importKey("pkcs8", …, "Ed25519").
+const ED25519_PKCS8_PREFIX = new Uint8Array([
+  0x30, 0x2e, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06,
+  0x03, 0x2b, 0x65, 0x70, 0x04, 0x22, 0x04, 0x20,
+]);
+
+// RELEASE_ED25519_SECRET_KEY: hex-encoded 32-byte Ed25519 seed (RFC 8032) —
+// the key format chosen here; document any change alongside the app's
+// verifier. Returns null when unset or malformed.
+async function ed25519Key(env) {
+  const hex = (env.RELEASE_ED25519_SECRET_KEY || "").trim();
+  if (!/^[0-9a-fA-F]{64}$/.test(hex)) return null;
+  const seed = hexToBytes(hex);
+  const pkcs8 = new Uint8Array(ED25519_PKCS8_PREFIX.length + seed.length);
+  pkcs8.set(ED25519_PKCS8_PREFIX, 0);
+  pkcs8.set(seed, ED25519_PKCS8_PREFIX.length);
+  return crypto.subtle.importKey("pkcs8", pkcs8, { name: "Ed25519" }, false, ["sign"]);
+}
+
+// Sign the exact raw response-body bytes and set X-Body-Signature (hex
+// Ed25519) — the Flutter app verifies this header against the bytes it
+// receives. Best-effort: a runtime without Ed25519 support or a bad key
+// serves the response unsigned rather than breaking downloads for everyone.
+async function signBody(headers, body, env) {
+  try {
+    const key = await ed25519Key(env);
+    if (!key) return;
+    const sig = await crypto.subtle.sign({ name: "Ed25519" }, key, body);
+    headers.set("X-Body-Signature", bytesToHex(sig));
+  } catch {
+    /* unsigned — see comment above */
+  }
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -99,13 +199,14 @@ export default {
       } catch {
         versions = {};
       }
-      return new Response(JSON.stringify({ versions }), {
-        status: 200,
-        headers: withSecurityHeaders({
-          "Content-Type": "application/json",
-          "Cache-Control": "public, max-age=300",
-        }),
+      const body = new TextEncoder().encode(JSON.stringify({ versions }));
+      const headers = withSecurityHeaders({
+        "Content-Type": "application/json",
+        "Cache-Control": "public, max-age=300",
       });
+      // Sign the exact bytes served so the app's update check can verify them.
+      await signBody(headers, body, env);
+      return new Response(body, { status: 200, headers });
     }
     const m = url.pathname.match(/^\/downloads\/([a-z0-9_-]+?)(\.sha256)?\/?$/i);
     if (!m) {
@@ -131,20 +232,30 @@ export default {
     const asset = wantHash ? `${file}.sha256` : file;
     const upstream = `https://github.com/${env.GITHUB_REPO}/releases/latest/download/${encodeURIComponent(asset)}`;
 
+    // Pinned platforms (KNOWN_GOOD_SHA256) are fetched whole and verified
+    // before a single byte leaves the worker — see the download path below.
+    const pinnedSha = wantHash ? null : knownGoodSha256(env, platform);
+
     // Forward the client's Range header so interrupted APK downloads can
     // resume: upstream answers 206 + Content-Range, which we pass through.
+    // Ranges are only forwarded when the body will stream through untouched:
+    // pinned platforms must fetch the whole object (a partial body can't be
+    // hash-verified) and serve slices from the verified buffer, and the tiny
+    // sidecars are served whole so their signature covers the full file.
     const upstreamHeaders = new Headers();
     const range = request.headers.get("range");
-    if (range) upstreamHeaders.set("range", range);
+    if (range && !pinnedSha && !wantHash) upstreamHeaders.set("range", range);
 
     // For binary downloads, grab the published .sha256 sidecar alongside the
     // asset (small, edge-cached 5 min) so the expected digest can travel as
-    // the X-Content-SHA256 response header. The worker does NOT verify the
-    // body itself: Web Crypto offers only one-shot subtle.digest (no
-    // incremental/streaming hashing), so self-verification would mean
-    // buffering the whole APK — tens of MB against the 128MB worker memory
-    // limit — and delaying the first byte until the last one arrives.
-    // Streaming through untouched and letting the client verify avoids both.
+    // the X-Content-SHA256 response header. By default the body itself is NOT
+    // verified: Web Crypto offers only one-shot subtle.digest (no
+    // incremental/streaming hashing), so self-verification means buffering
+    // the whole asset and delaying the first byte until the last one arrives.
+    // Platforms pinned in KNOWN_GOOD_SHA256 opt into exactly that tradeoff
+    // (full buffer → digest → constant-time compare) so a tampered upstream
+    // release can never reach a client; everything else streams through
+    // untouched and the client verifies.
     const hashUrl = `https://github.com/${env.GITHUB_REPO}/releases/latest/download/${encodeURIComponent(file)}.sha256`;
     let upstreamRes;
     let expectedSha256 = null;
@@ -189,15 +300,54 @@ export default {
     if (wantHash) {
       // .sha256 sidecars are tiny text files; force a friendly content type.
       headers.set("Content-Type", "text/plain; charset=utf-8");
-    } else {
-      if (!headers.has("Content-Type")) {
-        headers.set("Content-Type", "application/octet-stream");
+      // Buffer the (tiny) sidecar so the exact bytes served can be signed for
+      // the app's anti-tamper check. No Range was forwarded upstream, so this
+      // is always the complete file.
+      const body = await upstreamRes.arrayBuffer();
+      await signBody(headers, body, env);
+      return new Response(body, { status: upstreamRes.status, headers });
+    }
+
+    if (!headers.has("Content-Type")) {
+      headers.set("Content-Type", "application/octet-stream");
+    }
+    // The filename comes from operator config, but a stray quote/CR/LF in
+    // it would split the header — strip those characters defensively.
+    const safeFile = String(file).replace(/["\r\n]/g, "");
+    headers.set("Content-Disposition", `attachment; filename="${safeFile}"`);
+    if (expectedSha256) headers.set("X-Content-SHA256", expectedSha256);
+
+    if (pinnedSha) {
+      // Pinned platform: the whole object was fetched (no Range forwarded),
+      // so buffer it, hash it, and only then decide what to serve.
+      // TRADEOFF (deliberate): full-buffering disables streaming for pinned
+      // platforms — the first byte waits for the entire body + digest, and
+      // the body counts against the worker memory limit. A mismatch means
+      // the upstream release was tampered with or the pin is stale: answer
+      // a generic 502 and send NOTHING of the body.
+      const body = await upstreamRes.arrayBuffer();
+      const digest = bytesToHex(await crypto.subtle.digest("SHA-256", body));
+      if (!hexEqual(digest, pinnedSha)) {
+        return new Response(JSON.stringify({ error: "unavailable" }), {
+          status: 502,
+          headers: withSecurityHeaders({ "Content-Type": "application/json" }),
+        });
       }
-      // The filename comes from operator config, but a stray quote/CR/LF in
-      // it would split the header — strip those characters defensively.
-      const safeFile = String(file).replace(/["\r\n]/g, "");
-      headers.set("Content-Disposition", `attachment; filename="${safeFile}"`);
-      if (expectedSha256) headers.set("X-Content-SHA256", expectedSha256);
+      const total = body.byteLength;
+      const slice = range ? sliceByteRange(range, total) : null;
+      if (slice && slice.unsatisfiable) {
+        headers.set("Content-Range", `bytes */${total}`);
+        return new Response(null, { status: 416, headers });
+      }
+      if (slice) {
+        // Serve the requested slice of the verified bytes — resume still
+        // works on pinned platforms, just from the buffer instead of upstream.
+        headers.set("Content-Range", `bytes ${slice.start}-${slice.end}/${total}`);
+        headers.set("Content-Length", String(slice.end - slice.start + 1));
+        return new Response(body.slice(slice.start, slice.end + 1), { status: 206, headers });
+      }
+      headers.set("Content-Length", String(total));
+      return new Response(body, { status: 200, headers });
     }
 
     // Pass through the upstream status: 200 for full responses, 206 when a

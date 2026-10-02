@@ -10,6 +10,12 @@ enum ReleaseChannel {
 
 @Envied(obfuscate: true, requireEnvFile: true, path: ".env")
 abstract class Env {
+  // ACCEPTED RISK (audit): the Last.fm API key/secret ship inside the binary.
+  // envied's `obfuscate: true` XOR-scatters the bytes, but that is obfuscation,
+  // not secrecy — a determined extractor can recover them. The impact is
+  // bounded to Last.fm quota abuse on OUR app key (no user data, no money
+  // movement), so embedding is accepted by design; server-side proxying is the
+  // only real fix and is deliberately not in scope. Please don't re-flag.
   @EnviedField(varName: 'LASTFM_API_KEY')
   static final String lastFmApiKey = _Env.lastFmApiKey;
 

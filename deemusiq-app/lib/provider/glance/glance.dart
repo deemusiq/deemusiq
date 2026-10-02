@@ -23,10 +23,31 @@ Future<void> glanceBackgroundCallback(Uri? data) async {
       return;
     }
 
+    // The widget-command URI is attacker-influenceable (any app can fire the
+    // background intent), so the target address is validated before use:
+    // it must be a loopback address AND exactly the value this app last
+    // persisted for the widget — anything else is ignored.
+    final serverAddress = data.queryParameters["serverAddress"]!;
+    if (!_isLoopbackServerAddress(serverAddress)) {
+      logger.w(
+        "[GlanceBackgroundCallback] rejected non-loopback address: $serverAddress",
+      );
+      return;
+    }
+    final savedAddress = await HomeWidget.getWidgetData<String>(
+      "playbackServerAddress",
+    );
+    if (savedAddress == null || savedAddress != serverAddress) {
+      logger.w(
+        "[GlanceBackgroundCallback] rejected unknown address: $serverAddress",
+      );
+      return;
+    }
+
     final command = data.pathSegments.first;
     final res = await get(
       Uri.parse(
-        "http://${data.queryParameters["serverAddress"]}/playback/$command",
+        "http://$serverAddress/playback/$command",
       ),
     );
 
@@ -36,6 +57,15 @@ Future<void> glanceBackgroundCallback(Uri? data) async {
   } catch (e) {
     logger.e("[GlanceBackgroundCallback] $e");
   }
+}
+
+/// True only for loopback `host:port` addresses (the embedded playback
+/// server). Anything routable — LAN or internet — is rejected so a forged
+/// widget command can't turn the callback into an HTTP proxy.
+bool _isLoopbackServerAddress(String address) {
+  final host = Uri.tryParse("http://$address")?.host;
+  if (host == null || host.isEmpty) return false;
+  return const {"127.0.0.1", "localhost", "::1", "[::1]"}.contains(host);
 }
 
 Future<bool?> _saveWidgetData<T>(String key, T? value) async {

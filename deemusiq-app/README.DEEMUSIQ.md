@@ -84,6 +84,11 @@ which has a "Secrets you MUST change" section).
 | **Spotify account linking** | Backend `.env`: `SPOTIFY_CLIENT_ID/SECRET`, redirect URI `https://<backend>/link/spotify/callback` (register it in the Spotify dev dashboard) | Other providers show "coming soon" until adapters exist. |
 | **Permanent signing keystore** | Repo secrets `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD` | See "Signing" above — **do this before the first public release.** |
 | **Anti-tamper cert pin** | Repo secret `DEEMUSIQ_CERT_SHA256` (+ optional backend `EXPECTED_CERT_SHA256`) | See "Anti-tamper" below. Arms the brick-on-repackage check. Set it right after the permanent keystore. |
+| **Backend TLS cert pin** | Repo secret `DEEMUSIQ_SERVER_CERT_SHA256` | SHA-256 of the backend's TLS leaf cert (comma-separated pins for rotation). When set, wallet/payment TLS is pinned and an active startup/6h probe locks money features if the reachable backend presents a different cert. |
+| **Integrity hash signing key** | Build define `DEEMUSIQ_INTEGRITY_ED25519_PUBLIC_KEY` | Base64 Ed25519 public key. When set, the published APK-hash payload must carry a valid `X-Body-Signature` (hex Ed25519 over the raw body) — unsigned/invalid payloads lock the wallet as tamper evidence. |
+| **Site update metadata** | Build define `DEEMUSIQ_UPDATE_METADATA_URL` | Point to the Cloudflare/site `version.json`; redirects are rejected. Optional raw-body digest/signature headers are supported. |
+| **Update signing key** | Build define `DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY` | Base64 Ed25519 public key. When set, the endpoint must provide a valid signature over the exact response bytes — either `X-DeeMusiq-Signature` (base64) or the worker's `X-Body-Signature` (hex) header. |
+| **Desktop yt-dlp pin** | Build defines `DEEMUSIQ_YTDLP_VERSION` and `DEEMUSIQ_YTDLP_SHA256` | Both are mandatory. A selected executable is unavailable unless its file digest and reported version both match. Supply the digest for the exact platform asset. |
 | **Site download link** | `deemusiq-site/js/main.js` | Android already wired; goes live with the first `v*` release. |
 | **Site social links** | `deemusiq-site/index.html` footer | Currently `#` placeholders — fill in when the accounts exist. |
 | **Release process** | — | Bump `pubspec.yaml` `x.y.z+N` → push tag `vx.y.z` → CI checks, builds, signs, attaches `DeeMusiq.apk` to the Release. |
@@ -134,6 +139,9 @@ release:
   even if `x.y.z` didn't change — Android refuses to install an APK whose build number
   isn't higher than the installed one, and the nightly update checker compares build
   numbers against the Actions run number.
+- bump **`VERSIONS` in `deemusiq-site/cloudflare/wrangler.toml`** to the same `x.y.z` —
+  that map backs `/downloads/version.json`, so a stale pin means the update check never
+  reports the new release.
 
 ## Accepted internal naming (deliberately NOT renamed)
 
@@ -169,6 +177,26 @@ GitHub Actions workflows:
 Linux can also be built locally: `flutter build linux --release`. The binary is at
 `build/linux/x64/release/bundle/deemusiq`.
 
+To ship a portable AppImage that keeps working on machines without a
+GTK/mpv/ffmpeg stack, use the packaging script — it assembles the AppDir with
+the bundle layout Flutter expects (`usr/bin/data` + `usr/bin/lib/libapp.so`),
+then verifies the packed image and smoke-runs it, so a regression fails the
+build instead of shipping:
+
+```bash
+bash scripts/build-linux-appimage.sh            # build + pack + verify + smoke
+bash scripts/build-linux-appimage.sh --skip-build   # re-pack an existing bundle
+bash scripts/build-linux-appimage.sh --verify-only dist/DeeMusiq-linux-x86_64.AppImage
+```
+
+The CI `deemusiq-linux.yml` job runs the same script with `--skip-build`, so
+local and release artifacts are packaged identically.
+
+yt-dlp is self-managed: on first use the app downloads the newest official
+yt-dlp release asset into its support folder (`<support>/bin/yt-dlp`),
+SHA-256 records it and refreshes it when older than 7 days, so no
+system-installed yt-dlp is ever required.
+
 ## Honest caveats
 - **This app streams metadata/audio using YouTube as the audio source.** It does not host
   your own artists' uploads directly — that's the separate DeeMusiq backend platform.
@@ -176,6 +204,13 @@ Linux can also be built locally: `flutter build linux --release`. The binary is 
 - YouTube engine failover is automatic: youtube_explode_dart → yt-dlp → NewPipe with
   5 retries per engine and exponential backoff. Connection checker pings 8.8.8.8 + 1.1.1.1
   before attempting playback.
+- **Backend-unreachable fallback:** a catalog track whose signed stream URL can no
+  longer be re-minted (DeeMusiq API network-unreachable, or the origin/edge is
+  failing with a 5xx) is re-found
+  through YouTube search (title + artist, closest duration wins) and streamed
+  straight from YouTube, announced with an info toast. The cached catalog source is
+  left intact, so the backend path resumes by itself once the API answers again —
+  see `_youtubeFallbackStreams` in `lib/services/metadata/deemusiq_native_plugin.dart`.
 
 ## Known TODO: drift DB migration tests
 

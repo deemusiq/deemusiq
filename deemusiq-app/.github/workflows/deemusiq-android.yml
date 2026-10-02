@@ -166,6 +166,44 @@ jobs:
           storeFile=deemusiq.jks
           EOF
 
+      - name: Guard — security dart-defines armed
+        # Regression guard for the 2026-10 pentest (F1/F2/F6/F7): a release
+        # built with empty security defines ships dead anti-tamper, unsigned
+        # update/integrity checks and fail-closed payments. Fail loud instead.
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          DEEMUSIQ_CERT_SHA256: ${{ secrets.DEEMUSIQ_CERT_SHA256 }}
+          DEEMUSIQ_SERVER_CERT_SHA256: ${{ secrets.DEEMUSIQ_SERVER_CERT_SHA256 }}
+          DEEMUSIQ_PAYMENT_HMAC_SECRET: ${{ secrets.DEEMUSIQ_PAYMENT_HMAC_SECRET }}
+          DEEMUSIQ_CHANNEL_KEY: ${{ secrets.DEEMUSIQ_CHANNEL_KEY }}
+          DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY: ${{ vars.DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY }}
+          DEEMUSIQ_INTEGRITY_ED25519_PUBLIC_KEY: ${{ vars.DEEMUSIQ_INTEGRITY_ED25519_PUBLIC_KEY }}
+        run: |
+          fail=0
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            # Permanent-keystore build: the baked anti-tamper pin MUST equal the
+            # actual signing cert hash, or the app bricks itself on first boot.
+            actual=$(keytool -list -v -keystore android/app/deemusiq.jks -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" 2>/dev/null | grep -m1 'SHA256:' | sed 's/.*SHA256: //' | tr -d ':' | tr 'A-F' 'a-f')
+            if [ -z "$DEEMUSIQ_CERT_SHA256" ]; then
+              echo "::error::DEEMUSIQ_CERT_SHA256 is empty but a permanent keystore is in use — set it to $actual"; fail=1
+            elif [ "$DEEMUSIQ_CERT_SHA256" != "$actual" ]; then
+              echo "::error::DEEMUSIQ_CERT_SHA256 != signing cert hash ($actual) — the APK would brick itself on boot."; fail=1
+            fi
+          else
+            echo "::notice::Temporary keystore build — DEEMUSIQ_CERT_SHA256 intentionally informational."
+          fi
+          for v in DEEMUSIQ_PAYMENT_HMAC_SECRET DEEMUSIQ_CHANNEL_KEY DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY DEEMUSIQ_INTEGRITY_ED25519_PUBLIC_KEY; do
+            if [ -z "${!v}" ]; then
+              echo "::error::$v is not set — release builds must ship with all security defines armed (see audit_pentest_2026-10.md)."; fail=1
+            fi
+          done
+          if [ -z "$DEEMUSIQ_SERVER_CERT_SHA256" ]; then
+            echo "::warning::DEEMUSIQ_SERVER_CERT_SHA256 unset — TLS pin probe dormant. Set it once api.deemusiq.co.za is live; Cloudflare edge certs rotate, so keep a rotation list and be ready to ship pin updates."
+          fi
+          [ "$fail" -eq 0 ] || exit 1
+
       - name: Build release APK
         # Backend wiring is optional: when the repo var/secret are unset the
         # dart-defines are empty strings and the app keeps its offline default.
@@ -177,6 +215,20 @@ jobs:
           # refuses to run if signed with any other key (anti-repackaging).
           # Empty (temp keystore) = check is informational only.
           DEEMUSIQ_CERT_SHA256: ${{ secrets.DEEMUSIQ_CERT_SHA256 }}
+          # SHA-256 of the backend's TLS leaf certificate (comma-separated
+          # pins allowed for rotation). When set, the app pins the backend
+          # cert and runs an active probe that locks money features on a
+          # mismatch. Empty = standard PKI validation only.
+          DEEMUSIQ_SERVER_CERT_SHA256: ${{ secrets.DEEMUSIQ_SERVER_CERT_SHA256 }}
+          DEEMUSIQ_UPDATE_METADATA_URL: ${{ vars.DEEMUSIQ_UPDATE_METADATA_URL }}
+          DEEMUSIQ_UPDATE_URL: ${{ vars.DEEMUSIQ_UPDATE_URL }}
+          DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY: ${{ vars.DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY }}
+          # Ed25519 public key verifying the worker's X-Body-Signature header
+          # on the published APK-hash payload. Empty = unsigned accepted.
+          DEEMUSIQ_INTEGRITY_ED25519_PUBLIC_KEY: ${{ vars.DEEMUSIQ_INTEGRITY_ED25519_PUBLIC_KEY }}
+          # Client-side payment request signing; must match the backend's
+          # PAYMENT_HMAC_SECRET or checkouts fail closed (403). Empty = unsigned.
+          DEEMUSIQ_PAYMENT_HMAC_SECRET: ${{ secrets.DEEMUSIQ_PAYMENT_HMAC_SECRET }}
         # `stableFdroid`: two flavor dimensions (default × store) mean a variant
         # needs one flavor from each. `stableFdroid` is the FOSS combo (no
         # google-services.json needed). Plain `--flavor stable` cannot resolve
@@ -186,6 +238,12 @@ jobs:
           --dart-define=DEEMUSIQ_BACKEND_URL="${DEEMUSIQ_BACKEND_URL}"
           --dart-define=DEEMUSIQ_CHANNEL_KEY="${DEEMUSIQ_CHANNEL_KEY}"
           --dart-define=DEEMUSIQ_CERT_SHA256="${DEEMUSIQ_CERT_SHA256}"
+          --dart-define=DEEMUSIQ_SERVER_CERT_SHA256="${DEEMUSIQ_SERVER_CERT_SHA256}"
+          --dart-define=DEEMUSIQ_PAYMENT_HMAC_SECRET="${DEEMUSIQ_PAYMENT_HMAC_SECRET}"
+          --dart-define=DEEMUSIQ_UPDATE_METADATA_URL="${DEEMUSIQ_UPDATE_METADATA_URL:-https://deemusiq.co.za/downloads/version.json}"
+          --dart-define=DEEMUSIQ_UPDATE_URL="${DEEMUSIQ_UPDATE_URL:-https://deemusiq.co.za/#download}"
+          --dart-define=DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY="${DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY}"
+          --dart-define=DEEMUSIQ_INTEGRITY_ED25519_PUBLIC_KEY="${DEEMUSIQ_INTEGRITY_ED25519_PUBLIC_KEY}"
 
       - name: Collect APK + publish its hash
         run: |
