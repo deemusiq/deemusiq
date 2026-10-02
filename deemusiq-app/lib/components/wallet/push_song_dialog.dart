@@ -85,8 +85,8 @@ class PushSongDialog extends HookConsumerWidget {
           Expanded(child: const Text("Push this song").large()),
         ],
       ),
-      content: SizedBox(
-        width: 420,
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 420),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,

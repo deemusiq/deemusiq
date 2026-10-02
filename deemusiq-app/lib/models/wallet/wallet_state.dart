@@ -3,13 +3,14 @@ import 'package:deemusiq/models/wallet/pushed_song.dart';
 import 'package:deemusiq/models/wallet/supported_creator.dart';
 import 'package:deemusiq/models/wallet/token_transaction.dart';
 
-/// The full, persisted state of a user's DeeMusiq wallet. Balance is derived
-/// from the [transactions] ledger so it can never drift out of sync.
+/// The full, persisted state of a user's DeeMusiq wallet.
 class WalletState {
   final List<TokenTransaction> transactions;
   final List<LinkedAccount> linkedAccounts;
   final List<SupportedCreator> supportedCreators;
   final List<PushedSong> pushedSongs;
+  final int? authoritativeBalance;
+  final String? syncError;
 
   /// Optional region override (ISO code). When null, pricing follows the app's
   /// recommendation market.
@@ -20,12 +21,14 @@ class WalletState {
     this.linkedAccounts = const [],
     this.supportedCreators = const [],
     this.pushedSongs = const [],
+    this.authoritativeBalance,
+    this.syncError,
     this.regionCode,
   });
 
-  /// Current spendable token balance.
-  int get balance =>
-      transactions.fold(0, (sum, tx) => sum + tx.tokens);
+  int get ledgerBalance => transactions.fold(0, (sum, tx) => sum + tx.tokens);
+
+  int get balance => authoritativeBalance ?? ledgerBalance;
 
   int get totalSpent => transactions
       .where((tx) => tx.tokens < 0)
@@ -40,6 +43,10 @@ class WalletState {
     List<LinkedAccount>? linkedAccounts,
     List<SupportedCreator>? supportedCreators,
     List<PushedSong>? pushedSongs,
+    int? authoritativeBalance,
+    bool clearAuthoritativeBalance = false,
+    String? syncError,
+    bool clearSyncError = false,
     String? regionCode,
     bool clearRegion = false,
   }) {
@@ -48,6 +55,10 @@ class WalletState {
       linkedAccounts: linkedAccounts ?? this.linkedAccounts,
       supportedCreators: supportedCreators ?? this.supportedCreators,
       pushedSongs: pushedSongs ?? this.pushedSongs,
+      authoritativeBalance: clearAuthoritativeBalance
+          ? null
+          : (authoritativeBalance ?? this.authoritativeBalance),
+      syncError: clearSyncError ? null : (syncError ?? this.syncError),
       regionCode: clearRegion ? null : (regionCode ?? this.regionCode),
     );
   }
@@ -55,9 +66,10 @@ class WalletState {
   Map<String, dynamic> toJson() => {
         "transactions": transactions.map((e) => e.toJson()).toList(),
         "linkedAccounts": linkedAccounts.map((e) => e.toJson()).toList(),
-        "supportedCreators":
-            supportedCreators.map((e) => e.toJson()).toList(),
+        "supportedCreators": supportedCreators.map((e) => e.toJson()).toList(),
         "pushedSongs": pushedSongs.map((e) => e.toJson()).toList(),
+        "authoritativeBalance": authoritativeBalance,
+        "syncError": syncError,
         "regionCode": regionCode,
       };
 
@@ -76,6 +88,8 @@ class WalletState {
       linkedAccounts: parse("linkedAccounts", LinkedAccount.fromJson),
       supportedCreators: parse("supportedCreators", SupportedCreator.fromJson),
       pushedSongs: parse("pushedSongs", PushedSong.fromJson),
+      authoritativeBalance: (json["authoritativeBalance"] as num?)?.toInt(),
+      syncError: json["syncError"] as String?,
       regionCode: json["regionCode"] as String?,
     );
   }

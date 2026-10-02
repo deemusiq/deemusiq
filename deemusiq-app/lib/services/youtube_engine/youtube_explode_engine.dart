@@ -1,7 +1,10 @@
 import 'dart:isolate';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
+import 'package:deemusiq/services/youtube_engine/quickjs_solver.dart';
 import 'package:deemusiq/services/youtube_engine/youtube_engine.dart';
+import 'package:youtube_explode_dart/js_challenge.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 import 'dart:async';
@@ -78,11 +81,17 @@ class IsolatedYoutubeExplode {
 
   static Future<void> _isolateEntry(SendPort mainSendPort) async {
     final receivePort = ReceivePort();
+    // EJS solver for n-cipher/signature challenges ("not a bot" pages).
+    // Degrade to plain explode when the QuickJS runtime or module download
+    // fails — extraction still works for unchallenged videos.
+    BaseJSChallengeSolver? jsSolver;
     try {
-      // QuickJSEJSSolver requires the 'jsf' package in pubspec.yaml.
-      // See lib/services/youtube_engine/quickjs_solver.dart for setup.
-    } catch (_) {}
-    final youtubeExplode = YoutubeExplode();
+      jsSolver = await QuickJSEJSSolver.init();
+    } catch (e, stack) {
+      debugPrint('IsolatedYoutubeExplode: EJS solver init failed, continuing without: $e');
+      AppLogger.reportError(e, stack, 'IsolatedYoutubeExplode EJS solver init');
+    }
+    final youtubeExplode = YoutubeExplode(jsSolver: jsSolver);
     final stopWatch = kDebugMode ? Stopwatch() : null;
 
     /// Send the main port to the main isolate
@@ -115,6 +124,15 @@ class IsolatedYoutubeExplode {
                 filter: arguments.elementAtOrNull(1) ?? TypeFilters.video,
               )
               .then((s) => s.toList()),
+          "searchChannels" => youtubeExplode.search
+              .searchContent(
+                arguments[0] as String,
+                filter: TypeFilters.channel,
+              )
+              .then((s) =>
+                  List<SearchChannel>.from(s.whereType<SearchChannel>())),
+          "channel" =>
+            youtubeExplode.channels.get(ChannelId(arguments[0] as String)),
           "video" => youtubeExplode.videos.get(arguments[0] as String),
           "manifest" => youtubeExplode.videos.streamsClient.getManifest(
               arguments[0] as String,
@@ -172,6 +190,14 @@ class IsolatedYoutubeExplode {
     return _runMethod<Video>("video", [videoId]);
   }
 
+  Future<Channel> channel(String channelId) async {
+    return _runMethod<Channel>("channel", [channelId]);
+  }
+
+  Future<List<SearchChannel>> searchChannels(String query) async {
+    return _runMethod<List<SearchChannel>>("searchChannels", [query]);
+  }
+
   Future<StreamManifest> manifest(
     String videoId, {
     bool requireWatchPage = false,
@@ -221,7 +247,7 @@ class YouTubeExplodeEngine implements YouTubeEngine {
       YoutubeApiClient.android,
     ];
 
-    StreamManifest _build(StreamManifest raw) {
+    StreamManifest build(StreamManifest raw) {
       var audioStreams = raw.audioOnly.where(
         (stream) => stream.bitrate.bitsPerSecond >= 40960,
       );
@@ -258,7 +284,7 @@ class YouTubeExplodeEngine implements YouTubeEngine {
         ytClients: ytClients,
       );
 
-      final manifest = _build(streamManifest);
+      final manifest = build(streamManifest);
       if (manifest.audioOnly.isNotEmpty) return manifest;
 
       AppLogger.log.w('YouTubeExplode: fast path returned empty streams for $videoId, retrying with watch page');
@@ -267,7 +293,7 @@ class YouTubeExplodeEngine implements YouTubeEngine {
         requireWatchPage: true,
         ytClients: ytClients,
       );
-      return _build(retryManifest);
+      return build(retryManifest);
     } catch (e, stack) {
       AppLogger.log.w('YouTubeExplode: fast path failed for $videoId: ${e.toString()}, retrying with watch page');
       AppLogger.reportError(e, stack);
@@ -277,7 +303,7 @@ class YouTubeExplodeEngine implements YouTubeEngine {
           requireWatchPage: true,
           ytClients: ytClients,
         );
-        return _build(retryManifest);
+        return build(retryManifest);
       } catch (e2, stack2) {
         AppLogger.log.w('YouTubeExplode: watch page retry also failed for $videoId: ${e2.toString()}');
         AppLogger.reportError(e2, stack2);
@@ -329,6 +355,32 @@ class YouTubeExplodeEngine implements YouTubeEngine {
       AppLogger.log.w('YouTubeExplode: Search failed for "$query": ${e.toString()}');
       AppLogger.reportError(e, stack);
       rethrow;
+    }
+  }
+
+  @override
+  Future<Channel?> resolveChannel(String idOrName) async {
+    final candidate = idOrName.trim();
+    if (candidate.isEmpty) return null;
+    await IsolatedYoutubeExplode.initialize();
+
+    try {
+      // Channel ids and channel URLs resolve directly; anything else is a
+      // display name that goes through channel search first.
+      final directId = ChannelId.parseChannelId(candidate);
+      if (directId != null) {
+        return await _youtubeExplode.channel(directId);
+      }
+      final results = await _youtubeExplode.searchChannels(candidate);
+      final channelId = results.firstOrNull?.id;
+      if (channelId == null) return null;
+      return await _youtubeExplode.channel(channelId.value);
+    } catch (e, stack) {
+      AppLogger.log.w(
+        'YouTubeExplode: channel resolution failed for "$idOrName": ${e.toString()}',
+      );
+      AppLogger.reportError(e, stack);
+      return null;
     }
   }
 

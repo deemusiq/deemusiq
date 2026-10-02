@@ -1,3 +1,6 @@
+// ISO 3166-1 alpha-2 market codes — SCREAMING_CAPS is the canonical form
+// and the serialized value, so the style lint does not apply here.
+// ignore_for_file: constant_identifier_names
 enum Market {
   AD,
   AE,

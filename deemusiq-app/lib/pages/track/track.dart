@@ -6,6 +6,8 @@ import 'package:skeletonizer/skeletonizer.dart';
 import 'package:deemusiq/collections/fake.dart';
 import 'package:deemusiq/collections/routes.gr.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
+import 'package:deemusiq/components/comments/comments_section.dart';
+import 'package:deemusiq/components/fallbacks/error_box.dart';
 import 'package:deemusiq/components/heart_button/heart_button.dart';
 import 'package:deemusiq/components/image/universal_image.dart';
 import 'package:deemusiq/components/links/artist_link.dart';
@@ -17,6 +19,7 @@ import 'package:deemusiq/extensions/list.dart';
 import 'package:deemusiq/models/metadata/metadata.dart';
 import 'package:deemusiq/provider/audio_player/audio_player.dart';
 import 'package:deemusiq/provider/metadata_plugin/tracks/track.dart';
+import 'package:deemusiq/provider/wallet/comments_provider.dart';
 import 'package:deemusiq/services/audio_player/audio_player.dart';
 
 import 'package:deemusiq/extensions/constrains.dart';
@@ -34,7 +37,7 @@ class TrackPage extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    final ThemeData(:typography, :colorScheme) = Theme.of(context);
+    final ThemeData(:typography, :colorScheme, :scaling) = Theme.of(context);
     final mediaQuery = MediaQuery.of(context);
 
     final playlist = ref.watch(audioPlayerProvider);
@@ -64,7 +67,16 @@ class TrackPage extends HookConsumerWidget {
           )
         ],
         floatingHeader: true,
-        child: Stack(
+        child: trackQuery.hasError && trackQuery.asData?.value == null
+            ? Center(
+                child: ErrorBox(
+                  error: trackQuery.error!,
+                  onRetry: () {
+                    ref.invalidate(metadataPluginTrackProvider(trackId));
+                  },
+                ),
+              )
+            : Stack(
           children: [
             Positioned.fill(
               child: Container(
@@ -104,7 +116,11 @@ class TrackPage extends HookConsumerWidget {
                       ),
                     ),
                     child: SafeArea(
-                      child: Wrap(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.only(bottom: 40),
+                        child: Column(
+                          children: [
+                            Wrap(
                         spacing: 20,
                         runSpacing: 20,
                         alignment: WrapAlignment.center,
@@ -119,8 +135,8 @@ class TrackPage extends HookConsumerWidget {
                                 path: track.album.images.asUrlString(
                                   placeholder: ImagePlaceholder.albumArt,
                                 ),
-                                height: 200,
-                                width: 200,
+                                height: 200 * scaling,
+                                width: 200 * scaling,
                               ),
                             ),
                           ),
@@ -242,7 +258,23 @@ class TrackPage extends HookConsumerWidget {
                               ],
                             ),
                           ),
-                        ],
+                            ],
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 24),
+                            child: Center(
+                              child: ConstrainedBox(
+                                constraints:
+                                    const BoxConstraints(maxWidth: 720),
+                                child: CommentsSection(
+                                  target: CommentTarget.track(trackId),
+                                ),
+                              ),
+                            ),
+                          ),
+                          ],
+                        ),
                       ),
                     ),
                   ),

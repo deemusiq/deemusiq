@@ -257,7 +257,9 @@ class PlayerQueue extends HookConsumerWidget {
                               icon: const Icon(DeeMusiqIcons.playlistRemove),
                               onPressed: () {
                                 onStop();
-                                closeDrawer(context);
+                                // No-op when the queue is not inside a drawer
+                                // (plain route or inline connect control page)
+                                closeOverlay(context);
                               },
                             ),
                           ),

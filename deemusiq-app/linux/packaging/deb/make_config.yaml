@@ -1,9 +1,9 @@
-display_name: Spotube
+display_name: DeeMusiq
 package_name: deemusiq
 
 maintainer:
-  name: Kingkor Roy Tirtho
-  email: krtirtho@gmail.com
+  name: DeeMusiq
+  email: deemusiq@protonmail.com
 
 priority: optional
 section: x11
@@ -30,7 +30,7 @@ suggested_dependencies:
   - yt-dlp
 
 essential: false
-icon: assets/branding/spotube-logo.png
+icon: assets/branding/deemusiq-logo.png
 
 keywords:
   - Music

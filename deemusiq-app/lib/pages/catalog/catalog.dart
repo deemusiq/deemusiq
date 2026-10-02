@@ -6,6 +6,7 @@ import 'package:deemusiq/components/track_presentation/presentation_props.dart';
 import 'package:deemusiq/components/track_presentation/track_presentation.dart';
 import 'package:deemusiq/models/metadata/metadata.dart';
 import 'package:deemusiq/provider/catalog/catalog_provider.dart';
+import 'package:deemusiq/provider/metadata_plugin/utils/common.dart';
 
 /// The DeeMusiq catalog page — exclusive DeeMusiq songs (unlisted-YouTube backed)
 /// rendered through the standard [TrackPresentation], so play / queue / download
@@ -18,6 +19,7 @@ class CatalogPage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, ref) {
     final catalog = ref.watch(catalogProvider);
+    final catalogNotifier = ref.read(catalogProvider.notifier);
     final tracks = catalog.asData?.value ?? const <DeeMusiqFullTrackObject>[];
 
     final collection = DeeMusiqSimplePlaylistObject(
@@ -32,8 +34,18 @@ class CatalogPage extends HookConsumerWidget {
       ),
     );
 
+    Future<void> refreshCatalog() async {
+      final refreshed = ref.refresh(catalogProvider.future);
+      await refreshed;
+    }
+
+    Future<List<DeeMusiqFullTrackObject>> fetchAllTracks() async {
+      await catalogNotifier.fetchAll();
+      return ref.read(catalogProvider).value ?? tracks;
+    }
+
     return material.RefreshIndicator.adaptive(
-      onRefresh: () async => ref.invalidate(catalogProvider),
+      onRefresh: refreshCatalog,
       child: TrackPresentation(
         options: TrackPresentationOptions(
           collection: collection,
@@ -48,11 +60,11 @@ class CatalogPage extends HookConsumerWidget {
           shareUrl: null,
           onHeart: null,
           pagination: PaginationProps(
-            hasNextPage: false,
-            isLoading: catalog.isLoading,
-            onFetchMore: () {},
-            onFetchAll: () async => tracks,
-            onRefresh: () async => ref.invalidate(catalogProvider),
+            hasNextPage: catalogNotifier.hasMore,
+            isLoading: catalog.isLoading || catalog.isLoadingNextPage,
+            onFetchMore: () => catalogNotifier.fetchMore(),
+            onFetchAll: fetchAllTracks,
+            onRefresh: refreshCatalog,
           ),
         ),
       ),

@@ -3,14 +3,15 @@ import 'package:drift/native.dart';
 import 'package:deemusiq/models/database/database.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-// Exercises the schema-v11 favorites table (the local source of truth for the
-// heart button) end to end against a fresh in-memory database.
+// Exercises the favorites table (the local source of truth for the
+// heart button) end to end against a fresh in-memory database at the
+// current schema version.
 void main() {
-  test('favorites table round-trips a liked track at schema v11', () async {
+  test('favorites table round-trips a liked track at current schema', () async {
     final db = AppDatabase.forTesting(NativeDatabase.memory());
     addTearDown(db.close);
 
-    expect(db.schemaVersion, 11);
+    expect(db.schemaVersion, 12);
 
     await db.into(db.favoritesTable).insert(
           FavoritesTableCompanion.insert(

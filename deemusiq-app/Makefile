@@ -1,8 +1,8 @@
-INNO_VERSION=6.2.0
 TEMP_DIR=/tmp/deemusiq-tar
 USR_SHARE=deb-struct/usr/share
 BUNDLE_DIR=build/linux/${ARCH}/release/bundle
 MIRRORLIST=${PWD}/build/mirrorlist
+VERSION ?= 0.0.0
 
 tar:
 		mkdir -p $(TEMP_DIR)\
@@ -26,13 +26,8 @@ publishaur:
 					 && git commit -m "${MSG}"\
 					 && git push
 
-innoinstall:
-						powershell curl -o build\installer.exe http://files.jrsoftware.org/is/6/innosetup-${INNO_VERSION}.exe
-						powershell git clone https://github.com/DomGries/InnoDependencyInstaller.git  build\inno-depend
-		 				powershell build\installer.exe /verysilent /allusers /dir=build\iscc
-
-inno:
-		 powershell .\build\iscc\iscc.exe scripts\windows-setup-creator.iss
+windows-installer:
+			mkdir -p dist && makensis -DVERSION="${VERSION}" -DBUILD_DIR="build/windows/x64/runner/Release" -DOUT_FILE="${PWD}/dist/DeeMusiq-windows-x86_64-setup.exe" packaging/windows/installer.nsi
 
 choco:
 			powershell cp dist\DeeMusiq-windows-x86_64-setup.exe choco-struct\tools
@@ -43,6 +38,15 @@ apk:
 
 gensums:
 				sh -c scripts/gensums.sh
+
+# Linux AppImage: build, pack and verify. The script asserts the packed image
+# contains data/flutter_assets + lib/libapp.so and smoke-runs it, so a broken
+# layout fails the build instead of shipping (see scripts/build-linux-appimage.sh).
+appimage:
+				bash scripts/build-linux-appimage.sh
+
+appimage-verify:
+				bash scripts/build-linux-appimage.sh --verify-only ../DeeMusiq-linux-x86_64.AppImage --no-smoke
 
 migrate:
 				dart run drift_dev make-migrations

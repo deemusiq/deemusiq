@@ -61,7 +61,7 @@ class LikedPlaylistPage extends HookConsumerWidget {
                 : () {},
             onFetchAll: showPagination
                 ? () => likedTracksNotifier.fetchAll()
-                : () async => [],
+                : () async => localFavorites.map(_toFullTrack).toList(),
             onRefresh: () async {
               ref.invalidate(metadataPluginSavedTracksProvider);
               ref.invalidate(localFavoritesProvider);

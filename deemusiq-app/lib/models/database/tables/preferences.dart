@@ -102,7 +102,7 @@ class PreferencesTable extends Table {
       systemTitleBar: false,
       skipNonMusic: false,
       closeBehavior: CloseBehavior.close,
-      accentColorScheme: DeeMusiqColor(0xFFFF5722, name: "DeeMusiq Orange"),
+      accentColorScheme: const DeeMusiqColor(0xFFFF5722, name: "DeeMusiq Orange"),
       layoutMode: LayoutMode.adaptive,
       locale: const Locale("system", "system"),
       market: Market.US,

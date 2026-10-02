@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart' as material;
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:flutter_undraw/flutter_undraw.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:collection/collection.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -135,38 +136,62 @@ class UserPlaylistsPage extends HookConsumerWidget {
                 ),
               ),
               const SliverGap(10),
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                sliver: PlaybuttonView(
-                  leading: const Expanded(
-                    child: Row(
+              if (playlists.isEmpty &&
+                  !playlistsQuery.isLoading &&
+                  searchText.value.isNotEmpty)
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  sliver: SliverToBoxAdapter(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      spacing: 10,
                       children: [
-                        PlaylistCreateDialogButton(),
-                        // const Gap(10),
-                        // Button.primary(
-                        //   leading: const Icon(DeeMusiqIcons.magic),
-                        //   child: Text(context.l10n.generate),
-                        //   onPressed: () {
-                        //     context.navigateTo(const PlaylistGeneratorRoute());
-                        //   },
-                        // ),
-                        // const Gap(10),
+                        Undraw(
+                          height: 200 * context.theme.scaling,
+                          illustration: UndrawIllustration.taken,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        Text(
+                          context.l10n.nothing_found,
+                          textAlign: TextAlign.center,
+                        ).muted().small()
                       ],
                     ),
                   ),
-                  controller: controller,
-                  hasMore: playlistsQuery.asData?.value.hasMore == true,
-                  isLoading: playlistsQuery.isLoading,
-                  onRequestMore: playlistsQueryNotifier.fetchMore,
-                  itemCount: playlists.length,
-                  gridItemBuilder: (context, index) {
-                    return PlaylistCard(playlists[index]);
-                  },
-                  listItemBuilder: (context, index) {
-                    return PlaylistCard.tile(playlists[index]);
-                  },
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  sliver: PlaybuttonView(
+                    leading: const Expanded(
+                      child: Row(
+                        children: [
+                          PlaylistCreateDialogButton(),
+                          // const Gap(10),
+                          // Button.primary(
+                          //   leading: const Icon(DeeMusiqIcons.magic),
+                          //   child: Text(context.l10n.generate),
+                          //   onPressed: () {
+                          //     context.navigateTo(const PlaylistGeneratorRoute());
+                          //   },
+                          // ),
+                          // const Gap(10),
+                        ],
+                      ),
+                    ),
+                    controller: controller,
+                    hasMore: playlistsQuery.asData?.value.hasMore == true,
+                    isLoading: playlistsQuery.isLoading,
+                    onRequestMore: playlistsQueryNotifier.fetchMore,
+                    itemCount: playlists.length,
+                    gridItemBuilder: (context, index) {
+                      return PlaylistCard(playlists[index]);
+                    },
+                    listItemBuilder: (context, index) {
+                      return PlaylistCard.tile(playlists[index]);
+                    },
+                  ),
                 ),
-              ),
               const SliverSafeArea(sliver: SliverGap(10)),
             ],
           ),

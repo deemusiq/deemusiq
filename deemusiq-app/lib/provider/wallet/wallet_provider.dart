@@ -24,6 +24,8 @@ class WalletNotifier extends Notifier<WalletState> {
   /// distinguish a backend refusal from a plain insufficient balance.
   String? lastActionError;
 
+  String? get lastSyncError => state.syncError;
+
   @override
   WalletState build() {
     return WalletPersistence.load();
@@ -65,7 +67,11 @@ class WalletNotifier extends Notifier<WalletState> {
       paymentMethod: method,
     );
 
-    await _commit(state.copyWith(transactions: _prepend(tx)));
+    await _commit(state.copyWith(
+      transactions: _prepend(tx),
+      clearAuthoritativeBalance: true,
+      clearSyncError: true,
+    ));
   }
 
   /// One-off promotional credit (e.g. a welcome bonus).
@@ -78,7 +84,11 @@ class WalletNotifier extends Notifier<WalletState> {
       timestamp: DateTime.now().toUtc(),
       description: reason,
     );
-    await _commit(state.copyWith(transactions: _prepend(tx)));
+    await _commit(state.copyWith(
+      transactions: _prepend(tx),
+      clearAuthoritativeBalance: true,
+      clearSyncError: true,
+    ));
   }
 
   /// Pays [tokens] to push a song up the charts. Returns false (no-op) if the
@@ -106,19 +116,18 @@ class WalletNotifier extends Notifier<WalletState> {
     if (WalletApiClient.instance.isConfigured) {
       // Online: the server is the ledger. Only mutate local state after the
       // spend succeeded — an API failure must never debit the wallet here too.
-      if (!await _spendOnline(() => WalletApiClient.instance.pushSong(
-            songId: songId,
-            title: title,
-            artist: artist,
-            artistId: artistId,
-            imageUrl: imageUrl,
-            tokens: tokens,
-          ))) {
-        return false;
-      }
-      // Keep this device's push aggregate for the offline trending view; the
-      // authoritative ledger/creators are pulled from the server below.
+      final balance =
+          await _spendOnline(() => WalletApiClient.instance.pushSong(
+                songId: songId,
+                title: title,
+                artist: artist,
+                artistId: artistId,
+                imageUrl: imageUrl,
+                tokens: tokens,
+              ));
+      if (balance == null) return false;
       await _commit(state.copyWith(
+        authoritativeBalance: balance,
         pushedSongs: _withPushAggregate(
           songId: songId,
           title: title,
@@ -128,6 +137,7 @@ class WalletNotifier extends Notifier<WalletState> {
           tokens: tokens,
           at: now,
         ),
+        clearSyncError: true,
       ));
       await syncFromBackend();
       return true;
@@ -147,6 +157,8 @@ class WalletNotifier extends Notifier<WalletState> {
 
     await _commit(state.copyWith(
       transactions: _prepend(tx),
+      clearAuthoritativeBalance: true,
+      clearSyncError: true,
       pushedSongs: _withPushAggregate(
         songId: songId,
         title: title,
@@ -184,13 +196,17 @@ class WalletNotifier extends Notifier<WalletState> {
     }
 
     if (WalletApiClient.instance.isConfigured) {
-      if (!await _spendOnline(() => WalletApiClient.instance.supportCreator(
-            creatorId: creatorId,
-            name: name,
-            tokens: tokens,
-          ))) {
-        return false;
-      }
+      final balance =
+          await _spendOnline(() => WalletApiClient.instance.supportCreator(
+                creatorId: creatorId,
+                name: name,
+                tokens: tokens,
+              ));
+      if (balance == null) return false;
+      await _commit(state.copyWith(
+        authoritativeBalance: balance,
+        clearSyncError: true,
+      ));
       await syncFromBackend();
       return true;
     }
@@ -208,6 +224,8 @@ class WalletNotifier extends Notifier<WalletState> {
 
     await _commit(state.copyWith(
       transactions: _prepend(tx),
+      clearAuthoritativeBalance: true,
+      clearSyncError: true,
       supportedCreators: _withCreatorContribution(
         creatorId: creatorId,
         name: name,
@@ -220,21 +238,59 @@ class WalletNotifier extends Notifier<WalletState> {
   }
 
   /// Runs one backend spend call; on failure records a friendly reason in
-  /// [lastActionError] and returns false WITHOUT touching local state.
-  Future<bool> _spendOnline(Future<int> Function() spend) async {
+  /// [lastActionError] and returns null WITHOUT touching local state.
+  Future<int?> _spendOnline(Future<int> Function() spend) async {
     try {
-      await spend();
-      return true;
+      return await spend();
     } on WalletApiException catch (e) {
-      lastActionError = e.message == "insufficient_balance"
-          ? "Not enough tokens — your balance may have changed."
-          : e.message;
-      return false;
+      lastActionError = e.friendlyMessage;
+      return null;
     } catch (e, stack) {
       AppLogger.reportError(e, stack);
       lastActionError = "Couldn't reach DeeMusiq — nothing was charged.";
-      return false;
+      return null;
     }
+  }
+
+  /// Polls a payment intent (`GET /payments/:id`) until it settles, then
+  /// re-syncs the wallet so a confirmed top-up updates the balance display
+  /// without a manual refresh. This is the pending→confirmed bridge for both
+  /// crypto deposits (no deep link fires for those) and card checkouts the
+  /// user completed in an external browser without returning via the
+  /// `deemusiq://payments` deep link.
+  ///
+  /// Returns the last observed status: a terminal one ("completed", "failed",
+  /// "expired", "refunded"), "not_found", "error", or "pending" when
+  /// [maxAttempts] ran out first (still-unsettled is NOT an error — crypto
+  /// confirmations can take a while; the webhook credits regardless and the
+  /// next sync picks it up). Sync failures surface through the existing
+  /// `syncError` banner — no separate error channel is introduced here.
+  Future<String> trackPaymentIntent(
+    String intentId, {
+    Duration interval = const Duration(seconds: 4),
+    int maxAttempts = 30,
+  }) async {
+    const terminal = {"completed", "failed", "expired", "refunded"};
+    var last = "pending";
+    for (var attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        final data =
+            await WalletApiClient.instance.fetchPaymentStatus(intentId);
+        last = (data["status"] ?? "pending").toString();
+        if (terminal.contains(last)) break;
+      } on WalletApiException catch (e) {
+        // 404: not this account's intent — no point polling further.
+        if (e.statusCode == 404) return "not_found";
+        // A definitive server answer (4xx/5xx) won't heal by polling.
+        if (!e.isConnectivity) return "error";
+        // Connectivity blip: keep polling until attempts run out.
+      }
+      await Future<void>.delayed(interval);
+    }
+    if (last == "completed") {
+      await syncFromBackend();
+    }
+    return last;
   }
 
   /// The per-song push aggregate with one more push applied.
@@ -355,30 +411,51 @@ class WalletNotifier extends Notifier<WalletState> {
     try {
       final data = await WalletApiClient.instance
           .fetchWallet()
-          .timeout(const Duration(seconds: 8));
+          .timeout(const Duration(seconds: 30));
+      final balanceValue = data["balance"];
+      if (balanceValue is! num) {
+        throw const WalletApiException("invalid_wallet_balance");
+      }
 
-      final txs = (data["transactions"] as List? ?? const [])
-          .map((e) {
+      final historyComplete = data["historyComplete"] != false;
+      final rawHistoryError = data["historyError"];
+      var historyError = rawHistoryError is String ? rawHistoryError : null;
+      var txs = state.transactions;
+      if (historyComplete) {
+        try {
+          txs = (data["transactions"] as List? ?? const []).map((e) {
             final m = Map<String, dynamic>.from(e as Map);
-            // Server fields differ from client model names — remap before
-            // handing off to the code-generated fromJson.
             m["timestamp"] = m["createdAt"] ?? m["timestamp"];
-            m["tokens"] = m["amount"] ?? m["tokens"];
+            m["tokens"] = m["tokens"] ?? m["amount"];
             return TokenTransaction.fromJson(m);
-          })
-          .toList();
+          }).toList();
+        } catch (e) {
+          historyError = "wallet_history_invalid";
+          txs = state.transactions;
+        }
+      } else {
+        historyError ??= "wallet_history_incomplete";
+      }
 
-      final creators = (data["supportedCreators"] as List? ?? const [])
-          .map((e) =>
-              SupportedCreator.fromJson(Map<String, dynamic>.from(e as Map)))
-          .toList();
+      var creators = state.supportedCreators;
+      final rawCreators = data["supportedCreators"];
+      if (rawCreators is List) {
+        try {
+          creators = rawCreators
+              .map((e) => SupportedCreator.fromJson(
+                    Map<String, dynamic>.from(e as Map),
+                  ))
+              .toList();
+        } catch (e) {
+          historyError ??= "wallet_creators_invalid";
+        }
+      }
 
-      // Linked accounts are owned by the backend — pull the authoritative list.
       var accounts = state.linkedAccounts;
       try {
         final raw = await WalletApiClient.instance
             .fetchLinkedAccounts()
-            .timeout(const Duration(seconds: 8));
+            .timeout(const Duration(seconds: 30));
         accounts = raw
             .map((e) =>
                 LinkedAccount.fromJson(Map<String, dynamic>.from(e as Map)))
@@ -391,11 +468,16 @@ class WalletNotifier extends Notifier<WalletState> {
         transactions: txs,
         supportedCreators: creators,
         linkedAccounts: accounts,
+        authoritativeBalance: balanceValue.toInt(),
+        syncError: historyError,
+        clearSyncError: historyError == null,
       ));
     } catch (e, stack) {
-      // Unreachable/slow backend → keep the last known state, but record it so
-      // a persistent sync failure is visible instead of silently stale.
-      AppLogger.reportError(e, stack);
+      final message = e is WalletApiException
+          ? e.friendlyMessage
+          : "Wallet sync failed: ${e.toString()}";
+      await _commit(state.copyWith(syncError: message));
+      AppLogger.reportError(e, stack, 'WalletNotifier.syncFromBackend');
     }
   }
 

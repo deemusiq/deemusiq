@@ -3,6 +3,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:shadcn_flutter/shadcn_flutter_extension.dart';
 
@@ -58,10 +59,19 @@ class UserLocalLibraryPage extends HookConsumerWidget {
 
     // This is just to pre-load the tracks.
     // For now, this gets all of them.
-    ref.watch(localTracksProvider);
+    final tracksSnapshot = ref.watch(localTracksProvider);
+    final documentsDir = useFuture(getApplicationDocumentsDirectory());
+
+    // The app-private documents dir hosts the encrypted (`.deemusiq`)
+    // downloads bucket — surface it as a folder tile only when it actually
+    // holds encrypted downloads, so users without any don't get a dead tile.
+    final encryptedFolder = documentsDir.data?.path;
+    final hasEncryptedDownloads = encryptedFolder != null &&
+        (tracksSnapshot.asData?.value[encryptedFolder]?.isNotEmpty ?? false);
 
     final locations = [
       preferences.downloadLocation,
+      if (hasEncryptedDownloads) encryptedFolder,
       if (cacheDir.hasData) cacheDir.data!,
       ...preferences.localLibraryLocation,
     ];

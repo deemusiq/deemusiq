@@ -27,10 +27,13 @@ class PlayerOverlay extends HookConsumerWidget {
 
     final panelController = ref.watch(playerOverlayControllerProvider);
 
+    // Matches the bottom padding reservation in root_app.dart
+    final collapsedHeight = 63 * Theme.of(context).scaling;
+
     return SlidingUpPanel(
       maxHeight: screenSize.height,
       backdropEnabled: false,
-      minHeight: canShow ? 63 : 0,
+      minHeight: canShow ? collapsedHeight : 0,
       onPanelSlide: (position) {
         final invertedPosition = 1 - position;
         ref.read(navigationPanelHeight.notifier).state = 50 * invertedPosition;
@@ -40,7 +43,7 @@ class PlayerOverlay extends HookConsumerWidget {
       parallaxEnabled: true,
       renderPanelSheet: false,
       header: SizedBox(
-        height: 63,
+        height: collapsedHeight,
         width: screenSize.width,
         child: PlayerOverlayCollapsedSection(panelController: panelController),
       ),

@@ -4,7 +4,14 @@ import 'package:deemusiq/extensions/constrains.dart';
 import 'package:deemusiq/extensions/context.dart';
 
 class ConfirmDownloadDialog extends StatelessWidget {
-  const ConfirmDownloadDialog({super.key});
+  final String? message;
+  final String? acceptLabel;
+
+  const ConfirmDownloadDialog({
+    super.key,
+    this.message,
+    this.acceptLabel,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +40,7 @@ class ConfirmDownloadDialog extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  context.l10n.download_warning,
+                  message ?? context.l10n.download_warning,
                   textAlign: TextAlign.justify,
                 ),
                 const SizedBox(height: 10),
@@ -68,7 +75,7 @@ class ConfirmDownloadDialog extends StatelessWidget {
           ),
           Button.destructive(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(context.l10n.accept),
+            child: Text(acceptLabel ?? context.l10n.accept),
           ),
         ],
       ),

@@ -21,7 +21,7 @@ class LinuxBuildCommand extends Command with BuildCommandCommonSteps {
     stdout.writeln("Replacing versions");
 
     final appDataFile = File(
-      join(cwd.path, "linux", "com.github.KRTirtho.Spotube.appdata.xml"),
+      join(cwd.path, "linux", "com.deemusiq.deemusiq.appdata.xml"),
     );
 
     appDataFile.writeAsStringSync(
@@ -45,7 +45,7 @@ class LinuxBuildCommand extends Command with BuildCommandCommonSteps {
       );
     }
 
-    final tempDir = join(Directory.systemTemp.path, "spotube-tar");
+    final tempDir = join(Directory.systemTemp.path, "deemusiq-tar");
     final bundleArchName = architecture == "x86" ? "x86_64" : "aarch64";
     final bundleDirPath = join(
       cwd.path,
@@ -59,22 +59,22 @@ class LinuxBuildCommand extends Command with BuildCommandCommonSteps {
     final tarFile = File(join(
       cwd.path,
       "dist",
-      "spotube-linux-"
+      "deemusiq-linux-"
           "${CliEnv.channel == BuildChannel.nightly ? "nightly" : versionWithoutBuildNumber}"
           "-$bundleArchName.tar.xz",
     ));
 
     await copyPath(bundleDirPath, tempDir);
-    await File(join(cwd.path, "linux", "spotube.desktop")).copy(
-      join(tempDir, "spotube.desktop"),
+    await File(join(cwd.path, "linux", "deemusiq.desktop")).copy(
+      join(tempDir, "deemusiq.desktop"),
     );
     await File(
-      join(cwd.path, "linux", "com.github.KRTirtho.Spotube.appdata.xml"),
+      join(cwd.path, "linux", "com.deemusiq.deemusiq.appdata.xml"),
     ).copy(
-      join(tempDir, "com.github.KRTirtho.Spotube.appdata.xml"),
+      join(tempDir, "com.deemusiq.deemusiq.appdata.xml"),
     );
-    await File(join(cwd.path, "assets", "branding", "spotube-logo.png")).copy(
-      join(tempDir, "spotube-logo.png"),
+    await File(join(cwd.path, "assets", "branding", "deemusiq-logo.png")).copy(
+      join(tempDir, "deemusiq-logo.png"),
     );
 
     await shell.run(
@@ -86,7 +86,7 @@ class LinuxBuildCommand extends Command with BuildCommandCommonSteps {
         cwd.path,
         "dist",
         pubspec.version.toString(),
-        "spotube-${pubspec.version}-linux.deb",
+        "deemusiq-${pubspec.version}-linux.deb",
       ),
     );
     await ogDeb.copy(
@@ -104,7 +104,7 @@ class LinuxBuildCommand extends Command with BuildCommandCommonSteps {
           cwd.path,
           "dist",
           pubspec.version.toString(),
-          "spotube-${pubspec.version}-linux.rpm",
+          "deemusiq-${pubspec.version}-linux.rpm",
         ),
       );
 
@@ -120,7 +120,7 @@ class LinuxBuildCommand extends Command with BuildCommandCommonSteps {
         cwd.path,
         "dist",
         pubspec.version.toString(),
-        "spotube-${pubspec.version}-linux.AppImage",
+        "deemusiq-${pubspec.version}-linux.AppImage",
       ),
     );
     await ogAppImage.copy(

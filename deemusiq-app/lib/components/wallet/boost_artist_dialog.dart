@@ -6,6 +6,7 @@ import 'package:deemusiq/components/wallet/wallet_common.dart';
 import 'package:deemusiq/provider/wallet/wallet_provider.dart';
 import 'package:deemusiq/services/logger/logger.dart';
 import 'package:deemusiq/services/wallet/wallet_api.dart';
+import 'package:uuid/uuid.dart';
 
 const _boostPresets = [5, 10, 25, 50];
 
@@ -23,8 +24,14 @@ Future<void> showBoostArtistDialog(
     builder: (context) => _BoostDialog(artistName: artistName),
   );
   if (tokens == null) return;
+  // One key per dialog-confirmed boost (backend L2 replay contract): a retry
+  // of THIS attempt replays instead of double-debiting; the next boost the
+  // user explicitly confirms gets a fresh key. Shape matches the backend's
+  // parseIdempotencyKey (/^[A-Za-z0-9_-]{8,64}$/).
+  final idempotencyKey = const Uuid().v4();
   try {
-    await WalletApiClient.instance.boostArtist(artistId: artistId, tokens: tokens);
+    await WalletApiClient.instance
+        .boostArtist(artistId: artistId, tokens: tokens, idempotencyKey: idempotencyKey);
     await ref.read(walletProvider.notifier).syncFromBackend();
     if (context.mounted) {
       showWalletToast(
@@ -35,7 +42,7 @@ Future<void> showBoostArtistDialog(
     }
   } on WalletApiException catch (e) {
     if (context.mounted) {
-      showWalletToast(context, e.message, icon: DeeMusiqIcons.info);
+      showWalletToast(context, e.friendlyMessage, icon: DeeMusiqIcons.info);
     }
   } catch (e, stack) {
     AppLogger.reportError(e, stack, 'boostArtist');
@@ -54,8 +61,8 @@ class _BoostDialog extends HookWidget {
     final amount = useState(_boostPresets[1]);
     return AlertDialog(
       title: Text("Boost $artistName").large(),
-      content: SizedBox(
-        width: 360,
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 360),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,

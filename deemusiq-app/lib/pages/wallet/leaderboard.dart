@@ -56,8 +56,8 @@ class PushLeaderboardPage extends HookConsumerWidget {
     return SafeArea(
       bottom: false,
       child: Scaffold(
-        headers: [
-          TitleBar(title: const Text("Trending pushes")),
+        headers: const [
+          TitleBar(title: Text("Trending pushes")),
         ],
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -127,7 +127,9 @@ class PushLeaderboardPage extends HookConsumerWidget {
             const Text("Couldn't load the board").semiBold(),
             const Gap(4),
             Text(
-              error is WalletApiException ? error.message : error.toString(),
+              error is WalletApiException
+                  ? error.friendlyMessage
+                  : error.toString(),
               textAlign: TextAlign.center,
             ).muted().small(),
             const Gap(12),

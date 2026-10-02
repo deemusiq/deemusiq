@@ -8,14 +8,24 @@ class VolumeProvider extends Notifier<double> {
 
   @override
   build() {
-    audioPlayer.setVolume(KVStoreService.volume);
-    return KVStoreService.volume;
+    final persisted = _sanitize(KVStoreService.volume);
+    audioPlayer.setVolume(persisted);
+    return persisted;
+  }
+
+  /// M6: LAN peers (Connect) can push arbitrary doubles here — clamp to the
+  /// [0, 1] platform range and reject non-finite values before they reach
+  /// the player (mpv would happily amplify >100%) or get persisted.
+  static double _sanitize(double volume) {
+    if (volume.isNaN || volume.isInfinite) return 1.0;
+    return volume.clamp(0.0, 1.0);
   }
 
   Future<void> setVolume(double volume) async {
-    state = volume;
-    await audioPlayer.setVolume(volume);
-    KVStoreService.setVolume(volume);
+    final clamped = _sanitize(volume);
+    state = clamped;
+    await audioPlayer.setVolume(clamped);
+    KVStoreService.setVolume(clamped);
   }
 }
 

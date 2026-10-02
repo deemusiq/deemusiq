@@ -40,6 +40,7 @@ part 'tables/history.dart';
 part 'tables/lyrics.dart';
 part 'tables/metadata_plugins.dart';
 part 'tables/favorites.dart';
+part 'tables/pending_actions.dart';
 
 part 'typeconverters/color.dart';
 part 'typeconverters/locale.dart';
@@ -62,6 +63,7 @@ part 'typeconverters/subtitle.dart';
     LyricsTable,
     PluginsTable,
     FavoritesTable,
+    PendingActionsTable,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -73,7 +75,18 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
+
+  /// Deletes every row in every table (POPIA account deletion), keeping the
+  /// schema and the open connection intact so stream-based providers simply
+  /// re-emit empty results.
+  Future<void> deleteAllData() async {
+    await transaction(() async {
+      for (final table in allTables) {
+        await delete(table).go();
+      }
+    });
+  }
 
   @override
   MigrationStrategy get migration {
@@ -243,9 +256,34 @@ class AppDatabase extends _$AppDatabase {
           await m
               .dropColumn(schema.sourceMatchTable, "source_id")
               .catchError((e, stack) => AppLogger.reportError(e, stack));
+          // The v10 preferences rework replaced the per-source quality/codec
+          // columns with a single audio_source_id. Converge databases upgraded
+          // from <=v9 so the current table definition doesn't reference a
+          // column that was never added (and stale ones never dropped).
+          await m
+              .addColumn(
+                schema.preferencesTable,
+                schema.preferencesTable.audioSourceId,
+              )
+              .catchError((e, stack) => AppLogger.reportError(e, stack));
+          await m
+              .dropColumn(schema.preferencesTable, "audio_quality")
+              .catchError((e, stack) => AppLogger.reportError(e, stack));
+          await m
+              .dropColumn(schema.preferencesTable, "audio_source")
+              .catchError((e, stack) => AppLogger.reportError(e, stack));
+          await m
+              .dropColumn(schema.preferencesTable, "stream_music_codec")
+              .catchError((e, stack) => AppLogger.reportError(e, stack));
+          await m
+              .dropColumn(schema.preferencesTable, "download_music_codec")
+              .catchError((e, stack) => AppLogger.reportError(e, stack));
         },
         from10To11: (m, schema) async {
           await m.createTable(schema.favoritesTable);
+        },
+        from11To12: (m, schema) async {
+          await m.createTable(schema.pendingActionsTable);
         },
       ),
     );

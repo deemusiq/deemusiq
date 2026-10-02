@@ -1,6 +1,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
+import 'package:shadcn_flutter/shadcn_flutter_extension.dart';
 import 'package:deemusiq/collections/routes.gr.dart';
 import 'package:deemusiq/components/fallbacks/error_box.dart';
 import 'package:deemusiq/components/fallbacks/no_default_metadata_plugin.dart';
@@ -20,6 +21,7 @@ class HomePageBrowseSection extends HookConsumerWidget {
     final browseSections = ref.watch(metadataPluginBrowseSectionsProvider);
     final sections = browseSections.asData?.value.items;
     final ThemeData(:colorScheme) = Theme.of(context);
+    final scale = context.theme.scaling;
 
     if (browseSections.isLoading) {
       return SliverToBoxAdapter(
@@ -28,7 +30,7 @@ class HomePageBrowseSection extends HookConsumerWidget {
           spacing: 16,
           children: [
             Undraw(
-              height: 200,
+              height: 200 * scale,
               illustration: UndrawIllustration.process,
               color: colorScheme.primary,
             ),
@@ -69,6 +71,30 @@ class HomePageBrowseSection extends HookConsumerWidget {
             onRetry: () {
               ref.invalidate(metadataPluginBrowseSectionsProvider);
             },
+          ),
+        ),
+      );
+    }
+
+    // A successful fetch with zero sections used to leave Home silently
+    // blank — mirror the illustration + muted label empty states elsewhere.
+    if (sections != null && sections.isEmpty) {
+      return SliverFillRemaining(
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 10,
+            children: [
+              Undraw(
+                height: 200 * scale,
+                illustration: UndrawIllustration.taken,
+                color: colorScheme.primary,
+              ),
+              Text(
+                context.l10n.nothing_found,
+                textAlign: TextAlign.center,
+              ).muted().small(),
+            ],
           ),
         ),
       );

@@ -1,7 +1,9 @@
 import 'dart:convert';
 
 import 'package:collection/collection.dart';
+import 'package:deemusiq/services/youtube_engine/direct_ytdlp_engine.dart';
 import 'package:deemusiq/services/youtube_engine/youtube_engine.dart';
+import 'package:deemusiq/services/youtube_engine/yt_dlp_provisioner.dart';
 import 'package:deemusiq/services/logger/logger.dart';
 import 'package:deemusiq/utils/platform.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
@@ -14,18 +16,24 @@ class YtDlpEngine implements YouTubeEngine {
     final audioOnlyStreams = formats
         .where((f) => f is Map && f["resolution"] == "audio only")
         .sorted((a, b) {
-          final aq = a["quality"] ?? 0;
-          final bq = b["quality"] ?? 0;
-          return (aq is num ? aq.toInt() : 0) > (bq is num ? bq.toInt() : 0) ? 1 : -1;
-        })
-        .map((f) {
+      final aq = a["quality"] ?? 0;
+      final bq = b["quality"] ?? 0;
+      return (aq is num ? aq.toInt() : 0) > (bq is num ? bq.toInt() : 0)
+          ? 1
+          : -1;
+    }).map((f) {
       final urlStr = f["url"] as String?;
       if (urlStr == null || urlStr.isEmpty) return null;
       final filesize = f["filesize"] ?? f["filesize_approx"];
-      final containerRaw = (f["container"] as String?)?.replaceAll("_dash", "").replaceAll("m4a", "mp4");
-      final containerStr = containerRaw ?? (f["protocol"] == "m3u8_native" ? "m3u8" : "mp4");
+      final containerRaw = (f["container"] as String?)
+          ?.replaceAll("_dash", "")
+          .replaceAll("m4a", "mp4");
+      final containerStr =
+          containerRaw ?? (f["protocol"] == "m3u8_native" ? "m3u8" : "mp4");
       final abrRaw = f["abr"] ?? f["tbr"] ?? 0;
-      final abr = (abrRaw is num) ? abrRaw.toInt() : (int.tryParse(abrRaw.toString()) ?? 0);
+      final abr = (abrRaw is num)
+          ? abrRaw.toInt()
+          : (int.tryParse(abrRaw.toString()) ?? 0);
       final audioExt = f["audio_ext"] as String? ?? "mp4";
       final codec = f["acodec"] as String? ?? "aac";
       return AudioOnlyStreamInfo(
@@ -65,8 +73,9 @@ class YtDlpEngine implements YouTubeEngine {
       } else {
         publishDate = DateTime.now();
       }
-    } catch (_) {
-      AppLogger.log.w('YtDlpEngine: failed to parse upload_date: ${info["upload_date"]}');
+    } catch (e) {
+      AppLogger.log.w(
+          'YtDlpEngine: failed to parse upload_date "${info["upload_date"]}": ${e.toString()}');
       publishDate = DateTime.now();
     }
 
@@ -98,11 +107,29 @@ class YtDlpEngine implements YouTubeEngine {
   @override
   Future<bool> isInstalled() async {
     return isAvailableForPlatform &&
-        await YtDlp.instance.checkAvailableInPath();
+        (await const YtDlpBinaryPolicy().resolve()).isApproved;
   }
+
+  /// Ensures a usable yt-dlp before any extraction: an installed/self-managed
+  /// binary is reused, otherwise the official latest release is downloaded and
+  /// verified on the spot (see `YtDlpProvisioner`).
+  Future<void> _ensureBinary() async {
+    final resolution = await YtDlpProvisioner.instance.resolveOrInstall();
+    if (!resolution.isApproved) {
+      throw StateError(resolution.error ?? 'yt-dlp is unavailable');
+    }
+    YtDlpBinaryPolicy.approvedPath = resolution.path;
+    if (_activeBinary == resolution.path) return;
+    await YtDlp.instance.setBinaryLocation(resolution.path!);
+    _activeBinary = resolution.path;
+  }
+
+  /// Last path handed to `yt_dlp_dart`, so we only touch it when it changes.
+  static String? _activeBinary;
 
   @override
   Future<StreamManifest> getStreamManifest(String videoId) async {
+    await _ensureBinary();
     try {
       final result = await YtDlp.instance.extractInfo(
         "https://www.youtube.com/watch?v=$videoId",
@@ -120,6 +147,7 @@ class YtDlpEngine implements YouTubeEngine {
 
   @override
   Future<Video> getVideo(String videoId) async {
+    await _ensureBinary();
     try {
       final result = await YtDlp.instance.extractInfo(
         "https://www.youtube.com/watch?v=$videoId",
@@ -137,6 +165,7 @@ class YtDlpEngine implements YouTubeEngine {
 
   @override
   Future<(Video, StreamManifest)> getVideoWithStreamInfo(String videoId) async {
+    await _ensureBinary();
     try {
       final result = await YtDlp.instance.extractInfo(
         "https://www.youtube.com/watch?v=$videoId",
@@ -146,12 +175,14 @@ class YtDlpEngine implements YouTubeEngine {
       if (result is Map<String, dynamic>) {
         final video = _parseInfo(result);
         final fmts = result["formats"];
-        final manifest = _parseFormats(fmts is List ? fmts : <dynamic>[], videoId);
+        final manifest =
+            _parseFormats(fmts is List ? fmts : <dynamic>[], videoId);
         return (video, manifest);
       }
       throw Exception('yt-dlp returned unexpected type: ${result.runtimeType}');
     } catch (e, stack) {
-      AppLogger.log.w('YtDlpEngine: getVideoWithStream failed for $videoId: $e');
+      AppLogger.log
+          .w('YtDlpEngine: getVideoWithStream failed for $videoId: $e');
       AppLogger.reportError(e, stack);
       rethrow;
     }
@@ -159,6 +190,7 @@ class YtDlpEngine implements YouTubeEngine {
 
   @override
   Future<List<Video>> searchVideos(String query) async {
+    await _ensureBinary();
     try {
       final sanitized = query.replaceAll('\n', ' ').replaceAll('\r', '').trim();
       if (sanitized.isEmpty) return <Video>[];
@@ -197,23 +229,30 @@ class YtDlpEngine implements YouTubeEngine {
   }
 
   static const _ytDlpArgs = [
-    "--no-check-certificate",
+    "--no-update",
+    "--ignore-config",
+    "--no-config-locations",
+    "--no-remote-components",
     "--quiet",
     "--ignore-errors",
-    "--remote-components",
-    "ejs:github",
   ];
 
   static const _searchArgs = [
     "--skip-download",
-    "--no-check-certificate",
+    "--no-update",
+    "--ignore-config",
+    "--no-config-locations",
+    "--no-remote-components",
     "--quiet",
     "--ignore-errors",
     "--flat-playlist",
     "--no-playlist",
-    "--remote-components",
-    "ejs:github",
   ];
+
+  @override
+  /// Channel lookups are only supported by the explode engine.
+  @override
+  Future<Channel?> resolveChannel(String idOrName) => Future.value(null);
 
   @override
   void dispose() {}

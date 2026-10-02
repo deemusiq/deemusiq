@@ -43,5 +43,9 @@ analyzer:
     - ios/**
     - web/**
     - windows/**
+    # Vendored fork of youtube_explode_dart — its own test/bin tool dirs
+    # reference dev dependencies this app doesn't have.
+    - packages/youtube_explode_dart/test/**
+    - packages/youtube_explode_dart/bin/**
     - macos/**
     - linux/**

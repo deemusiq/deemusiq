@@ -5,12 +5,16 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:shadcn_flutter/shadcn_flutter_extension.dart';
 import 'package:deemusiq/hooks/configurators/use_check_yt_dlp_installed.dart';
+import 'package:deemusiq/extensions/constrains.dart';
+import 'package:deemusiq/models/database/database.dart';
 import 'package:deemusiq/modules/root/deemusiq_navigation_bar.dart';
 import 'package:deemusiq/modules/root/bottom_player.dart';
 import 'package:deemusiq/modules/root/sidebar/sidebar.dart';
 import 'package:deemusiq/hooks/configurators/use_endless_playback.dart';
 import 'package:deemusiq/modules/root/use_global_subscriptions.dart';
+import 'package:deemusiq/provider/audio_player/audio_player.dart';
 import 'package:deemusiq/provider/glance/glance.dart';
+import 'package:deemusiq/provider/user_preferences/user_preferences_provider.dart';
 
 @RoutePage()
 class RootAppPage extends HookConsumerWidget {
@@ -52,11 +56,28 @@ class RootAppPage extends HookConsumerWidget {
           floatingFooter: true,
           child: Sidebar(
             child: Builder(builder: (context) {
-              // Dynamically account for bottom player (63px collapsed) +
-              // navigation bar (50px animated) so content never hides behind them.
-              final navHeight = ref.watch(navigationPanelHeight);
-              final playerHeight = 63.0; // PlayerOverlay collapsed minHeight
-              final bottomPadding = (playerHeight + navHeight) * context.theme.scaling;
+              // Reserve exactly what the floating footers occupy so content
+              // never hides behind them. Compact chrome = collapsed
+              // PlayerOverlay (63, but 0 tall when no track is active) +
+              // navigation bar; desktop chrome = tall player card and no
+              // navigation bar. Must mirror the chrome decision in
+              // bottom_player.dart.
+              final layoutMode = ref.watch(
+                userPreferencesProvider.select((s) => s.layoutMode),
+              );
+              final compactChrome = layoutMode == LayoutMode.compact ||
+                  (MediaQuery.sizeOf(context).mdAndDown &&
+                      layoutMode == LayoutMode.adaptive);
+              final hasActiveTrack = ref.watch(
+                audioPlayerProvider.select((s) => s.activeTrack != null),
+              );
+              final navHeight =
+                  compactChrome ? ref.watch(navigationPanelHeight) : 0.0;
+              final playerHeight = compactChrome
+                  ? (hasActiveTrack ? 63.0 : 0.0)
+                  : 104.0;
+              final bottomPadding =
+                  (playerHeight + navHeight) * context.theme.scaling;
               return MediaQuery(
                 data: MediaQuery.of(context).copyWith(
                   padding: MediaQuery.paddingOf(context)

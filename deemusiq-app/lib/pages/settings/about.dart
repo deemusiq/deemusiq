@@ -68,7 +68,7 @@ class AboutDeeMusiqPage extends HookConsumerWidget {
                               TableCell(
                                 child: Hyperlink(
                                   "Spotube by KRTirtho",
-                                  "https://github.com/KRTirtho/spotube",
+                                  "https://github.com/team-spotube/spotube",
                                 ),
                               )
                             ],
@@ -103,8 +103,8 @@ class AboutDeeMusiqPage extends HookConsumerWidget {
                               colon,
                               TableCell(
                                 child: Hyperlink(
-                                  "deemusiq.github.io/deemusiq",
-                                  "https://deemusiq.github.io/deemusiq/",
+                                  "deemusiq.co.za",
+                                  "https://deemusiq.co.za/",
                                 ),
                               ),
                             ],
@@ -115,8 +115,8 @@ class AboutDeeMusiqPage extends HookConsumerWidget {
                               colon,
                               const TableCell(
                                 child: Hyperlink(
-                                  "github.com/deemusiq/deemusiq",
-                                  "https://github.com/deemusiq/deemusiq",
+                                  "deemusiq.co.za",
+                                  "https://deemusiq.co.za/",
                                 ),
                               ),
                             ],
@@ -128,7 +128,7 @@ class AboutDeeMusiqPage extends HookConsumerWidget {
                               const TableCell(
                                 child: Hyperlink(
                                   "BSD-4-Clause",
-                                  "https://raw.githubusercontent.com/deemusiq/deemusiq/main/deemusiq-app/LICENSE",
+                                  "https://deemusiq.co.za/license",
                                 ),
                               ),
                             ],
@@ -139,8 +139,8 @@ class AboutDeeMusiqPage extends HookConsumerWidget {
                               colon,
                               const TableCell(
                                 child: Hyperlink(
-                                  "GitHub Issues",
-                                  "https://github.com/deemusiq/deemusiq/issues",
+                                  "Support",
+                                  "mailto:deemusiq@protonmail.com",
                                 ),
                               ),
                             ],

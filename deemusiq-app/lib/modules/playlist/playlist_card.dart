@@ -9,6 +9,7 @@ import 'package:deemusiq/components/playbutton_view/playbutton_tile.dart';
 import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/models/connect/connect.dart';
 import 'package:deemusiq/models/metadata/metadata.dart';
+import 'package:deemusiq/modules/album/album_card.dart';
 import 'package:deemusiq/provider/audio_player/querying_track_info.dart';
 import 'package:deemusiq/provider/connect/connect.dart';
 import 'package:deemusiq/provider/history/history.dart';
@@ -87,9 +88,19 @@ class PlaylistCard extends HookConsumerWidget {
           return audioPlayer.resume();
         }
 
-        final fetchedInitialTracks = await fetchInitialTracks();
+        final List<DeeMusiqTrackObject> fetchedInitialTracks;
+        try {
+          fetchedInitialTracks = await fetchInitialTracks();
+        } catch (_) {
+          if (context.mounted) showListLoadFailureToast(context);
+          return;
+        }
 
-        if (fetchedInitialTracks.isEmpty || !context.mounted) return;
+        if (!context.mounted) return;
+        if (fetchedInitialTracks.isEmpty) {
+          showListLoadFailureToast(context);
+          return;
+        }
 
         final isRemoteDevice = await showSelectDeviceDialog(context, ref);
         if (isRemoteDevice == null) return;

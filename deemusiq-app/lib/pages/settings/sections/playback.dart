@@ -15,7 +15,9 @@ import 'package:deemusiq/modules/settings/playback/edit_connect_port_dialog.dart
 import 'package:deemusiq/modules/settings/section_card_with_heading.dart';
 import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/modules/settings/youtube_engine_not_installed_dialog.dart';
+import 'package:deemusiq/modules/settings/yt_dlp_install_dialog.dart';
 import 'package:deemusiq/provider/metadata_plugin/audio_source/quality_presets.dart';
+import 'package:deemusiq/provider/server/routes/connect.dart';
 import 'package:deemusiq/provider/user_preferences/user_preferences_provider.dart';
 import 'package:deemusiq/services/kv_store/kv_store.dart';
 import 'package:deemusiq/services/youtube_engine/yt_dlp_engine.dart';
@@ -55,15 +57,24 @@ class SettingsPlaybackSection extends HookConsumerWidget {
             if (value == null) return;
             if (value == YoutubeClientEngine.ytDlp) {
               final customPath = KVStoreService.getYoutubeEnginePath(value);
-              if (!await YtDlpEngine().isInstalled() &&
-                  (customPath == null || !await File(customPath).exists()) &&
+              var storedPathMissing = false;
+              if (customPath != null && customPath.trim().isNotEmpty) {
+                storedPathMissing = !(await File(customPath.trim()).exists());
+              }
+              if ((!await YtDlpEngine().isInstalled() || storedPathMissing) &&
                   context.mounted) {
-                final hasInstalled = await showDialog<bool>(
-                  context: context,
-                  builder: (context) =>
-                      YouTubeEngineNotInstalledDialog(engine: value),
-                );
-                if (hasInstalled != true) return;
+                // Install the official release automatically; the manual dialog
+                // is only a fallback when that cannot be done.
+                final resolution = await showYtDlpInstallDialog(context);
+                if (!(resolution?.isApproved ?? false)) {
+                  if (!context.mounted) return;
+                  final hasInstalled = await showDialog<bool>(
+                    context: context,
+                    builder: (context) =>
+                        YouTubeEngineNotInstalledDialog(engine: value),
+                  );
+                  if (hasInstalled != true) return;
+                }
               }
             }
             preferencesNotifier.setYoutubeClientEngine(value);
@@ -71,7 +82,7 @@ class SettingsPlaybackSection extends HookConsumerWidget {
         ),
         AdaptiveSelectTile<YouTubeAudioQuality>(
           secondary: const Icon(DeeMusiqIcons.audioQuality),
-          title: Text('YouTube Audio Quality'),
+          title: const Text('YouTube Audio Quality'),
           value: youtubeQuality.value,
           options: YouTubeAudioQuality.values
               .map((q) => SelectItemButton(
@@ -134,7 +145,7 @@ class SettingsPlaybackSection extends HookConsumerWidget {
           AdaptiveSelectTile(
             secondary: const Icon(DeeMusiqIcons.audioQuality),
             title: Text(context.l10n.download_music_quality),
-            value: sourcePresets.selectedStreamingQualityIndex,
+            value: sourcePresets.selectedDownloadingQualityIndex,
             options: [
               for (final MapEntry(:key, value: quality) in sourcePresets
                   .presets[sourcePresets.selectedDownloadingContainerIndex]
@@ -145,7 +156,7 @@ class SettingsPlaybackSection extends HookConsumerWidget {
             ],
             onChanged: (value) {
               if (value == null) return;
-              sourcePresetsNotifier.setSelectedStreamingQualityIndex(value);
+              sourcePresetsNotifier.setSelectedDownloadingQualityIndex(value);
             },
           ),
         ],
@@ -231,6 +242,65 @@ class SettingsPlaybackSection extends HookConsumerWidget {
             ],
           ),
         ),
+        // M5: revocation path for granted pairings (pairing allowlist + the
+        // per-pairing HTTP tokens minted on approval).
+        if (preferences.enableConnect) const _PairedDevicesTile(),
+      ],
+    );
+  }
+}
+
+/// Lists the currently paired Connect origins with per-origin revoke plus a
+/// "forget all" action (M5). The allowlist is in-memory with a 24 h TTL on
+/// the server side, so this is a session-scoped revocation surface.
+class _PairedDevicesTile extends ConsumerWidget {
+  const _PairedDevicesTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(pairedDevicesRevisionProvider);
+    final routes = ref.watch(serverConnectRoutesProvider);
+    final paired = routes.pairedOrigins;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Divider(),
+        ListTile(
+          leading: const Icon(DeeMusiqIcons.connect),
+          title: const Text("Paired devices"),
+          subtitle: Text(
+            paired.isEmpty
+                ? "No devices paired. Approving a Connect request pairs it."
+                : "${paired.length} paired — revoking also drops its HTTP access token.",
+          ),
+          trailing: paired.isEmpty
+              ? null
+              : Tooltip(
+                  tooltip: const TooltipContainer(
+                    child: Text("Revoke all pairings"),
+                  ).call,
+                  child: IconButton.secondary(
+                    icon: const Icon(DeeMusiqIcons.delete),
+                    onPressed: routes.revokeAllPairings,
+                  ),
+                ),
+        ),
+        for (final origin in paired)
+          ListTile(
+            dense: true,
+            leading: const Icon(DeeMusiqIcons.device, size: 18),
+            title: Text(origin).small(),
+            trailing: Tooltip(
+              tooltip: const TooltipContainer(
+                child: Text("Revoke pairing"),
+              ).call,
+              child: IconButton.ghost(
+                icon: const Icon(DeeMusiqIcons.close, size: 16),
+                onPressed: () => routes.revokePairing(origin),
+              ),
+            ),
+          ),
       ],
     );
   }

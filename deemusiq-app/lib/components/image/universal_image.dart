@@ -10,18 +10,27 @@ import 'package:deemusiq/collections/assets.gen.dart';
 
 /// Configured cache manager with reasonable size limits for album art.
 /// Defaults: max 200 files, max 100MB total cache, stale period 30 days.
+/// Mixes in [ImageCacheManager] so the maxWidth/maxHeight passed to
+/// [CachedNetworkImageProvider] actually resize instead of tripping the
+/// "cacheManager is ImageCacheManager || (maxWidth == null && maxHeight == null)"
+/// assertion in cached_network_image.
+class _ResizingCacheManager extends CacheManager with ImageCacheManager {
+  _ResizingCacheManager()
+      : super(
+          Config(
+            'album_art_cache',
+            stalePeriod: const Duration(days: 30),
+            maxNrOfCacheObjects: 200,
+            repo: JsonCacheInfoRepository(databaseName: 'album_art_cache'),
+            fileService: HttpFileService(),
+          ),
+        );
+}
+
 class AlbumArtCacheManager {
   static CacheManager? _instance;
   static CacheManager get instance {
-    _instance ??= CacheManager(
-      Config(
-        'album_art_cache',
-        stalePeriod: const Duration(days: 30),
-        maxNrOfCacheObjects: 200,
-        repo: JsonCacheInfoRepository(databaseName: 'album_art_cache'),
-        fileService: HttpFileService(),
-      ),
-    );
+    _instance ??= _ResizingCacheManager();
     return _instance!;
   }
 }

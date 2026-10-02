@@ -7,6 +7,7 @@ import 'package:dio/dio.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:metadata_god/metadata_god.dart';
 import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart' hide join;
 import 'package:deemusiq/collections/routes.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
@@ -16,8 +17,8 @@ import 'package:deemusiq/extensions/dio.dart';
 import 'package:deemusiq/models/metadata/metadata.dart';
 import 'package:deemusiq/provider/metadata_plugin/audio_source/quality_presets.dart';
 import 'package:deemusiq/provider/server/sourced_track_provider.dart';
-import 'package:deemusiq/provider/user_preferences/user_preferences_provider.dart';
 import 'package:deemusiq/services/logger/logger.dart';
+import 'package:deemusiq/services/offline_drm/offline_drm.dart';
 import 'package:deemusiq/services/wallet/wallet_api.dart';
 import 'package:deemusiq/utils/service_utils.dart';
 
@@ -96,6 +97,9 @@ class DownloadManagerNotifier extends Notifier<List<DownloadTask>> {
     // (it authorises the catalog). When it can't be reached the app stays
     // playable for already-downloaded songs, but no NEW downloads start.
     _guardedEnqueue(() {
+      // Re-checked after the async gate: the track may have been queued while
+      // the backend ping was in flight (TOCTOU).
+      if (state.any((element) => element.track.id == track.id)) return;
       state = [
         ...state,
         DownloadTask(
@@ -114,16 +118,27 @@ class DownloadManagerNotifier extends Notifier<List<DownloadTask>> {
   void addAllToQueue(List<DeeMusiqFullTrackObject> tracks) {
     if (tracks.isEmpty) return;
     _guardedEnqueue(() {
+      // Filter after the async gate (TOCTOU): skip tracks already
+      // queued/downloading and duplicates within the batch itself.
+      final seen = <String>{};
+      final fresh = tracks
+          .where(
+            (track) =>
+                seen.add(track.id) &&
+                !state.any((element) => element.track.id == track.id),
+          )
+          .toList();
+      if (fresh.isEmpty) return;
       state = [
         ...state,
-        ...tracks.map((e) => DownloadTask(
+        ...fresh.map((e) => DownloadTask(
               track: e,
               status: DownloadStatus.queued,
               cancelToken: CancelToken(),
             )),
       ];
 
-      ref.read(sourcedTrackProvider(tracks.first));
+      ref.read(sourcedTrackProvider(fresh.first));
       _startDownloading(); // No await should be invoked to avoid stuck UI
     });
   }
@@ -157,7 +172,17 @@ class DownloadManagerNotifier extends Notifier<List<DownloadTask>> {
   void retry(DeeMusiqFullTrackObject track) {
     if (state.firstWhereOrNull((e) => e.track.id == track.id)?.status
         case DownloadStatus.canceled || DownloadStatus.failed) {
-      _setStatus(track, DownloadStatus.queued);
+      // A canceled task's CancelToken is spent — mint a fresh one or
+      // _downloadTrack would instantly re-cancel at its first guard.
+      state = state.map((e) {
+        if (e.track.id == track.id) {
+          return e.copyWith(
+            status: DownloadStatus.queued,
+            cancelToken: CancelToken(),
+          );
+        }
+        return e;
+      }).toList();
       _startDownloading(); // No await should be invoked to avoid stuck UI
     }
   }
@@ -220,17 +245,21 @@ class DownloadManagerNotifier extends Notifier<List<DownloadTask>> {
   }
 
   Future<void> _downloadTrack(DownloadTask task) async {
+    File? stagingFile;
     try {
+      if (task.cancelToken.isCancelled) {
+        _setStatus(task.track, DownloadStatus.canceled);
+        return;
+      }
       _setStatus(task.track, DownloadStatus.downloading);
       final track = await ref.read(sourcedTrackProvider(task.track).future);
       if (task.cancelToken.isCancelled) {
         _setStatus(task.track, DownloadStatus.canceled);
+        return;
       }
       final presets = ref.read(audioSourcePresetsProvider);
       final container =
           presets.presets[presets.selectedDownloadingContainerIndex];
-      final downloadLocation = ref.read(
-          userPreferencesProvider.select((value) => value.downloadLocation));
 
       final url = track.getUrlOfQuality(
         container,
@@ -241,30 +270,43 @@ class DownloadManagerNotifier extends Notifier<List<DownloadTask>> {
         throw Exception("No download URL found for selected codec");
       }
 
-      final savePath = join(
-        downloadLocation,
-        ServiceUtils.sanitizeFilename(
-          "${track.query.name} - ${track.query.artists.map((e) => e.name).join(", ")}.${container.getFileExtension()}",
-        ),
+      final fileName = ServiceUtils.sanitizeFilename(
+        "${track.query.name} - ${track.query.artists.map((e) => e.name).join(", ")}.${container.getFileExtension()}",
       );
 
-      final savePathFile = File(savePath);
-      if (await savePathFile.exists()) {
-        // dio automatically replaces the file if it exists so no deletion required
+      // Downloads are DRM-protected at rest (offline DRM, C1): the encrypted
+      // `.deemusiq` file lives in the app-private documents directory and is
+      // only decryptable in-app (license-gated). Plaintext exists only
+      // transiently in a dot-prefixed staging file inside the same private
+      // directory and is deleted right after encryption — nothing is written
+      // to public/shared storage. The user-facing "download location" folder
+      // keeps working as before for pre-existing plaintext downloads and
+      // imported audio (the local library scanner still reads it).
+      final drm = OfflineTrackEncryption.instance;
+      final encryptedPath = await drm.encryptedPathFor(fileName);
+      if (await File(encryptedPath).exists()) {
         if (!await _shouldReplaceFileOnExist(task)) {
-          _setStatus(track.query, DownloadStatus.completed);
+          _setStatus(track.query, DownloadStatus.canceled);
           return;
         }
       }
 
+      final documentsDir = await getApplicationDocumentsDirectory();
+      stagingFile = File(
+        _resolveSavePath(
+          documentsDir.path,
+          '.dl-${DateTime.now().microsecondsSinceEpoch}-$fileName',
+        ),
+      );
+
       final response = await dio.chunkDownload(
         url,
-        savePath,
+        stagingFile.path,
         cancelToken: task.cancelToken,
         onReceiveProgress: (count, total) {
-          if (task.totalSizeBytes == null) {
+          if (total > 0) {
             state = state.map((e) {
-              if (e.track.id == track.query.id) {
+              if (e.track.id == track.query.id && e.totalSizeBytes == null) {
                 return e.copyWith(totalSizeBytes: total);
               }
               return e;
@@ -275,64 +317,157 @@ class DownloadManagerNotifier extends Notifier<List<DownloadTask>> {
         deleteOnError: true,
         fileAccessMode: FileAccessMode.write,
       );
-      if (response.statusCode != null && response.statusCode! < 400) {
-        _setStatus(track.query, DownloadStatus.completed);
+      await _verifyDownloadedFile(stagingFile, response);
 
-        final downloadedBytes = await savePathFile.readAsBytes();
-        final digest = sha256.convert(downloadedBytes);
-        final actualHash = digest.toString();
-
-        final expectedHash = response.headers.value('x-content-sha256');
-        if (expectedHash != null && actualHash != expectedHash) {
-          await savePathFile.delete();
-          _setStatus(track.query, DownloadStatus.failed);
-          AppLogger.log.w(
-            'Download hash mismatch for ${task.track.name}: '
-            'expected $expectedHash, got $actualHash',
+      if (container.getFileExtension() != "weba") {
+        // Tag the plaintext staging file BEFORE encryption so the decrypted
+        // stream a player gets is a fully-tagged audio file.
+        try {
+          final imageBytes = await ServiceUtils.downloadImage(
+            (task.track.album.images).asUrlString(
+              placeholder: ImagePlaceholder.albumArt,
+              index: 1,
+            ),
           );
-          return;
+          await MetadataGod.writeMetadata(
+            file: stagingFile.path,
+            metadata: task.track.toMetadata(
+              fileLength: await stagingFile.length(),
+              imageBytes: imageBytes,
+            ),
+          );
+        } catch (error, stack) {
+          AppLogger.reportError(error, stack);
         }
-      } else {
-        _setStatus(track.query, DownloadStatus.failed);
-        return;
       }
 
-      if (container.getFileExtension() == "weba") return;
-
-      final imageBytes = await ServiceUtils.downloadImage(
-        (task.track.album.images).asUrlString(
-          placeholder: ImagePlaceholder.albumArt,
-          index: 1,
-        ),
+      final encrypted = await drm.encryptAndSave(
+        await stagingFile.readAsBytes(),
+        fileName,
       );
-      await MetadataGod.writeMetadata(
-        file: savePath,
-        metadata: task.track.toMetadata(
-          fileLength: await savePathFile.length(),
-          imageBytes: imageBytes,
-        ),
-      );
+      AppLogger.log.i('Download stored encrypted: $encrypted');
+      _setStatus(track.query, DownloadStatus.completed);
     } catch (e, stack) {
-      if (e is! DioException || e.type != DioExceptionType.cancel) {
-        _setStatus(task.track, DownloadStatus.failed);
-        AppLogger.reportError(e, stack);
+      if (task.cancelToken.isCancelled ||
+          e is DioException && e.type == DioExceptionType.cancel) {
+        _setStatus(task.track, DownloadStatus.canceled);
+        return;
+      }
+      _setStatus(task.track, DownloadStatus.failed);
+      AppLogger.reportError(e, stack);
+    } finally {
+      if (stagingFile != null) {
+        try {
+          if (await stagingFile.exists()) await stagingFile.delete();
+        } catch (_) {}
       }
     }
   }
 
-  Future<void> _startDownloading() async {
-    for (final task in state) {
-      if (task.status == DownloadStatus.downloading) return;
+  /// Resolves [downloadLocation] + [fileName] into a canonical path that is
+  /// guaranteed to stay inside the download directory: an empty/whitespace
+  /// base or a per-track filename with `..` (or otherwise escaping) segments
+  /// must never write outside it.
+  static String _resolveSavePath(String downloadLocation, String fileName) {
+    final trimmed = downloadLocation.trim();
+    if (trimmed.isEmpty) {
+      throw StateError('Download location is empty');
+    }
+    if (fileName.trim().isEmpty) {
+      throw StateError('Download file name is empty');
+    }
+    final basePath = normalize(absolute(trimmed));
+    final filePath = normalize(join(basePath, fileName));
+    if (!isWithin(basePath, filePath)) {
+      throw StateError(
+        'Download path escapes the download directory: $fileName',
+      );
+    }
+    return filePath;
+  }
 
-      if (task.status == DownloadStatus.queued) {
-        try {
-          await _downloadTrack(task);
-        } finally {
-          // After completion, check for more queued tasks
-          // Ignore errors of the prior task to allow next task to complete
-          await _startDownloading();
+  /// Post-download sanity checks. Length/hash are compared against the
+  /// ORIGIN-declared validators (`x-origin-content-length` /
+  /// `x-origin-sha256`) that `chunkDownload` captured from the server's
+  /// probe/GET responses — NOT against the file's own recomputed values,
+  /// which would be a tautology. When the origin sent no validators the
+  /// comparison is skipped (chunkDownload already verified what it could).
+  Future<void> _verifyDownloadedFile(
+    File file,
+    Response response,
+  ) async {
+    final status = response.statusCode;
+    if (status == null || status < 200 || status >= 300) {
+      throw StateError('Download returned status ${status ?? 'null'}');
+    }
+    if (!await file.exists()) {
+      throw StateError('Download did not create ${file.path}');
+    }
+    final length = await file.length();
+    if (length <= 0) {
+      throw StateError('Download created an empty file');
+    }
+    final originLengthHeader = response.headers.value('x-origin-content-length');
+    final declaredLength = int.tryParse(originLengthHeader?.trim() ?? '');
+    if (originLengthHeader != null &&
+        (declaredLength == null || declaredLength != length)) {
+      throw StateError(
+        'Download length mismatch: expected $declaredLength, got $length',
+      );
+    }
+    final digest = await sha256.bind(file.openRead()).first;
+    final actualHash = digest.toString();
+    final expectedHash =
+        normalizeSha256(response.headers.value('x-origin-sha256'));
+    if (expectedHash != null && actualHash != expectedHash) {
+      throw StateError(
+        'Download hash mismatch: expected $expectedHash, got $actualHash',
+      );
+    }
+  }
+
+  /// Max downloads in flight at once. Queue order is preserved; only this
+  /// many tasks run concurrently so bulk adds don't take forever serially
+  /// while still avoiding a connection storm.
+  static const int _maxConcurrentDownloads = 3;
+  bool _pumping = false;
+
+  Future<void> _startDownloading() async {
+    if (_pumping) return;
+    _pumping = true;
+    try {
+      while (true) {
+        final active =
+            state.where((t) => t.status == DownloadStatus.downloading).length;
+        if (active >= _maxConcurrentDownloads) break;
+
+        DownloadTask? next;
+        for (final task in state) {
+          if (task.status == DownloadStatus.queued) {
+            next = task;
+            break;
+          }
         }
+        if (next == null) break;
+
+        // Mark in-flight before awaiting so sibling pump iterations skip it.
+        _setStatus(next.track, DownloadStatus.downloading);
+        unawaited(_downloadTrack(next).whenComplete(() {
+          // Kick the pump again when a slot frees up.
+          _startDownloading();
+        }));
       }
+    } finally {
+      _pumping = false;
+    }
+
+    // A completion that raced the finally above may have returned early while
+    // _pumping was still true — if capacity remains, pick that work up now.
+    final active =
+        state.where((t) => t.status == DownloadStatus.downloading).length;
+    final hasQueued = state.any((t) => t.status == DownloadStatus.queued);
+    if (hasQueued && active < _maxConcurrentDownloads) {
+      unawaited(_startDownloading());
     }
   }
 }

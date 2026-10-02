@@ -11,6 +11,10 @@ import 'package:window_manager/window_manager.dart';
 
 final kTitlebarVisible = kIsWindows || kIsLinux;
 
+/// Most recent theme scaling seen by a [TitleBar] build — backs
+/// [TitleBar.preferredSize], which is queried without a BuildContext.
+double _lastScaling = 1;
+
 class TitleBar extends HookConsumerWidget implements PreferredSizeWidget {
   final bool automaticallyImplyLeading;
   final List<Widget> trailing;
@@ -66,6 +70,9 @@ class TitleBar extends HookConsumerWidget implements PreferredSizeWidget {
   Widget build(BuildContext context, ref) {
     final hasLeadingOrCanPop = leading.isNotEmpty || Navigator.canPop(context);
     final lastClicked = useRef<int>(DateTime.now().millisecondsSinceEpoch);
+    // preferredSize has no BuildContext, so the scaling the build pass
+    // actually used is stashed here to keep the two heights in sync.
+    _lastScaling = context.theme.scaling;
 
     return SizedBox(
       height: height ?? (48 * context.theme.scaling),
@@ -131,5 +138,5 @@ class TitleBar extends HookConsumerWidget implements PreferredSizeWidget {
   }
 
   @override
-  Size get preferredSize => Size.fromHeight(height ?? 48);
+  Size get preferredSize => Size.fromHeight(height ?? 48 * _lastScaling);
 }

@@ -85,15 +85,33 @@ final metadataPluginSavedTracksProvider = AutoDisposeAsyncNotifierProvider<
   () => MetadataPluginSavedTracksNotifier(),
 );
 
+/// Set of every saved-track id, loaded ONCE for the whole tree.
+///
+/// Heart buttons used to each open a family provider that re-ran
+/// `fetchAll()` (full library paging) per track id — N tiles ⇒ N storms.
+/// This shared provider does at most one `fetchAll()` per library revision;
+/// membership checks become a Set lookup.
+final metadataPluginSavedTrackIdsProvider = FutureProvider<Set<String>>(
+  (ref) async {
+    final savedTracks = await ref.watch(metadataPluginSavedTracksProvider.future);
+    if (!savedTracks.hasMore) {
+      return savedTracks.items.map((t) => t.id).toSet();
+    }
+    try {
+      final all =
+          await ref.read(metadataPluginSavedTracksProvider.notifier).fetchAll();
+      return all.map((t) => t.id).toSet();
+    } catch (_) {
+      // Partial library is better than failing every heart button.
+      return savedTracks.items.map((t) => t.id).toSet();
+    }
+  },
+);
+
 final metadataPluginIsSavedTrackProvider =
     FutureProvider.autoDispose.family<bool, String>(
   (ref, trackId) async {
-    final savedTracks =
-        await ref.watch(metadataPluginSavedTracksProvider.future);
-    final allSavedTracks = savedTracks.hasMore
-        ? await ref.read(metadataPluginSavedTracksProvider.notifier).fetchAll()
-        : savedTracks.items;
-
-    return allSavedTracks.any((track) => track.id == trackId);
+    final ids = await ref.watch(metadataPluginSavedTrackIdsProvider.future);
+    return ids.contains(trackId);
   },
 );

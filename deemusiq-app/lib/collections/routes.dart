@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:deemusiq/collections/routes.gr.dart';
 import 'package:deemusiq/services/kv_store/kv_store.dart';
-import 'package:deemusiq/services/wallet/wallet_api.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -28,10 +27,12 @@ class AppRouter extends RootStackRouter {
               guards: [
                 AutoRouteGuardCallback(
                   (resolver, router) async {
+                    // Only first-run users land on /auth. A configured backend
+                    // without a token must NOT bounce the user back there:
+                    // when the server is unreachable, limited (device)
+                    // sign-in proceeds in offline mode and the token is
+                    // acquired on the next successful sync.
                     if (!KVStoreService.doneGettingStarted) {
-                      resolver.redirect(const Auth());
-                    } else if (WalletApiClient.instance.isConfigured &&
-                        !WalletApiClient.instance.hasToken()) {
                       resolver.redirect(const Auth());
                     } else {
                       resolver.next(true);
@@ -158,6 +159,10 @@ class AppRouter extends RootStackRouter {
               page: WalletRoute.page,
             ),
             AutoRoute(
+              path: "notifications",
+              page: NotificationsRoute.page,
+            ),
+            AutoRoute(
               path: "wallet/store",
               page: TokenStoreRoute.page,
             ),
@@ -188,6 +193,14 @@ class AppRouter extends RootStackRouter {
             AutoRoute(
               path: "creator-studio",
               page: CreatorStudioRoute.page,
+            ),
+            AutoRoute(
+              path: "release-console",
+              page: ReleaseConsoleRoute.page,
+            ),
+            AutoRoute(
+              path: "creator-verification",
+              page: VerificationRoute.page,
             ),
             AutoRoute(
               path: "stats",

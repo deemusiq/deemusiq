@@ -57,12 +57,15 @@ final artistLeaderboardProvider = FutureProvider.autoDispose
       entries: const [],
     );
   }
-  final data = await WalletApiClient.instance.fetchArtistLeaderboard(year: year);
+  final data =
+      await WalletApiClient.instance.fetchArtistLeaderboard(year: year);
   final entries = (data["entries"] as List? ?? const [])
-      .map((e) => ArtistLeaderEntry.fromJson(Map<String, dynamic>.from(e as Map)))
+      .map((e) =>
+          ArtistLeaderEntry.fromJson(Map<String, dynamic>.from(e as Map)))
       .toList();
   return ArtistLeaderboard(
-    year: (data["year"] as num?)?.toInt() ?? (year ?? DateTime.now().toUtc().year),
+    year: (data["year"] as num?)?.toInt() ??
+        (year ?? DateTime.now().toUtc().year),
     isCurrentYear: data["isCurrentYear"] == true,
     entries: entries,
   );
@@ -84,7 +87,8 @@ class HallOfFameEntry {
     this.imageUrl,
   });
 
-  factory HallOfFameEntry.fromJson(Map<String, dynamic> json) => HallOfFameEntry(
+  factory HallOfFameEntry.fromJson(Map<String, dynamic> json) =>
+      HallOfFameEntry(
         year: (json["year"] as num?)?.toInt() ?? 0,
         artistId: json["artistId"] as String? ?? "",
         name: json["name"] as String? ?? "Unknown artist",
@@ -106,38 +110,80 @@ final hallOfFameProvider =
 class CreatorSong {
   final String id;
   final String title;
-  final String youtubeId;
+  final String? youtubeId;
   final String? coverUrl;
   final String? description;
   final String status;
   final int pushes;
   final int tokens;
   final int likes;
+  // New pipeline fields.
+  final bool hasAudio;
+  final bool hasCover;
+  final int? audioSizeBytes;
+  final int? audioDurationSec;
+  final int? audioBitrateKbps;
+  final DateTime? scheduledPublishAt;
+  final bool cancelRequested;
+  final DateTime? cancelledAt;
+  final String? reviewNote;
+  final DateTime? reviewedAt;
+  final String? publishedTrackId;
+
+  bool get canSubmitForReview => status == "draft" && hasAudio && hasCover;
+  bool get isLegacyYoutubeSubmission => youtubeId != null && !hasAudio;
 
   const CreatorSong({
     required this.id,
     required this.title,
-    required this.youtubeId,
     required this.status,
     required this.pushes,
     required this.tokens,
     required this.likes,
+    this.youtubeId,
     this.coverUrl,
     this.description,
+    this.hasAudio = false,
+    this.hasCover = false,
+    this.audioSizeBytes,
+    this.audioDurationSec,
+    this.audioBitrateKbps,
+    this.scheduledPublishAt,
+    this.cancelRequested = false,
+    this.cancelledAt,
+    this.reviewNote,
+    this.reviewedAt,
+    this.publishedTrackId,
   });
 
   factory CreatorSong.fromJson(Map<String, dynamic> json) {
     final stats = json["stats"] as Map? ?? const {};
+    DateTime? parseDt(Object? v) {
+      if (v is String && v.isNotEmpty) return DateTime.tryParse(v);
+      return null;
+    }
+
     return CreatorSong(
       id: json["id"] as String? ?? "",
       title: json["title"] as String? ?? "",
-      youtubeId: json["youtubeId"] as String? ?? "",
+      youtubeId: json["youtubeId"] as String?,
       coverUrl: json["coverUrl"] as String?,
       description: json["description"] as String?,
-      status: json["status"] as String? ?? "published",
+      status: json["status"] as String? ?? "draft",
       pushes: (stats["pushes"] as num?)?.toInt() ?? 0,
       tokens: (stats["tokens"] as num?)?.toInt() ?? 0,
       likes: (stats["likes"] as num?)?.toInt() ?? 0,
+      hasAudio: json["hasAudio"] as bool? ?? false,
+      hasCover: json["hasCover"] as bool? ?? false,
+      audioSizeBytes: (json["audioSizeBytes"] as num?)?.toInt(),
+      audioDurationSec: (json["audioDurationSec"] as num?)?.toInt(),
+      audioBitrateKbps: (json["audioBitrateKbps"] as num?)?.toInt(),
+      scheduledPublishAt: parseDt(json["scheduledPublishAt"]),
+      cancelRequested: json["cancelRequested"] as bool? ?? false,
+      cancelledAt: parseDt(json["cancelledAt"]),
+      reviewNote: json["reviewNote"] as String?,
+      reviewedAt: parseDt(json["reviewedAt"]),
+      publishedTrackId: json["publishedTrackId"] as String?,
     );
   }
 }

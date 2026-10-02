@@ -28,11 +28,14 @@ import 'package:deemusiq/hooks/configurators/use_get_storage_perms.dart';
 import 'package:deemusiq/hooks/configurators/use_has_touch.dart';
 import 'package:deemusiq/models/database/database.dart';
 import 'package:deemusiq/modules/settings/color_scheme_picker_dialog.dart';
+import 'package:deemusiq/components/auth/app_lock_screen.dart';
 import 'package:deemusiq/pages/integrity/tampered.dart';
+import 'package:deemusiq/services/auth/biometric_lock.dart';
 import 'package:deemusiq/provider/audio_player/audio_player_streams.dart';
 import 'package:deemusiq/provider/database/database.dart';
 import 'package:deemusiq/provider/glance/glance.dart';
 import 'package:deemusiq/provider/metadata_plugin/metadata_plugin_provider.dart';
+import 'package:deemusiq/provider/offline_queue/offline_queue_provider.dart';
 import 'package:deemusiq/provider/server/bonsoir.dart';
 import 'package:deemusiq/provider/server/server.dart';
 import 'package:deemusiq/provider/tray_manager/tray_manager.dart';
@@ -42,6 +45,10 @@ import 'package:deemusiq/provider/user_preferences/user_preferences_provider.dar
 import 'package:deemusiq/services/audio_player/audio_player.dart';
 import 'package:deemusiq/services/cli/cli.dart';
 import 'package:deemusiq/services/integrity/integrity_service.dart';
+import 'package:deemusiq/services/wallet/payment_service.dart'
+    show PaymentGatewayConfig;
+import 'package:deemusiq/services/youtube_engine/direct_ytdlp_engine.dart';
+import 'package:deemusiq/services/youtube_engine/yt_dlp_provisioner.dart';
 import 'package:deemusiq/services/kv_store/encrypted_kv_store.dart';
 import 'package:deemusiq/services/kv_store/kv_store.dart';
 import 'package:deemusiq/services/logger/logger.dart';
@@ -73,27 +80,58 @@ Future<void> main(List<String> rawArgs) async {
   AppLogger.runZoned(() async {
     final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
 
+    // Non-blocking: clean up a stale control server from a previous run.
+    // Only PIDs whose cmdline mentions this app are touched, and the whole
+    // scan runs off the critical path so startup never stalls on `ss`/awk.
     if (kIsLinux) {
-      try {
-        final result = await Process.run('bash', [
-          '-c',
-          r'''ss -tlnp 2>/dev/null | awk '/:8000|:(1[0-9]{3}|2[0-2][0-9]{2})/{match($0,/pid=([0-9]+)/,a); if(a[1]) print a[1]}' | sort -u''',
-        ]);
-        for (final line in result.stdout.toString().trim().split('\n')) {
-          final pidStr = line.trim();
-          if (pidStr.isNotEmpty) {
+      unawaited(() async {
+        try {
+          final result = await Process.run('bash', [
+            '-c',
+            r'''ss -tlnp 2>/dev/null | awk '/:8000|:(1[0-9]{3}|2[0-2][0-9]{2})/{match($0,/pid=([0-9]+)/,a); if(a[1]) print a[1]}' | sort -u''',
+          ]);
+          for (final line in result.stdout.toString().trim().split('\n')) {
+            final pidStr = line.trim();
+            if (pidStr.isEmpty) continue;
+            final pid = int.tryParse(pidStr);
+            if (pid == null) continue;
+            // Never kill arbitrary processes that merely share the port range —
+            // only our own control-server / app processes.
+            String cmdline = '';
             try {
-              Process.killPid(int.parse(pidStr));
-              AppLogger.log.i('Cleaned up stale server on pid $pidStr');
+              cmdline =
+                  await File('/proc/$pid/cmdline').readAsString().catchError(
+                        (_) => '',
+                      );
             } catch (_) {}
+            final looksLikeOurs = cmdline.contains('deemusiq') ||
+                cmdline.contains('spotube') ||
+                cmdline.contains('DeeMusiq');
+            if (!looksLikeOurs) {
+              AppLogger.log.d(
+                'Stale-server scan: leaving unrelated pid $pid alone',
+              );
+              continue;
+            }
+            try {
+              Process.killPid(pid);
+              AppLogger.log.i('Cleaned up stale server on pid $pidStr');
+            } catch (e) {
+              AppLogger.log.w(
+                  'Could not kill stale server pid $pidStr: ${e.toString()}');
+            }
           }
+        } catch (e) {
+          AppLogger.log.d('Stale-server scan skipped: ${e.toString()}');
         }
-      } catch (_) {}
+      }());
     }
 
-    if (kDebugMode) {
-      HttpOverrides.global = DeeMusiqHttpOverrides();
-    }
+    // Apply TLS cert pinning in ALL build modes. DeeMusiqHttpOverrides only
+    // relaxes validation for Spotify hosts when kDebugMode, and only pins the
+    // backend when DEEMUSIQ_SERVER_CERT_SHA256 is set — so this is safe to
+    // install unconditionally and gives release builds real MITM protection.
+    HttpOverrides.global = DeeMusiqHttpOverrides();
 
     // await registerWindowsScheme("spotify");
 
@@ -131,11 +169,16 @@ Future<void> main(List<String> rawArgs) async {
               try {
                 await f.delete();
                 AppLogger.log.d('Cleaned stale .part file: ${f.path}');
-              } catch (_) {}
+              } catch (e) {
+                AppLogger.log.w(
+                    'Could not delete stale .part ${f.path}: ${e.toString()}');
+              }
             }
           }
         }
-      } catch (_) {}
+      } catch (e) {
+        AppLogger.log.d('Stale .part cleanup skipped: ${e.toString()}');
+      }
     }
 
     // Anti-tamper boot gate (Android, offline): refuse to run a build signed
@@ -150,15 +193,28 @@ Future<void> main(List<String> rawArgs) async {
 
     if (kIsDesktop) {
       await windowManager.setPreventClose(true);
-      await YtDlp.instance
-          .setBinaryLocation(
-        KVStoreService.getYoutubeEnginePath(YoutubeClientEngine.ytDlp) ??
-            "/usr/bin/yt-dlp",
-      )
-          .catchError((e, stack) {
-        AppLogger.log.w('YtDlp binary location failed: ${e.toString()}');
-        AppLogger.reportError(e, stack, 'YtDlp setBinaryLocation');
-      });
+      final selectedPath =
+          KVStoreService.getYoutubeEnginePath(YoutubeClientEngine.ytDlp);
+      // resolveOrInstall() reuses a user-chosen, self-installed or PATH binary
+      // and otherwise downloads the official latest release into the app's own
+      // folder (recorded + SHA-256 verified), so yt-dlp is always available.
+      final resolution = await YtDlpProvisioner.instance
+          .resolveOrInstall(selectedPath: selectedPath);
+      if (resolution.isApproved) {
+        YtDlpBinaryPolicy.approvedPath = resolution.path;
+        try {
+          await YtDlp.instance.setBinaryLocation(resolution.path!);
+        } catch (error, stack) {
+          YtDlpBinaryPolicy.approvedPath = null;
+          AppLogger.log.w('yt-dlp unavailable: $error');
+          AppLogger.reportError(error, stack, 'YtDlp setBinaryLocation');
+        }
+      } else {
+        YtDlpBinaryPolicy.approvedPath = null;
+        AppLogger.log.w(
+          'yt-dlp unavailable: ${resolution.error}',
+        );
+      }
 
       await FlutterDiscordRPC.initialize(Env.discordAppId);
     }
@@ -170,28 +226,6 @@ Future<void> main(List<String> rawArgs) async {
     await EncryptedKvStoreService.initialize();
 
     await KVStoreService.loadEncryptedFlags();
-
-    // Pre-warm yt-dlp: download JS challenge solver components during splash.
-    // Block up to 15s — the native splash screen covers this wait visually.
-    if (kIsDesktop) {
-      try {
-        // Pre-warm yt-dlp by extracting a known-good video during splash.
-        // First call downloads ~2MB JS solver components; subsequent calls are instant.
-        await YtDlp.instance.extractInfoString(
-          "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-          formatSpecifiers: "%(title)s",
-          extraArgs: const [
-            "--no-check-certificate",
-            "--quiet",
-            "--ignore-errors",
-            "--remote-components",
-            "ejs:github",
-          ],
-        ).timeout(const Duration(seconds: 45));
-      } catch (e) {
-        AppLogger.log.w('YtDlp warmup failed (non-critical): $e');
-      }
-    }
 
     final database = AppDatabase();
 
@@ -221,6 +255,13 @@ Future<void> main(List<String> rawArgs) async {
     // random 1–10 minute interval). Locks the wallet on a confirmed mismatch;
     // playback is never interrupted. No-op off Android.
     IntegrityService.instance.startMonitor();
+
+    // ACTIVE backend TLS pin probe: badCertificateCallback alone misses
+    // valid-but-wrong certs (it only fires when platform validation fails),
+    // so the pinned backend certificate is also verified proactively — now,
+    // every 6h, and on connectivity regain. A FAILED probe locks money
+    // features via IntegrityService.walletLocked; offline never locks.
+    BackendCertPinProbe.start(PaymentGatewayConfig.backendBaseUrl);
   });
 }
 
@@ -255,6 +296,7 @@ class DeeMusiq extends HookConsumerWidget {
     ref.listen(metadataPluginsProvider, (_, __) {});
     ref.listen(metadataPluginProvider, (_, __) {});
     ref.listen(audioSourcePluginProvider, (_, __) {});
+    ref.listen(offlineSupportProvider, (_, __) {});
 
     useFixWindowStretching();
     useDisableBatteryOptimizations();
@@ -290,6 +332,7 @@ class DeeMusiq extends HookConsumerWidget {
       debugShowCheckedModeBanner: false,
       title: 'DeeMusiq',
       builder: (context, child) {
+        child = AppLockGate(child: child!);
         child = ScrollConfiguration(
           behavior: ScrollConfiguration.of(context).copyWith(
             dragDevices: hasTouchSupport
@@ -300,7 +343,7 @@ class DeeMusiq extends HookConsumerWidget {
                   }
                 : null,
           ),
-          child: child!,
+          child: child,
         );
 
         if (kIsLinux) {
@@ -409,6 +452,64 @@ class DeeMusiq extends HookConsumerWidget {
         HomeTabIntent: HomeTabAction(),
         CloseAppIntent: CloseAppAction(),
       },
+    );
+  }
+}
+
+/// Gate that shows [AppLockScreen] on cold start when fingerprint unlock is
+/// enabled. Re-checks on every foreground via [BiometricLockService].
+class AppLockGate extends StatefulWidget {
+  final Widget child;
+  const AppLockGate({super.key, required this.child});
+
+  @override
+  State<AppLockGate> createState() => _AppLockGateState();
+}
+
+class _AppLockGateState extends State<AppLockGate>
+    with WidgetsBindingObserver {
+  bool _locked = false;
+  bool _checked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _check();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _check();
+  }
+
+  Future<void> _check() async {
+    try {
+      final needs =
+          await BiometricLockService.instance.needsUnlock();
+      if (mounted) {
+        setState(() {
+          _locked = needs;
+          _checked = true;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _checked = true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_checked) return widget.child;
+    if (!_locked) return widget.child;
+    return AppLockScreen(
+      onUnlocked: () => setState(() => _locked = false),
     );
   }
 }

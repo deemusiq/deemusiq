@@ -6,6 +6,7 @@ import 'package:skeletonizer/skeletonizer.dart';
 import 'package:deemusiq/collections/fake.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/components/dialogs/select_device_dialog.dart';
+import 'package:deemusiq/components/fallbacks/error_box.dart';
 import 'package:deemusiq/components/track_tile/track_tile.dart';
 import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/models/connect/connect.dart';
@@ -35,13 +36,23 @@ class ArtistPageTopTracks extends HookConsumerWidget {
     if (topTracksQuery.hasError) {
       return SliverToBoxAdapter(
         child: Center(
-          child: Text(topTracksQuery.error.toString()),
+          child: ErrorBox(
+            error: topTracksQuery.error!,
+            onRetry: () {
+              ref.invalidate(
+                metadataPluginArtistTopTracksProvider(artistId),
+              );
+            },
+          ),
         ),
       );
     }
 
     final topTracks = topTracksQuery.asData?.value.items ??
         List.generate(10, (index) => FakeData.track);
+
+    final hasTopTracks =
+        topTracksQuery.asData?.value.items.isNotEmpty == true;
 
     void playPlaylist(
       List<DeeMusiqFullTrackObject> tracks, {
@@ -111,27 +122,30 @@ class ArtistPageTopTracks extends HookConsumerWidget {
                   icon: const Icon(
                     DeeMusiqIcons.queueAdd,
                   ),
-                  onPressed: () {
-                    playlistNotifier.addTracks(topTracks.toList());
-                    showToast(
-                      context: context,
-                      location: ToastLocation.topRight,
-                      builder: (context, overlay) {
-                        return SurfaceCard(
-                          child: Text(
-                            context.l10n.added_to_queue(
-                              topTracks.length,
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  },
+                  onPressed: hasTopTracks
+                      ? () {
+                          playlistNotifier.addTracks(topTracks.toList());
+                          showToast(
+                            context: context,
+                            location: ToastLocation.topRight,
+                            builder: (context, overlay) {
+                              return SurfaceCard(
+                                child: Text(
+                                  context.l10n.added_to_queue(
+                                    topTracks.length,
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        }
+                      : null,
                 ),
               const SizedBox(width: 5),
               IconButton.primary(
                 shape: ButtonShape.circle,
-                enabled: !isPlaylistPlaying && !isLoading.value,
+                enabled:
+                    !isPlaylistPlaying && !isLoading.value && hasTopTracks,
                 icon: isLoading.value
                     ? CircularProgressIndicator(
                         size: 20 * context.theme.scaling,

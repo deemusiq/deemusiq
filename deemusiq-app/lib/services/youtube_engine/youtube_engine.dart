@@ -12,5 +12,11 @@ abstract interface class YouTubeEngine {
   Future<(Video, StreamManifest)> getVideoWithStreamInfo(String videoId);
   Future<List<Video>> searchVideos(String query);
 
+  /// Resolves a YouTube channel by id or display name. Used to render artist
+  /// pages for YouTube-sourced content when the catalog backend can't serve
+  /// them. Null when the engine doesn't support channel lookups or the
+  /// channel wasn't found.
+  Future<Channel?> resolveChannel(String idOrName) => Future.value(null);
+
   void dispose();
 }

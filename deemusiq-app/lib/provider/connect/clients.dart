@@ -33,7 +33,9 @@ class ConnectClientsNotifier extends AsyncNotifier<ConnectClientsState> {
   @override
   build() async {
     final discovery = BonsoirDiscovery(type: '_spotube._tcp');
-    final deviceId = await DeviceInfoService.instance.deviceId();
+    // M7: self-filtering compares the random per-session instance id that
+    // bonsoir.dart advertises (not the OS machine id — never broadcast).
+    final ownSessionId = DeviceInfoService.instance.sessionId;
     try {
       await discovery.ready;
     } catch (e) {
@@ -44,7 +46,7 @@ class ConnectClientsNotifier extends AsyncNotifier<ConnectClientsState> {
     final subscription = discovery.eventStream?.listen((event) {
       // ignore device itself
       try {
-        if (event.service?.attributes["deviceId"] == deviceId) {
+        if (event.service?.attributes["deviceId"] == ownSessionId) {
           return;
         }
 

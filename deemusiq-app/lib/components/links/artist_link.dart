@@ -4,6 +4,7 @@ import 'package:deemusiq/collections/routes.gr.dart';
 import 'package:deemusiq/components/links/anchor_button.dart';
 import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/models/metadata/metadata.dart';
+import 'package:deemusiq/widgets/artist_verified_badge.dart';
 
 class ArtistLink extends StatelessWidget {
   final List<DeeMusiqSimpleArtistObject> artists;
@@ -36,12 +37,10 @@ class ArtistLink extends StatelessWidget {
         ...(hideOverflowArtist ? artists.take(3).toList() : artists)
             .asMap()
             .entries
-            .map(
-              (artist) => Builder(builder: (context) {
-                return AnchorButton(
-                  (artist.key != artists.length - 1)
-                      ? "${artist.value.name}, "
-                      : artist.value.name,
+            .expand(
+              (artist) => [
+                AnchorButton(
+                  artist.value.name,
                   onTap: () {
                     if (onRouteChange != null) {
                       onRouteChange?.call("/artist/${artist.value.id}");
@@ -52,8 +51,11 @@ class ArtistLink extends StatelessWidget {
                   },
                   overflow: TextOverflow.ellipsis,
                   style: textStyle,
-                );
-              }),
+                ),
+                ArtistVerifiedBadge(artistId: artist.value.id),
+                if (artist.key != artists.length - 1)
+                  Text(", ", style: textStyle),
+              ],
             ),
         if (hideOverflowArtist && artists.length > 3)
           AnchorButton(

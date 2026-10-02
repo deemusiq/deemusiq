@@ -1025,6 +1025,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get contribute_on_github => 'Berkontribusi di GitHub';
 
   @override
+  String get visit_our_website => 'Visit our website';
+
+  @override
   String get donate_on_open_collective => 'Donasi di Open Collective';
 
   @override
@@ -1366,6 +1369,59 @@ class AppLocalizationsId extends AppLocalizations {
       'In macOS/Linux/unix like OS\'s, setting path on .zshrc/.bashrc/.bash_profile etc. won\'t work.\nYou need to set the path in the shell configuration file';
 
   @override
+  String get yt_dlp_install_title => 'Setting up yt-dlp';
+
+  @override
+  String get yt_dlp_install_phase_checking =>
+      'Checking for an existing yt-dlp install…';
+
+  @override
+  String yt_dlp_install_phase_downloading(Object version) {
+    return 'Downloading yt-dlp $version…';
+  }
+
+  @override
+  String get yt_dlp_install_phase_verifying =>
+      'Verifying the downloaded yt-dlp…';
+
+  @override
+  String yt_dlp_install_phase_installing(Object version) {
+    return 'Installing yt-dlp $version…';
+  }
+
+  @override
+  String yt_dlp_install_phase_done(Object version) {
+    return 'yt-dlp $version is ready';
+  }
+
+  @override
+  String get yt_dlp_install_phase_failed => 'yt-dlp setup failed';
+
+  @override
+  String yt_dlp_install_progress(Object received, Object total) {
+    return '$received of $total';
+  }
+
+  @override
+  String get yt_dlp_install_action => 'Install automatically';
+
+  @override
+  String get yt_dlp_install_latest_action =>
+      'Install the latest yt-dlp automatically';
+
+  @override
+  String get yt_dlp_install_retry => 'Retry';
+
+  @override
+  String yt_dlp_install_failed_message(Object error) {
+    return 'yt-dlp could not be installed automatically:\n$error';
+  }
+
+  @override
+  String get yt_dlp_install_managed_message =>
+      'DeeMusiq downloads the official yt-dlp release into its own folder and keeps it up to date, so nothing has to be installed system-wide.';
+
+  @override
   String get download => 'Download';
 
   @override
@@ -1574,6 +1630,17 @@ class AppLocalizationsId extends AppLocalizations {
   String get confirm_age_18 => 'I am 18 or older';
 
   @override
+  String get birth_year_hint => 'Birth year (e.g. 1990)';
+
+  @override
+  String get must_enter_valid_birth_year =>
+      'Enter a valid birth year (e.g. 1990).';
+
+  @override
+  String get under_min_age_message =>
+      'Sorry — DeeMusiq is only available to users 18 or older.';
+
+  @override
   String get agree_privacy_policy => 'I agree to the Privacy Policy';
 
   @override
@@ -1588,6 +1655,10 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get continue_with_device_limited => 'Continue with device (limited)';
+
+  @override
+  String get offline_staying_on_device =>
+      'Couldn\'t reach the backend. Continuing on this device with YouTube.';
 
   @override
   String get wallet_sync_failed_retry =>

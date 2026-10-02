@@ -1,18 +1,23 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart' hide Theme, Colors;
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
+import 'package:deemusiq/collections/routes.dart';
+import 'package:deemusiq/components/dialogs/confirm_download_dialog.dart';
+import 'package:deemusiq/extensions/color_scheme.dart';
 import 'package:deemusiq/extensions/context.dart';
+import 'package:deemusiq/models/metadata/metadata.dart';
 import 'package:deemusiq/provider/audio_player/audio_player.dart';
 import 'package:deemusiq/provider/database/database.dart';
+import 'package:deemusiq/provider/download_manager_provider.dart';
 import 'package:deemusiq/provider/server/routes/connect.dart';
 import 'package:deemusiq/services/audio_player/audio_player.dart';
 import 'package:deemusiq/services/audio_player/audio_error_handler.dart';
 import 'package:deemusiq/services/connectivity_adapter.dart';
 import 'package:deemusiq/services/queue/playback_queue.dart';
+import 'package:deemusiq/services/auth/biometric_lock.dart';
 import 'package:deemusiq/utils/service_utils.dart';
 
 DateTime? _lastConnectivityToastTime;
@@ -35,8 +40,13 @@ void useGlobalSubscriptions(WidgetRef ref) {
       final color = severity == AudioErrorSeverity.error
           ? theme.colorScheme.destructive
           : severity == AudioErrorSeverity.warning
-              ? Colors.yellow[600]
+              ? theme.colorScheme.chart3
               : null;
+      final foreground = color == null
+          ? null
+          : severity == AudioErrorSeverity.warning
+              ? Colors.black
+              : theme.colorScheme.onDestructive;
       showToast(
         context: context,
         location: ToastLocation.topRight,
@@ -49,7 +59,7 @@ void useGlobalSubscriptions(WidgetRef ref) {
                 severity == AudioErrorSeverity.error
                     ? DeeMusiqIcons.error
                     : DeeMusiqIcons.info,
-                color: color != null ? Colors.white : null,
+                color: foreground,
                 size: 14,
               ),
               title: Text(
@@ -57,7 +67,7 @@ void useGlobalSubscriptions(WidgetRef ref) {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: color != null ? Colors.white : null,
+                  color: foreground,
                   fontSize: 13,
                 ),
               ),
@@ -65,6 +75,32 @@ void useGlobalSubscriptions(WidgetRef ref) {
           );
         },
       );
+    };
+
+    AudioErrorHandler.instance.onPlaybackUnavailable = (error) async {
+      final track = ref.read(audioPlayerProvider).activeTrack;
+      if (track is! DeeMusiqFullTrackObject ||
+          (error.trackId.isNotEmpty && track.id != error.trackId)) {
+        return AudioUnavailableAction.retry;
+      }
+
+      final dialogContext = rootNavigatorKey.currentContext;
+      if (dialogContext == null || !dialogContext.mounted) {
+        return AudioUnavailableAction.retry;
+      }
+
+      final confirmed = await showDialog<bool>(
+        context: dialogContext,
+        builder: (_) => ConfirmDownloadDialog(
+          message:
+              'This track is temporarily unavailable. Download it to this device to keep listening.',
+          acceptLabel: dialogContext.l10n.download,
+        ),
+      );
+      if (confirmed != true) return AudioUnavailableAction.retry;
+
+      ref.read(downloadManagerProvider.notifier).addToQueue(track);
+      return AudioUnavailableAction.downloadQueued;
     };
 
     StreamSubscription? audioPlayerSubscription;
@@ -135,12 +171,12 @@ void useGlobalSubscriptions(WidgetRef ref) {
               child: Basic(
                 leading: Icon(
                   DeeMusiqIcons.noWifi,
-                  color: theme.colorScheme.destructiveForeground,
+                  color: theme.colorScheme.onDestructive,
                 ),
                 trailing: Text(
                   context.l10n.you_are_offline,
                   style: TextStyle(
-                    color: theme.colorScheme.destructiveForeground,
+                    color: theme.colorScheme.onDestructive,
                   ),
                 ),
               ),
@@ -155,7 +191,7 @@ void useGlobalSubscriptions(WidgetRef ref) {
           location: ToastLocation.topRight,
           builder: (context, overlay) {
             return SurfaceCard(
-              fillColor: Colors.yellow[600],
+              fillColor: theme.colorScheme.chart3,
               filled: true,
               child: Basic(
                 leading: const Icon(
@@ -179,6 +215,7 @@ void useGlobalSubscriptions(WidgetRef ref) {
     return () {
       WidgetsBinding.instance.removeObserver(lifecycleWatcher);
       AudioErrorHandler.instance.onUserMessage = null;
+      AudioErrorHandler.instance.onPlaybackUnavailable = null;
       for (final subscription in subscriptions) {
         subscription.cancel();
       }
@@ -192,6 +229,14 @@ class LifecycleWatcher extends WidgetsBindingObserver {
 
   @override
   Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
+    // Fingerprint lock grace window: background timestamp drives re-lock.
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.hidden) {
+      BiometricLockService.instance.markBackgrounded();
+    } else if (state == AppLifecycleState.resumed) {
+      BiometricLockService.instance.markForegrounded();
+    }
     if (state == AppLifecycleState.paused) {
       final audioState = ref.read(audioPlayerProvider);
       final tracks = audioState.tracks;

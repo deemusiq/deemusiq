@@ -8,6 +8,7 @@ import 'package:deemusiq/components/wallet/boost_artist_dialog.dart';
 import 'package:deemusiq/components/wallet/wallet_common.dart';
 import 'package:deemusiq/provider/creator/creator_provider.dart';
 import 'package:deemusiq/services/wallet/wallet_api.dart';
+import 'package:deemusiq/widgets/follow_button.dart';
 
 /// The yearly artist leaderboard: users boost the artists they love with tokens,
 /// and the top artist each calendar year is crowned "Best Artist". The board
@@ -28,7 +29,7 @@ class ArtistLeaderboardPage extends HookConsumerWidget {
     return SafeArea(
       bottom: false,
       child: Scaffold(
-        headers: [TitleBar(title: const Text("Artists of the Year"))],
+        headers: const [TitleBar(title: Text("Artists of the Year"))],
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           children: [
@@ -52,7 +53,7 @@ class ArtistLeaderboardPage extends HookConsumerWidget {
                         ),
                         error: (error, _) => _ErrorCard(
                           message: error is WalletApiException
-                              ? error.message
+                              ? error.friendlyMessage
                               : error.toString(),
                           onRetry: () =>
                               ref.invalidate(artistLeaderboardProvider(null)),
@@ -217,14 +218,25 @@ class _ArtistTile extends ConsumerWidget {
             ),
           ),
           const Gap(8),
-          Button.ghost(
-            leading: const Icon(DeeMusiqIcons.boost, size: 14),
-            onPressed: () => showBoostArtistDialog(
-              context,
-              ref,
+          if (WalletApiClient.instance.isConfigured)
+            FollowArtistButton(
               artistId: entry.artistId,
               artistName: entry.name,
             ),
+          Button.ghost(
+            leading: const Icon(DeeMusiqIcons.boost, size: 14),
+            onPressed: () async {
+              await showBoostArtistDialog(
+                context,
+                ref,
+                artistId: entry.artistId,
+                artistName: entry.name,
+              );
+              // The dialog boosts + re-syncs the wallet; the board itself is a
+              // separate provider and would otherwise show the pre-boost totals
+              // until the page is revisited.
+              ref.invalidate(artistLeaderboardProvider(null));
+            },
             child: const Text("Boost"),
           ),
         ],

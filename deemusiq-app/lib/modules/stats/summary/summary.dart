@@ -3,7 +3,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:deemusiq/collections/fake.dart';
-import 'package:deemusiq/collections/formatters.dart';
 import 'package:deemusiq/collections/routes.gr.dart';
 import 'package:deemusiq/modules/stats/summary/summary_card.dart';
 import 'package:deemusiq/extensions/constrains.dart';
@@ -55,15 +54,6 @@ class StatsPageSummarySection extends HookConsumerWidget {
                 color: Colors.blue,
                 onTap: () {
                   context.navigateTo(const StatsStreamsRoute());
-                },
-              ),
-              SummaryCard.unformatted(
-                title: usdFormatter.format(summaryData.fees.toDouble()),
-                unit: "",
-                description: context.l10n.summary_owed_to_artists,
-                color: Colors.green,
-                onTap: () {
-                  context.navigateTo(const StatsStreamFeesRoute());
                 },
               ),
               SummaryCard(

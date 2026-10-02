@@ -7,6 +7,7 @@ import 'package:deemusiq/provider/audio_player/audio_player.dart';
 import 'package:deemusiq/provider/audio_player/state.dart';
 import 'package:deemusiq/provider/discord_provider.dart';
 import 'package:deemusiq/provider/history/history.dart';
+import 'package:deemusiq/provider/history/monthly_plays.dart';
 import 'package:deemusiq/provider/metadata_plugin/core/scrobble.dart';
 import 'package:deemusiq/provider/metadata_plugin/metadata_plugin_provider.dart';
 import 'package:deemusiq/provider/server/sourced_track_provider.dart';
@@ -18,6 +19,8 @@ import 'package:deemusiq/services/audio_player/audio_error_handler.dart';
 import 'package:deemusiq/services/ad_roll/ad_roll_service.dart';
 import 'package:deemusiq/services/audio_services/audio_services.dart';
 import 'package:deemusiq/services/logger/logger.dart';
+import 'package:deemusiq/provider/history/recently_played.dart';
+import 'package:deemusiq/services/wallet/wallet_api.dart';
 
 class AudioPlayerStreamListeners {
   final Ref ref;
@@ -157,7 +160,11 @@ class AudioPlayerStreamListeners {
       scrobbler.scrobble(audioPlayerState.activeTrack!);
       ref
           .read(metadataPluginScrobbleProvider.notifier)
-          .scrobble(audioPlayerState.activeTrack!);
+          .scrobbleWith(
+            track: audioPlayerState.activeTrack!,
+            listenedMs: position.inMilliseconds,
+            durationMs: audioPlayer.duration.inMilliseconds,
+          );
       _lastScrobbled = uid;
 
       /// The [Track] from Playlist.getTracks doesn't contain artist images
@@ -182,6 +189,43 @@ class AudioPlayerStreamListeners {
       }
 
       await history.addTrack(activeTrack);
+
+      // Monthly Top-50 offline cache: count the qualified play (same bar as
+      // the scrobble above) so the playback cache keeps this month's
+      // most-played tracks pinned. Local files are already on disk.
+      if (activeTrack is! DeeMusiqLocalTrackObject) {
+        ref.read(monthlyPlaysProvider.notifier).recordPlay(activeTrack.id);
+      }
+
+      // User improvement: local recently-played + streak (on-device only).
+      try {
+        final title = activeTrack.name;
+        final artist = activeTrack.artists.isNotEmpty
+            ? activeTrack.artists.first.name
+            : 'Unknown artist';
+        await ref.read(recentlyPlayedProvider.notifier).push(
+              RecentPlay(
+                trackId: activeTrack.id,
+                title: title,
+                artist: artist,
+                playedAt: DateTime.now(),
+              ),
+            );
+      } catch (_) {}
+
+      // Backend listen telemetry (Gmail-linked users get smarter For You).
+      // Best-effort: local tracks have no backend id and offline plays retry
+      // on the next scrobble — never fail playback on analytics.
+      try {
+        if (WalletApiClient.instance.isConfigured &&
+            activeTrack is! DeeMusiqLocalTrackObject) {
+          await WalletApiClient.instance.scrobble(
+            trackId: activeTrack.id,
+            listenedMs: position.inMilliseconds,
+            durationMs: audioPlayer.duration.inMilliseconds,
+          );
+        }
+      } catch (_) {}
 
       AdRollService.instance.onTrackListened();
     } catch (e, stack) {
@@ -231,16 +275,52 @@ class AudioPlayerStreamListeners {
     }
   }
 
+  String? _sourceForPlayerError() {
+    final source = audioPlayer.currentSource;
+    if (source != null && source.startsWith('http')) return source;
+
+    final track = audioPlayerState.activeTrack;
+    if (track is DeeMusiqFullTrackObject && DeeMusiqMedia.serverPort > 0) {
+      return DeeMusiqMedia(track).uri;
+    }
+    return source;
+  }
+
   StreamSubscription subscribeToPlayerError() {
-    return audioPlayer.errorStream.listen((event) {
+    return audioPlayer.errorStream.listen((event) async {
+      final stack = StackTrace.current;
       AppLogger.log.e('MediaKit player error: $event');
-      AppLogger.reportError(event, StackTrace.current, 'MediaKit player error');
-      AudioErrorHandler.instance.handleError(
-        event is Exception ? event : Exception(event.toString()),
-        StackTrace.current,
-        context: 'MediaKit stream',
-        canSkipTrack: true,
-      );
+      AppLogger.reportError(event, stack, 'MediaKit player error');
+
+      try {
+        final unavailable = await PlaybackUnavailableError.resolve(
+          event,
+          source: _sourceForPlayerError(),
+        );
+        if (unavailable != null) {
+          try {
+            await audioPlayer.pause();
+          } catch (pauseError, pauseStack) {
+            AppLogger.reportError(
+              pauseError,
+              pauseStack,
+              'Pause after unavailable playback',
+            );
+          }
+        }
+
+        final error = unavailable ??
+            (event is Exception ? event : Exception(event.toString()));
+        await AudioErrorHandler.instance.handleError(
+          error,
+          stack,
+          context: 'MediaKit stream',
+          canSkipTrack: unavailable == null,
+        );
+      } catch (error, errorStack) {
+        AppLogger.reportError(
+            error, errorStack, 'MediaKit player error handling');
+      }
     });
   }
 

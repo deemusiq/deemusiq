@@ -17,7 +17,18 @@ import 'package:deemusiq/provider/blacklist_provider.dart';
 import 'package:deemusiq/provider/metadata_plugin/artist/artist.dart';
 import 'package:deemusiq/provider/metadata_plugin/core/auth.dart';
 import 'package:deemusiq/provider/metadata_plugin/library/artists.dart';
+import 'package:deemusiq/services/metadata/deemusiq_native_plugin.dart';
 import 'package:deemusiq/utils/primitive_utils.dart';
+import 'package:deemusiq/widgets/follow_button.dart';
+import 'package:deemusiq/widgets/report_button.dart';
+
+/// Verified flag for a catalog artist — the metadata model has no field for
+/// it, so it is fetched from the backend separately (same flag the artist
+/// leaderboard shows next to names).
+final artistVerifiedProvider =
+    FutureProvider.autoDispose.family<bool, String>(
+  (ref, artistId) => fetchCatalogArtistVerified(artistId),
+);
 
 class ArtistPageHeader extends HookConsumerWidget {
   final String artistId;
@@ -35,6 +46,8 @@ class ArtistPageHeader extends HookConsumerWidget {
     ref.watch(blacklistProvider);
     final blacklistNotifier = ref.watch(blacklistProvider.notifier);
     final isBlackListed = blacklistNotifier.containsArtist(artist.id);
+    final isVerified =
+        ref.watch(artistVerifiedProvider(artistId)).asData?.value == true;
 
     final image = artist.images.asUrlString(
       placeholder: ImagePlaceholder.artist,
@@ -84,9 +97,14 @@ class ArtistPageHeader extends HookConsumerWidget {
             ),
           const SizedBox(width: 5),
           if (WalletApiClient.instance.isConfigured)
+            FollowArtistButton(
+              artistId: artist.id,
+              artistName: artist.name,
+            ),
+          if (WalletApiClient.instance.isConfigured)
             Tooltip(
-              tooltip: TooltipContainer(
-                child: const Text("Boost this artist with tokens"),
+              tooltip: const TooltipContainer(
+                child: Text("Boost this artist with tokens"),
               ).call,
               child: IconButton.ghost(
                 icon: const Icon(DeeMusiqIcons.boost, color: deeMusiqOrange),
@@ -150,6 +168,23 @@ class ArtistPageHeader extends HookConsumerWidget {
                 },
               );
             },
+          ),
+          Tooltip(
+            tooltip: const TooltipContainer(
+              child: Text("Report artist"),
+            ).call,
+            child: IconButton.ghost(
+              icon: const Icon(
+                DeeMusiqIcons.flag,
+                color: Colors.orange,
+              ),
+              onPressed: () => ReportButton.show(
+                context,
+                targetKind: "artist",
+                targetId: artist.id,
+                targetLabel: "this artist",
+              ),
+            ),
           )
         ],
       ),
@@ -189,6 +224,17 @@ class ArtistPageHeader extends HookConsumerWidget {
                                 child:
                                     Text(context.l10n.artist).small().muted(),
                               ),
+                              if (isVerified) ...[
+                                const Gap(5),
+                                const PrimaryBadge(
+                                  leading: Icon(
+                                    DeeMusiqIcons.verified,
+                                    size: 12,
+                                    color: deeMusiqOrange,
+                                  ),
+                                  child: Text("Verified"),
+                                ),
+                              ],
                               if (isBlackListed) ...[
                                 const Gap(5),
                                 DestructiveBadge(
@@ -210,20 +256,19 @@ class ArtistPageHeader extends HookConsumerWidget {
                             ),
                           ),
                           const Gap(5),
-                          Flexible(
-                            child: AutoSizeText(
-                              context.l10n.followers(
-                                artist.followers == null
-                                    ? double.infinity
-                                    : PrimitiveUtils.toReadableNumber(
-                                        artist.followers!.toDouble(),
-                                      ),
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              minFontSize: 12,
-                            ).muted(),
-                          ),
+                          if (artist.followers != null)
+                            Flexible(
+                              child: AutoSizeText(
+                                context.l10n.followers(
+                                  PrimitiveUtils.toReadableNumber(
+                                    artist.followers!.toDouble(),
+                                  ),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                minFontSize: 12,
+                              ).muted(),
+                            ),
                           if (constrains.mdAndUp) ...[
                             const Gap(20),
                             actions,

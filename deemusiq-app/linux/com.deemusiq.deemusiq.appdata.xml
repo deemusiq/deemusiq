@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The appstream <id> (and the flatpak launchable below) intentionally keeps
+     com.github.KRTirtho.Spotube: it is the flatpak application ID baked into
+     linux/my_application.cc and is deliberately NOT rebranded (see AGENTS.md).
+     Only user-facing strings (name, summary, description, URLs) are DeeMusiq. -->
+<component type="desktop-application">
+  <id>com.github.KRTirtho.Spotube</id>
+  <name>DeeMusiq</name>
+  <summary>
+    African music streaming and download platform
+  </summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>BSD-4-Clause</project_license>
+  <recommends>
+    <control>pointing</control>
+    <control>keyboard</control>
+    <control>touch</control>
+  </recommends>
+  <developer_name>The Dembe Group</developer_name>
+  <url type="bugtracker">https://github.com/deemusiq/deemusiq/issues</url>
+  <url type="homepage">https://deemusiq.co.za</url>
+  <description>
+    <p>DeeMusiq — African music streaming and download platform. It's a drop day. Built on the
+      open-source Spotube engine (BSD-4-Clause).</p>
+    <p>Stream and download the sound of the continent. Artists keep ownership and get paid fairly.
+      Built in South Africa.</p>
+    <p>Following are the features that currently DeeMusiq offers:</p>
+    <ul>
+      <li>🚫 No ads, thanks to the use of public &amp; free music metadata providers and YT Music
+        APIs¹</li>
+      <li>⬇️ Downloadable tracks</li>
+      <li>🖥️ 📱 Cross-platform support</li>
+      <li>🪶 Small size &amp; less data usage</li>
+      <li>🕵️ Anonymous/guest login</li>
+      <li>🕒 Time synced lyrics</li>
+      <li>✋ No telemetry, diagnostics or user data collection</li>
+      <li>🚀 Native performance</li>
+      <li>📖 Open source/libre software</li>
+      <li>🔉 Playback control is done locally, not on the server</li>
+    </ul>
+  </description>
+  <launchable type="desktop-id">com.github.KRTirtho.Spotube.desktop</launchable>
+  <content_rating type="oars-1.1" />
+  <update_contact>deemusiq@protonmail.com</update_contact>
+</component>

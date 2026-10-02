@@ -19,7 +19,18 @@ enum WsEvent {
   next,
   previous,
   jump,
-  stop;
+  stop,
+
+  /// Nearby-share (protocol v1): catalog ids + metadata only, never audio
+  /// bytes. Unknown to older builds — [fromString] maps it to [WsEvent.error]
+  /// there, so a legacy peer just logs an error instead of crashing.
+  share,
+
+  /// Pairing token grant (H1): sent once right after the user approves the
+  /// pairing dialog; the token authenticates the LAN HTTP endpoints
+  /// (`/stream/*`, `/playback/*`). Unknown to older builds — maps to
+  /// [WsEvent.error] there, harmless since they never call those endpoints.
+  paired;
 
   static WsEvent fromString(String value) {
     return WsEvent.values.firstWhere((e) => e.name == value, orElse: () => WsEvent.error);
@@ -222,6 +233,26 @@ class WebSocketEvent<T> {
       await callback(WebSocketVolumeEvent(data as double));
     }
   }
+
+  Future<void> onShare(
+    EventCallback<WebSocketShareEvent> callback,
+  ) async {
+    if (type == WsEvent.share) {
+      await callback(
+        WebSocketShareEvent(
+          ConnectSharePayload.fromJson(data as Map<String, dynamic>),
+        ),
+      );
+    }
+  }
+
+  Future<void> onPaired(
+    EventCallback<WebSocketPairedEvent> callback,
+  ) async {
+    if (type == WsEvent.paired) {
+      await callback(WebSocketPairedEvent(data as String));
+    }
+  }
 }
 
 class WebSocketLoopEvent extends WebSocketEvent<PlaylistMode> {
@@ -325,6 +356,14 @@ class WebSocketErrorEvent extends WebSocketEvent<String> {
   WebSocketErrorEvent(String data) : super(WsEvent.error, data);
 }
 
+/// Carries the per-pairing token minted at pairing approval (H1). A paired
+/// client presents it as `X-DM-Connect-Token` (or `?token=`) on the LAN HTTP
+/// endpoints; it lives only in memory on both sides and dies with the host's
+/// server (24 h allowlist TTL bounds the server-side copy).
+class WebSocketPairedEvent extends WebSocketEvent<String> {
+  WebSocketPairedEvent(String data) : super(WsEvent.paired, data);
+}
+
 class WebSocketQueueEvent extends WebSocketEvent<AudioPlayerState> {
   WebSocketQueueEvent(AudioPlayerState data) : super(WsEvent.queue, data);
 
@@ -378,4 +417,227 @@ class WebSocketReorderEvent extends WebSocketEvent<ReorderData> {
 
 class WebSocketVolumeEvent extends WebSocketEvent<double> {
   WebSocketVolumeEvent(double data) : super(WsEvent.volume, data);
+}
+
+/// ── Nearby share (WsEvent.share) ──────────────────────────────────────────
+/// "Send to nearby device" payload: catalog ids + display metadata only —
+/// never audio bytes (the project's byte-path rule forbids proxying audio).
+/// The receiver resolves [id] against its own catalog/backend.
+
+/// One track entry inside a shared playlist.
+class ConnectShareTrack {
+  final String id;
+  final String title;
+  final String artist;
+  final String? coverUrl;
+
+  const ConnectShareTrack({
+    required this.id,
+    required this.title,
+    required this.artist,
+    this.coverUrl,
+  });
+
+  Map<String, dynamic> toJson() => {
+        "id": id,
+        "title": title,
+        "artist": artist,
+        if (coverUrl != null) "coverUrl": coverUrl,
+      };
+
+  factory ConnectShareTrack.fromJson(Map<String, dynamic> json) {
+    final id = json["id"];
+    final title = json["title"];
+    final artist = json["artist"];
+    if (id is! String || id.isEmpty) {
+      throw const FormatException("share track: missing id");
+    }
+    return ConnectShareTrack(
+      id: ConnectSharePayload._bounded(id),
+      title: ConnectSharePayload._bounded(title is String ? title : ""),
+      artist: ConnectSharePayload._bounded(artist is String ? artist : ""),
+      coverUrl: json["coverUrl"] is String
+          ? ConnectSharePayload._bounded(json["coverUrl"] as String)
+          : null,
+    );
+  }
+}
+
+/// Versioned share envelope (`{"v":1,"kind":"track|playlist",...}`).
+class ConnectSharePayload {
+  /// Bump when the wire shape changes; receivers reject newer versions with a
+  /// [FormatException] so the UI can tell the user to update.
+  static const int currentVersion = 1;
+
+  /// Playlist entries are capped so the encoded message stays far below the
+  /// WebSocket limits (ConnectNotifier._wsMaxMsgSize = 1 MB).
+  static const int maxPlaylistTracks = 200;
+
+  /// Hard encoded-size guard enforced by the sender ([encodeChecked]).
+  static const int maxPayloadBytes = 500 * 1024;
+
+  /// Per-field length cap — a malicious/buggy peer can't send huge strings.
+  static const int maxFieldLength = 300;
+
+  static const kindTrack = "track";
+  static const kindPlaylist = "playlist";
+
+  final int version;
+  final String kind;
+  final String id;
+  final String title;
+  final String? artist;
+  final String? coverUrl;
+  final String? externalUri;
+
+  /// Playlist entries (empty for single tracks).
+  final List<ConnectShareTrack> tracks;
+
+  /// True when the sender cut the playlist down to [maxPlaylistTracks].
+  final bool truncated;
+
+  const ConnectSharePayload({
+    required this.kind,
+    required this.id,
+    required this.title,
+    this.version = currentVersion,
+    this.artist,
+    this.coverUrl,
+    this.externalUri,
+    this.tracks = const [],
+    this.truncated = false,
+  });
+
+  factory ConnectSharePayload.track(DeeMusiqTrackObject track) {
+    return ConnectSharePayload(
+      kind: kindTrack,
+      id: track.id,
+      title: track.name,
+      artist: track.artists.map((a) => a.name).join(", "),
+      coverUrl:
+          track.album.images.isNotEmpty ? track.album.images.first.url : null,
+      externalUri: track.externalUri.isNotEmpty ? track.externalUri : null,
+    );
+  }
+
+  factory ConnectSharePayload.playlist({
+    required DeeMusiqSimplePlaylistObject playlist,
+    required List<DeeMusiqTrackObject> tracks,
+  }) {
+    final capped = tracks.length > maxPlaylistTracks;
+    return ConnectSharePayload(
+      kind: kindPlaylist,
+      id: playlist.id,
+      title: playlist.name,
+      artist: playlist.owner.name,
+      coverUrl: playlist.images.isNotEmpty ? playlist.images.first.url : null,
+      externalUri:
+          playlist.externalUri.isNotEmpty ? playlist.externalUri : null,
+      truncated: capped,
+      tracks: tracks
+          .take(maxPlaylistTracks)
+          .map(
+            (t) => ConnectShareTrack(
+              id: t.id,
+              title: t.name,
+              artist: t.artists.map((a) => a.name).join(", "),
+              coverUrl:
+                  t.album.images.isNotEmpty ? t.album.images.first.url : null,
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  static String _bounded(String value) => value.length > maxFieldLength
+      ? value.substring(0, maxFieldLength)
+      : value;
+
+  static ConnectShareTrack? _tryParseTrack(dynamic raw) {
+    if (raw is! Map) return null;
+    try {
+      return ConnectShareTrack.fromJson(Map<String, dynamic>.from(raw));
+    } on FormatException {
+      // Skip malformed entries — one bad row must not kill the whole share.
+      return null;
+    }
+  }
+
+  Map<String, dynamic> toJson() => {
+        "v": version,
+        "kind": kind,
+        "id": id,
+        "title": title,
+        if (artist != null) "artist": artist,
+        if (coverUrl != null) "coverUrl": coverUrl,
+        if (externalUri != null) "externalUri": externalUri,
+        if (tracks.isNotEmpty)
+          "tracks": tracks.map((t) => t.toJson()).toList(),
+        if (truncated) "truncated": true,
+      };
+
+  factory ConnectSharePayload.fromJson(Map<String, dynamic> json) {
+    final version = json["v"];
+    if (version is! int || version < 1 || version > currentVersion) {
+      throw FormatException("Unsupported share version: $version");
+    }
+    final kind = json["kind"];
+    if (kind != kindTrack && kind != kindPlaylist) {
+      throw FormatException("Unknown share kind: $kind");
+    }
+    final id = json["id"];
+    if (id is! String || id.isEmpty) {
+      throw const FormatException("Share payload is missing an id");
+    }
+    final rawTracks = json["tracks"];
+    return ConnectSharePayload(
+      version: version,
+      kind: kind,
+      id: _bounded(id),
+      title: _bounded(json["title"] is String ? json["title"] as String : ""),
+      artist: json["artist"] is String
+          ? _bounded(json["artist"] as String)
+          : null,
+      coverUrl: json["coverUrl"] is String
+          ? _bounded(json["coverUrl"] as String)
+          : null,
+      externalUri: json["externalUri"] is String
+          ? _bounded(json["externalUri"] as String)
+          : null,
+      truncated: json["truncated"] == true,
+      tracks: rawTracks is List
+          ? rawTracks
+              .take(maxPlaylistTracks)
+              .map(_tryParseTrack)
+              .nonNulls
+              .toList()
+          : const [],
+    );
+  }
+
+  /// Encodes and enforces the size guard — throws [StateError] when the
+  /// message would exceed [maxBytes] (default [maxPayloadBytes]).
+  String encodeChecked({int maxBytes = maxPayloadBytes}) {
+    final encoded = jsonEncode(toJson());
+    if (encoded.length > maxBytes) {
+      throw StateError(
+        "Share payload too large (${encoded.length} bytes > $maxBytes)",
+      );
+    }
+    return encoded;
+  }
+}
+
+class WebSocketShareEvent extends WebSocketEvent<ConnectSharePayload> {
+  WebSocketShareEvent(ConnectSharePayload data) : super(WsEvent.share, data);
+
+  @override
+  String toJson() {
+    return jsonEncode({
+      "type": type.name,
+      // Raw toJson here — the size guard lives on the sender path
+      // ([ConnectSharePayload.encodeChecked]), not on every encode.
+      "data": data.toJson(),
+    });
+  }
 }

@@ -2,6 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
+import 'package:shadcn_flutter/shadcn_flutter_extension.dart';
 
 import 'package:deemusiq/collections/side_bar_tiles.dart';
 import 'package:deemusiq/models/database/database.dart';
@@ -46,8 +47,13 @@ class Sidebar extends HookConsumerWidget {
       (e) => router.currentPath.startsWith(e.pathPrefix),
     );
 
+    // Hide at mdAndDown to match bottom_player.dart and
+    // deemusiq_navigation_bar.dart, which switch to the mobile chrome
+    // (collapsed PlayerOverlay + bottom NavigationBar) at the same
+    // breakpoint — otherwise rail and bottom bar render together at
+    // 640-820px.
     if (layoutMode == LayoutMode.compact ||
-        (mediaQuery.smAndDown && layoutMode == LayoutMode.adaptive)) {
+        (mediaQuery.mdAndDown && layoutMode == LayoutMode.adaptive)) {
       return child;
     }
 
@@ -57,7 +63,7 @@ class Sidebar extends HookConsumerWidget {
             ? DefaultTextStyle(
                 style: TextStyle(
                   fontFamily: "Cookie",
-                  fontSize: 30,
+                  fontSize: 30 * context.theme.scaling,
                   letterSpacing: 1.8,
                   color: colorScheme.foreground,
                 ),
@@ -124,7 +130,17 @@ class Sidebar extends HookConsumerWidget {
                     ),
             ),
             const SidebarFooter(),
-            SizedBox(height: ref.watch(navigationPanelHeight) + 63),
+            // Matches root_app.dart's bottom inset: compact chrome is the
+            // collapsed player (63) + nav bar; desktop chrome is the tall
+            // player card with no nav bar. Mirror bottom_player.dart.
+            SizedBox(
+              height: ((layoutMode == LayoutMode.compact ||
+                          (mediaQuery.mdAndDown &&
+                              layoutMode == LayoutMode.adaptive)
+                      ? ref.watch(navigationPanelHeight) + 63
+                      : 104.0) *
+                  context.theme.scaling),
+            ),
           ],
         ),
         const VerticalDivider(),

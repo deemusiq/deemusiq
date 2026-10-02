@@ -12,12 +12,14 @@ class WindowsBuildCommand extends Command with BuildCommandCommonSteps {
   @override
   String get name => "windows";
 
-  Future<void> innoDependInstall() async {
-    final innoDependencyPath = join(cwd.path, "build", "inno-depend");
-
-    await shell.run(
-      "git clone https://github.com/DomGries/InnoDependencyInstaller.git $innoDependencyPath",
+  /// Locates makensis on PATH (`where` on Windows, `which` elsewhere).
+  String? findMakensis() {
+    final result = Process.runSync(
+      Platform.isWindows ? "where" : "which",
+      ["makensis"],
     );
+    if (result.exitCode != 0) return null;
+    return (result.stdout as String).trim().split("\n").first;
   }
 
   @override
@@ -26,7 +28,7 @@ class WindowsBuildCommand extends Command with BuildCommandCommonSteps {
 
     final chocoFiles = [
       join(cwd.path, "choco-struct", "tools", "VERIFICATION.txt"),
-      join(cwd.path, "choco-struct", "spotube.nuspec"),
+      join(cwd.path, "choco-struct", "deemusiq.nuspec"),
     ];
 
     for (final filePath in chocoFiles) {
@@ -39,7 +41,6 @@ class WindowsBuildCommand extends Command with BuildCommandCommonSteps {
     }
 
     await bootstrap();
-    await innoDependInstall();
 
     final runnerRCFile = File(
       join(cwd.path, "windows", "runner", "Runner.rc"),
@@ -60,23 +61,37 @@ class WindowsBuildCommand extends Command with BuildCommandCommonSteps {
           ),
     );
 
-    await shell.run(
-      "fastforge package --platform=windows --targets=exe --skip-clean",
-    );
+    await shell.run("flutter build windows --release");
 
-    final ogExe = File(
-      join(
-        cwd.path,
-        "dist",
-        pubspec.version.toString(),
-        "spotube-${pubspec.version}-windows-setup.exe",
-      ),
-    );
+    // NSIS is the single Windows installer path. The checked-in script takes
+    // version, build dir and output file as -D defines, exactly like the
+    // Makefile `windows-installer` target (see packaging/windows/installer.nsi).
+    final makensis = findMakensis();
+    if (makensis == null) {
+      throw Exception(
+        "makensis not found on PATH. Install NSIS (`choco install nsis`) "
+        "or add its install directory to PATH, then retry.",
+      );
+    }
 
+    final buildDir = join(
+      cwd.path,
+      "build",
+      "windows",
+      "x64",
+      "runner",
+      "Release",
+    );
+    await Directory(join(cwd.path, "dist")).create(recursive: true);
     final exePath = join(cwd.path, "dist", "DeeMusiq-windows-x86_64-setup.exe");
 
-    await ogExe.copy(exePath);
-    await ogExe.delete();
+    await shell.run(
+      '"$makensis" '
+      '-DVERSION="$versionWithoutBuildNumber" '
+      '-DBUILD_DIR="$buildDir" '
+      '-DOUT_FILE="$exePath" '
+      '"${join(cwd.path, "packaging", "windows", "installer.nsi")}"',
+    );
 
     stdout.writeln("✅ Windows exe built at $exePath");
 
@@ -102,7 +117,7 @@ class WindowsBuildCommand extends Command with BuildCommandCommonSteps {
     );
 
     final chocoNupkg = File(
-      join(cwd.path, "dist", "spotube.$versionWithoutBuildNumber.nupkg"),
+      join(cwd.path, "dist", "deemusiq.$versionWithoutBuildNumber.nupkg"),
     );
 
     final distNupkgPath = join(

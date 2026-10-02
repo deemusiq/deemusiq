@@ -1,8 +1,11 @@
+import 'dart:math' as math;
+
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:shadcn_flutter/shadcn_flutter_extension.dart';
+import 'package:deemusiq/collections/routes.gr.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/components/image/universal_image.dart';
 import 'package:deemusiq/components/titlebar/titlebar.dart';
@@ -24,13 +27,15 @@ class CreatorsSupportedPage extends HookConsumerWidget {
         ref.watch(walletProvider.select((s) => s.supportedCreators));
     final totalToCreators =
         creators.fold<int>(0, (sum, c) => sum + c.totalTokens);
-    final topTokens = creators.isEmpty ? 1 : creators.first.totalTokens;
+    // The share bars below divide by the top supporter's total — clamp so a
+    // creator list whose best total is 0 can't produce a NaN widthFactor.
+    final topTokens = creators.isEmpty ? 1 : math.max(1, creators.first.totalTokens);
 
     return SafeArea(
       bottom: false,
       child: Scaffold(
-        headers: [
-          TitleBar(title: const Text("Creators you support")),
+        headers: const [
+          TitleBar(title: Text("Creators you support")),
         ],
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -223,22 +228,32 @@ class _CreatorTile extends ConsumerWidget {
   }
 }
 
-class _SupportDialog extends HookWidget {
+class _SupportDialog extends HookConsumerWidget {
   final SupportedCreator creator;
   const _SupportDialog({required this.creator});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final balance = ref.watch(walletProvider.select((s) => s.balance));
     final amount = useState(_supportPresets[1]);
+    final canAfford = balance >= amount.value;
     return AlertDialog(
       title: Text("Support ${creator.name}").large(),
-      content: SizedBox(
-        width: 360,
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 360),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text("Choose how many tokens to send.").muted().small(),
+            const Gap(12),
+            Row(
+              children: [
+                const Icon(DeeMusiqIcons.token, color: deeMusiqOrange, size: 16),
+                const Gap(6),
+                Text("Balance: ${formatTokens(balance)} tokens").small(),
+              ],
+            ),
             const Gap(12),
             Wrap(
               spacing: 8,
@@ -254,6 +269,15 @@ class _SupportDialog extends HookWidget {
                   ),
               ],
             ),
+            if (!canAfford) ...[
+              const Gap(12),
+              Text(
+                "You need ${amount.value - balance} more tokens for this.",
+                style: TextStyle(
+                  color: context.theme.colorScheme.destructive,
+                ),
+              ).small(),
+            ],
           ],
         ),
       ),
@@ -262,8 +286,17 @@ class _SupportDialog extends HookWidget {
           onPressed: () => Navigator.pop(context),
           child: const Text("Cancel"),
         ),
+        if (!canAfford)
+          Button.secondary(
+            onPressed: () {
+              Navigator.pop(context);
+              context.navigateTo(const TokenStoreRoute());
+            },
+            child: const Text("Get tokens"),
+          ),
         Button.primary(
-          onPressed: () => Navigator.pop(context, amount.value),
+          onPressed:
+              canAfford ? () => Navigator.pop(context, amount.value) : null,
           child: Text("Send ${amount.value}"),
         ),
       ],

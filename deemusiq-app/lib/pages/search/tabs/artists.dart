@@ -20,6 +20,7 @@ class SearchPageArtistsTab extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, ref) {
     final controller = useScrollController();
+    final scale = context.theme.scaling;
 
     final searchTerm = ref.watch(searchTermStateProvider);
     final searchArtistsSnapshot =
@@ -67,8 +68,8 @@ class SearchPageArtistsTab extends HookConsumerWidget {
             padding: const EdgeInsets.all(16),
             itemCount: searchArtists.length + 1,
             gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 200,
-              mainAxisExtent: constrains.smAndDown ? 225 : 250,
+              maxCrossAxisExtent: 200 * scale,
+              mainAxisExtent: (constrains.smAndDown ? 225 : 250) * scale,
               crossAxisSpacing: 8,
               mainAxisSpacing: 8,
             ),

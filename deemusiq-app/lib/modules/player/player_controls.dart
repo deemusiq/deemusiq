@@ -283,8 +283,8 @@ class PlayerControls extends HookConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Tooltip(
-                          tooltip: TooltipContainer(
-                            child: const Text('Cycle playback speed'),
+                          tooltip: const TooltipContainer(
+                            child: Text('Cycle playback speed'),
                           ).call,
                           child: Button.ghost(
                             onPressed: () {

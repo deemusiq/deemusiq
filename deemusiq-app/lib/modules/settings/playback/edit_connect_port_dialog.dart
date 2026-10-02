@@ -1,13 +1,22 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:deemusiq/components/form/text_form_field.dart';
 import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/hooks/controllers/use_shadcn_text_editing_controller.dart';
 import 'package:deemusiq/provider/user_preferences/user_preferences_provider.dart';
+
+/// Returns an error message when [raw] isn't a bindable TCP/UDP port
+/// (1–65535), null when valid. Top-level so it can be unit-tested.
+String? validateConnectPort(String? raw) {
+  final port = int.tryParse(raw ?? "");
+  if (port == null || port < 1 || port > 65535) {
+    return "Enter a port between 1 and 65535";
+  }
+  return null;
+}
 
 class SettingsPlaybackEditConnectPortDialog extends HookConsumerWidget {
   const SettingsPlaybackEditConnectPortDialog({super.key});
@@ -35,21 +44,18 @@ class SettingsPlaybackEditConnectPortDialog extends HookConsumerWidget {
                 name: "port",
                 controller: controller,
                 placeholder: const Text("3000"),
-                validator: FormBuilderValidators.integer(radix: 10),
+                validator: validateConnectPort,
                 keyboardType: TextInputType.number,
                 inputFormatters: [
-                  // Allow only signed integers
+                  // Allow only unsigned integers
                   TextInputFormatter.withFunction(
                     (oldValue, newValue) {
                       if (newValue.text.isEmpty) {
                         return const TextEditingValue();
                       }
-                      if (newValue.text.length == 1 && newValue.text == "-") {
-                        return newValue;
-                      }
 
                       final intValue = int.tryParse(newValue.text);
-                      if (intValue == null) {
+                      if (intValue == null || intValue < 0) {
                         return oldValue;
                       }
                       return newValue;

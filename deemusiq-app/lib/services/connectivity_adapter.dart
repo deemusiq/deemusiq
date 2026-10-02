@@ -110,11 +110,13 @@ class ConnectionCheckerService with WidgetsBindingObserver {
         return true;
       }
       return false;
-    } on SocketException catch (_) {
+    } on SocketException catch (e) {
+      AppLogger.log.d('Connectivity: DNS lookup failed for $address: ${e.toString()}');
       try {
         final response = await dio.head('https://$address');
         return (response.statusCode ?? 500) <= 400;
-      } on DioException catch (_) {
+      } on DioException catch (e2) {
+        AppLogger.log.d('Connectivity: HEAD https://$address failed: ${e2.toString()}');
         return false;
       }
     }

@@ -1,11 +1,41 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:deemusiq/provider/catalog/catalog_provider.dart';
+import 'package:deemusiq/provider/database/database.dart';
 import 'package:deemusiq/provider/wallet/leaderboard_provider.dart';
 import 'package:deemusiq/provider/wallet/server_pricing_provider.dart';
 
 // Offline (no DEEMUSIQ_BACKEND_URL in test builds) both online providers must
 // resolve immediately to their fallback values without touching the network.
 void main() {
+  test("catalog reports missing backend configuration before accessing storage",
+      () async {
+    var databaseAccessed = false;
+    final container = ProviderContainer(overrides: [
+      databaseProvider.overrideWith((ref) {
+        databaseAccessed = true;
+        throw StateError('Unexpected database access');
+      }),
+    ]);
+    addTearDown(container.dispose);
+
+    final configurationError = isA<StateError>().having(
+      (error) => error.message,
+      'message',
+      contains('--dart-define=DEEMUSIQ_BACKEND_URL='),
+    );
+    await expectLater(
+      container.read(catalogProvider.future),
+      throwsA(configurationError),
+    );
+    expect(container.read(catalogProvider).hasError, isTrue);
+    await expectLater(
+      container.refresh(catalogProvider.future),
+      throwsA(configurationError),
+    );
+    expect(databaseAccessed, isFalse);
+  });
+
   test("leaderboard is empty when no backend is configured", () async {
     final container = ProviderContainer();
     addTearDown(container.dispose);

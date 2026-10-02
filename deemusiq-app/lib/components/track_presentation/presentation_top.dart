@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:shadcn_flutter/shadcn_flutter_extension.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
+import 'package:deemusiq/components/dialogs/share_nearby_dialog.dart';
 import 'package:deemusiq/components/heart_button/heart_button.dart';
 import 'package:deemusiq/components/image/universal_image.dart';
 import 'package:deemusiq/components/track_presentation/presentation_props.dart';
@@ -11,7 +12,10 @@ import 'package:deemusiq/components/track_presentation/use_action_callbacks.dart
 import 'package:deemusiq/components/track_presentation/use_is_user_playlist.dart';
 import 'package:deemusiq/extensions/constrains.dart';
 import 'package:deemusiq/extensions/context.dart';
+import 'package:deemusiq/models/connect/connect.dart';
+import 'package:deemusiq/models/metadata/metadata.dart';
 import 'package:deemusiq/modules/playlist/playlist_create_dialog.dart';
+import 'package:deemusiq/provider/connect/clients.dart';
 
 class TrackPresentationTopSection extends HookConsumerWidget {
   const TrackPresentationTopSection({super.key});
@@ -32,6 +36,13 @@ class TrackPresentationTopSection extends HookConsumerWidget {
 
     final (:isLoading, :isActive, :onPlay, :onShuffle, :onAddToQueue) =
         useActionCallbacks(ref);
+
+    final hasConnectPeers =
+        ref.watch(connectClientsProvider).asData?.value.services.isNotEmpty ==
+            true;
+    final playlistCollection = options.collection is DeeMusiqSimplePlaylistObject
+        ? options.collection as DeeMusiqSimplePlaylistObject
+        : null;
 
     final playbackActions = Row(
       spacing: 8 * scale,
@@ -130,6 +141,25 @@ class TrackPresentationTopSection extends HookConsumerWidget {
                       ).small(),
                     );
                   },
+                );
+              },
+            ),
+          ),
+        if (playlistCollection != null && hasConnectPeers)
+          Tooltip(
+            tooltip: const TooltipContainer(
+              child: Text("Send to nearby device"),
+            ).call,
+            child: IconButton.outline(
+              icon: const Icon(DeeMusiqIcons.speaker),
+              size: ButtonSize.small,
+              onPressed: () {
+                ShareNearbyDialog.show(
+                  context,
+                  ConnectSharePayload.playlist(
+                    playlist: playlistCollection,
+                    tracks: options.tracks,
+                  ),
                 );
               },
             ),

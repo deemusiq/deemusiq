@@ -8,6 +8,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_undraw/flutter_undraw.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:shadcn_flutter/shadcn_flutter_extension.dart';
 import 'package:skeletonizer/skeletonizer.dart';
@@ -22,6 +23,7 @@ import 'package:deemusiq/models/metadata/metadata.dart';
 import 'package:deemusiq/modules/library/local_folder/cache_export_dialog.dart';
 import 'package:deemusiq/pages/library/user_local_tracks/user_local_tracks.dart';
 import 'package:deemusiq/components/expandable_search/expandable_search.dart';
+import 'package:deemusiq/components/fallbacks/error_box.dart';
 import 'package:deemusiq/components/inter_scrollbar/inter_scrollbar.dart';
 import 'package:deemusiq/components/titlebar/titlebar.dart';
 import 'package:deemusiq/components/track_presentation/sort_tracks_dropdown.dart';
@@ -54,6 +56,7 @@ class LocalLibraryPage extends HookConsumerWidget {
   }) async {
     final playlist = ref.read(audioPlayerProvider);
     final playback = ref.read(audioPlayerProvider.notifier);
+    if (tracks.isEmpty) return;
     currentTrack ??= tracks.first;
     final isPlaylistPlaying = playlist.containsTracks(tracks);
     if (!isPlaylistPlaying) {
@@ -118,6 +121,8 @@ class LocalLibraryPage extends HookConsumerWidget {
     useValueListenable(searchController);
     final searchFocus = useFocusNode();
     final isFiltering = useState(false);
+    final documentsDir = useFuture(getApplicationDocumentsDirectory());
+    final isEncryptedDownloads = documentsDir.data?.path == location;
 
     final controller = useScrollController();
 
@@ -147,11 +152,13 @@ class LocalLibraryPage extends HookConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isDownloads
-                      ? context.l10n.downloads
-                      : isCache
-                          ? context.l10n.cache_folder.capitalize()
-                          : location,
+                  isEncryptedDownloads
+                      ? "Downloads (encrypted)"
+                      : isDownloads
+                          ? context.l10n.downloads
+                          : isCache
+                              ? context.l10n.cache_folder.capitalize()
+                              : location,
                 ),
                 FutureBuilder<String>(
                   future: directorySize,
@@ -266,7 +273,8 @@ class LocalLibraryPage extends HookConsumerWidget {
                       child: IconButton.primary(
                         onPressed: trackSnapshot.asData?.value != null
                             ? () async {
-                                if (trackSnapshot.asData?.value.isNotEmpty ==
+                                if (trackSnapshot.asData?.value[location]
+                                        ?.isNotEmpty ==
                                     true) {
                                   if (!isPlaylistPlaying) {
                                     await playLocalTracks(
@@ -293,7 +301,8 @@ class LocalLibraryPage extends HookConsumerWidget {
                       child: IconButton.outline(
                         onPressed: trackSnapshot.asData?.value != null
                             ? () async {
-                                if (trackSnapshot.asData?.value.isNotEmpty ==
+                                if (trackSnapshot.asData?.value[location]
+                                        ?.isNotEmpty ==
                                     true) {
                                   if (!isPlaylistPlaying) {
                                     await shufflePlayLocalTracks(
@@ -317,7 +326,8 @@ class LocalLibraryPage extends HookConsumerWidget {
                       child: IconButton.outline(
                         onPressed: trackSnapshot.asData?.value != null
                             ? () async {
-                                if (trackSnapshot.asData?.value.isNotEmpty ==
+                                if (trackSnapshot.asData?.value[location]
+                                        ?.isNotEmpty ==
                                     true) {
                                   if (!isPlaylistPlaying) {
                                     await addToQueueLocalTracks(
@@ -491,7 +501,18 @@ class LocalLibraryPage extends HookConsumerWidget {
                       ),
                     ),
                   ),
-                  error: (error, _) => Text("Could not load tracks. Pull to retry."),
+                  error: (error, _) => Expanded(
+                    child: Center(
+                      child: ErrorBox(
+                        error: error,
+                        userMessage:
+                            "Could not load tracks. Pull to retry.",
+                        onRetry: () {
+                          ref.invalidate(localTracksProvider);
+                        },
+                      ),
+                    ),
+                  ),
                 );
               }),
             ],

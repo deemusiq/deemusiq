@@ -8,9 +8,11 @@ import 'package:deemusiq/services/audio_player/custom_player.dart';
 import 'package:deemusiq/services/audio_player/audio_equalizer.dart';
 
 import 'package:media_kit/media_kit.dart' as mk;
+import 'package:path/path.dart' show basename;
 
 import 'package:deemusiq/services/audio_player/playback_state.dart';
 import 'package:deemusiq/services/audio_player/audio_error_handler.dart';
+import 'package:deemusiq/services/offline_drm/offline_drm.dart';
 import 'package:deemusiq/utils/platform.dart';
 
 part 'audio_players_streams_mixin.dart';
@@ -29,20 +31,42 @@ class DeeMusiqMedia extends mk.Media {
           "Track must be a either a local track or a full track object with ISRC",
         ),
         super(
-          track is DeeMusiqLocalTrackObject
-              ? track.path
-              : "http://$_host:${serverPort == 0 ? -1 : serverPort}/stream/${track.id}",
+          _resolveUri(track),
           extras: track.toJson(),
         ) {
-    if (serverPort == 0 && track is! DeeMusiqLocalTrackObject) {
+    if (serverPort == 0 && !track.isPlainLocalFile) {
       AppLogger.log.w('DeeMusiqMedia: serverPort is 0, using -1');
     }
+  }
+
+  static String _resolveUri(DeeMusiqTrackObject track) {
+    if (track is DeeMusiqLocalTrackObject && track.isPlainLocalFile) {
+      return track.path;
+    }
+    if (track is DeeMusiqLocalTrackObject) {
+      // DRM-protected offline download (`.deemusiq`): the bytes on disk are
+      // ciphertext, so the player streams them from the loopback server,
+      // which decrypts in memory via the license-gated DRM service
+      // (`/offline/<name>`). Plaintext never lands in a temp file.
+      return "http://$_host:${serverPort == 0 ? -1 : serverPort}"
+          "/offline/${Uri.encodeComponent(basename(track.path))}";
+    }
+    return "http://$_host:${serverPort == 0 ? -1 : serverPort}/stream/${track.id}";
   }
 
   factory DeeMusiqMedia.media(Media media) {
     assert(media.extras != null, "[Media] must have extra metadata set");
     return DeeMusiqMedia(DeeMusiqTrackObject.fromJson(media.extras!));
   }
+}
+
+extension on DeeMusiqTrackObject {
+  /// True for ordinary on-disk audio; false for DRM-encrypted downloads
+  /// (`.deemusiq`), which must go through the loopback decrypt route.
+  bool get isPlainLocalFile =>
+      this is DeeMusiqLocalTrackObject &&
+      !OfflineTrackEncryption.instance
+          .isEncryptedTrack((this as DeeMusiqLocalTrackObject).path);
 }
 
 abstract class AudioPlayerInterface {

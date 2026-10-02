@@ -37,6 +37,7 @@ class PlayerActions extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
+    final theme = Theme.of(context);
     final playlist = ref.watch(audioPlayerProvider);
     final isLocalTrack = playlist.activeTrack is DeeMusiqLocalTrackObject;
     ref.watch(downloadManagerProvider);
@@ -190,7 +191,7 @@ class PlayerActions extends HookConsumerWidget {
           ],
           icon: Icon(
             DeeMusiqIcons.timer,
-            color: sleepTimer != null ? Colors.red : null,
+            color: sleepTimer != null ? theme.colorScheme.destructive : null,
           ),
           onSelected: (value) {
             if (value == Duration.zero) {
@@ -245,11 +246,13 @@ class PlayerActions extends HookConsumerWidget {
                 );
 
                 if (time != null) {
+                  // Forward delta from now, wrapping past midnight
+                  final deltaMinutes =
+                      ((time.hour * 60 + time.minute) -
+                              (currentTime.hour * 60 + currentTime.minute)) %
+                          (24 * 60);
                   sleepTimerNotifier.setSleepTimer(
-                    Duration(
-                      hours: (time.hour - currentTime.hour).abs(),
-                      minutes: (time.minute - currentTime.minute).abs(),
-                    ),
+                    Duration(minutes: deltaMinutes),
                   );
                 }
               },
@@ -264,7 +267,7 @@ class PlayerActions extends HookConsumerWidget {
               enabled: sleepTimer != Duration.zero && sleepTimer != null,
               child: Text(
                 context.l10n.cancel,
-                style: const TextStyle(color: Colors.green),
+                style: TextStyle(color: theme.colorScheme.primary),
               ),
             ),
           ],

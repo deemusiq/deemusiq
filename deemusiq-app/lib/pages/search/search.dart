@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 
@@ -12,6 +14,7 @@ import 'package:deemusiq/components/titlebar/titlebar.dart';
 import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/extensions/string.dart';
 import 'package:deemusiq/hooks/controllers/use_shadcn_text_editing_controller.dart';
+import 'package:deemusiq/hooks/utils/use_debounce.dart';
 import 'package:deemusiq/pages/search/tabs/albums.dart';
 import 'package:deemusiq/pages/search/tabs/all.dart';
 import 'package:deemusiq/pages/search/tabs/artists.dart';
@@ -56,6 +59,25 @@ class SearchPage extends HookConsumerWidget {
       return null;
     }, []);
 
+    // Live search, debounced (500ms via useDebounce) so each keystroke
+    // doesn't fire a catalog query. Submitting still searches instantly.
+    final searchText = useState("");
+    final debouncedSearchText = useDebounce(searchText.value);
+
+    useEffect(() {
+      final term = debouncedSearchText.trim();
+      if (term.isEmpty) return null;
+      // flutter_hooks runs useEffect synchronously during build, and Riverpod
+      // forbids modifying a provider mid-build ("Tried to modify a provider
+      // while the widget tree was building" → StateController<String> threw).
+      // Defer the write to just after the frame; the disposer cancels a
+      // pending write if the term changes again or the page closes first.
+      final timer = Timer(Duration.zero, () {
+        ref.read(searchTermStateProvider.notifier).state = term;
+      });
+      return timer.cancel;
+    }, [debouncedSearchText]);
+
     void onSubmitted(String value) {
       ref.read(searchTermStateProvider.notifier).state = value;
       focusNode.unfocus();
@@ -71,109 +93,116 @@ class SearchPage extends HookConsumerWidget {
     }
 
     return SafeArea(
-        bottom: false,
-        child: Scaffold(
-          headers: [
-            if (kTitlebarVisible)
-              const TitleBar(automaticallyImplyLeading: false, height: 30)
-          ],
-          child: Builder(builder: (context) {
-            if (searchChipSnapshot.error
-                case MetadataPluginException(
-                  errorCode: MetadataPluginErrorCode.noDefaultMetadataPlugin,
-                  message: _
-                )) {
-              return NoDefaultMetadataPlugin(
-                onRetry: () => ref.invalidate(metadataPluginSearchChipsProvider),
-              );
-            }
+      bottom: false,
+      child: Scaffold(
+        headers: [
+          if (kTitlebarVisible)
+            const TitleBar(automaticallyImplyLeading: false, height: 30)
+        ],
+        child: Builder(builder: (context) {
+          if (searchChipSnapshot.error
+              case MetadataPluginException(
+                errorCode: MetadataPluginErrorCode.noDefaultMetadataPlugin,
+                message: _
+              )) {
+            return NoDefaultMetadataPlugin(
+              onRetry: () => ref.invalidate(metadataPluginSearchChipsProvider),
+            );
+          }
 
-            if (searchChipSnapshot.hasError) {
-              return ErrorBox(
-                error: searchChipSnapshot.error!,
-                onRetry: () {
-                  ref.invalidate(metadataPluginSearchChipsProvider);
-                },
-              );
-            }
+          if (searchChipSnapshot.hasError) {
+            return ErrorBox(
+              error: searchChipSnapshot.error!,
+              onRetry: () {
+                ref.invalidate(metadataPluginSearchChipsProvider);
+              },
+            );
+          }
 
-            return Column(
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 10,
-                        ),
-                        child: ListenableBuilder(
-                            listenable: controller,
-                            builder: (context, _) {
-                              final suggestions = controller.text.isEmpty
-                                  ? KVStoreService.recentSearches
-                                  : KVStoreService.recentSearches
-                                      .where(
-                                        (s) =>
-                                            weightedRatio(
-                                              s.toLowerCase(),
-                                              controller.text.toLowerCase(),
-                                            ) >
-                                            50,
-                                      )
-                                      .toList();
-
-                              return AutoComplete(
-                                suggestions: suggestions.length <= 2
-                                    ? [
-                                        ...suggestions,
-                                        "Tyla",
-                                        "Kabza De Small",
-                                        "Black Coffee",
-                                      ]
-                                    : suggestions,
-                                completer: (suggestion) => suggestion,
-                                mode: AutoCompleteMode.replaceAll,
-                                child: TextField(
-                                  autofocus: true,
-                                  controller: controller,
-                                  focusNode: focusNode,
-                                  features: [
-                                    const InputFeature.leading(
-                                      Icon(DeeMusiqIcons.search),
-                                    ),
-                                    InputFeature.trailing(
-                                      AnimatedCrossFade(
-                                        duration:
-                                            const Duration(milliseconds: 300),
-                                        crossFadeState:
-                                            controller.text.isNotEmpty
-                                                ? CrossFadeState.showFirst
-                                                : CrossFadeState.showSecond,
-                                        firstChild: IconButton.ghost(
-                                          size: ButtonSize.small,
-                                          icon: const Icon(DeeMusiqIcons.close),
-                                          onPressed: () {
-                                            controller.clear();
-                                          },
-                                        ),
-                                        secondChild: const SizedBox.square(
-                                            dimension: 28),
-                                      ),
-                                    )
-                                  ],
-                                  textInputAction: TextInputAction.search,
-                                  placeholder: Text(context.l10n.search),
-                                  onSubmitted: onSubmitted,
-                                ),
-                              );
-                            }),
+          return Column(
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 10,
                       ),
+                      child: ListenableBuilder(
+                          listenable: controller,
+                          builder: (context, _) {
+                            final suggestions = controller.text.isEmpty
+                                ? KVStoreService.recentSearches
+                                : KVStoreService.recentSearches
+                                    .where(
+                                      (s) =>
+                                          weightedRatio(
+                                            s.toLowerCase(),
+                                            controller.text.toLowerCase(),
+                                          ) >
+                                          50,
+                                    )
+                                    .toList();
+
+                            return AutoComplete(
+                              suggestions: suggestions,
+                              completer: (suggestion) => suggestion,
+                              mode: AutoCompleteMode.replaceAll,
+                              child: TextField(
+                                autofocus: true,
+                                controller: controller,
+                                focusNode: focusNode,
+                                onChanged: (value) => searchText.value = value,
+                                features: [
+                                  const InputFeature.leading(
+                                    Icon(DeeMusiqIcons.search),
+                                  ),
+                                  InputFeature.trailing(
+                                    AnimatedCrossFade(
+                                      duration:
+                                          const Duration(milliseconds: 300),
+                                      crossFadeState: controller.text.isNotEmpty
+                                          ? CrossFadeState.showFirst
+                                          : CrossFadeState.showSecond,
+                                      firstChild: IconButton.ghost(
+                                        size: ButtonSize.small,
+                                        icon: const Icon(DeeMusiqIcons.close),
+                                        onPressed: () {
+                                          controller.clear();
+                                          searchText.value = "";
+                                          // The debounce skips empty terms,
+                                          // so clearing never reached the
+                                          // provider and stale results stayed
+                                          // under an empty query. Reset it
+                                          // post-frame, like the debounce.
+                                          Timer(Duration.zero, () {
+                                            ref
+                                                .read(searchTermStateProvider
+                                                    .notifier)
+                                                .state = "";
+                                          });
+                                        },
+                                      ),
+                                      secondChild:
+                                          const SizedBox.square(dimension: 28),
+                                    ),
+                                  )
+                                ],
+                                textInputAction: TextInputAction.search,
+                                placeholder: Text(context.l10n.search),
+                                onSubmitted: onSubmitted,
+                              ),
+                            );
+                          }),
                     ),
-                  ],
-                ),
-                Row(
+                  ),
+                ],
+              ),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
                   spacing: 8,
                   children: [
                     const Gap(12),
@@ -208,22 +237,23 @@ class SearchPage extends HookConsumerWidget {
                         ),
                   ],
                 ),
-                Expanded(
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    child: switch (selectedChip.value) {
-                      "tracks" => const SearchPageTracksTab(),
-                      "albums" => const SearchPageAlbumsTab(),
-                      "artists" => const SearchPageArtistsTab(),
-                      "playlists" => const SearchPagePlaylistsTab(),
-                      _ => const SearchPageAllTab(),
-                    },
-                  ),
+              ),
+              Expanded(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: switch (selectedChip.value) {
+                    "tracks" => const SearchPageTracksTab(),
+                    "albums" => const SearchPageAlbumsTab(),
+                    "artists" => const SearchPageArtistsTab(),
+                    "playlists" => const SearchPagePlaylistsTab(),
+                    _ => const SearchPageAllTab(),
+                  },
                 ),
-              ],
-            );
-          }),
-        ),
+              ),
+            ],
+          );
+        }),
+      ),
     );
   }
 }

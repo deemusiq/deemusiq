@@ -11,6 +11,7 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:deemusiq/provider/user_preferences/user_preferences_provider.dart';
+import 'package:deemusiq/services/offline_drm/offline_drm.dart';
 // ignore: depend_on_referenced_packages
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart' show FrbException;
 import 'package:deemusiq/utils/service_utils.dart';
@@ -68,10 +69,19 @@ final localTracksProvider =
       userPreferencesProvider.select((s) => s.localLibraryLocation),
     );
 
-    for (final location in [
-      downloadLocation,
-      cacheDir.path,
-      ...localLibraryLocations
+    // Encrypted offline downloads (`.deemusiq`) live in the app-private
+    // documents directory. They can't be mime-sniffed or read by MetadataGod
+    // (ciphertext), so the track object is derived from the file name and
+    // playback goes through the license-gated `/offline/` server route
+    // (decrypt-on-play, in memory).
+    final documentsDir = await getApplicationDocumentsDirectory();
+    final drm = OfflineTrackEncryption.instance;
+
+    for (final (location, encryptedBucket) in [
+      (downloadLocation, false),
+      (cacheDir.path, false),
+      ...localLibraryLocations.map((e) => (e, false)),
+      (documentsDir.path, true),
     ]) {
       if (location.isEmpty) continue;
       final entities = <File>[];
@@ -83,10 +93,17 @@ final localTracksProvider =
           entities.addAll(
             dirEntities.where(
               (e) {
+                if (e is! File) return false;
+                final isEncrypted = drm.isEncryptedTrack(e.path);
+                // `.deemusiq` files are surfaced only by the encrypted bucket;
+                // plaintext audio in the documents dir (e.g. transient staging
+                // files) is never shown as library tracks.
+                if (encryptedBucket) return isEncrypted;
+                if (isEncrypted) return false;
                 final mime = lookupMimeType(e.path) ??
                     (extension(e.path) == ".opus" ? "audio/opus" : null);
 
-                return e is File && supportedAudioTypes.contains(mime);
+                return supportedAudioTypes.contains(mime);
               },
             ).cast<File>(),
           );
@@ -100,6 +117,9 @@ final localTracksProvider =
           try {
             return await (() async {
               try {
+                if (encryptedBucket) {
+                  return (file: file, metadata: null, art: null);
+                }
                 final metadata = await MetadataGod.readMetadata(file: file.path);
 
                 final imageFile = File(
@@ -128,7 +148,8 @@ final localTracksProvider =
                 return null;
               }
             })();
-          } catch (_) {
+          } catch (e) {
+            AppLogger.log.w('Local track metadata read failed: ${e.toString()}');
             return null;
           }
         }),
@@ -136,15 +157,31 @@ final localTracksProvider =
 
       final tracksFromMetadata = filesWithMetadata
           .map(
-            (fileWithMetadata) => DeeMusiqTrackObject.localTrackFromFile(
-              fileWithMetadata.file,
-              metadata: fileWithMetadata.metadata,
-              art: fileWithMetadata.art,
-            ) as DeeMusiqLocalTrackObject,
+            (fileWithMetadata) {
+              var track = DeeMusiqTrackObject.localTrackFromFile(
+                fileWithMetadata.file,
+                metadata: fileWithMetadata.metadata,
+                art: fileWithMetadata.art,
+              ) as DeeMusiqLocalTrackObject;
+              if (encryptedBucket) {
+                // "Name - Artist.mp3.deemusiq" → display "Name - Artist".
+                final displayName = basenameWithoutExtension(
+                  basenameWithoutExtension(fileWithMetadata.file.path),
+                );
+                if (displayName.isNotEmpty) {
+                  track = track.copyWith(name: displayName);
+                }
+              }
+              return track;
+            },
           )
           .toList();
 
-      libraryToTracks[location] = tracksFromMetadata;
+      // Don't add a permanent empty "downloads" group for the encrypted
+      // bucket when the user has no encrypted downloads yet.
+      if (tracksFromMetadata.isNotEmpty || !encryptedBucket) {
+        libraryToTracks[location] = tracksFromMetadata;
+      }
     }
     return libraryToTracks;
   } catch (e, stack) {

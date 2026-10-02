@@ -178,15 +178,13 @@ class NewPipeEngine implements YouTubeEngine {
   @override
   Future<List<Video>> searchVideos(String query) async {
     try {
-      final results = await NewPipeExtractor.search(
-        query,
-        contentFilters: [SearchContentFilters.videos],
-      );
-
-      final resultsWithVideos = results
-          .whereType<VideoSearchResultItem>()
-          .map((e) => _parseVideoResult(e))
-          .toList();
+      // YouTube Music "songs" filter surfaces official uploads instead of
+      // generic videos; fall back to plain video search when it yields
+      // nothing (e.g. non-music or obscure uploads).
+      var resultsWithVideos = await _search(query, SearchContentFilters.musicSongs);
+      if (resultsWithVideos.isEmpty) {
+        resultsWithVideos = await _search(query, SearchContentFilters.videos);
+      }
 
       return resultsWithVideos;
     } catch (e, stack) {
@@ -195,6 +193,23 @@ class NewPipeEngine implements YouTubeEngine {
       rethrow;
     }
   }
+
+  Future<List<Video>> _search(String query, SearchContentFilters filter) async {
+    final results = await NewPipeExtractor.search(
+      query,
+      contentFilters: [filter],
+    );
+
+    return results
+        .whereType<VideoSearchResultItem>()
+        .map((e) => _parseVideoResult(e))
+        .toList();
+  }
+
+  @override
+  /// Channel lookups are only supported by the explode engine.
+  @override
+  Future<Channel?> resolveChannel(String idOrName) => Future.value(null);
 
   @override
   void dispose() {}

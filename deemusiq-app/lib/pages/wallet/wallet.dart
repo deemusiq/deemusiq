@@ -11,7 +11,7 @@ import 'package:deemusiq/models/wallet/token_transaction.dart';
 import 'package:deemusiq/provider/wallet/region_provider.dart';
 import 'package:deemusiq/provider/wallet/wallet_provider.dart';
 import 'package:deemusiq/services/integrity/integrity_service.dart';
-import 'package:deemusiq/services/logger/logger.dart';
+import 'package:deemusiq/services/wallet/wallet_api.dart';
 
 @RoutePage()
 class WalletPage extends HookConsumerWidget {
@@ -24,71 +24,53 @@ class WalletPage extends HookConsumerWidget {
     final wallet = ref.watch(walletProvider);
     final region = ref.watch(regionTierProvider);
 
-    final isLoading = useState(false);
-    final error = useState<String?>(null);
+    // Full-screen spinner only while the first sync after opening the page is
+    // in flight, and never longer than a few seconds: the sync itself keeps
+    // running in the background and failures surface in the banner below
+    // (wallet.syncError) while the persisted local state renders immediately.
+    final initialSync = useState(WalletApiClient.instance.isConfigured);
+    final retrying = useState(false);
 
-    // When a backend is configured, refresh authoritative state on open.
-    // No-op (returns immediately) in the default local-only build.
     useEffect(() {
-      isLoading.value = true;
-      try {
-        ref.read(walletProvider.notifier).syncFromBackend();
-      } catch (e) {
-        AppLogger.log.w('Wallet sync failed: $e');
-        error.value = e.toString();
-      } finally {
-        isLoading.value = false;
-      }
-      return null;
+      if (!initialSync.value) return null;
+      var cancelled = false;
+      () async {
+        await ref.read(walletProvider.notifier).syncFromBackend().timeout(
+              const Duration(seconds: 3),
+              onTimeout: () {},
+            );
+        if (!cancelled) initialSync.value = false;
+      }();
+      return () => cancelled = true;
     }, const []);
 
-    if (isLoading.value) {
+    Future<void> retrySync() async {
+      if (retrying.value) return;
+      retrying.value = true;
+      try {
+        await ref.read(walletProvider.notifier).syncFromBackend();
+      } finally {
+        retrying.value = false;
+      }
+    }
+
+    if (initialSync.value) {
       return const SafeArea(
         bottom: false,
         child: Center(child: CircularProgressIndicator()),
       );
     }
 
-    if (error.value != null) {
-      return SafeArea(
-        bottom: false,
-        child: Center(
-          child: Card(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text("Failed to load wallet").semiBold(),
-                const Gap(8),
-                Text(error.value!).muted().small(),
-                const Gap(12),
-                Button.primary(
-                  onPressed: () {
-                    error.value = null;
-                    isLoading.value = true;
-                    ref.read(walletProvider.notifier).syncFromBackend().then((_) {
-                      isLoading.value = false;
-                    }).catchError((e) {
-                      isLoading.value = false;
-                      error.value = e.toString();
-                    });
-                  },
-                  child: const Text("Retry"),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    final recent = wallet.transactions.take(8).toList();
+    final showAllActivity = useState(false);
+    final recent = showAllActivity.value
+        ? wallet.transactions
+        : wallet.transactions.take(8).toList();
 
     return SafeArea(
       bottom: false,
       child: Scaffold(
-        headers: [
-          TitleBar(title: const Text("Wallet")),
+        headers: const [
+          TitleBar(title: Text("Wallet")),
         ],
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -100,6 +82,14 @@ class WalletPage extends HookConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const _IntegrityBanner(),
+                    if (wallet.syncError != null) ...[
+                      _SyncErrorBanner(
+                        message: wallet.syncError!,
+                        retrying: retrying.value,
+                        onRetry: retrySync,
+                      ),
+                      const Gap(12),
+                    ],
                     _BalanceHero(
                       balance: wallet.balance,
                       regionLabel: region.label,
@@ -114,6 +104,16 @@ class WalletPage extends HookConsumerWidget {
                           Text(
                             "${wallet.totalPurchased} in · ${wallet.totalSpent} out",
                           ).muted().small(),
+                        if (wallet.transactions.length > 8) ...[
+                          const Gap(8),
+                          Button.ghost(
+                            onPressed: () => showAllActivity.value =
+                                !showAllActivity.value,
+                            child: Text(
+                              showAllActivity.value ? "Show less" : "See all",
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                     const Gap(8),
@@ -134,6 +134,54 @@ class WalletPage extends HookConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Shown when the last backend sync failed (wallet.syncError). Local wallet
+/// state keeps rendering underneath; retry re-runs the sync, which clears the
+/// error on success.
+class _SyncErrorBanner extends StatelessWidget {
+  final String message;
+  final bool retrying;
+  final VoidCallback onRetry;
+  const _SyncErrorBanner({
+    required this.message,
+    required this.retrying,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const amber = Color(0xFFF59E0B);
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: amber.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: amber),
+      ),
+      child: Row(
+        children: [
+          const Icon(DeeMusiqIcons.info, color: amber),
+          const Gap(10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text("Couldn't refresh your wallet").semiBold().small(),
+                Text(message).muted().xSmall(),
+              ],
+            ),
+          ),
+          const Gap(8),
+          Button.outline(
+            onPressed: retrying ? null : onRetry,
+            child: Text(retrying ? "Retrying…" : "Retry"),
+          ),
+        ],
       ),
     );
   }
@@ -179,7 +227,7 @@ class _BalanceHero extends StatelessWidget {
             ),
           ),
           Text(
-            "Prices shown for $regionLabel · it's a drop day.",
+            "Prices shown for $regionLabel.",
             style: TextStyle(color: _white.withValues(alpha: 0.85)),
           ).small(),
           const Gap(16),

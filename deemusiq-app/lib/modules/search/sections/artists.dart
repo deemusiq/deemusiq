@@ -27,6 +27,10 @@ class SearchArtistsSection extends HookConsumerWidget {
 
     final artists = search.asData?.value.artists ?? [];
 
+    if (artists.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return HorizontalPlaybuttonCardView(
       isLoadingNextPage: false,
       hasNextPage: false,

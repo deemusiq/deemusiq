@@ -1,10 +1,20 @@
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:uuid/uuid.dart';
 
 class DeviceInfoService {
   final DeviceInfoPlugin deviceInfo;
   DeviceInfoService._() : deviceInfo = DeviceInfoPlugin();
 
   static final instance = DeviceInfoService._();
+
+  static const _uuid = Uuid();
+  String? _sessionId;
+
+  /// Random per-process instance id advertised over mDNS / used for Connect
+  /// self-filtering (M7). Deliberately NOT the OS machine id — a stable
+  /// hardware identifier on the LAN would be a persistent tracker. Regenerated
+  /// every app start, in-memory only, never persisted.
+  String get sessionId => _sessionId ??= _uuid.v4();
 
   Future<String> deviceId() async {
     final info = await deviceInfo.deviceInfo;

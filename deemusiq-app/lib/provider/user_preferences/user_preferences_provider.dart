@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -98,14 +100,15 @@ class UserPreferencesNotifier extends Notifier<PreferencesTableData> {
     if (kIsAndroid) {
       final dir =
           await paths.getExternalCacheDirectories().then((dirs) => dirs!.first);
-      if (!await dir.exists()) {
-        await dir.create(recursive: true);
-      }
-      return join(dir.path, 'Cached Tracks');
+      final cacheDir = Directory(join(dir.path, 'Cached Tracks'));
+      await cacheDir.create(recursive: true);
+      return cacheDir.path;
     }
 
     final dir = await paths.getApplicationCacheDirectory();
-    return join(dir.path, 'cached_tracks');
+    final cacheDir = Directory(join(dir.path, 'cached_tracks'));
+    await cacheDir.create(recursive: true);
+    return cacheDir.path;
   }
 
   Future<void> openCacheFolder() async {

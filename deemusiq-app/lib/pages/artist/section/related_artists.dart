@@ -1,5 +1,6 @@
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:deemusiq/components/fallbacks/error_box.dart';
 import 'package:deemusiq/modules/artist/artist_card.dart';
 import 'package:deemusiq/provider/metadata_plugin/artist/related.dart';
 
@@ -38,7 +39,14 @@ class ArtistPageRelatedArtists extends ConsumerWidget {
         ),
       AsyncError(:final error) => SliverToBoxAdapter(
           child: Center(
-            child: Text(error.toString()),
+            child: ErrorBox(
+              error: error,
+              onRetry: () {
+                ref.invalidate(
+                  metadataPluginArtistRelatedArtistsProvider(artistId),
+                );
+              },
+            ),
           ),
         ),
       _ => const SliverToBoxAdapter(

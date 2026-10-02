@@ -27,7 +27,7 @@ class TrackDetailsDialog extends HookConsumerWidget {
       context.l10n.artist: ArtistLink(
         artists: track.artists,
         mainAxisAlignment: WrapAlignment.start,
-        textStyle: const TextStyle(color: Colors.blue),
+        textStyle: TextStyle(color: theme.colorScheme.primary),
         hideOverflowArtist: false,
       ),
       // context.l10n.album: LinkText(
@@ -78,7 +78,7 @@ class TrackDetailsDialog extends HookConsumerWidget {
         ],
       ),
       content: SizedBox(
-        width: mediaQuery.mdAndUp ? double.infinity : 700,
+        width: mediaQuery.mdAndUp ? 700 : double.infinity,
         child: Table(
           columnWidths: const {
             0: FixedTableSize(95),

@@ -2,9 +2,11 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:deemusiq/collections/env.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
+import 'package:deemusiq/collections/routes.gr.dart';
 import 'package:deemusiq/modules/getting_started/blur_card.dart';
 import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/services/kv_store/kv_store.dart';
+import 'package:auto_route/auto_route.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class GettingStartedScreenSupportSection extends HookConsumerWidget {
@@ -39,7 +41,7 @@ class GettingStartedScreenSupportSection extends HookConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Button(
-                      leading: const Icon(DeeMusiqIcons.github),
+                      leading: const Icon(DeeMusiqIcons.web),
                       style: ButtonVariance.primary.copyWith(
                           decoration: (context, states, value) {
                         if (states.isNotEmpty) {
@@ -54,12 +56,12 @@ class GettingStartedScreenSupportSection extends HookConsumerWidget {
                       }),
                       onPressed: () async {
                         await launchUrlString(
-                          "https://github.com/deemusiq/deemusiq",
+                          "https://deemusiq.co.za/",
                           mode: LaunchMode.externalApplication,
                         );
                       },
                       child: Text(
-                        context.l10n.contribute_on_github,
+                        context.l10n.visit_our_website,
                         style: const TextStyle(color: Colors.white),
                       ),
                     ),
@@ -106,6 +108,9 @@ class GettingStartedScreenSupportSection extends HookConsumerWidget {
                   leading: const Icon(DeeMusiqIcons.extensions),
                   onPressed: () async {
                     await KVStoreService.setDoneGettingStarted(true);
+                    if (context.mounted) {
+                      context.router.replaceAll([const HomeRoute()]);
+                    }
                   },
                   child: Text(context.l10n.install_a_metadata_provider),
                 ),

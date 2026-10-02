@@ -41,16 +41,16 @@ class AgeRestrictionDialog extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             'This application may contain explicit music content.',
           ).large(),
           const Gap(8),
-          Text(
+          const Text(
             'In compliance with the South African Films and Publications Act '
             '(FPB), you must be 18 years or older to access explicit content.',
           ).muted(),
           const Gap(12),
-          Text(
+          const Text(
             'By proceeding, you confirm that you are at least 18 years old.',
           ).semiBold(),
         ],

@@ -3,11 +3,13 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:deemusiq/models/metadata/metadata.dart';
 
+import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/modules/playlist/playlist_create_dialog.dart';
 import 'package:deemusiq/components/image/universal_image.dart';
 import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/provider/metadata_plugin/library/playlists.dart';
 import 'package:deemusiq/provider/metadata_plugin/core/user.dart';
+import 'package:deemusiq/services/logger/logger.dart';
 
 class PlaylistAddTrackDialog extends HookConsumerWidget {
   /// The id of the playlist this dialog was opened from
@@ -55,14 +57,33 @@ class PlaylistAddTrackDialog extends HookConsumerWidget {
           .where((entry) => entry.value)
           .map((entry) => entry.key);
 
-      await Future.wait(
-        selectedPlaylists.map(
-          (playlistId) => favoritePlaylistsNotifier.addTracks(
-            playlistId,
-            tracks.map((e) => e.id).toList(),
+      try {
+        await Future.wait(
+          selectedPlaylists.map(
+            (playlistId) => favoritePlaylistsNotifier.addTracks(
+              playlistId,
+              tracks.map((e) => e.id).toList(),
+            ),
           ),
-        ),
-      ).then((_) => context.mounted ? Navigator.pop(context, true) : null);
+        );
+        if (context.mounted) Navigator.pop(context, true);
+      } catch (e, stack) {
+        AppLogger.reportError(e, stack, 'add tracks to playlists');
+        if (context.mounted) {
+          showToast(
+            context: context,
+            location: ToastLocation.bottomCenter,
+            builder: (context, overlay) {
+              return SurfaceCard(
+                child: Basic(
+                  leading: const Icon(DeeMusiqIcons.error),
+                  title: Text(context.l10n.something_went_wrong),
+                ),
+              );
+            },
+          );
+        }
+      }
     }
 
     return ConstrainedBox(
@@ -81,13 +102,13 @@ class PlaylistAddTrackDialog extends HookConsumerWidget {
           ],
         ),
         actions: [
-          OutlineButton(
+          Button.outline(
             child: Text(context.l10n.cancel),
             onPressed: () {
               Navigator.pop(context, false);
             },
           ),
-          PrimaryButton(
+          Button.primary(
             onPressed: onAdd,
             child: Text(context.l10n.add),
           ),
@@ -96,7 +117,20 @@ class PlaylistAddTrackDialog extends HookConsumerWidget {
           height: 300,
           child: userPlaylists.isLoading
               ? const Center(child: CircularProgressIndicator())
-              : ListView.builder(
+              : filteredPlaylists.isEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(
+                          "You don't have any playlists yet — create one above, then add tracks to it.",
+                          textAlign: TextAlign.center,
+                          style: typography.small.copyWith(
+                            color: Theme.of(context).colorScheme.mutedForeground,
+                          ),
+                        ),
+                      ),
+                    )
+                  : ListView.builder(
                   shrinkWrap: true,
                   itemCount: filteredPlaylists.length,
                   itemBuilder: (context, index) {

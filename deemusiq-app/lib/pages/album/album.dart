@@ -31,6 +31,10 @@ class AlbumPage extends HookConsumerWidget {
         ref.watch(metadataPluginSavedAlbumsProvider.notifier);
     final isSavedAlbum =
         ref.watch(metadataPluginIsSavedAlbumProvider(album.id));
+    // Catalog-feed albums (catalog_provider) carry `artists: const []` —
+    // `.first` would throw and blank the whole page.
+    final artistName =
+        album.artists.isEmpty ? "" : album.artists.first.name;
 
     return material.RefreshIndicator.adaptive(
       onRefresh: () async {
@@ -46,7 +50,7 @@ class AlbumPage extends HookConsumerWidget {
           ),
           title: album.name,
           description:
-              "${context.l10n.released} • ${album.releaseDate} • ${album.artists.first.name}",
+              "${context.l10n.released} • ${album.releaseDate} • $artistName",
           tracks: tracks.asData?.value.items ?? [],
           error: tracks.error,
           pagination: PaginationProps(
@@ -65,7 +69,7 @@ class AlbumPage extends HookConsumerWidget {
           routePath: "/album/${album.id}",
           shareUrl: album.externalUri,
           isLiked: isSavedAlbum.asData?.value ?? false,
-          owner: album.artists.first.name,
+          owner: artistName,
           onHeart: isSavedAlbum.asData?.value == null
               ? null
               : () async {

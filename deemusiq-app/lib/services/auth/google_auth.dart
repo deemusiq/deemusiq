@@ -1,3 +1,6 @@
+import 'dart:io' show Platform;
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:deemusiq/services/wallet/wallet_api.dart';
 import 'package:deemusiq/services/wallet/payment_service.dart'
@@ -12,7 +15,8 @@ import 'package:deemusiq/services/logger/logger.dart';
 ///
 /// **Privacy**: The backend only stores a SHA-256 hash of the Google `sub`
 /// claim. No email, name, or profile data is ever persisted. Liked songs are
-/// stored as hashed IDs; playlist names are encrypted.
+/// stored as hashed IDs; playlist names travel inside the sealed channel
+/// envelope (not separately encrypted at rest).
 class GoogleAuthService {
   GoogleAuthService._();
   static final GoogleAuthService instance = GoogleAuthService._();
@@ -27,6 +31,13 @@ class GoogleAuthService {
   bool get isConfigured =>
       PaymentGatewayConfig.backendBaseUrl.isNotEmpty;
 
+  /// google_sign_in has no Linux/Windows implementation — the button must be
+  /// hidden there instead of throwing MissingPluginException.
+  bool get isPlatformSupported {
+    if (kIsWeb) return true;
+    return Platform.isAndroid || Platform.isIOS || Platform.isMacOS;
+  }
+
   GoogleSignIn? _googleSignIn;
 
   GoogleSignIn get _client {
@@ -40,11 +51,11 @@ class GoogleAuthService {
 
   /// Whether a user is currently signed in with Google on this device.
   Future<bool> isSignedIn() async {
-    if (!isConfigured) return false;
+    if (!isConfigured || !isPlatformSupported) return false;
     try {
       return await _client.isSignedIn();
-    } catch (_) {
-      AppLogger.log.d('Google isSignedIn check failed (likely no network or Google Play Services)');
+    } catch (e) {
+      AppLogger.log.w('Google isSignedIn check failed: ${e.toString()}');
       return false;
     }
   }
@@ -63,6 +74,10 @@ class GoogleAuthService {
   Future<({String token, String? displayName, String? email, String? photoUrl})> signIn() async {
     if (!isConfigured) {
       throw GoogleAuthException('Sign-in is not configured.');
+    }
+    if (!isPlatformSupported) {
+      throw GoogleAuthException(
+          'Google sign-in is not supported on this platform.');
     }
 
     // No Google client ID configured → device-based sign-in via the wallet
@@ -113,7 +128,7 @@ class GoogleAuthService {
     try {
       final token = await WalletApiClient.instance.authWithGoogle(
         idToken: idToken,
-        deviceId: WalletApiClient.instance.deviceId,
+        deviceId: await WalletApiClient.instance.resolvedDeviceId(),
       );
       return (token: token, displayName: displayName, email: email, photoUrl: photoUrl);
     } on WalletApiException catch (e) {
@@ -121,14 +136,17 @@ class GoogleAuthService {
     }
   }
 
-  /// Sign out of Google on this device. Does NOT revoke the backend token.
+  /// Sign out of Google on this device AND the DeeMusiq backend session
+  /// (H2): sets the logged-out tombstone so the device can't silently
+  /// re-authenticate — reconnecting needs an explicit sign-in. Callers in the
+  /// UI layer additionally purge account-derived local state.
   Future<void> signOut() async {
     try {
       await _client.signOut();
     } catch (e) {
       AppLogger.log.w('Google sign-out failed: ${e.toString()}');
     }
-    WalletApiClient.instance.logout();
+    await WalletApiClient.instance.markLoggedOut();
   }
 
   /// Disconnect Google entirely: sign out + revoke access.
@@ -138,7 +156,7 @@ class GoogleAuthService {
     } catch (e) {
       AppLogger.log.w('Google disconnect failed: ${e.toString()}');
     }
-    WalletApiClient.instance.logout();
+    await WalletApiClient.instance.markLoggedOut();
   }
 }
 

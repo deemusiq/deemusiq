@@ -419,7 +419,9 @@ class AudioPlayerNotifier extends Notifier<AudioPlayerState> {
           serverStarted = true;
           break;
         }
-      } catch (_) {}
+      } catch (e) {
+        AppLogger.log.w('Streaming server start attempt $attempt failed: ${e.toString()}');
+      }
       if (attempt < 9) {
         await Future.delayed(const Duration(milliseconds: 500));
       }

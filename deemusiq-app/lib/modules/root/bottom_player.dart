@@ -57,7 +57,7 @@ class BottomPlayer extends HookConsumerWidget {
       child: playlist.activeTrack == null
           ? Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Text(
+              child: const Text(
                 "No track selected — browse to start playing",
               ).muted().small(),
             )

@@ -1,3 +1,6 @@
+// Manual CLI harness for exercising yt-dlp stream extraction by hand —
+// stdout output is the entire point of this script.
+// ignore_for_file: avoid_print
 import 'package:yt_dlp_dart/yt_dlp_dart.dart';
 import 'package:deemusiq/services/youtube_engine/yt_dlp_engine.dart';
 

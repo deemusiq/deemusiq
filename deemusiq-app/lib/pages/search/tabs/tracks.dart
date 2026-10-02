@@ -1,5 +1,7 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_undraw/flutter_undraw.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
+import 'package:shadcn_flutter/shadcn_flutter_extension.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:deemusiq/collections/fake.dart';
 import 'package:deemusiq/components/dialogs/prompt_dialog.dart';
@@ -56,6 +58,26 @@ class SearchPageTracksTab extends HookConsumerWidget {
         },
         onFetchData: () {
           searchTracksNotifier.fetchMore();
+        },
+        // Dead-end fix: a completed search with zero hits used to render a
+        // blank page with no feedback (the albums/artists/playlists tabs
+        // already show this same empty state).
+        emptyBuilder: (context) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 10,
+            children: [
+              Undraw(
+                height: 200 * context.theme.scaling,
+                illustration: UndrawIllustration.taken,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              Text(
+                context.l10n.nothing_found,
+                textAlign: TextAlign.center,
+              ).muted().small()
+            ],
+          );
         },
         itemBuilder: (context, index) {
           final track = searchTracks[index];

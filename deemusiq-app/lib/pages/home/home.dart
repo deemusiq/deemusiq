@@ -11,6 +11,8 @@ import 'package:deemusiq/modules/home/sections/featured.dart';
 import 'package:deemusiq/modules/home/sections/sections.dart';
 import 'package:deemusiq/modules/home/sections/new_releases.dart';
 import 'package:deemusiq/modules/home/sections/recent.dart';
+import 'package:deemusiq/components/home/for_you_section.dart';
+import 'package:deemusiq/provider/history/recently_played.dart';
 import 'package:deemusiq/components/titlebar/titlebar.dart';
 import 'package:deemusiq/extensions/constrains.dart';
 import 'package:deemusiq/provider/user_preferences/user_preferences_provider.dart';
@@ -68,13 +70,22 @@ class HomePage extends HookConsumerWidget {
                 const SliverGap(10),
               const SliverGap(10),
               SliverList.builder(
-                itemCount: 4,
+                itemCount: 5,
                 itemBuilder: (context, index) {
                   return switch (index) {
                     // 0 => const HomeGenresSection(),
                     0 => const HomeRecentlyPlayedSection(),
-                    1 => const HomeFeaturedSection(),
-                    // 3 => const HomePageFriendsSection(),
+                    1 => const _StreakBadge(),
+                    2 => const Padding(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                        child: ForYouSection(),
+                      ),
+                    // Intentional seam: renders nothing until the featured
+                    // playlists metadata-plugin API lands.
+                    // ignore: deprecated_member_use_from_same_package
+                    3 => const HomeFeaturedSection(),
+                    // 5 => const HomePageFriendsSection(),
                     _ => const HomeNewReleasesSection()
                   };
                 },
@@ -83,5 +94,24 @@ class HomePage extends HookConsumerWidget {
             ],
           ),
         ));
+  }
+}
+
+/// Listening streak badge (user improvement): days in a row with a play.
+/// Reads the on-device recently-played history — no backend needed.
+class _StreakBadge extends HookConsumerWidget {
+  const _StreakBadge();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final history = ref.watch(recentlyPlayedProvider);
+    if (history.isEmpty) return const SizedBox.shrink();
+    final streak = ref.read(recentlyPlayedProvider.notifier).streakDays;
+    if (streak < 2) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Text('🔥 $streak-day listening streak',
+          style: const TextStyle(fontSize: 12)),
+    );
   }
 }

@@ -1,11 +1,11 @@
-icon: assets/branding/spotube-logo.png
+icon: assets/branding/deemusiq-logo.png
 summary: Lightweight cross-platform music client
 group: Applications/Multimedia
-vendor: Kingkor Roy Tirtho
-packager: Kingkor Roy Tirtho
-packagerEmail: krtirtho@gmail.com
+vendor: The Dembe Group
+packager: DeeMusiq
+packagerEmail: deemusiq@protonmail.com
 license: BSD-4-Clause
-url: https://github.com/KRTirtho/spotube
+url: https://github.com/deemusiq/deemusiq
 requires:
   - mpv
   - libappindicator
@@ -19,7 +19,7 @@ requires:
   - webkit2gtk4.1
   - libsoup3
 
-display_name: Spotube
+display_name: DeeMusiq
 
 keywords:
   - Music

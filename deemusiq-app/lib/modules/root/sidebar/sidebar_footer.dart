@@ -1,5 +1,5 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:flutter/material.dart' show Badge;
+import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 
@@ -10,9 +10,11 @@ import 'package:deemusiq/extensions/constrains.dart';
 import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/models/metadata/metadata.dart';
 import 'package:deemusiq/modules/connect/connect_device.dart';
+import 'package:deemusiq/modules/root/count_badge.dart';
 import 'package:deemusiq/provider/download_manager_provider.dart';
 import 'package:deemusiq/provider/metadata_plugin/core/auth.dart';
 import 'package:deemusiq/provider/metadata_plugin/core/user.dart';
+import 'package:deemusiq/provider/wallet/notifications_provider.dart';
 
 class SidebarFooter extends HookConsumerWidget implements NavigationBarItem {
   const SidebarFooter({
@@ -40,20 +42,36 @@ class SidebarFooter extends HookConsumerWidget implements NavigationBarItem {
 
     final authenticated = ref.watch(metadataPluginAuthenticatedProvider);
 
-    if (mediaQuery.mdAndDown) {
+    final unreadNotifications = ref.watch(
+      notificationsProvider.select((s) => s.available ? s.unread : 0),
+    );
+
+    // Compact column whenever the NavigationRail is showing (sidebar.dart
+    // hides the whole sidebar at mdAndDown and switches rail ↔ full sidebar
+    // on lgAndUp).
+    if (!mediaQuery.lgAndUp) {
       return Column(
         mainAxisSize: MainAxisSize.min,
         spacing: 10,
         children: [
-          Badge(
-            isLabelVisible: downloadCount > 0,
-            label: Text(downloadCount.toString()),
+          CountBadge(
+            count: downloadCount,
             child: IconButton(
               variance: router.topRoute.name == UserDownloadsRoute.name
                   ? ButtonVariance.secondary
                   : ButtonVariance.ghost,
               icon: const Icon(DeeMusiqIcons.download),
               onPressed: () => context.navigateTo(const UserDownloadsRoute()),
+            ),
+          ),
+          CountBadge(
+            count: unreadNotifications,
+            child: IconButton(
+              variance: router.topRoute.name == NotificationsRoute.name
+                  ? ButtonVariance.secondary
+                  : ButtonVariance.ghost,
+              icon: const Icon(FeatherIcons.bell),
+              onPressed: () => context.navigateTo(const NotificationsRoute()),
             ),
           ),
           const ConnectDeviceButton.sidebar(),
@@ -70,20 +88,38 @@ class SidebarFooter extends HookConsumerWidget implements NavigationBarItem {
         children: [
           SizedBox(
             width: double.infinity,
-            child: Button(
-              style: router.topRoute.name == UserDownloadsRoute.name
-                  ? ButtonVariance.secondary
-                  : ButtonVariance.outline,
-              onPressed: () {
-                context.navigateTo(const UserDownloadsRoute());
-              },
-              leading: const Icon(DeeMusiqIcons.download),
-              trailing: downloadCount > 0
-                  ? PrimaryBadge(
-                      child: Text(downloadCount.toString()),
-                    )
-                  : null,
-              child: Text(context.l10n.downloads),
+            child: Row(
+              spacing: 6,
+              children: [
+                Expanded(
+                  child: Button(
+                    style: router.topRoute.name == UserDownloadsRoute.name
+                        ? ButtonVariance.secondary
+                        : ButtonVariance.outline,
+                    onPressed: () {
+                      context.navigateTo(const UserDownloadsRoute());
+                    },
+                    leading: const Icon(DeeMusiqIcons.download),
+                    trailing: downloadCount > 0
+                        ? PrimaryBadge(
+                            child: Text(downloadCount.toString()),
+                          )
+                        : null,
+                    child: Text(context.l10n.downloads),
+                  ),
+                ),
+                CountBadge(
+                  count: unreadNotifications,
+                  child: IconButton(
+                    variance: router.topRoute.name == NotificationsRoute.name
+                        ? ButtonVariance.secondary
+                        : ButtonVariance.outline,
+                    icon: const Icon(FeatherIcons.bell),
+                    onPressed: () =>
+                        context.navigateTo(const NotificationsRoute()),
+                  ),
+                ),
+              ],
             ),
           ),
           const ConnectDeviceButton.sidebar(),
@@ -91,9 +127,7 @@ class SidebarFooter extends HookConsumerWidget implements NavigationBarItem {
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              if (authenticated.asData?.value == true && data == null)
-                const CircularProgressIndicator()
-              else if (data != null)
+              if (data != null)
                 Flexible(
                   child: GestureDetector(
                     onTap: () {
@@ -119,7 +153,19 @@ class SidebarFooter extends HookConsumerWidget implements NavigationBarItem {
                       ],
                     ),
                   ),
-                ),
+                )
+              else if (userSnapshot.hasError)
+                Tooltip(
+                  tooltip: TooltipContainer(child: Text(context.l10n.retry))
+                      .call,
+                  child: IconButton.ghost(
+                    icon: const Icon(DeeMusiqIcons.refresh),
+                    onPressed: () =>
+                        ref.invalidate(metadataPluginUserProvider),
+                  ),
+                )
+              else if (authenticated.asData?.value == true)
+                const CircularProgressIndicator(),
             ],
           ),
         ],

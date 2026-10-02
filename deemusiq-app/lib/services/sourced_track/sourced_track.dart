@@ -16,7 +16,6 @@ import 'package:deemusiq/services/metadata/errors/exceptions.dart';
 
 import 'package:deemusiq/services/content_filter.dart';
 import 'package:deemusiq/services/sourced_track/exceptions.dart';
-import 'package:deemusiq/utils/service_utils.dart';
 
 final officialMusicRegex = RegExp(
   r"official\s(video|audio|music\svideo|lyric\svideo|visualizer)",
@@ -145,42 +144,64 @@ class SourcedTrack extends BasicSourcedTrack {
     List<DeeMusiqAudioSourceMatchObject> results,
     DeeMusiqFullTrackObject track,
   ) {
+    final trackTitle = track.name.toLowerCase();
+    final albumTitle = track.album.name.toLowerCase();
+    final trackDuration = Duration(milliseconds: track.durationMs);
+
     return results
         .map((sibling) {
-          int score = 0;
+          double score = 0;
+          final title = sibling.title.toLowerCase();
 
+          // Title containing the track name is the strongest signal,
+          // together with a channel/uploader that matches the artist.
+          if (trackTitle.isNotEmpty && title.contains(trackTitle)) {
+            score += 0.3;
+          }
+
+          final uploader = sibling.artists.firstOrNull?.toLowerCase() ?? '';
           for (final artist in track.artists) {
-            final isSameChannelArtist =
-                sibling.artists.any((a) => a.toLowerCase() == artist.name);
+            final artistName = artist.name.toLowerCase();
+            if (artistName.isEmpty) continue;
+
+            // Uploader == artist, or one contains the other
+            // (e.g. "Artist" vs "ArtistVEVO" / "Artist - Topic").
+            final isSameChannelArtist = sibling.artists
+                    .any((a) => a.toLowerCase() == artistName) ||
+                (uploader.isNotEmpty &&
+                    (artistName.contains(uploader) ||
+                        uploader.contains(artistName)));
 
             if (isSameChannelArtist) {
-              score += 1;
+              score += 0.3;
             }
 
-            final titleContainsArtist =
-                sibling.title.toLowerCase().contains(artist.name.toLowerCase());
-
-            if (titleContainsArtist) {
-              score += 1;
+            if (title.contains(artistName)) {
+              score += 0.1;
             }
           }
 
-          final titleContainsTrackName =
-              sibling.title.toLowerCase().contains(track.name.toLowerCase());
-
-          final hasOfficialFlag =
-              officialMusicRegex.hasMatch(sibling.title.toLowerCase());
-
-          if (titleContainsTrackName) {
-            score += 3;
+          // Duration within ±30s filters out wrong versions, live
+          // recordings, covers and remixes sharing the same title.
+          if (track.durationMs > 0 && sibling.duration > Duration.zero) {
+            final diff = (sibling.duration - trackDuration).abs();
+            if (diff <= const Duration(seconds: 30)) {
+              score += 0.2;
+            }
           }
 
+          if (albumTitle.isNotEmpty &&
+            albumTitle != 'unknown album' &&
+            title.contains(albumTitle)) {
+            score += 0.1;
+          }
+
+          final hasOfficialFlag = officialMusicRegex.hasMatch(title);
           if (hasOfficialFlag) {
-            score += 1;
-          }
-
-          if (hasOfficialFlag && titleContainsTrackName) {
-            score += 2;
+            score += 0.1;
+            if (trackTitle.isNotEmpty && title.contains(trackTitle)) {
+              score += 0.2;
+            }
           }
 
           return (sibling: sibling, score: score);
@@ -204,11 +225,9 @@ class SourcedTrack extends BasicSourcedTrack {
 
     final searchResults = await audioSource.audioSource.matches(query);
 
-    if (ServiceUtils.onlyContainsEnglish(query.name)) {
-      videoResults.addAll(searchResults);
-    } else {
-      videoResults.addAll(rankResults(searchResults, query));
-    }
+    // Always rank by confidence (title/uploader/duration/album/official
+    // signals) — the raw search order regularly surfaces wrong versions.
+    videoResults.addAll(rankResults(searchResults, query));
 
     final filtered = videoResults
         .where(ContentFilter.isPlayableMatch)

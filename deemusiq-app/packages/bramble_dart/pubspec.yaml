@@ -1,0 +1,16 @@
+name: bramble_dart
+description: >-
+  Clean-room Dart implementation of the Bramble Handshake Protocol (BHP 0.1)
+  from the publicly published Briar protocol specifications. Milestone 1:
+  identity, key agreement, handshake state machine, transport abstraction.
+version: 0.1.0
+publish_to: "none"
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  cryptography: ^2.7.0
+
+dev_dependencies:
+  test: ^1.25.0

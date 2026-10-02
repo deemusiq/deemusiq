@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart' hide Slider;
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:deemusiq/services/audio_player/audio_player.dart';

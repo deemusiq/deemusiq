@@ -38,7 +38,7 @@ class SyncedLyricsNotifier
         options: Options(
           headers: {
             "User-Agent":
-                "DeeMusiq v${packageInfo.version} (https://github.com/deemusiq/deemusiq)"
+                "DeeMusiq v${packageInfo.version} (https://deemusiq.co.za)"
           },
           responseType: ResponseType.json,
           validateStatus: (s) => s != null && s < 500,
@@ -87,7 +87,10 @@ class SyncedLyricsNotifier
         rating: 0,
         provider: "LRCLib",
       );
-    } catch (_) {
+    } catch (e) {
+      // Expected for tracks without lyrics — but the failure is logged, not
+      // swallowed, so persistent fetch/parse breakage stays diagnosable.
+      AppLogger.log.d('LRCLib lyrics fetch failed for "${_track.name}": ${e.toString()}');
       return SubtitleSimple(
         lyrics: [],
         name: _track.name,

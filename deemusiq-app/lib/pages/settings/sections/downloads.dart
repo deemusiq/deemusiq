@@ -40,7 +40,11 @@ class SettingsDownloadsSection extends HookConsumerWidget {
         ListTile(
           leading: const Icon(DeeMusiqIcons.download),
           title: Text(context.l10n.download_location),
-          subtitle: Text(preferences.downloadLocation),
+          subtitle: Text(
+            "${preferences.downloadLocation}\n"
+            "New downloads are stored encrypted inside the app (offline DRM) — "
+            "this folder is scanned for your existing/plaintext audio files.",
+          ),
           trailing: IconButton.secondary(
             onPressed: pickDownloadLocation,
             icon: const Icon(DeeMusiqIcons.folder),

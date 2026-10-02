@@ -2019,6 +2019,12 @@ abstract class AppLocalizations {
   /// **'Contribute on GitHub'**
   String get contribute_on_github;
 
+  /// No description provided for @visit_our_website.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit our website'**
+  String get visit_our_website;
+
   /// No description provided for @donate_on_open_collective.
   ///
   /// In en, this message translates to:
@@ -2592,7 +2598,7 @@ abstract class AppLocalizations {
   /// No description provided for @youtube_engine.
   ///
   /// In en, this message translates to:
-  /// **'YouTube Engine'**
+  /// **'DeeMusiq Engine'**
   String get youtube_engine;
 
   /// No description provided for @youtube_engine_not_installed_title.
@@ -2618,6 +2624,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'In macOS/Linux/unix like OS\'s, setting path on .zshrc/.bashrc/.bash_profile etc. won\'t work.\nYou need to set the path in the shell configuration file'**
   String get youtube_engine_unix_issue_message;
+
+  /// No description provided for @yt_dlp_install_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Setting up yt-dlp'**
+  String get yt_dlp_install_title;
+
+  /// No description provided for @yt_dlp_install_phase_checking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking for an existing yt-dlp install…'**
+  String get yt_dlp_install_phase_checking;
+
+  /// No description provided for @yt_dlp_install_phase_downloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading yt-dlp {version}…'**
+  String yt_dlp_install_phase_downloading(Object version);
+
+  /// No description provided for @yt_dlp_install_phase_verifying.
+  ///
+  /// In en, this message translates to:
+  /// **'Verifying the downloaded yt-dlp…'**
+  String get yt_dlp_install_phase_verifying;
+
+  /// No description provided for @yt_dlp_install_phase_installing.
+  ///
+  /// In en, this message translates to:
+  /// **'Installing yt-dlp {version}…'**
+  String yt_dlp_install_phase_installing(Object version);
+
+  /// No description provided for @yt_dlp_install_phase_done.
+  ///
+  /// In en, this message translates to:
+  /// **'yt-dlp {version} is ready'**
+  String yt_dlp_install_phase_done(Object version);
+
+  /// No description provided for @yt_dlp_install_phase_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'yt-dlp setup failed'**
+  String get yt_dlp_install_phase_failed;
+
+  /// No description provided for @yt_dlp_install_progress.
+  ///
+  /// In en, this message translates to:
+  /// **'{received} of {total}'**
+  String yt_dlp_install_progress(Object received, Object total);
+
+  /// No description provided for @yt_dlp_install_action.
+  ///
+  /// In en, this message translates to:
+  /// **'Install automatically'**
+  String get yt_dlp_install_action;
+
+  /// No description provided for @yt_dlp_install_latest_action.
+  ///
+  /// In en, this message translates to:
+  /// **'Install the latest yt-dlp automatically'**
+  String get yt_dlp_install_latest_action;
+
+  /// No description provided for @yt_dlp_install_retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get yt_dlp_install_retry;
+
+  /// No description provided for @yt_dlp_install_failed_message.
+  ///
+  /// In en, this message translates to:
+  /// **'yt-dlp could not be installed automatically:\n{error}'**
+  String yt_dlp_install_failed_message(Object error);
+
+  /// No description provided for @yt_dlp_install_managed_message.
+  ///
+  /// In en, this message translates to:
+  /// **'DeeMusiq downloads the official yt-dlp release into its own folder and keeps it up to date, so nothing has to be installed system-wide.'**
+  String get yt_dlp_install_managed_message;
 
   /// No description provided for @download.
   ///
@@ -2985,6 +3069,24 @@ abstract class AppLocalizations {
   /// **'I am 18 or older'**
   String get confirm_age_18;
 
+  /// No description provided for @birth_year_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Birth year (e.g. 1990)'**
+  String get birth_year_hint;
+
+  /// No description provided for @must_enter_valid_birth_year.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid birth year (e.g. 1990).'**
+  String get must_enter_valid_birth_year;
+
+  /// No description provided for @under_min_age_message.
+  ///
+  /// In en, this message translates to:
+  /// **'Sorry — DeeMusiq is only available to users 18 or older.'**
+  String get under_min_age_message;
+
   /// No description provided for @agree_privacy_policy.
   ///
   /// In en, this message translates to:
@@ -3014,6 +3116,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Continue with device (limited)'**
   String get continue_with_device_limited;
+
+  /// No description provided for @offline_staying_on_device.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach the backend. Continuing on this device with YouTube.'**
+  String get offline_staying_on_device;
 
   /// No description provided for @wallet_sync_failed_retry.
   ///

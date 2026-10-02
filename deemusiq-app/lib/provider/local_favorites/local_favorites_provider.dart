@@ -8,6 +8,7 @@ import 'package:deemusiq/provider/database/database.dart';
 import 'package:deemusiq/provider/metadata_plugin/library/tracks.dart';
 import 'package:deemusiq/services/auth/data_sync.dart';
 import 'package:deemusiq/services/logger/logger.dart';
+import 'package:deemusiq/services/offline_queue/offline_action_queue.dart';
 import 'package:deemusiq/services/wallet/wallet_api.dart';
 
 final localFavoritesProvider =
@@ -123,8 +124,15 @@ Future<bool> toggleTrackFavorite({
       AppLogger.log.d('Liked-song backend sync failed: ${e.toString()}');
     }));
     if (WalletApiClient.instance.isConfigured) {
-      unawaited(WalletApiClient.instance.unlikeTrack(track.id).catchError((e) {
+      unawaited(WalletApiClient.instance.unlikeTrack(track.id).catchError((e) async {
         AppLogger.log.d('Account favorite unlike failed: ${e.toString()}');
+        if (e is WalletApiException && e.isConnectivity) {
+          await OfflineActionQueue.instance.enqueue(
+            OfflineActionType.recommendationsUnlike,
+            OfflineActionQueue.trackLikeEntityKey(track.id),
+            {'trackId': track.id},
+          );
+        }
       }));
     }
     try {
@@ -148,8 +156,19 @@ Future<bool> toggleTrackFavorite({
             title: track.name,
             artist: track.artists.map((a) => a.name).join(', '),
           )
-          .catchError((e) {
+          .catchError((e) async {
         AppLogger.log.d('Account favorite like failed: ${e.toString()}');
+        if (e is WalletApiException && e.isConnectivity) {
+          await OfflineActionQueue.instance.enqueue(
+            OfflineActionType.recommendationsLike,
+            OfflineActionQueue.trackLikeEntityKey(track.id),
+            {
+              'trackId': track.id,
+              'title': track.name,
+              'artist': track.artists.map((a) => a.name).join(', '),
+            },
+          );
+        }
       }));
     }
     try {

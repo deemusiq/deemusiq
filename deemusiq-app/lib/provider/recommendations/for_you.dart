@@ -65,12 +65,16 @@ class RecommendedTrack {
 }
 
 /// State for the recommendations notifier.
+/// `gmailLinked` mirrors the backend's Gmail-sign-in personalization flag:
+/// true when the user's Google identity carries likes/listens across devices.
 class RecommendationsState {
   final List<RecommendedTrack> tracks;
   final bool isLoading;
   final bool isRefreshing;
   final String? error;
   final DateTime? generatedAt;
+  final bool gmailLinked;
+  final bool personalised;
 
   const RecommendationsState({
     this.tracks = const [],
@@ -78,6 +82,8 @@ class RecommendationsState {
     this.isRefreshing = false,
     this.error,
     this.generatedAt,
+    this.gmailLinked = false,
+    this.personalised = false,
   });
 
   RecommendationsState copyWith({
@@ -86,6 +92,8 @@ class RecommendationsState {
     bool? isRefreshing,
     String? error,
     DateTime? generatedAt,
+    bool? gmailLinked,
+    bool? personalised,
   }) {
     return RecommendationsState(
       tracks: tracks ?? this.tracks,
@@ -93,6 +101,8 @@ class RecommendationsState {
       isRefreshing: isRefreshing ?? this.isRefreshing,
       error: error,
       generatedAt: generatedAt ?? this.generatedAt,
+      gmailLinked: gmailLinked ?? this.gmailLinked,
+      personalised: personalised ?? this.personalised,
     );
   }
 }
@@ -102,9 +112,22 @@ class RecommendationsNotifier extends StateNotifier<RecommendationsState> {
 
   bool get _isConfigured => PaymentGatewayConfig.backendBaseUrl.isNotEmpty;
 
-  Future<void> load() async {
+  /// In-memory TTL for the last successful fetch. [load] serves the cached
+  /// state while fresh so revisiting the home page doesn't re-hit the
+  /// backend; retry/refresh paths pass `force: true` to bypass it.
+  static const _cacheTtl = Duration(minutes: 5);
+  DateTime? _lastFetchedAt;
+
+  bool get _hasFreshCache =>
+      _lastFetchedAt != null &&
+      DateTime.now().difference(_lastFetchedAt!) < _cacheTtl;
+
+  Future<void> load({bool force = false}) async {
     if (!_isConfigured) {
       state = state.copyWith(isLoading: false, error: 'backend_not_configured');
+      return;
+    }
+    if (!force && _hasFreshCache && state.tracks.isNotEmpty) {
       return;
     }
     try {
@@ -118,10 +141,13 @@ class RecommendationsNotifier extends StateNotifier<RecommendationsState> {
       final generatedAt = data['generatedAt'] != null
           ? DateTime.tryParse(data['generatedAt'] as String)
           : null;
+      _lastFetchedAt = DateTime.now();
       state = RecommendationsState(
         tracks: list,
         isLoading: false,
         generatedAt: generatedAt,
+        gmailLinked: data['gmailLinked'] == true,
+        personalised: data['personalised'] == true || list.isNotEmpty,
       );
     } catch (e, stack) {
       AppLogger.log.w('Failed to load recommendations: ${e.toString()}');
@@ -146,10 +172,13 @@ class RecommendationsNotifier extends StateNotifier<RecommendationsState> {
       final generatedAt = data['generatedAt'] != null
           ? DateTime.tryParse(data['generatedAt'] as String)
           : null;
+      _lastFetchedAt = DateTime.now();
       state = RecommendationsState(
         tracks: list,
         isRefreshing: false,
         generatedAt: generatedAt,
+        gmailLinked: data['gmailLinked'] == true,
+        personalised: data['personalised'] == true || list.isNotEmpty,
       );
     } catch (e, stack) {
       AppLogger.log.w('Failed to refresh recommendations: ${e.toString()}');

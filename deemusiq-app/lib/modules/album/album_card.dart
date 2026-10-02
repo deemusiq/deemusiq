@@ -20,6 +20,21 @@ extension FormattedAlbumType on DeeMusiqAlbumType {
   String get formatted => name.replaceFirst(name[0], name[0].toUpperCase());
 }
 
+/// User-visible feedback for a failed collection load — cards used to swallow
+/// track-fetch failures silently, leaving the play button looking dead.
+void showListLoadFailureToast(BuildContext context) {
+  showToast(
+    context: context,
+    builder: (context, overlay) {
+      return const SurfaceCard(
+        child: Basic(
+          content: Text("Couldn't load this list"),
+        ),
+      );
+    },
+  );
+}
+
 class AlbumCard extends HookConsumerWidget {
   final DeeMusiqSimpleAlbumObject album;
   final bool _isTile;
@@ -78,9 +93,19 @@ class AlbumCard extends HookConsumerWidget {
           return playing ? audioPlayer.pause() : audioPlayer.resume();
         }
 
-        final fetchedTracks = await fetchAllTrack();
+        final List<DeeMusiqFullTrackObject> fetchedTracks;
+        try {
+          fetchedTracks = await fetchAllTrack();
+        } catch (_) {
+          if (context.mounted) showListLoadFailureToast(context);
+          return;
+        }
 
-        if (fetchedTracks.isEmpty || !context.mounted) return;
+        if (!context.mounted) return;
+        if (fetchedTracks.isEmpty) {
+          showListLoadFailureToast(context);
+          return;
+        }
 
         final isRemoteDevice = await showSelectDeviceDialog(context, ref);
         if (isRemoteDevice == null) return;

@@ -73,13 +73,9 @@ class PlayerView extends HookConsumerWidget {
       [currentActiveTrack?.album.images],
     );
 
-    useEffect(() {
-      return null;
-    }, [panelController.isAttached && panelController.isPanelOpen]);
-
     return AppPopScope(
       canPop: false,
-      onPopInvoked: (didPop) async {
+      onPopInvoked: (didPop, result) async {
         await panelController.close();
       },
       child: SurfaceCard(

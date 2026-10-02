@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:shadcn_flutter/shadcn_flutter_extension.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:deemusiq/components/fallbacks/error_box.dart';
 import 'package:deemusiq/components/playbutton_view/playbutton_card.dart';
 import 'package:deemusiq/components/waypoint.dart';
 import 'package:deemusiq/models/metadata/metadata.dart';
@@ -12,7 +13,6 @@ import 'package:deemusiq/modules/artist/artist_card.dart';
 import 'package:deemusiq/modules/playlist/playlist_card.dart';
 import 'package:deemusiq/components/titlebar/titlebar.dart';
 import 'package:deemusiq/provider/metadata_plugin/browse/section_items.dart';
-import 'package:deemusiq/provider/metadata_plugin/utils/common.dart';
 
 const _dummyPlaybuttonCard = PlaybuttonCard(
   imageUrl: 'https://placehold.co/150x150.png',
@@ -46,7 +46,7 @@ class HomeBrowseSectionItemsPage extends HookConsumerWidget {
     final items = sectionItems.asData?.value.items ?? [];
     final controller = useScrollController();
 
-    final isLoading = sectionItems.isLoading || sectionItems.isLoadingNextPage;
+    final isLoading = sectionItems.isLoading;
     final itemCount = items.length;
     final hasMore = sectionItems.asData?.value.hasMore ?? false;
 
@@ -60,59 +60,71 @@ class HomeBrowseSectionItemsPage extends HookConsumerWidget {
               title: Text(section.title),
             )
           ],
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: CustomScrollView(
-              controller: controller,
-              slivers: [
-                SliverGrid.builder(
-                  itemCount: isLoading ? 6 : itemCount + 1,
-                  gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 150 * scale,
-                    mainAxisExtent: 225 * scale,
-                    crossAxisSpacing: 12 * scale,
-                    mainAxisSpacing: 12 * scale,
-                  ),
-                  itemBuilder: (context, index) {
-                    if (isLoading) {
-                      return const Skeletonizer(
-                        enabled: true,
-                        child: _dummyPlaybuttonCard,
+          child: sectionItems.hasError
+              ? Center(
+                  child: ErrorBox(
+                    error: sectionItems.error!,
+                    onRetry: () {
+                      ref.invalidate(
+                        metadataPluginBrowseSectionItemsProvider(sectionId),
                       );
-                    }
-
-                    if (index == itemCount) {
-                      if (!hasMore) return const SizedBox.shrink();
-                      return Waypoint(
-                        controller: controller,
-                        isGrid: true,
-                        onTouchEdge: () async {
-                          await sectionItemsNotifier.fetchMore();
-                        },
-                        child: const Skeletonizer(
-                          enabled: true,
-                          child: _dummyPlaybuttonCard,
+                    },
+                  ),
+                )
+              : Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: CustomScrollView(
+                    controller: controller,
+                    slivers: [
+                      SliverGrid.builder(
+                        itemCount: isLoading ? 6 : itemCount + 1,
+                        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 150 * scale,
+                          mainAxisExtent: 225 * scale,
+                          crossAxisSpacing: 12 * scale,
+                          mainAxisSpacing: 12 * scale,
                         ),
-                      );
-                    }
+                        itemBuilder: (context, index) {
+                          if (isLoading) {
+                            return const Skeletonizer(
+                              enabled: true,
+                              child: _dummyPlaybuttonCard,
+                            );
+                          }
 
-                    final item = items[index];
-                    return switch (item) {
-                      DeeMusiqFullArtistObject() => ArtistCard(item),
-                      DeeMusiqSimplePlaylistObject() => PlaylistCard(item),
-                      DeeMusiqSimpleAlbumObject() => AlbumCard(item),
-                      _ => const SizedBox.shrink(),
-                    };
-                  },
-                ),
-                const SliverToBoxAdapter(
-                  child: SafeArea(
-                    child: SizedBox(),
+                          if (index == itemCount) {
+                            if (!hasMore) return const SizedBox.shrink();
+                            return Waypoint(
+                              controller: controller,
+                              isGrid: true,
+                              onTouchEdge: () async {
+                                await sectionItemsNotifier.fetchMore();
+                              },
+                              child: const Skeletonizer(
+                                enabled: true,
+                                child: _dummyPlaybuttonCard,
+                              ),
+                            );
+                          }
+
+                          final item = items[index];
+                          return switch (item) {
+                            DeeMusiqFullArtistObject() => ArtistCard(item),
+                            DeeMusiqSimplePlaylistObject() =>
+                              PlaylistCard(item),
+                            DeeMusiqSimpleAlbumObject() => AlbumCard(item),
+                            _ => const SizedBox.shrink(),
+                          };
+                        },
+                      ),
+                      const SliverToBoxAdapter(
+                        child: SafeArea(
+                          child: SizedBox(),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
         ),
       ),
     );

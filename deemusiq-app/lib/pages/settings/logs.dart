@@ -6,6 +6,7 @@ import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:shadcn_flutter/shadcn_flutter_extension.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/components/button/back_button.dart';
+import 'package:deemusiq/components/dialogs/prompt_dialog.dart';
 import 'package:deemusiq/components/inter_scrollbar/inter_scrollbar.dart';
 import 'package:deemusiq/components/titlebar/titlebar.dart';
 import 'package:deemusiq/extensions/context.dart';
@@ -33,39 +34,56 @@ class LogsPage extends HookConsumerWidget {
             title: Text(context.l10n.logs),
             leading: const [BackButton()],
             trailing: [
-              IconButton.ghost(
-                icon: const Icon(DeeMusiqIcons.clipboard, size: 16),
-                onPressed: () async {
-                  final logsSnapshot = await ref.read(logsProvider.future);
+              Tooltip(
+                tooltip: TooltipContainer(
+                  child: Text(context.l10n.copy_to_clipboard),
+                ).call,
+                child: IconButton.ghost(
+                  icon: const Icon(DeeMusiqIcons.clipboard, size: 16),
+                  onPressed: () async {
+                    final logsSnapshot = await ref.read(logsProvider.future);
 
-                  await Clipboard.setData(ClipboardData(text: logsSnapshot));
-                  if (context.mounted) {
-                    showToast(
-                      context: context,
-                      location: ToastLocation.topRight,
-                      builder: (context, overlay) {
-                        return SurfaceCard(
-                          child: Basic(
-                            title: Text(context.l10n.copied_to_clipboard("")),
-                          ),
-                        );
-                      },
-                    );
-                  }
-                },
-              ),
-              IconButton.ghost(
-                icon: const Icon(
-                  DeeMusiqIcons.trash,
-                  size: 16,
+                    await Clipboard.setData(ClipboardData(text: logsSnapshot));
+                    if (context.mounted) {
+                      showToast(
+                        context: context,
+                        location: ToastLocation.topRight,
+                        builder: (context, overlay) {
+                          return SurfaceCard(
+                            child: Basic(
+                              title: Text(context.l10n.copied_to_clipboard("")),
+                            ),
+                          );
+                        },
+                      );
+                    }
+                  },
                 ),
-                onPressed: () async {
-                  ref.invalidate(logsProvider);
+              ),
+              Tooltip(
+                tooltip: const TooltipContainer(
+                  child: Text("Clear logs"),
+                ).call,
+                child: IconButton.ghost(
+                  icon: const Icon(
+                    DeeMusiqIcons.trash,
+                    size: 16,
+                  ),
+                  onPressed: () async {
+                    final confirmed = await showPromptDialog(
+                      context: context,
+                      title: "Clear logs",
+                      message:
+                          "Delete all stored logs? This cannot be undone.",
+                    );
+                    if (!confirmed) return;
+                    ref.invalidate(logsProvider);
 
-                  final logsFile = await AppLogger.getLogsPath();
+                    final logsFile = await AppLogger.getLogsPath();
 
-                  await logsFile.writeAsString("");
-                },
+                    await logsFile.writeAsString("");
+                  },
+                ),
               )
             ],
           ),

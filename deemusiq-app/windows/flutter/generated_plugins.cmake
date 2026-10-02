@@ -11,6 +11,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   flutter_inappwebview_windows
   flutter_new_pipe_extractor
   flutter_secure_storage_windows
+  local_auth_windows
   local_notifier
   media_kit_libs_windows_audio
   permission_handler_windows
@@ -23,6 +24,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
   flutter_discord_rpc
+  jsf
   metadata_god
   smtc_windows
 )

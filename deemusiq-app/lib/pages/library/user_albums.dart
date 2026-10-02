@@ -132,6 +132,27 @@ class UserAlbumsPage extends HookConsumerWidget {
                       ),
                     ),
                   )
+                else if (albums.isEmpty && !albumsQuery.isLoading)
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    sliver: SliverToBoxAdapter(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        spacing: 10,
+                        children: [
+                          Undraw(
+                            height: 200 * context.theme.scaling,
+                            illustration: UndrawIllustration.taken,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          Text(
+                            context.l10n.nothing_found,
+                            textAlign: TextAlign.center,
+                          ).muted().small()
+                        ],
+                      ),
+                    ),
+                  )
                 else
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),

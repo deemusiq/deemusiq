@@ -131,10 +131,13 @@ class SyncedLyrics extends HookConsumerWidget {
                   final isActive = lyricSlice.time.inSeconds == currentTime;
 
                   if (isActive) {
-                    controller.scrollToIndex(
-                      index,
-                      preferPosition: AutoScrollPosition.middle,
-                    );
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (!controller.hasClients) return;
+                      controller.scrollToIndex(
+                        index,
+                        preferPosition: AutoScrollPosition.middle,
+                      );
+                    });
                   }
                   return AutoScrollTag(
                     key: ValueKey(index),

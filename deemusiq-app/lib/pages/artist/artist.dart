@@ -5,6 +5,7 @@ import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:shadcn_flutter/shadcn_flutter_extension.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:deemusiq/components/button/back_button.dart';
+import 'package:deemusiq/components/fallbacks/error_box.dart';
 
 import 'package:deemusiq/components/titlebar/titlebar.dart';
 import 'package:deemusiq/extensions/context.dart';
@@ -65,7 +66,38 @@ class ArtistPage extends HookConsumerWidget {
           },
           child: Builder(builder: (context) {
             if (artistQuery.hasError && artistQuery.asData?.value == null) {
-              return Center(child: Text(artistQuery.error.toString()));
+              return CustomScrollView(
+                controller: scrollController,
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  SliverFillRemaining(
+                    child: Center(
+                      child: ErrorBox(
+                        error: artistQuery.error!,
+                        onRetry: () {
+                          ref.invalidate(
+                            metadataPluginArtistProvider(artistId),
+                          );
+                          ref.invalidate(
+                            metadataPluginArtistRelatedArtistsProvider(
+                              artistId,
+                            ),
+                          );
+                          ref.invalidate(
+                            metadataPluginArtistAlbumsProvider(artistId),
+                          );
+                          ref.invalidate(
+                            metadataPluginIsSavedArtistProvider(artistId),
+                          );
+                          ref.invalidate(
+                            metadataPluginArtistTopTracksProvider(artistId),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              );
             }
             return Skeletonizer(
               enabled: artistQuery.isLoading,

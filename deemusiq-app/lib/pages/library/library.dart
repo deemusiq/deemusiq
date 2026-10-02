@@ -57,7 +57,7 @@ class LibraryPage extends HookConsumerWidget {
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: TabList(
-                      index: index,
+                      index: index < 0 ? 0 : index,
                       onChanged: (index) {
                         context.navigateTo(sidebarLibraryTileList[index].route);
                       },

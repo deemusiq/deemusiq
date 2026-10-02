@@ -140,6 +140,7 @@ abstract class DeeMusiqIcons {
   static const upload = FeatherIcons.uploadCloud;
   static const plugin = Icons.extension_outlined;
   static const warning = FeatherIcons.alertTriangle;
+  static const flag = FeatherIcons.flag;
 
   // DeeMusiq wallet / monetization (material glyphs — brand fidelity via colour)
   static const wallet = Icons.account_balance_wallet_rounded;

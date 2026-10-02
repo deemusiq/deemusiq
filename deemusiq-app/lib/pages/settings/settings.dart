@@ -3,6 +3,7 @@ import 'package:flutter/material.dart' show Material, MaterialType;
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
+import 'package:deemusiq/components/dialogs/prompt_dialog.dart';
 import 'package:deemusiq/components/titlebar/titlebar.dart';
 import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/pages/settings/sections/about.dart';
@@ -13,6 +14,9 @@ import 'package:deemusiq/pages/settings/sections/developers.dart';
 import 'package:deemusiq/pages/settings/sections/downloads.dart';
 import 'package:deemusiq/pages/settings/sections/language_region.dart';
 import 'package:deemusiq/pages/settings/sections/playback.dart';
+import 'package:deemusiq/pages/settings/sections/security.dart';
+import 'package:deemusiq/pages/settings/sections/privacy.dart';
+import 'package:deemusiq/pages/settings/sections/storage.dart';
 import 'package:deemusiq/provider/user_preferences/user_preferences_provider.dart';
 import 'package:deemusiq/utils/platform.dart';
 import 'package:auto_route/auto_route.dart';
@@ -48,16 +52,28 @@ class SettingsPage extends HookConsumerWidget {
                     controller: controller,
                     children: [
                       const SettingsAccountSection(),
+                      const SettingsSecuritySection(),
+                      const SettingsPrivacySection(),
                       const SettingsLanguageRegionSection(),
                       const SettingsAppearanceSection(),
                       const SettingsPlaybackSection(),
                       const SettingsDownloadsSection(),
+                      const SettingsStorageSection(),
                       if (kIsDesktop) const SettingsDesktopSection(),
                       if (!kIsWeb) const SettingsDevelopersSection(),
                       const SettingsAboutSection(),
                       Center(
                         child: Button.destructive(
-                          onPressed: preferencesNotifier.reset,
+                          onPressed: () async {
+                            final confirmed = await showPromptDialog(
+                              context: context,
+                              title: context.l10n.restore_defaults,
+                              message:
+                                  "Reset all settings to their default values? This cannot be undone.",
+                            );
+                            if (!confirmed) return;
+                            await preferencesNotifier.reset();
+                          },
                           child: Text(context.l10n.restore_defaults),
                         ),
                       ),

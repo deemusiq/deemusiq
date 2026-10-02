@@ -30,7 +30,7 @@ class MacosBuildCommand extends Command with BuildCommandCommonSteps {
         cwd.path,
         "dist",
         pubspec.version.toString(),
-        "spotube-${pubspec.version}-macos.pkg",
+        "deemusiq-${pubspec.version}-macos.pkg",
       ),
     );
 

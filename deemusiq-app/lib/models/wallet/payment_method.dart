@@ -8,12 +8,13 @@ enum PaymentRail { fiat, crypto, demo }
 /// Concrete payment methods a user can pick when buying tokens.
 ///
 /// The fiat/crypto methods are wired through [PaymentService] but require the
-/// DeeMusiq backend (PayFast/Stripe merchant + a crypto deposit watcher) to
-/// actually settle. The [demoCredit] method credits instantly and exists so the
-/// wallet is fully demoable offline.
+/// DeeMusiq backend (PayShap/PayFast/Stripe merchant + a crypto deposit
+/// watcher) to actually settle. The [demoCredit] method credits instantly and
+/// exists so the wallet is fully demoable offline.
 enum PaymentMethodKind {
   payfastCard,
   stripeCard,
+  payshap,
   monero,
   ethereum,
   bitcoin,
@@ -25,6 +26,7 @@ enum PaymentMethodKind {
     switch (this) {
       case PaymentMethodKind.payfastCard:
       case PaymentMethodKind.stripeCard:
+      case PaymentMethodKind.payshap:
         return PaymentRail.fiat;
       case PaymentMethodKind.monero:
       case PaymentMethodKind.ethereum:
@@ -45,6 +47,8 @@ enum PaymentMethodKind {
         return "Card · PayFast";
       case PaymentMethodKind.stripeCard:
         return "Card · Stripe";
+      case PaymentMethodKind.payshap:
+        return "PayShap";
       case PaymentMethodKind.monero:
         return "Monero (XMR)";
       case PaymentMethodKind.ethereum:
@@ -67,6 +71,8 @@ enum PaymentMethodKind {
         return "Visa / Mastercard · ZAR settlement";
       case PaymentMethodKind.stripeCard:
         return "International cards";
+      case PaymentMethodKind.payshap:
+        return "Instant EFT · South African banks · ZAR";
       case PaymentMethodKind.monero:
         return "Private, low-fee · Monero network";
       case PaymentMethodKind.ethereum:
@@ -86,6 +92,7 @@ enum PaymentMethodKind {
     switch (this) {
       case PaymentMethodKind.payfastCard:
       case PaymentMethodKind.stripeCard:
+      case PaymentMethodKind.payshap:
         return DeeMusiqIcons.creditCard;
       case PaymentMethodKind.bitcoin:
         return DeeMusiqIcons.bitcoin;
@@ -110,6 +117,8 @@ enum PaymentMethodKind {
         return const Color(0xFF2E7D32);
       case PaymentMethodKind.stripeCard:
         return const Color(0xFF635BFF);
+      case PaymentMethodKind.payshap:
+        return const Color(0xFF1B75BB);
       case PaymentMethodKind.bitcoin:
         return const Color(0xFFF7931A);
       case PaymentMethodKind.ethereum:
@@ -129,6 +138,7 @@ enum PaymentMethodKind {
   /// Online-only: tokens are bought through the backend, so the local
   /// [demoCredit] method is intentionally NOT offered here.
   static List<PaymentMethodKind> get topUpMethods => const [
+        PaymentMethodKind.payshap,
         PaymentMethodKind.payfastCard,
         PaymentMethodKind.stripeCard,
         PaymentMethodKind.monero,

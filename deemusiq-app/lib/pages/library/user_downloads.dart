@@ -1,6 +1,8 @@
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:flutter_undraw/flutter_undraw.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
+import 'package:shadcn_flutter/shadcn_flutter_extension.dart';
 
 import 'package:deemusiq/modules/library/user_downloads/download_item.dart';
 import 'package:deemusiq/extensions/context.dart';
@@ -43,15 +45,33 @@ class UserDownloadsPage extends HookConsumerWidget {
         ),
         Expanded(
           child: SafeArea(
-            child: ListView.builder(
-              itemCount: downloadQueue.length,
-              padding: const EdgeInsets.only(bottom: 200),
-              itemBuilder: (context, index) {
-                return DownloadItem(
-                  task: downloadQueue.elementAt(index),
-                );
-              },
-            ),
+            child: downloadQueue.isEmpty
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Undraw(
+                        illustration: UndrawIllustration.empty,
+                        height: 200 * context.theme.scaling,
+                        color: context.theme.colorScheme.primary,
+                      ),
+                      const Gap(10),
+                      Text(
+                        context.l10n.no_tracks,
+                        textAlign: TextAlign.center,
+                      ).muted().small(),
+                    ],
+                  )
+                : ListView.builder(
+                    itemCount: downloadQueue.length,
+                    padding: EdgeInsets.only(
+                      bottom: 200 * context.theme.scaling,
+                    ),
+                    itemBuilder: (context, index) {
+                      return DownloadItem(
+                        task: downloadQueue.elementAt(index),
+                      );
+                    },
+                  ),
           ),
         ),
       ],

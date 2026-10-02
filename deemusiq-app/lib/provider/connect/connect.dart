@@ -4,6 +4,7 @@ import 'package:media_kit/media_kit.dart' hide Track;
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:deemusiq/collections/routes.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
+import 'package:deemusiq/extensions/color_scheme.dart';
 import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/models/metadata/metadata.dart';
 import 'package:deemusiq/provider/audio_player/state.dart';
@@ -49,6 +50,13 @@ final queueProvider = StateProvider<AudioPlayerState>(
 
 final volumeProvider = StateProvider<double>(
   (ref) => 1.0,
+);
+
+/// Per-pairing token granted by the host after the user approved pairing
+/// (H1). Present it as `X-DM-Connect-Token` (or `?token=`) when calling the
+/// host's LAN HTTP endpoints (`/stream/*`, `/playback/*`). Memory-only.
+final connectPairingTokenProvider = StateProvider<String?>(
+  (ref) => null,
 );
 
 typedef ConnectState = ({WebSocketChannel channel, Stream stream});
@@ -140,6 +148,12 @@ class ConnectNotifier extends AsyncNotifier<ConnectState?> {
             ref.read(volumeProvider.notifier).state = event.data;
           });
 
+          event.onPaired((event) {
+            // Pairing token granted by the host (H1) — used for the LAN
+            // HTTP endpoints if this client ever streams/controls via HTTP.
+            ref.read(connectPairingTokenProvider.notifier).state = event.data;
+          });
+
           event.onError((event) {
             if (event.data == "Connection denied") {
               ref.read(connectClientsProvider.notifier).clearResolvedService();
@@ -160,7 +174,7 @@ class ConnectNotifier extends AsyncNotifier<ConnectState?> {
                         title: Text(
                           context.l10n.connection_request_denied,
                           style: theme.typography.normal.copyWith(
-                            color: theme.colorScheme.destructiveForeground,
+                            color: theme.colorScheme.onDestructive,
                           ),
                         ),
                         leadingAlignment: Alignment.center,
@@ -183,6 +197,7 @@ class ConnectNotifier extends AsyncNotifier<ConnectState?> {
       ref.onDispose(() {
         subscription.cancel();
         channel.sink.close(status.goingAway);
+        ref.read(connectPairingTokenProvider.notifier).state = null;
       });
 
       return (channel: channel, stream: stream);

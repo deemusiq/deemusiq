@@ -26,7 +26,10 @@ final bonsoirProvider = FutureProvider((ref) async {
     port: port,
     attributes: {
       "id": PrimitiveUtils.uuid.v4(),
-      "deviceId": await DeviceInfoService.instance.deviceId(),
+      // M7: advertise a random per-session instance id, not the OS machine
+      // id — a stable hardware id on the LAN is a persistent tracker. The
+      // client-side self-filter compares against the same session id.
+      "deviceId": DeviceInfoService.instance.sessionId,
     },
   );
 

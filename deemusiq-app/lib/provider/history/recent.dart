@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:deemusiq/models/database/database.dart';
 import 'package:deemusiq/provider/database/database.dart';
+import 'package:deemusiq/services/logger/logger.dart';
 
 class RecentlyPlayedItemNotifier extends AsyncNotifier<List<HistoryTableData>> {
   @override
@@ -40,7 +41,12 @@ class RecentlyPlayedItemNotifier extends AsyncNotifier<List<HistoryTableData>> {
     final subscription = query.watch().listen((event) async {
       final results = (await Future.wait(
         event.map((f) async {
-          try { return await f; } catch (_) { return null; }
+          try {
+            return await f;
+          } catch (e) {
+            AppLogger.log.w('History watch entry failed: ${e.toString()}');
+            return null;
+          }
         }),
       )).whereType<HistoryTableData>().toList();
       state = AsyncData(results);
@@ -51,7 +57,12 @@ class RecentlyPlayedItemNotifier extends AsyncNotifier<List<HistoryTableData>> {
     final futures = await query.get();
     final items = (await Future.wait(
       futures.map((f) async {
-        try { return await f; } catch (_) { return null; }
+        try {
+          return await f;
+        } catch (e) {
+          AppLogger.log.w('History read entry failed: ${e.toString()}');
+          return null;
+        }
       }),
     )).whereType<HistoryTableData>().toList();
 

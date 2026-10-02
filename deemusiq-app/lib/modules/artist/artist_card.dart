@@ -3,11 +3,15 @@ import 'package:auto_size_text/auto_size_text.dart';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
+import 'package:shadcn_flutter/shadcn_flutter_extension.dart';
 
 import 'package:deemusiq/collections/routes.gr.dart';
+import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/components/image/universal_image.dart';
+import 'package:deemusiq/components/wallet/wallet_common.dart';
 import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/models/metadata/metadata.dart';
+import 'package:deemusiq/pages/artist/section/header.dart';
 
 import 'package:deemusiq/provider/blacklist_provider.dart';
 
@@ -18,11 +22,16 @@ class ArtistCard extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, ref) {
     final theme = Theme.of(context);
+    final scale = context.theme.scaling;
     final backgroundImage = UniversalImage.imageProvider(
       artist.images.asUrlString(
         placeholder: ImagePlaceholder.artist,
       ),
     );
+    // Empty/whitespace artist names (bad upstream data) must not crash the
+    // card grid with a RangeError — fall back to a neutral initial.
+    final trimmedName = artist.name.trim();
+    final initial = trimmedName.isEmpty ? "?" : trimmedName[0].toUpperCase();
     final isBlackListed = ref.watch(
       blacklistProvider.select(
         (blacklist) => blacklist.asData?.value.any(
@@ -32,7 +41,7 @@ class ArtistCard extends HookConsumerWidget {
     );
 
     return SizedBox(
-      width: 180,
+      width: 180 * scale,
       child: Button.card(
         onPressed: () {
           context.navigateTo(ArtistRoute(artistId: artist.id));
@@ -40,9 +49,9 @@ class ArtistCard extends HookConsumerWidget {
         child: Column(
           children: [
             Avatar(
-              initials: artist.name.trim()[0].toUpperCase(),
+              initials: initial,
               provider: backgroundImage,
-              size: 130,
+              size: 130 * scale,
             ),
             const Gap(10),
             AutoSizeText(
@@ -56,6 +65,20 @@ class ArtistCard extends HookConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                if (ref.watch(artistVerifiedProvider(artist.id))
+                        .asData
+                        ?.value ==
+                    true) ...[
+                  const PrimaryBadge(
+                    leading: Icon(
+                      DeeMusiqIcons.verified,
+                      size: 12,
+                      color: deeMusiqOrange,
+                    ),
+                    child: Text("Verified"),
+                  ),
+                  const Gap(5),
+                ],
                 if (isBlackListed == true) ...[
                   DestructiveBadge(
                     child: Text(context.l10n.blacklisted.toUpperCase()),

@@ -5,6 +5,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:deemusiq/collections/routes.gr.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
@@ -28,9 +29,13 @@ class LocalFolderItem extends HookConsumerWidget {
     final downloadFolder =
         ref.watch(userPreferencesProvider.select((s) => s.downloadLocation));
     final cacheFolder = useFuture(UserPreferencesNotifier.getMusicCacheDir());
+    final documentsFolder = useFuture(getApplicationDocumentsDirectory());
 
     final isDownloadFolder = folder == downloadFolder;
     final isCacheFolder = folder == cacheFolder.data;
+    // The app-private documents dir = the encrypted (`.deemusiq`) downloads
+    // bucket. Not a removable library location, hence no overflow menu.
+    final isEncryptedFolder = folder == documentsFolder.data?.path;
 
     final trackSnapshot = ref.watch(
       localTracksProvider.select(
@@ -100,14 +105,16 @@ class LocalFolderItem extends HookConsumerWidget {
                       ? context.l10n.downloads
                       : isCacheFolder
                           ? context.l10n.cache_folder.capitalize()
-                          : basename(folder),
+                          : isEncryptedFolder
+                              ? "Downloads (encrypted)"
+                              : basename(folder),
                   style: const TextStyle(fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              if (!isDownloadFolder && !isCacheFolder)
+              if (!isDownloadFolder && !isCacheFolder && !isEncryptedFolder)
                 Align(
                   alignment: Alignment.topRight,
                   child: IconButton.ghost(

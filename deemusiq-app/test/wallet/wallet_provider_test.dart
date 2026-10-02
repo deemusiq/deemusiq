@@ -3,6 +3,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:deemusiq/models/wallet/linked_account.dart';
 import 'package:deemusiq/provider/wallet/wallet_provider.dart';
+import 'package:deemusiq/services/kv_store/encrypted_kv_store.dart';
 import 'package:deemusiq/services/kv_store/kv_store.dart';
 
 // These tests run the notifier fully offline (no DEEMUSIQ_BACKEND_URL is baked
@@ -15,6 +16,7 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     await KVStoreService.initialize();
+    await EncryptedKvStoreService.initialize();
     container = ProviderContainer();
     addTearDown(container.dispose);
   });

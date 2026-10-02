@@ -1,14 +1,19 @@
 #!/usr/bin/env bash
 
-# Varibles
-fname="$(basename $0)"
-installDir='/usr/share/spotube'
-desktopFile='/usr/share/applications/spotube.desktop'
-appdata='/usr/share/appdata/spotube.appdata.xml'
-icon='/usr/share/icons/spotube/spotube-logo.png'
-symlink='/usr/bin/spotube'
-temp='/tmp/spotube-installer'
-latestVer="$(wget -qO- "https://api.github.com/repos/KRTirtho/spotube/releases/latest" \ | grep -Po '"tag_name": "\K.*?(?=")')"
+# DeeMusiq Linux installer — installs the portable tarball released by the
+# Makefile `tar` target (build/deemusiq-linux-<ver>-x86_64.tar.xz) system-wide.
+
+# Variables
+fname="$(basename "$0")"
+installDir='/usr/share/deemusiq'
+desktopFile='/usr/share/applications/deemusiq.desktop'
+appdataDir='/usr/share/appdata'
+appdata="${appdataDir}/com.deemusiq.deemusiq.appdata.xml"
+iconDir='/usr/share/icons/deemusiq'
+icon="${iconDir}/deemusiq-logo.png"
+symlink='/usr/bin/deemusiq'
+temp='/tmp/deemusiq-installer'
+latestVer="$(wget -qO- "https://api.github.com/repos/deemusiq/deemusiq/releases/latest" | grep -Po '"tag_name": "\K.*?(?=")' | sed 's/^v//')"
 
 # Root check - From CAAIS (https://codeberg.org/RaptaG/CAAIS), under GPL-3.0
 function rootCheck() {
@@ -23,9 +28,9 @@ function rootCheck() {
 function help(){
   echo "Usage: sudo ./${fname} [flags]"
   echo 'Flags:'
-  echo '  -i, --install <version>    Install any Spotube version (if not specified, the latest is installed).'
+  echo '  -i, --install <version>    Install any DeeMusiq version (if not specified, the latest is installed).'
   echo '  -h, --help                 This help menu'
-  echo '  -r, --remove               Removes Spotube from your system'
+  echo '  -r, --remove               Removes DeeMusiq from your system'
   exit 0
 }
 
@@ -42,53 +47,48 @@ function install_deps(){
     if command_exists apt; then
         apt install -y ${debianDeps}
     elif command_exists dnf; then
-        dnf install -y ${debianDeps}
+        dnf install -y ${rpmDeps}
     elif command_exists yum; then
         yum install -y ${rpmDeps}
     elif command_exists zypper; then
         zypper install -y ${rpmDeps}
     elif command_exists pacman; then
         pacman -Sy ${archDeps}
-    else   
-    # Maybe one day
-    #  # Deps
-    #    # JsonCpp
-    #    wget https://github.com/open-source-parsers/jsoncpp/tarball/master -O jsoncpp.tar.gz
-    #    tar -xf jsoncpp.tar.gz && cd open-source-parsers-jsoncpp-*
-        echo 'You have to install some dependancies manually in order for Spotube to work.'
+    else
+        echo 'You have to install some dependencies manually in order for DeeMusiq to work.'
         echo "The deps are the following: ${rpmDeps}"
     fi
 }
 
-function download_extract_spotube(){
-  local tarPath="/tmp/spotube-${ver}.tar.xz"
-  local donwloadURL="https://github.com/KRTirtho/spotube/releases/download/v${ver}/spotube-linux-${ver}-x86_64.tar.xz"
+function download_extract_deemusiq(){
+  local tarPath="/tmp/deemusiq-${ver}.tar.xz"
+  local downloadURL="https://github.com/deemusiq/deemusiq/releases/download/v${ver}/deemusiq-linux-${ver}-x86_64.tar.xz"
 
   if [ "${ver}" = "nightly" ]; then
-      downloadURL"=https://github.com/KRTirtho/spotube/releases/download/nightly/spotube-linux-nightly-x86_64.tar.xz"
+      downloadURL="https://github.com/deemusiq/deemusiq/releases/download/nightly/deemusiq-linux-nightly-x86_64.tar.xz"
   fi
 
   rm -rf ${temp}
   mkdir -p ${temp}
 
   # Check if already exists downloaded file
-  if [ -f ${tarPath} ]; then
+  if [ -f "${tarPath}" ]; then
     echo "Installation file detected. Skipping download..."
   else
-    echo "Downloading spotube-${ver}.tar.xz..."
-    wget -q ${downloadURL} -P ${tarPath}
+    echo "Downloading deemusiq-${ver}.tar.xz..."
+    wget -q "${downloadURL}" -O "${tarPath}"
   fi
 
-  tar -xf ${tarPath} -C ${temp}
+  tar -xf "${tarPath}" -C ${temp}
 
   # Is $temp empty or not
   if [ ! "$(ls -A ${temp})" ]; then
     echo 'Failed to extract the tarball. Redownloading...'
-    rm -f ${tarPath}
-    wget -q ${downloadURL} -P ${tarPath}
-    tar -xf ${tarPath} -C ${temp}
+    rm -f "${tarPath}"
+    wget -q "${downloadURL}" -O "${tarPath}"
+    tar -xf "${tarPath}" -C ${temp}
   fi
-  
+
   # Once again
   if [ ! "$(ls -A ${temp})" ]; then
     echo 'Failed to extract the tarball. Installation aborted.'
@@ -96,43 +96,44 @@ function download_extract_spotube(){
   fi
 }
 
-function install_spotube(){
+function install_deemusiq(){
     if [ -d ${installDir} ]; then
-        echo -n "Spotube is already installed. Do you want to reinstall it? [y/N] "
+        echo -n "DeeMusiq is already installed. Do you want to reinstall it? [y/N] "
         read reinstall
 
         case "${reinstall}" in
         [yY]*)
-            uninstall_spotube ;;
+            uninstall_deemusiq ;;
         *)
             echo 'Aborting installation...'
             exit 1 ;;
         esac
     fi
 
-    # Install Spotube from temp dir
+    # Install DeeMusiq from temp dir
     mkdir -p ${installDir}
     mv ${temp}/data ${installDir}
     mv ${temp}/lib ${installDir}
-    mv ${temp}/spotube ${installDir}
-    mv ${temp}/spotube.desktop ${desktopDir}
-    mv ${temp}/com.github.KRTirtho.Spotube.appdata.xml ${appdata}
-    mkdir -p /usr/share/icons/spotube
-    mv ${temp}/spotube-logo.png ${icon}
-    ln -s /usr/share/spotube/spotube ${symlink}
+    mv ${temp}/deemusiq ${installDir}
+    mv ${temp}/deemusiq.desktop ${desktopFile}
+    mkdir -p ${appdataDir}
+    mv ${temp}/com.deemusiq.deemusiq.appdata.xml ${appdata}
+    mkdir -p ${iconDir}
+    mv ${temp}/deemusiq-logo.png ${icon}
+    ln -sf ${installDir}/deemusiq ${symlink}
 
     rm -rf ${temp}  # Remove temp dir
-    echo "Spotube ${ver} has been installed successfully!"
+    echo "DeeMusiq ${ver} has been installed successfully!"
 }
 
-function uninstall_spotube(){
-    echo -n "Are you sure you want to uninstall Spotube? [y/N] "
+function uninstall_deemusiq(){
+    echo -n "Are you sure you want to uninstall DeeMusiq? [y/N] "
     read confirm
 
     case "${confirm}" in
     [yY]*)
-            echo 'Unstalling Spotube..'
-            rm -rf ${installDir} ${desktopDir} ${appdata} ${icon} ${symlink} ;;
+            echo 'Uninstalling DeeMusiq...'
+            rm -rf ${installDir} ${desktopFile} ${appdata} ${iconDir} ${symlink} ;;
     *)
             echo 'Aborting...'
             exit 0 ;;
@@ -146,15 +147,15 @@ case "$1" in
     else
         ver="${latestVer}"
     fi
-    
+
     rootCheck
     install_deps
-    download_extract_spotube
-    install_spotube
+    download_extract_deemusiq
+    install_deemusiq
     exit 0 ;;
 -r | --remove)
     rootCheck
-    uninstall_spotube
+    uninstall_deemusiq
     exit 0 ;;
 -h | --help | "")
     help

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Do not remove this test for UTF-8: if “Ω” doesn’t appear as greek uppercase omega letter
+enclosed in quotation marks, you should use an editor that supports UTF-8, not this one. -->
+<!-- The %{{SPOTUBE_VERSION}}% placeholder is an internal build marker replaced by
+     cli/commands/build (common.dart) — do not rename it. -->
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <!-- == PACKAGE SPECIFIC SECTION == -->
+    <id>deemusiq</id>
+    <version>%{{SPOTUBE_VERSION}}%</version>
+    <packageSourceUrl>https://github.com/deemusiq/deemusiq/tree/main/deemusiq-app/choco-struct</packageSourceUrl>
+    <owners>The Dembe Group</owners>
+    <!-- ============================== -->
+
+    <!-- == SOFTWARE SPECIFIC SECTION == -->
+    <title>DeeMusiq (Install)</title>
+    <authors>The Dembe Group</authors>
+    <projectUrl>https://deemusiq.co.za</projectUrl>
+    <iconUrl>
+      https://raw.githubusercontent.com/deemusiq/deemusiq/main/deemusiq-app/assets/branding/deemusiq-logo.png</iconUrl>
+    <copyright>2026 The Dembe Group</copyright>
+    <!-- If there is a license Url available, it is required for the community feed -->
+    <licenseUrl>https://github.com/deemusiq/deemusiq/blob/main/deemusiq-app/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <projectSourceUrl>https://github.com/deemusiq/deemusiq</projectSourceUrl>
+    <docsUrl>https://deemusiq.co.za</docsUrl>
+    <bugTrackerUrl>https://github.com/deemusiq/deemusiq/issues/new</bugTrackerUrl>
+    <tags>deemusiq music audio youtube flutter</tags>
+    <summary>🎧 DeeMusiq — African music streaming and download platform. It's a drop day.</summary>
+    <description>
+      DeeMusiq is a Flutter based lightweight music client, built on the open-source Spotube
+      engine (BSD-4-Clause). Stream and download the sound of the continent — artists keep
+      ownership and get paid fairly. Built in South Africa.
+
+      # Features
+      - Open source/libre software
+      - Anonymous/guest login
+      - Cross platform support
+      - No telemetry, diagnostics or user data collection
+      - Lightweight &amp; resource-friendly
+      - Native performance (Thanks to Flutter+Skia)
+      - Playback control is done locally instead of on the server
+      - Small size &amp; less data usage
+      - Time synced lyrics
+      - Downloadable tracks
+    </description>
+    <releaseNotes>https://github.com/deemusiq/deemusiq/releases/tag/v%{{SPOTUBE_VERSION}}%</releaseNotes>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>

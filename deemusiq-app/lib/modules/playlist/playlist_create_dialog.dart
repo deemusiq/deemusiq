@@ -20,6 +20,22 @@ import 'package:deemusiq/models/metadata/metadata.dart';
 import 'package:deemusiq/provider/metadata_plugin/library/playlists.dart';
 import 'package:deemusiq/provider/metadata_plugin/playlist/playlist.dart';
 
+/// Mirrors the backend caps (`playlistBody` in
+/// backend/src/routes/catalog.ts): title ≤ 200, description ≤ 2000.
+const _playlistNameMaxLength = 200;
+const _playlistDescriptionMaxLength = 2000;
+
+/// Same control-char class KVStoreService strips from search history
+/// (everything except \n and \t — the description field is multiline).
+final _controlCharPattern = RegExp(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]');
+
+String? _rejectControlChars(String? value) {
+  if (value == null || value.isEmpty) return null;
+  return _controlCharPattern.hasMatch(value)
+      ? "Control characters are not allowed"
+      : null;
+}
+
 class PlaylistCreateDialog extends HookConsumerWidget {
   /// Track ids to add to the playlist
   final List<String> trackIds;
@@ -254,13 +270,21 @@ class PlaylistCreateDialog extends HookConsumerWidget {
                 name: 'playlistName',
                 label: Text(context.l10n.playlist_name),
                 placeholder: Text(context.l10n.name_of_playlist),
-                validator: FormBuilderValidators.required(),
+                validator: FormBuilderValidators.compose([
+                  FormBuilderValidators.required(),
+                  FormBuilderValidators.maxLength(_playlistNameMaxLength),
+                  _rejectControlChars,
+                ]),
               ),
               const Gap(20),
               TextFormBuilderField(
                 name: 'description',
                 label: Text(context.l10n.description),
-                validator: FormBuilderValidators.required(),
+                validator: FormBuilderValidators.compose([
+                  FormBuilderValidators.required(),
+                  FormBuilderValidators.maxLength(_playlistDescriptionMaxLength),
+                  _rejectControlChars,
+                ]),
                 placeholder: Text(context.l10n.description),
                 keyboardType: TextInputType.multiline,
                 maxLines: 5,

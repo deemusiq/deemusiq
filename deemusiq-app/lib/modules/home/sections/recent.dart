@@ -4,13 +4,14 @@ import 'package:skeletonizer/skeletonizer.dart';
 import 'package:deemusiq/components/fallbacks/error_box.dart';
 import 'package:deemusiq/components/horizontal_playbutton_card_view/horizontal_playbutton_card_view.dart';
 import 'package:deemusiq/extensions/context.dart';
+import 'package:deemusiq/models/database/database.dart';
 import 'package:deemusiq/provider/history/recent.dart';
 
 class HomeRecentlyPlayedSection extends HookConsumerWidget {
   const HomeRecentlyPlayedSection({super.key});
 
   @override
-  Widget build(BuildContext context, ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final history = ref.watch(recentlyPlayedItems);
     final historyData = history.asData?.value;
 
@@ -30,7 +31,7 @@ class HomeRecentlyPlayedSection extends HookConsumerWidget {
       child: HorizontalPlaybuttonCardView(
         title: Text(context.l10n.recently_played),
         items: [
-          for (final item in historyData ?? [])
+          for (final item in historyData ?? const <HistoryTableData>[])
             if (item.playlist != null)
               item.playlist
             else if (item.album != null)

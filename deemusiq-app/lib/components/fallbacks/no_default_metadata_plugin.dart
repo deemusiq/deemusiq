@@ -65,8 +65,8 @@ class NoDefaultMetadataPlugin extends StatelessWidget {
               if (onRetry != null)
                 Button.outline(
                   leading: const Icon(DeeMusiqIcons.refresh),
-                  child: const Text("Retry"),
                   onPressed: onRetry,
+                  child: const Text("Retry"),
                 ),
             ],
           ),

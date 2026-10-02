@@ -4,12 +4,17 @@ import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:shadcn_flutter/shadcn_flutter_extension.dart';
 import 'package:deemusiq/collections/routes.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
+import 'package:deemusiq/components/dialogs/share_nearby_dialog.dart';
 import 'package:deemusiq/components/ui/button_tile.dart';
 import 'package:deemusiq/components/wallet/push_song_dialog.dart';
+import 'package:deemusiq/components/wallet/wallet_common.dart';
 import 'package:deemusiq/extensions/constrains.dart';
 import 'package:deemusiq/extensions/context.dart';
+import 'package:deemusiq/models/connect/connect.dart';
 import 'package:deemusiq/models/metadata/metadata.dart';
+import 'package:deemusiq/provider/connect/clients.dart';
 import 'package:deemusiq/provider/track_options/track_options_provider.dart';
+import 'package:deemusiq/widgets/report_button.dart';
 
 /// [track] must be a [DeeMusiqFullTrackObject] or [DeeMusiqLocalTrackObject]
 class TrackOptions extends HookConsumerWidget {
@@ -46,6 +51,9 @@ class TrackOptions extends HookConsumerWidget {
       :downloadTask
     ) = ref.watch(trackOptionsStateProvider(track));
     final isLocalTrack = track is DeeMusiqLocalTrackObject;
+    final hasConnectPeers =
+        ref.watch(connectClientsProvider).asData?.value.services.isNotEmpty ==
+            true;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -146,7 +154,7 @@ class TrackOptions extends HookConsumerWidget {
             leading: isLiked
                 ? const Icon(
                     DeeMusiqIcons.heartFilled,
-                    color: Colors.pink,
+                    color: deeMusiqOrange,
                   )
                 : const Icon(DeeMusiqIcons.heart),
             title: Text(
@@ -173,7 +181,7 @@ class TrackOptions extends HookConsumerWidget {
             },
             leading: const Icon(
               DeeMusiqIcons.boost,
-              color: Color(0xFFFF5722),
+              color: deeMusiqOrange,
             ),
             title: const Text("Push this song"),
           ),
@@ -261,14 +269,18 @@ class TrackOptions extends HookConsumerWidget {
             },
             leading: Icon(
               DeeMusiqIcons.playlistRemove,
-              color: isBlacklisted != true ? Colors.red[400] : null,
+              color: isBlacklisted != true
+                  ? context.theme.colorScheme.destructive
+                  : null,
             ),
             title: Text(
               isBlacklisted == true
                   ? context.l10n.remove_from_blacklist
                   : context.l10n.add_to_blacklist,
               style: TextStyle(
-                color: isBlacklisted != true ? Colors.red[400] : null,
+                color: isBlacklisted != true
+                    ? context.theme.colorScheme.destructive
+                    : null,
               ),
             ),
           ),
@@ -286,6 +298,19 @@ class TrackOptions extends HookConsumerWidget {
             leading: const Icon(DeeMusiqIcons.share),
             title: Text(context.l10n.share),
           ),
+        if (!isLocalTrack && hasConnectPeers)
+          ButtonTile(
+            style: ButtonVariance.menu,
+            onPressed: () {
+              onTapItem?.call();
+              ShareNearbyDialog.show(
+                (rootNavigatorKey.currentContext ?? context),
+                ConnectSharePayload.track(track),
+              );
+            },
+            leading: const Icon(DeeMusiqIcons.speaker),
+            title: const Text("Send to nearby device"),
+          ),
         if (!isLocalTrack)
           ButtonTile(
             style: ButtonVariance.menu,
@@ -299,6 +324,24 @@ class TrackOptions extends HookConsumerWidget {
             },
             leading: const Icon(DeeMusiqIcons.info),
             title: Text(context.l10n.details),
+          ),
+        if (!isLocalTrack)
+          ButtonTile(
+            style: ButtonVariance.menu,
+            onPressed: () {
+              onTapItem?.call();
+              ReportButton.show(
+                (rootNavigatorKey.currentContext ?? context),
+                targetKind: "track",
+                targetId: track.id,
+                targetLabel: "this track",
+              );
+            },
+            leading: const Icon(
+              DeeMusiqIcons.flag,
+              color: deeMusiqOrange,
+            ),
+            title: const Text("Report"),
           ),
       ],
     );

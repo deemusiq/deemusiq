@@ -1,4 +1,5 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:shadcn_flutter/shadcn_flutter_extension.dart';
@@ -53,8 +54,8 @@ class LinkedAccountsPage extends HookConsumerWidget {
     return SafeArea(
       bottom: false,
       child: Scaffold(
-        headers: [
-          TitleBar(title: const Text("Linked accounts")),
+        headers: const [
+          TitleBar(title: Text("Linked accounts")),
         ],
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -103,7 +104,7 @@ class LinkedAccountsPage extends HookConsumerWidget {
   }
 }
 
-class _ProviderTile extends ConsumerWidget {
+class _ProviderTile extends HookConsumerWidget {
   final LinkedProvider provider;
   final LinkedAccount? account;
   final bool backendConfigured;
@@ -142,6 +143,7 @@ class _ProviderTile extends ConsumerWidget {
       );
     } catch (e) {
       AppLogger.log.w('Linked accounts load failed: ${e.toString()}');
+      if (!context.mounted) return;
       showWalletToast(context, 'Failed to load linked accounts',
           icon: DeeMusiqIcons.info);
     }
@@ -164,6 +166,18 @@ class _ProviderTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final connected = account != null;
+    // Double-taps (or a slow OAuth round-trip) must not fire the action twice.
+    final busy = useState(false);
+
+    Future<void> guard(Future<void> Function() action) async {
+      if (busy.value) return;
+      busy.value = true;
+      try {
+        await action();
+      } finally {
+        busy.value = false;
+      }
+    }
     return Card(
       padding: const EdgeInsets.all(14),
       child: Row(
@@ -204,14 +218,16 @@ class _ProviderTile extends ConsumerWidget {
           const Gap(10),
           if (connected)
             Button.outline(
-              onPressed: () => _disconnect(context, ref),
-              child: const Text("Disconnect"),
+              onPressed:
+                  busy.value ? null : () => guard(() => _disconnect(context, ref)),
+              child: Text(busy.value ? "Disconnecting…" : "Disconnect"),
             )
           else
             Button.primary(
-              onPressed:
-                  backendConfigured ? () => _connect(context, ref) : null,
-              child: const Text("Connect"),
+              onPressed: backendConfigured && !busy.value
+                  ? () => guard(() => _connect(context, ref))
+                  : null,
+              child: Text(busy.value ? "Connecting…" : "Connect"),
             ),
         ],
       ),

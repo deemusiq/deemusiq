@@ -99,7 +99,7 @@ class TrackTile extends HookConsumerWidget {
           }
           _overlay.value = TrackOptionsButton.showOptions(
             context,
-            Offset.zero,
+            event.position,
             track,
             userPlaylist: userPlaylist,
             playlistId: playlistId,

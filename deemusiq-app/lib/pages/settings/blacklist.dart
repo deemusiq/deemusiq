@@ -1,8 +1,10 @@
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter_undraw/flutter_undraw.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
+import 'package:shadcn_flutter/shadcn_flutter_extension.dart';
 
 import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/components/button/back_button.dart';
@@ -67,29 +69,52 @@ class BlackListPage extends HookConsumerWidget {
                 // prefixIcon: const Icon(DeeMusiqIcons.search),
               ),
             ),
-            InterScrollbar(
-              controller: controller,
-              child: ListView.builder(
-                controller: controller,
-                shrinkWrap: true,
-                itemCount: filteredBlacklist.length,
-                itemBuilder: (context, index) {
-                  final item = filteredBlacklist.elementAt(index);
-                  return ButtonTile(
-                    style: ButtonVariance.ghost,
-                    leading: Text("${index + 1}."),
-                    title: Text("${item.name} (${item.elementType.name})"),
-                    subtitle: Text(item.elementId),
-                    trailing: IconButton.ghost(
-                      icon: Icon(DeeMusiqIcons.trash, color: Colors.red[400]),
-                      onPressed: () {
-                        ref.read(blacklistProvider.notifier).remove(
-                            filteredBlacklist.elementAt(index).elementId);
+            Expanded(
+              child: switch (blacklist) {
+                AsyncData() when filteredBlacklist.isNotEmpty => InterScrollbar(
+                    controller: controller,
+                    child: ListView.builder(
+                      controller: controller,
+                      shrinkWrap: true,
+                      itemCount: filteredBlacklist.length,
+                      itemBuilder: (context, index) {
+                        final item = filteredBlacklist.elementAt(index);
+                        return ButtonTile(
+                          style: ButtonVariance.ghost,
+                          leading: Text("${index + 1}."),
+                          title: Text("${item.name} (${item.elementType.name})"),
+                          subtitle: Text(item.elementId),
+                          trailing: Tooltip(
+                            tooltip: TooltipContainer(
+                              child: Text(context.l10n.delete),
+                            ).call,
+                            child: IconButton.ghost(
+                              icon: Icon(DeeMusiqIcons.trash, color: Colors.red[400]),
+                              onPressed: () {
+                                ref.read(blacklistProvider.notifier).remove(
+                                    filteredBlacklist.elementAt(index).elementId);
+                              },
+                            ),
+                          ),
+                        );
                       },
                     ),
-                  );
-                },
-              ),
+                  ),
+                AsyncData() => Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Undraw(
+                        illustration: UndrawIllustration.noData,
+                        height: 200 * context.theme.scaling,
+                        width: 200 * context.theme.scaling,
+                        color: context.theme.colorScheme.primary,
+                      ),
+                      Text(context.l10n.the_box_is_empty).muted().small(),
+                    ],
+                  ),
+                AsyncError(:final error) => Center(child: Text(error.toString())),
+                _ => const Center(child: CircularProgressIndicator()),
+              },
             ),
           ],
         ),

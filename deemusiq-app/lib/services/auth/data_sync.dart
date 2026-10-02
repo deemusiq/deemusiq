@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:deemusiq/services/logger/logger.dart';
+import 'package:deemusiq/services/offline_queue/offline_action_queue.dart';
 import 'package:deemusiq/services/wallet/wallet_api.dart';
 import 'package:deemusiq/services/wallet/payment_service.dart'
     show PaymentGatewayConfig;
@@ -9,7 +11,9 @@ import 'package:crypto/crypto.dart' as crypto;
 ///
 /// All data is anonymized before syncing:
 /// - Song IDs are SHA-256 hashed before sending (only hashes are stored server-side)
-/// - Playlist names are encrypted with the secure channel key before transmission
+/// - Playlist names are plaintext FIELDS, but the request body rides inside the
+///   sealed AES-256-GCM channel envelope when the secure channel is configured
+///   (in-transit protection — they are not separately encrypted at rest)
 /// - No personal information is ever included
 ///
 /// Communication with the backend is encrypted via the secure channel
@@ -35,13 +39,23 @@ class DataSyncService {
 
   // ── Liked Songs ──────────────────────────────────────────────────────────
 
-  /// Sync a liked song to the backend (idempotent).
+  /// Sync a liked song to the backend (idempotent). When the backend is
+  /// unreachable due to connectivity, the action is queued for FIFO replay
+  /// (see [OfflineActionQueue]) instead of being dropped.
   Future<void> likeSong(String songId) async {
     if (!isConfigured) return;
     try {
       await WalletApiClient.instance.syncLikeSong(hashSongId(songId));
-    } on WalletApiException {
-      // Silently fail — liked songs sync is best-effort.
+    } on WalletApiException catch (e) {
+      // Best-effort — never blocks the UI — but the failure is visible.
+      AppLogger.log.d('DataSync.likeSong failed: ${e.message}');
+      if (e.isConnectivity) {
+        await OfflineActionQueue.instance.enqueue(
+          OfflineActionType.syncLike,
+          OfflineActionQueue.likedEntityKey(hashSongId(songId)),
+          {'songHash': hashSongId(songId)},
+        );
+      }
     }
   }
 
@@ -50,8 +64,15 @@ class DataSyncService {
     if (!isConfigured) return;
     try {
       await WalletApiClient.instance.syncUnlikeSong(hashSongId(songId));
-    } on WalletApiException {
-      // Silently fail.
+    } on WalletApiException catch (e) {
+      AppLogger.log.d('DataSync.unlikeSong failed: ${e.message}');
+      if (e.isConnectivity) {
+        await OfflineActionQueue.instance.enqueue(
+          OfflineActionType.syncUnlike,
+          OfflineActionQueue.likedEntityKey(hashSongId(songId)),
+          {'songHash': hashSongId(songId)},
+        );
+      }
     }
   }
 
@@ -60,7 +81,8 @@ class DataSyncService {
     if (!isConfigured) return [];
     try {
       return await WalletApiClient.instance.syncFetchLikedSongs();
-    } on WalletApiException {
+    } on WalletApiException catch (e) {
+      AppLogger.log.w('DataSync.fetchLikedSongs failed: ${e.message}');
       return [];
     }
   }
@@ -70,6 +92,8 @@ class DataSyncService {
   /// Create a new playlist on the backend.
   /// [name] is plaintext on-device; transmitted encrypted via secure channel.
   /// [songIds] are raw IDs; they are SHA-256 hashed before sending.
+  /// Offline: the create is queued for replay and a placeholder (no server id
+  /// yet) is returned, mirroring the unconfigured-backend shape.
   Future<Map<String, dynamic>> createPlaylist({
     required String name,
     required List<String> songIds,
@@ -78,10 +102,23 @@ class DataSyncService {
       return {'id': '', 'name': name, 'songHashes': []};
     }
     final hashes = songIds.map(hashSongId).toList();
-    return await WalletApiClient.instance.syncCreatePlaylist(
-      name: name,
-      songHashes: hashes,
-    );
+    try {
+      return await WalletApiClient.instance.syncCreatePlaylist(
+        name: name,
+        songHashes: hashes,
+      );
+    } on WalletApiException catch (e) {
+      if (e.isConnectivity) {
+        AppLogger.log.d('DataSync.createPlaylist queued (offline)');
+        await OfflineActionQueue.instance.enqueue(
+          OfflineActionType.syncPlaylistCreate,
+          OfflineActionQueue.playlistCreateEntityKey(name),
+          {'name': name, 'songHashes': hashes},
+        );
+        return {'id': '', 'name': name, 'songHashes': hashes, 'queued': true};
+      }
+      rethrow;
+    }
   }
 
   /// Update a playlist (name and/or song list).
@@ -98,8 +135,19 @@ class DataSyncService {
         name: name,
         songHashes: hashes,
       );
-    } on WalletApiException {
-      // Silently fail.
+    } on WalletApiException catch (e) {
+      AppLogger.log.d('DataSync.updatePlaylist failed: ${e.message}');
+      if (e.isConnectivity) {
+        await OfflineActionQueue.instance.enqueue(
+          OfflineActionType.syncPlaylistUpdate,
+          OfflineActionQueue.playlistEntityKey(id),
+          {
+            'id': id,
+            if (name != null) 'name': name,
+            if (hashes != null) 'songHashes': hashes,
+          },
+        );
+      }
     }
   }
 
@@ -108,8 +156,16 @@ class DataSyncService {
     if (!isConfigured) return;
     try {
       await WalletApiClient.instance.syncDeletePlaylist(id);
-    } on WalletApiException {
-      // Silently fail.
+    } on WalletApiException catch (e) {
+      AppLogger.log.d('DataSync.deletePlaylist failed: ${e.message}');
+      if (e.isConnectivity) {
+        // Tombstone: replaces any pending update for this playlist.
+        await OfflineActionQueue.instance.enqueue(
+          OfflineActionType.syncPlaylistDelete,
+          OfflineActionQueue.playlistEntityKey(id),
+          {'id': id},
+        );
+      }
     }
   }
 
@@ -118,7 +174,8 @@ class DataSyncService {
     if (!isConfigured) return [];
     try {
       return await WalletApiClient.instance.syncFetchPlaylists();
-    } on WalletApiException {
+    } on WalletApiException catch (e) {
+      AppLogger.log.w('DataSync.fetchPlaylists failed: ${e.message}');
       return [];
     }
   }

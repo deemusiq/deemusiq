@@ -51,6 +51,7 @@ class CustomPlayer extends Player {
         // Reset error count when playback successfully starts
         if (playing) {
           _consecutiveErrors = 0;
+          AudioErrorHandler.instance.notifyPlaybackHealthy();
           _playerStateStream.add(AudioPlaybackState.playing);
         } else {
           _playerStateStream.add(AudioPlaybackState.paused);
@@ -175,6 +176,10 @@ class CustomPlayer extends Player {
     final error = event is Exception ? event : Exception(event.toString());
     AppLogger.log.e('[MediaKitError] $event');
     AppLogger.reportError(error, StackTrace.current, '[MediaKitError]');
+
+    if (PlaybackUnavailableError.isPotentialPlaybackUnavailable(event)) {
+      return;
+    }
 
     final now = DateTime.now();
     if (_lastErrorTime != null &&

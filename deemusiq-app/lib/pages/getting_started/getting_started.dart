@@ -61,12 +61,12 @@ class GettingStartedPage extends HookConsumerWidget {
                     duration: const Duration(milliseconds: 300),
                     child: pageController.hasClients &&
                             (pageController.page == 0 ||
-                                pageController.page == 4)
+                                pageController.page == 3)
                         ? const SizedBox()
                         : Button.secondary(
                             onPressed: () {
                               pageController.animateToPage(
-                                4,
+                                3,
                                 duration: const Duration(milliseconds: 300),
                                 curve: Curves.easeInOut,
                               );

@@ -140,7 +140,9 @@ class MobileAudioService extends BaseAudioHandler {
           playerState.tracks,
           currentIndex: playerState.currentIndex,
         );
-      } catch (_) {}
+      } catch (e) {
+        AppLogger.log.w('Failed to persist queue on exit: ${e.toString()}');
+      }
       await audioPlayerNotifier.stop();
       exit(0);
     }

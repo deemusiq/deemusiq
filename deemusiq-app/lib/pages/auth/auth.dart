@@ -6,10 +6,12 @@ import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/collections/routes.gr.dart';
 import 'package:deemusiq/components/wallet/wallet_common.dart';
 import 'package:deemusiq/models/wallet/linked_account.dart';
+import 'package:deemusiq/pages/auth/birth_year.dart';
 import 'package:deemusiq/provider/local_favorites/local_favorites_provider.dart';
 import 'package:deemusiq/provider/wallet/wallet_provider.dart';
 import 'package:deemusiq/services/auth/google_auth.dart';
 import 'package:deemusiq/services/kv_store/kv_store.dart';
+import 'package:deemusiq/services/wallet/wallet_api.dart';
 import 'package:deemusiq/l10n/l10n.dart';
 import 'package:deemusiq/services/logger/logger.dart';
 
@@ -22,6 +24,7 @@ class AuthPage extends HookConsumerWidget {
     final ageVerified = useState(false);
     final privacyConsent = useState(false);
     final loading = useState(false);
+    final birthYearController = useTextEditingController();
     final theme = Theme.of(context);
 
     Future<void> handleSignIn({required bool google}) async {
@@ -34,6 +37,12 @@ class AuthPage extends HookConsumerWidget {
       }
       if (!privacyConsent.value) {
         showWalletToast(context, l10n.must_agree_privacy_policy,
+            icon: DeeMusiqIcons.error);
+        return;
+      }
+      final birthYear = parseBirthYearInput(birthYearController.text);
+      if (birthYear == null) {
+        showWalletToast(context, l10n.must_enter_valid_birth_year,
             icon: DeeMusiqIcons.error);
         return;
       }
@@ -58,6 +67,63 @@ class AuthPage extends HookConsumerWidget {
           await syncFavoritesFromBackend(
             ref.read(localFavoritesProvider.notifier),
           );
+        } else if (WalletApiClient.instance.isConfigured) {
+          // "Continue with device (limited)" still gets a real backend
+          // account via the Ed25519 challenge login when the server answers.
+          // Without it the device stays signed OUT: no backend token is ever
+          // minted, so the Home guard (`isConfigured && !hasToken()`)
+          // redirects straight back to Auth and the taps look dead. A
+          // connectivity failure keeps the app in offline mode — playback
+          // works client-side and the wallet syncs once the backend is back.
+          try {
+            await WalletApiClient.instance.deviceLogin();
+          } on WalletApiException catch (e, stack) {
+            AppLogger.log.w('AuthPage: device login failed: ${e.message}');
+            AppLogger.reportError(e, stack, 'AuthPage deviceLogin');
+            if (e.isConnectivity) {
+              if (context.mounted) {
+                showWalletToast(
+                  context,
+                  AppLocalizations.of(context)!.offline_staying_on_device,
+                  icon: DeeMusiqIcons.info,
+                );
+              }
+            } else if (context.mounted) {
+              showWalletToast(context, e.message,
+                  icon: DeeMusiqIcons.error);
+              return;
+            }
+          } catch (e, stack) {
+            AppLogger.log.w('AuthPage: device login failed, continuing offline: $e');
+            AppLogger.reportError(e, stack, 'AuthPage deviceLogin');
+          }
+        }
+
+        // Server is the source of truth for age verification — the local KV
+        // flag set above is only a cache. A definitive under-age rejection
+        // blocks entry; connectivity failures defer to the offline flow.
+        if (WalletApiClient.instance.isConfigured) {
+          final birthYearResult = await submitBirthYearToServer(birthYear);
+          if (!context.mounted) return;
+          switch (birthYearResult.status) {
+            case BirthYearSubmitStatus.underMinAge:
+              await KVStoreService.setAgeVerified(false);
+              if (!context.mounted) return;
+              showWalletToast(context, l10n.under_min_age_message,
+                  icon: DeeMusiqIcons.error);
+              return;
+            case BirthYearSubmitStatus.error:
+              showWalletToast(
+                context,
+                birthYearResult.message ?? l10n.wallet_sync_failed_retry,
+                icon: DeeMusiqIcons.error,
+              );
+              return;
+            case BirthYearSubmitStatus.connectivity:
+              AppLogger.log.w(
+                  'AuthPage: birth-year submission deferred (backend unreachable)');
+            case BirthYearSubmitStatus.success:
+          }
         }
 
         await KVStoreService.setDoneGettingStarted(true);
@@ -114,6 +180,12 @@ class AuthPage extends HookConsumerWidget {
                       .semiBold()
                       .center(),
                   const Gap(32),
+                  TextField(
+                    controller: birthYearController,
+                    placeholder: Text(l10n.birth_year_hint),
+                    keyboardType: TextInputType.number,
+                  ),
+                  const Gap(12),
                   Row(
                     children: [
                       Checkbox(
@@ -152,19 +224,21 @@ class AuthPage extends HookConsumerWidget {
                   if (loading.value)
                     const Center(child: CircularProgressIndicator())
                   else ...[
-                    Button.primary(
-                      onPressed: () => handleSignIn(google: true),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(DeeMusiqIcons.google,
-                              size: 18),
-                          const Gap(8),
-                          Text(l10n.sign_in_with_google),
-                        ],
+                    if (GoogleAuthService.instance.isPlatformSupported) ...[
+                      Button.primary(
+                        onPressed: () => handleSignIn(google: true),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(DeeMusiqIcons.google,
+                                size: 18),
+                            const Gap(8),
+                            Text(l10n.sign_in_with_google),
+                          ],
+                        ),
                       ),
-                    ),
-                    const Gap(8),
+                      const Gap(8),
+                    ],
                     Button.outline(
                       onPressed: () => handleSignIn(google: false),
                       child: Text(l10n.continue_with_device_limited),

@@ -12,17 +12,17 @@ class TamperBlockedApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
         backgroundColor: _ink,
         body: SafeArea(
           child: Center(
             child: Padding(
-              padding: const EdgeInsets.all(28),
+              padding: EdgeInsets.all(28),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                children: const [
+                children: [
                   Icon(Icons.gpp_bad_outlined, color: _orange, size: 72),
                   SizedBox(height: 20),
                   Text(
@@ -38,8 +38,7 @@ class TamperBlockedApp extends StatelessWidget {
                   Text(
                     "For your safety it won't run. This build wasn't signed by "
                     "DeeMusiq, so it may be tampered with or fake.\n\n"
-                    "Install the official app only from deemusiq.github.io/deemusiq "
-                    "or the DeeMusiq GitHub releases.",
+                    "Install the official app only from deemusiq.co.za.",
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
                   ),

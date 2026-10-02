@@ -26,8 +26,8 @@ class TokenStorePage extends HookConsumerWidget {
       builder: (context) {
         return AlertDialog(
           title: const Text("Choose your region").large(),
-          content: SizedBox(
-            width: 360,
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 360),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -80,8 +80,8 @@ class TokenStorePage extends HookConsumerWidget {
     return SafeArea(
       bottom: false,
       child: Scaffold(
-        headers: [
-          TitleBar(title: const Text("Token store")),
+        headers: const [
+          TitleBar(title: Text("Token store")),
         ],
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -156,7 +156,7 @@ class TokenStorePage extends HookConsumerWidget {
                           ),
                           const Gap(6),
                           const Text(
-                            "Pay with PayFast/Stripe cards or Monero, Ethereum, Bitcoin and USDT. "
+                            "Pay with PayShap instant EFT, PayFast/Stripe cards, or Monero, Ethereum, Bitcoin and USDT. "
                             "Top-ups are processed securely online by the DeeMusiq backend and are "
                             "available in South Africa for now — tokens appear once your payment confirms.",
                           ).muted().small(),

@@ -43,4 +43,67 @@ void main() {
     expect(res.creditedTokens, 0);
     expect(res.allowSimulate, isFalse);
   });
+
+  group("normalizePayerPhone matches the backend's normalizeE164", () {
+    // Mirrors backend/src/util/phone.ts: ZA country code 27, formatting
+    // stripped, trunk 0 dropped, loose E.164 (7–15 digits) enforced.
+    test("national and international forms normalise identically", () {
+      expect(
+        DeeMusiqPaymentService.normalizePayerPhone("073 725 3454"),
+        "+27737253454",
+      );
+      expect(
+        DeeMusiqPaymentService.normalizePayerPhone("+27 73 725 3454"),
+        "+27737253454",
+      );
+      expect(
+        DeeMusiqPaymentService.normalizePayerPhone("27737253454"),
+        "+27737253454",
+      );
+      expect(
+        DeeMusiqPaymentService.normalizePayerPhone("+27 (73) 725-3454"),
+        "+27737253454",
+      );
+    });
+
+    test("rejects implausible numbers instead of round-tripping a 400", () {
+      expect(DeeMusiqPaymentService.normalizePayerPhone(""), isNull);
+      expect(DeeMusiqPaymentService.normalizePayerPhone("   "), isNull);
+      expect(DeeMusiqPaymentService.normalizePayerPhone("abc"), isNull);
+      expect(DeeMusiqPaymentService.normalizePayerPhone("0123"), isNull);
+      expect(
+        DeeMusiqPaymentService.normalizePayerPhone("+2700737253454000000"),
+        isNull,
+      );
+      expect(
+        DeeMusiqPaymentService.normalizePayerPhone("+27 82 123 4567 ext 9"),
+        isNull,
+      );
+    });
+
+    test("honours a non-ZA default country code", () {
+      expect(
+        DeeMusiqPaymentService.normalizePayerPhone(
+          "07123 456789",
+          defaultCountryCode: "254",
+        ),
+        "+2547123456789",
+      );
+    });
+  });
+
+  test("unavailable-method cache is observable by the method picker", () {
+    DeeMusiqPaymentService.unavailableMethods.clear();
+    addTearDown(DeeMusiqPaymentService.unavailableMethods.clear);
+
+    expect(
+      DeeMusiqPaymentService.isMethodUnavailable(PaymentMethodKind.monero),
+      isFalse,
+    );
+    DeeMusiqPaymentService.unavailableMethods.add(PaymentMethodKind.monero);
+    expect(
+      DeeMusiqPaymentService.isMethodUnavailable(PaymentMethodKind.monero),
+      isTrue,
+    );
+  });
 }
