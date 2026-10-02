@@ -30,3 +30,7 @@ key.properties
 .env.*
 !.env.example
 *.env
+
+# Bramble protocol core lives on disk only until the license review lands
+# (AGENTS.md: "license review before any distribution") — never commit.
+deemusiq-app/packages/
