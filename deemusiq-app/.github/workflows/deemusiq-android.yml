@@ -43,7 +43,9 @@ env:
 jobs:
   # Quality gate — runs on every branch push, PR, tag push and manual run.
   check:
-    runs-on: ubuntu-22.04
+    # 24.04: sqlite 3.45 — the drift migration suite (ALTER ... ADD COLUMN with
+    # CHECK/DEFAULT) errors with "SQL logic error" on 22.04's sqlite 3.37.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
@@ -79,6 +81,10 @@ jobs:
         # --no-fatal-infos: the tree has known info-level lints (e.g.
         # avoid_print in lib/services/cli/cli.dart). Warnings/errors stay fatal.
         run: flutter analyze --no-fatal-infos
+
+      # Widget tests instantiate the media_kit player, which dlopens libmpv.
+      - name: Install libmpv (media_kit test dependency)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libmpv-dev
 
       - name: Test
         run: flutter test
