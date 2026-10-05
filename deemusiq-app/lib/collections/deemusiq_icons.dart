@@ -151,6 +151,9 @@ abstract class DeeMusiqIcons {
   static const trophy = Icons.emoji_events_rounded;
   static const trending = Icons.trending_up_rounded;
   static const creditCard = Icons.credit_card_rounded;
+  /// Pay-by-bank rails (Ozow instant EFT) — distinct from [creditCard] so the
+  /// method chip reads as "transfer from your bank", not "type a card number".
+  static const bank = Icons.account_balance_rounded;
   static const bitcoin = Icons.currency_bitcoin;
   static const ethereum = Icons.currency_exchange;
   static const monero = Icons.toll_rounded;

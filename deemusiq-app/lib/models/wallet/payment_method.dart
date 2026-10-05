@@ -15,6 +15,12 @@ enum PaymentMethodKind {
   payfastCard,
   stripeCard,
   payshap,
+  // South African gateway coverage. `method.name` is sent verbatim to
+  // POST /payments/checkout, so these strings must match the backend's
+  // z.enum in src/routes/payments.ts exactly.
+  peachCard,
+  yocoCard,
+  ozowEft,
   monero,
   ethereum,
   bitcoin,
@@ -27,6 +33,11 @@ enum PaymentMethodKind {
       case PaymentMethodKind.payfastCard:
       case PaymentMethodKind.stripeCard:
       case PaymentMethodKind.payshap:
+      case PaymentMethodKind.peachCard:
+      case PaymentMethodKind.yocoCard:
+      // Instant EFT is a bank transfer, not a card, but it settles through the
+      // same hosted-checkout + webhook path, so it is a fiat rail.
+      case PaymentMethodKind.ozowEft:
         return PaymentRail.fiat;
       case PaymentMethodKind.monero:
       case PaymentMethodKind.ethereum:
@@ -49,6 +60,12 @@ enum PaymentMethodKind {
         return "Card · Stripe";
       case PaymentMethodKind.payshap:
         return "PayShap";
+      case PaymentMethodKind.peachCard:
+        return "Card · Peach";
+      case PaymentMethodKind.yocoCard:
+        return "Card · Yoco";
+      case PaymentMethodKind.ozowEft:
+        return "Bank transfer · Ozow";
       case PaymentMethodKind.monero:
         return "Monero (XMR)";
       case PaymentMethodKind.ethereum:
@@ -73,6 +90,12 @@ enum PaymentMethodKind {
         return "International cards";
       case PaymentMethodKind.payshap:
         return "Instant EFT · South African banks · ZAR";
+      case PaymentMethodKind.peachCard:
+        return "Visa / Mastercard · ZAR";
+      case PaymentMethodKind.yocoCard:
+        return "Visa / Mastercard · ZAR";
+      case PaymentMethodKind.ozowEft:
+        return "Instant EFT · Any South African bank";
       case PaymentMethodKind.monero:
         return "Private, low-fee · Monero network";
       case PaymentMethodKind.ethereum:
@@ -93,7 +116,11 @@ enum PaymentMethodKind {
       case PaymentMethodKind.payfastCard:
       case PaymentMethodKind.stripeCard:
       case PaymentMethodKind.payshap:
+      case PaymentMethodKind.peachCard:
+      case PaymentMethodKind.yocoCard:
         return DeeMusiqIcons.creditCard;
+      case PaymentMethodKind.ozowEft:
+        return DeeMusiqIcons.bank;
       case PaymentMethodKind.bitcoin:
         return DeeMusiqIcons.bitcoin;
       case PaymentMethodKind.ethereum:
@@ -119,6 +146,12 @@ enum PaymentMethodKind {
         return const Color(0xFF635BFF);
       case PaymentMethodKind.payshap:
         return const Color(0xFF1B75BB);
+      case PaymentMethodKind.peachCard:
+        return const Color(0xFFFF6B35);
+      case PaymentMethodKind.yocoCard:
+        return const Color(0xFF0F2D52);
+      case PaymentMethodKind.ozowEft:
+        return const Color(0xFF00AEEF);
       case PaymentMethodKind.bitcoin:
         return const Color(0xFFF7931A);
       case PaymentMethodKind.ethereum:
@@ -138,7 +171,12 @@ enum PaymentMethodKind {
   /// Online-only: tokens are bought through the backend, so the local
   /// [demoCredit] method is intentionally NOT offered here.
   static List<PaymentMethodKind> get topUpMethods => const [
+        PaymentMethodKind.peachCard,
+        PaymentMethodKind.yocoCard,
         PaymentMethodKind.payshap,
+        // Instant EFT is the only rail that settles from a bank transfer, so it
+        // is offered after the card options.
+        PaymentMethodKind.ozowEft,
         PaymentMethodKind.payfastCard,
         PaymentMethodKind.stripeCard,
         PaymentMethodKind.monero,
