@@ -10,6 +10,81 @@ import 'package:deemusiq/provider/metadata_plugin/utils/common.dart';
 import 'package:deemusiq/services/logger/logger.dart';
 import 'package:deemusiq/services/wallet/wallet_api.dart';
 
+/// Maps one flat catalog-feed item to a playable [DeeMusiqFullTrackObject] and
+/// seeds the source-match cache with the unlisted videoId so the existing
+/// YouTube engine resolves it directly (no title search). Shared by the
+/// catalog page and the trending/top feeds — the feed DTO is intentionally
+/// flat for exactly this reuse.
+Future<DeeMusiqFullTrackObject> catalogFeedItemToTrack(
+  Map<String, dynamic> s, {
+  required AppDatabase db,
+  required String? audioSourceSlug,
+}) async {
+  final id = s["id"] as String;
+  final title = s["title"] as String;
+  final artist = s["artistName"] as String;
+  final youtubeId = (s["youtubeId"] as String?) ?? "";
+  // Backend "hide the source" mode: a short-lived signed play URL served by
+  // the backend itself — neither YouTube nor any file host is exposed.
+  final streamUrl = (s["streamUrl"] as String?) ?? "";
+  final useStream = streamUrl.isNotEmpty;
+  final cover = s["coverUrl"] as String?;
+  final durationMs = (s["durationMs"] as int?) ?? 0;
+  final ytUri =
+      useStream ? streamUrl : "https://www.youtube.com/watch?v=$youtubeId";
+  final playUri = useStream ? "urlsource:$streamUrl" : "ytsource:$youtubeId";
+
+  // Seed the source-match cache: trackId -> the exact unlisted videoId.
+  // insertOrIgnore so we never clobber a user's sibling swap. Skipped in
+  // stream mode: playback goes through the backend URL, not YouTube.
+  if (!useStream && youtubeId.isNotEmpty && audioSourceSlug != null) {
+    final match = DeeMusiqAudioSourceMatchObject(
+      id: youtubeId,
+      title: title,
+      artists: [artist],
+      duration: Duration(milliseconds: durationMs),
+      thumbnail: cover,
+      externalUri: playUri,
+    );
+    await db.into(db.sourceMatchTable).insert(
+          SourceMatchTableCompanion.insert(
+            trackId: id,
+            sourceInfo: Value(jsonEncode(match)),
+            sourceType: audioSourceSlug,
+          ),
+          mode: InsertMode.insertOrIgnore,
+        );
+  }
+
+  return DeeMusiqTrackObject.full(
+    id: id,
+    name: title,
+    externalUri: playUri,
+    artists: [
+      DeeMusiqSimpleArtistObject(
+        id: (s["artistId"] as String?) ?? artist,
+        name: artist,
+        externalUri: "",
+        images: null,
+      ),
+    ],
+    album: DeeMusiqSimpleAlbumObject(
+      albumType: DeeMusiqAlbumType.single,
+      artists: const [],
+      externalUri: ytUri,
+      id: id,
+      name: title,
+      releaseDate: s["releaseDate"] as String?,
+      images: cover != null
+          ? [DeeMusiqImageObject(height: 300, width: 300, url: cover)]
+          : const [],
+    ),
+    durationMs: durationMs,
+    isrc: "",
+    explicit: false,
+  ) as DeeMusiqFullTrackObject;
+}
+
 /// The DeeMusiq catalog: the platform's own songs, each an UNLISTED YouTube
 /// video served by the backend. Each row is mapped to a playable
 /// [DeeMusiqFullTrackObject], and the app's source-match cache is SEEDED with
@@ -59,72 +134,11 @@ class CatalogNotifier
     final tracks = <DeeMusiqFullTrackObject>[];
     for (final raw in items) {
       final s = Map<String, dynamic>.from(raw as Map);
-      final id = s["id"] as String;
-      final title = s["title"] as String;
-      final artist = s["artistName"] as String;
-      final youtubeId = (s["youtubeId"] as String?) ?? "";
-      // Backend "hide the source" mode: a short-lived signed play URL served by
-      // the backend itself — neither YouTube nor any file host is exposed.
-      final streamUrl = (s["streamUrl"] as String?) ?? "";
-      final useStream = streamUrl.isNotEmpty;
-      final cover = s["coverUrl"] as String?;
-      final durationMs = (s["durationMs"] as int?) ?? 0;
-      final ytUri = useStream
-          ? streamUrl
-          : "https://www.youtube.com/watch?v=$youtubeId";
-      final playUri = useStream ? "urlsource:$streamUrl" : "ytsource:$youtubeId";
-
-      // Seed the source-match cache: trackId -> the exact unlisted videoId.
-      // insertOrIgnore so we never clobber a user's sibling swap. Skipped in
-      // stream mode: playback goes through the backend URL, not YouTube.
-      if (!useStream && youtubeId.isNotEmpty && audioCfg != null) {
-        final match = DeeMusiqAudioSourceMatchObject(
-          id: youtubeId,
-          title: title,
-          artists: [artist],
-          duration: Duration(milliseconds: durationMs),
-          thumbnail: cover,
-          externalUri: playUri,
-        );
-        await db.into(db.sourceMatchTable).insert(
-              SourceMatchTableCompanion.insert(
-                trackId: id,
-                sourceInfo: Value(jsonEncode(match)),
-                sourceType: audioCfg.slug,
-              ),
-              mode: InsertMode.insertOrIgnore,
-            );
-      }
-
-      tracks.add(
-        DeeMusiqTrackObject.full(
-          id: id,
-          name: title,
-          externalUri: playUri,
-          artists: [
-            DeeMusiqSimpleArtistObject(
-              id: (s["artistId"] as String?) ?? artist,
-              name: artist,
-              externalUri: "",
-              images: null,
-            ),
-          ],
-          album: DeeMusiqSimpleAlbumObject(
-            albumType: DeeMusiqAlbumType.single,
-            artists: const [],
-            externalUri: ytUri,
-            id: id,
-            name: title,
-            releaseDate: s["releaseDate"] as String?,
-            images: cover != null
-                ? [DeeMusiqImageObject(height: 300, width: 300, url: cover)]
-                : const [],
-          ),
-          durationMs: durationMs,
-          isrc: "",
-          explicit: false,
-        ) as DeeMusiqFullTrackObject,
-      );
+      tracks.add(await catalogFeedItemToTrack(
+        s,
+        db: db,
+        audioSourceSlug: audioCfg?.slug,
+      ));
     }
     return tracks;
   }

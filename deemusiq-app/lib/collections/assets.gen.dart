@@ -25,6 +25,20 @@ class $AssetsBrandingGen {
   List<dynamic> get values => [deemusiqLogoIco, deemusiqLogoPng];
 }
 
+class $AssetsIconsGen {
+  const $AssetsIconsGen();
+
+  /// File path: assets/icons/app_icon.png
+  AssetGenImage get appIcon => const AssetGenImage('assets/icons/app_icon.png');
+
+  /// File path: assets/icons/app_icon_fg.png
+  AssetGenImage get appIconFg =>
+      const AssetGenImage('assets/icons/app_icon_fg.png');
+
+  /// List of all assets
+  List<AssetGenImage> get values => [appIcon, appIconFg];
+}
+
 class $AssetsImagesGen {
   const $AssetsImagesGen();
 
@@ -43,9 +57,45 @@ class $AssetsImagesGen {
   /// Directory path: assets/images/logos
   $AssetsImagesLogosGen get logos => const $AssetsImagesLogosGen();
 
+  /// File path: assets/images/onboard_1.jpg
+  AssetGenImage get onboard1 =>
+      const AssetGenImage('assets/images/onboard_1.jpg');
+
+  /// File path: assets/images/onboard_2.jpg
+  AssetGenImage get onboard2 =>
+      const AssetGenImage('assets/images/onboard_2.jpg');
+
+  /// File path: assets/images/onboard_3.jpg
+  AssetGenImage get onboard3 =>
+      const AssetGenImage('assets/images/onboard_3.jpg');
+
+  /// File path: assets/images/onboard_4.jpg
+  AssetGenImage get onboard4 =>
+      const AssetGenImage('assets/images/onboard_4.jpg');
+
+  /// File path: assets/images/onboard_5.jpg
+  AssetGenImage get onboard5 =>
+      const AssetGenImage('assets/images/onboard_5.jpg');
+
   /// File path: assets/images/placeholder.png
   AssetGenImage get placeholder =>
       const AssetGenImage('assets/images/placeholder.png');
+
+  /// File path: assets/images/splash_1.jpg
+  AssetGenImage get splash1 =>
+      const AssetGenImage('assets/images/splash_1.jpg');
+
+  /// File path: assets/images/splash_2.jpg
+  AssetGenImage get splash2 =>
+      const AssetGenImage('assets/images/splash_2.jpg');
+
+  /// File path: assets/images/splash_3.jpg
+  AssetGenImage get splash3 =>
+      const AssetGenImage('assets/images/splash_3.jpg');
+
+  /// File path: assets/images/splash_4.jpg
+  AssetGenImage get splash4 =>
+      const AssetGenImage('assets/images/splash_4.jpg');
 
   /// File path: assets/images/user-placeholder.png
   AssetGenImage get userPlaceholder =>
@@ -56,7 +106,16 @@ class $AssetsImagesGen {
         albumPlaceholder,
         bengaliPatternsBg,
         likedTracks,
+        onboard1,
+        onboard2,
+        onboard3,
+        onboard4,
+        onboard5,
         placeholder,
+        splash1,
+        splash2,
+        splash3,
+        splash4,
         userPlaceholder
       ];
 }
@@ -85,6 +144,7 @@ class Assets {
 
   static const String license = 'LICENSE';
   static const $AssetsBrandingGen branding = $AssetsBrandingGen();
+  static const $AssetsIconsGen icons = $AssetsIconsGen();
   static const $AssetsImagesGen images = $AssetsImagesGen();
 
   /// List of all assets

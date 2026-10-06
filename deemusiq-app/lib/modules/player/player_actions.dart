@@ -13,6 +13,7 @@ import 'package:deemusiq/modules/player/player_queue.dart';
 import 'package:deemusiq/modules/player/sibling_tracks_sheet.dart';
 import 'package:deemusiq/components/adaptive/adaptive_pop_sheet_list.dart';
 import 'package:deemusiq/components/heart_button/heart_button.dart';
+import 'package:deemusiq/components/ratings/track_rating_buttons.dart';
 import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/extensions/duration.dart';
 import 'package:deemusiq/provider/download_manager_provider.dart';
@@ -183,6 +184,8 @@ class PlayerActions extends HookConsumerWidget {
             !isLocalTrack &&
             authenticated.asData?.value == true)
           TrackHeartButton(track: playlist.activeTrack!),
+        if (playlist.activeTrack != null && !isLocalTrack)
+          TrackRatingControls(track: playlist.activeTrack!),
         AdaptivePopSheetList<Duration>(
           tooltip: context.l10n.sleep_timer,
           offset: Offset(0, -50 * (sleepTimerEntries.values.length + 2)),

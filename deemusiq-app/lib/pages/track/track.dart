@@ -12,6 +12,7 @@ import 'package:deemusiq/components/heart_button/heart_button.dart';
 import 'package:deemusiq/components/image/universal_image.dart';
 import 'package:deemusiq/components/links/artist_link.dart';
 import 'package:deemusiq/components/links/link_text.dart';
+import 'package:deemusiq/components/ratings/track_rating_buttons.dart';
 import 'package:deemusiq/components/titlebar/titlebar.dart';
 import 'package:deemusiq/components/track_tile/track_options_button.dart';
 import 'package:deemusiq/extensions/context.dart';
@@ -247,6 +248,7 @@ class TrackPage extends HookConsumerWidget {
                                       else
                                         const Gap(20),
                                       TrackHeartButton(track: track),
+                                      TrackRatingControls(track: track),
                                       TrackOptionsButton(
                                         track: track,
                                         userPlaylist: false,
