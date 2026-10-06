@@ -83,7 +83,12 @@ class LinkedAccountsPage extends HookConsumerWidget {
                       ).muted().small(),
                     ),
                     const Gap(16),
-                    for (final provider in LinkedProvider.values)
+                    // Only providers the backend actually accepts
+                    // (spotify, google) — scaffolded providers would fail on
+                    // tap, and the DeeMusiq frontend never brands YouTube.
+                    for (final provider in LinkedProvider.values.where(
+                      (p) => p == LinkedProvider.spotify || p == LinkedProvider.google,
+                    ))
                       Padding(
                         padding: const EdgeInsets.only(bottom: 10),
                         child: _ProviderTile(
