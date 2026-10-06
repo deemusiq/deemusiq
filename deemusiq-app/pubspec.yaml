@@ -227,6 +227,7 @@ flutter:
   assets:
     - assets/images/
     - assets/images/logos/
+    - assets/icons/
     - assets/branding/deemusiq-logo.png
     - assets/branding/deemusiq-logo.ico
     - LICENSE
