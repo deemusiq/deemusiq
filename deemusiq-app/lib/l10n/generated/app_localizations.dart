@@ -1482,7 +1482,7 @@ abstract class AppLocalizations {
   /// No description provided for @download_ip_ban_warning.
   ///
   /// In en, this message translates to:
-  /// **'BTW, your IP can get blocked on YouTube due excessive download requests than usual. IP block means you can\'t use YouTube (even if you\'re logged in) for at least 2-3 months from that IP device. And DeeMusiq doesn\'t hold any responsibility if this ever happens'**
+  /// **'BTW, your IP can get blocked by the streaming source due to more download requests than usual. An IP block means you can\'t use the source (even if you\'re logged in) for at least 2-3 months from that device. And DeeMusiq doesn\'t hold any responsibility if this ever happens'**
   String get download_ip_ban_warning;
 
   /// No description provided for @by_clicking_accept_terms.
@@ -1506,7 +1506,7 @@ abstract class AppLocalizations {
   /// No description provided for @download_agreement_3.
   ///
   /// In en, this message translates to:
-  /// **'I\'m completely aware that my IP can get blocked on YouTube & I don\'t hold DeeMusiq or his owners/contributors responsible for any accidents caused by my current action'**
+  /// **'I\'m completely aware that my IP can get blocked by the streaming source & I don\'t hold DeeMusiq or its owners/contributors responsible for any accidents caused by my current action'**
   String get download_agreement_3;
 
   /// No description provided for @decline.
@@ -1530,7 +1530,7 @@ abstract class AppLocalizations {
   /// No description provided for @youtube.
   ///
   /// In en, this message translates to:
-  /// **'YouTube'**
+  /// **'Drop'**
   String get youtube;
 
   /// No description provided for @channel.
@@ -1674,7 +1674,7 @@ abstract class AppLocalizations {
   /// No description provided for @piped_down_error_instructions.
   ///
   /// In en, this message translates to:
-  /// **'The Piped instance {pipedInstance} is currently down\n\nEither change the instance or change the \'API type\' to official YouTube API\n\nMake sure to restart the app after change'**
+  /// **'The Piped instance {pipedInstance} is currently down\n\nEither change the instance or change the \'API type\' to the official API\n\nMake sure to restart the app after change'**
   String piped_down_error_instructions(Object pipedInstance);
 
   /// No description provided for @you_are_offline.
@@ -1950,7 +1950,7 @@ abstract class AppLocalizations {
   /// No description provided for @piped_source_description.
   ///
   /// In en, this message translates to:
-  /// **'Feeling free? Same as YouTube but a lot free.'**
+  /// **'Feeling free? Same catalog, but a lot freer.'**
   String get piped_source_description;
 
   /// No description provided for @jiosaavn_source_description.
@@ -2598,19 +2598,19 @@ abstract class AppLocalizations {
   /// No description provided for @youtube_engine.
   ///
   /// In en, this message translates to:
-  /// **'DeeMusiq Engine'**
+  /// **'Playback engine'**
   String get youtube_engine;
 
   /// No description provided for @youtube_engine_not_installed_title.
   ///
   /// In en, this message translates to:
-  /// **'{engine} is not installed'**
+  /// **'{engine} engine is not installed'**
   String youtube_engine_not_installed_title(Object engine);
 
   /// No description provided for @youtube_engine_not_installed_message.
   ///
   /// In en, this message translates to:
-  /// **'{engine} is not installed in your system.'**
+  /// **'{engine} engine is not installed on this device.'**
   String youtube_engine_not_installed_message(Object engine);
 
   /// No description provided for @youtube_engine_set_path.
@@ -2628,43 +2628,43 @@ abstract class AppLocalizations {
   /// No description provided for @yt_dlp_install_title.
   ///
   /// In en, this message translates to:
-  /// **'Setting up yt-dlp'**
+  /// **'Setting up Drop 1'**
   String get yt_dlp_install_title;
 
   /// No description provided for @yt_dlp_install_phase_checking.
   ///
   /// In en, this message translates to:
-  /// **'Checking for an existing yt-dlp install…'**
+  /// **'Checking for an existing Drop 1 install…'**
   String get yt_dlp_install_phase_checking;
 
   /// No description provided for @yt_dlp_install_phase_downloading.
   ///
   /// In en, this message translates to:
-  /// **'Downloading yt-dlp {version}…'**
+  /// **'Downloading Drop 1 {version}…'**
   String yt_dlp_install_phase_downloading(Object version);
 
   /// No description provided for @yt_dlp_install_phase_verifying.
   ///
   /// In en, this message translates to:
-  /// **'Verifying the downloaded yt-dlp…'**
+  /// **'Verifying the downloaded Drop 1…'**
   String get yt_dlp_install_phase_verifying;
 
   /// No description provided for @yt_dlp_install_phase_installing.
   ///
   /// In en, this message translates to:
-  /// **'Installing yt-dlp {version}…'**
+  /// **'Installing Drop 1 {version}…'**
   String yt_dlp_install_phase_installing(Object version);
 
   /// No description provided for @yt_dlp_install_phase_done.
   ///
   /// In en, this message translates to:
-  /// **'yt-dlp {version} is ready'**
+  /// **'Drop 1 {version} is ready'**
   String yt_dlp_install_phase_done(Object version);
 
   /// No description provided for @yt_dlp_install_phase_failed.
   ///
   /// In en, this message translates to:
-  /// **'yt-dlp setup failed'**
+  /// **'Drop 1 setup failed'**
   String get yt_dlp_install_phase_failed;
 
   /// No description provided for @yt_dlp_install_progress.
@@ -2682,7 +2682,7 @@ abstract class AppLocalizations {
   /// No description provided for @yt_dlp_install_latest_action.
   ///
   /// In en, this message translates to:
-  /// **'Install the latest yt-dlp automatically'**
+  /// **'Install the latest Drop 1 automatically'**
   String get yt_dlp_install_latest_action;
 
   /// No description provided for @yt_dlp_install_retry.
@@ -2694,13 +2694,13 @@ abstract class AppLocalizations {
   /// No description provided for @yt_dlp_install_failed_message.
   ///
   /// In en, this message translates to:
-  /// **'yt-dlp could not be installed automatically:\n{error}'**
+  /// **'Drop 1 could not be installed automatically:\n{error}'**
   String yt_dlp_install_failed_message(Object error);
 
   /// No description provided for @yt_dlp_install_managed_message.
   ///
   /// In en, this message translates to:
-  /// **'DeeMusiq downloads the official yt-dlp release into its own folder and keeps it up to date, so nothing has to be installed system-wide.'**
+  /// **'DeeMusiq downloads the official Drop 1 release into its own folder and keeps it up to date, so nothing has to be installed system-wide.'**
   String get yt_dlp_install_managed_message;
 
   /// No description provided for @download.
@@ -3120,7 +3120,7 @@ abstract class AppLocalizations {
   /// No description provided for @offline_staying_on_device.
   ///
   /// In en, this message translates to:
-  /// **'Couldn\'t reach the backend. Continuing on this device with YouTube.'**
+  /// **'Couldn\'t reach the backend. Continuing on this device with direct playback.'**
   String get offline_staying_on_device;
 
   /// No description provided for @wallet_sync_failed_retry.

@@ -82,7 +82,7 @@ class SettingsPlaybackSection extends HookConsumerWidget {
         ),
         AdaptiveSelectTile<YouTubeAudioQuality>(
           secondary: const Icon(DeeMusiqIcons.audioQuality),
-          title: const Text('YouTube Audio Quality'),
+          title: const Text('Stream Quality'),
           value: youtubeQuality.value,
           options: YouTubeAudioQuality.values
               .map((q) => SelectItemButton(

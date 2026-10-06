@@ -1375,33 +1375,33 @@ class AppLocalizationsFr extends AppLocalizations {
       'Dans macOS/Linux/les systèmes d\'exploitation similaires à Unix, définir le chemin dans .zshrc/.bashrc/.bash_profile etc. ne fonctionnera pas.\nVous devez définir le chemin dans le fichier de configuration du shell.';
 
   @override
-  String get yt_dlp_install_title => 'Setting up yt-dlp';
+  String get yt_dlp_install_title => 'Setting up Drop 1';
 
   @override
   String get yt_dlp_install_phase_checking =>
-      'Checking for an existing yt-dlp install…';
+      'Checking for an existing Drop 1 install…';
 
   @override
   String yt_dlp_install_phase_downloading(Object version) {
-    return 'Downloading yt-dlp $version…';
+    return 'Downloading Drop 1 $version…';
   }
 
   @override
   String get yt_dlp_install_phase_verifying =>
-      'Verifying the downloaded yt-dlp…';
+      'Verifying the downloaded Drop 1…';
 
   @override
   String yt_dlp_install_phase_installing(Object version) {
-    return 'Installing yt-dlp $version…';
+    return 'Installing Drop 1 $version…';
   }
 
   @override
   String yt_dlp_install_phase_done(Object version) {
-    return 'yt-dlp $version is ready';
+    return 'Drop 1 $version is ready';
   }
 
   @override
-  String get yt_dlp_install_phase_failed => 'yt-dlp setup failed';
+  String get yt_dlp_install_phase_failed => 'Drop 1 setup failed';
 
   @override
   String yt_dlp_install_progress(Object received, Object total) {
@@ -1413,19 +1413,19 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get yt_dlp_install_latest_action =>
-      'Install the latest yt-dlp automatically';
+      'Install the latest Drop 1 automatically';
 
   @override
   String get yt_dlp_install_retry => 'Retry';
 
   @override
   String yt_dlp_install_failed_message(Object error) {
-    return 'yt-dlp could not be installed automatically:\n$error';
+    return 'Drop 1 could not be installed automatically:\n$error';
   }
 
   @override
   String get yt_dlp_install_managed_message =>
-      'DeeMusiq downloads the official yt-dlp release into its own folder and keeps it up to date, so nothing has to be installed system-wide.';
+      'DeeMusiq downloads the official Drop 1 release into its own folder and keeps it up to date, so nothing has to be installed system-wide.';
 
   @override
   String get download => 'Télécharger';
@@ -1670,7 +1670,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get offline_staying_on_device =>
-      'Couldn\'t reach the backend. Continuing on this device with YouTube.';
+      'Couldn\'t reach the backend. Continuing on this device with direct playback.';
 
   @override
   String get wallet_sync_failed_retry =>

@@ -70,8 +70,8 @@ class YouTubeEngineNotInstalledDialog extends HookConsumerWidget {
                   Button.link(
                     child: Text(
                       YtDlpBinaryPolicy.hasBuildApprovedBinary
-                          ? 'yt-dlp ${YtDlpBinaryPolicy.buildApprovedVersion}'
-                          : 'yt-dlp (latest)',
+                          ? 'Drop 1 ${YtDlpBinaryPolicy.buildApprovedVersion}'
+                          : 'Drop 1 (latest)',
                     ),
                     onPressed: () async {
                       launchUrl(Uri.parse(engineDownloadUrl));
@@ -88,10 +88,10 @@ class YouTubeEngineNotInstalledDialog extends HookConsumerWidget {
                 name: "path",
                 controller: controller,
                 placeholder: Text(switch (context.theme.platform) {
-                  TargetPlatform.macOS => "e.g. /opt/homebrew/bin/yt-dlp",
+                  TargetPlatform.macOS => "e.g. /opt/homebrew/bin/drop1",
                   TargetPlatform.windows =>
-                    r"e.g. C:\Program Files\yt-dlp\yt-dlp.exe",
-                  _ => "e.g. /home/user/.local/bin/yt-dlp",
+                    r"e.g. C:\Tools\drop1\drop1.exe",
+                  _ => "e.g. /home/user/.local/bin/drop1",
                 }),
               ),
             ),
@@ -136,7 +136,7 @@ class YouTubeEngineNotInstalledDialog extends HookConsumerWidget {
                     .verify(controller.text.trim());
                 if (!resolution.isApproved && context.mounted) {
                   formKey.currentState?.fields["path"]?.invalidate(
-                    resolution.error ?? 'yt-dlp is unavailable',
+                    resolution.error ?? 'Drop 1 engine is unavailable',
                   );
                   return;
                 }

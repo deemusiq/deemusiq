@@ -3,9 +3,47 @@
 -keep class io.flutter.plugin.**  { *; }
 -keep class io.flutter.util.**  { *; }
 -keep class io.flutter.view.**  { *; }
-# -keep class io.flutter.**  { *; }
+-keep class io.flutter.**  { *; }
 -keep class io.flutter.plugins.**  { *; }
 -keep class de.prosiebensat1digital.** { *; }
+
+# Reflection-heavy attribute metadata (kotlinx.serialization, Glance generic
+# superclass resolution, JNI native methods)
+-keepattributes *Annotation*, Signature, InnerClasses, EnclosingMethod
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
+
+# audio_service / just_audio / audio_session (manifest-declared service +
+# media-button receiver)
+-keep class com.ryanheise.** { *; }
+
+# media_kit
+-keep class com.alexmercerind.** { *; }
+
+# flutter_secure_storage
+-keep class com.it_nomads.fluttersecurestorage.** { *; }
+
+# home_widget background receiver/service
+-keep class es.antonborri.home_widget.** { *; }
+
+# App Glance widget — HomeWidgetGlanceWidgetReceiver resolves the widget class
+# through the generic superclass, and ActionCallbacks are instantiated by name
+-keep class oss.krtirtho.spotube.glance.** { *; }
+-keep class * extends androidx.glance.appwidget.action.ActionCallback { *; }
+
+# WorkManager (androidx.work) — widget/background scheduling
+-keep class androidx.work.** { *; }
+
+# sqflite (drift + cache manager)
+-keep class com.tekartik.** { *; }
+
+# flutter_inappwebview
+-keep class com.pichillilorenzo.** { *; }
+
+# Play Core is absent from the F-Droid flavor; the Flutter embedding only
+# references it for deferred-component installs, which this app never uses.
+-dontwarn com.google.android.play.core.**
 
 -keep class androidx.lifecycle.DefaultLifecycleObserver
 

@@ -727,7 +727,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get download_ip_ban_warning =>
-      'BTW, your IP can get blocked on YouTube due excessive download requests than usual. IP block means you can\'t use YouTube (even if you\'re logged in) for at least 2-3 months from that IP device. And DeeMusiq doesn\'t hold any responsibility if this ever happens';
+      'BTW, your IP can get blocked by the streaming source due to more download requests than usual. An IP block means you can\'t use the source (even if you\'re logged in) for at least 2-3 months from that device. And DeeMusiq doesn\'t hold any responsibility if this ever happens';
 
   @override
   String get by_clicking_accept_terms =>
@@ -742,7 +742,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get download_agreement_3 =>
-      'I\'m completely aware that my IP can get blocked on YouTube & I don\'t hold DeeMusiq or his owners/contributors responsible for any accidents caused by my current action';
+      'I\'m completely aware that my IP can get blocked by the streaming source & I don\'t hold DeeMusiq or its owners/contributors responsible for any accidents caused by my current action';
 
   @override
   String get decline => 'Decline';
@@ -754,7 +754,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get details => 'Details';
 
   @override
-  String get youtube => 'YouTube';
+  String get youtube => 'Drop';
 
   @override
   String get channel => 'Channel';
@@ -834,7 +834,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String piped_down_error_instructions(Object pipedInstance) {
-    return 'The Piped instance $pipedInstance is currently down\n\nEither change the instance or change the \'API type\' to official YouTube API\n\nMake sure to restart the app after change';
+    return 'The Piped instance $pipedInstance is currently down\n\nEither change the instance or change the \'API type\' to the official API\n\nMake sure to restart the app after change';
   }
 
   @override
@@ -977,7 +977,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get piped_source_description =>
-      'Feeling free? Same as YouTube but a lot free.';
+      'Feeling free? Same catalog, but a lot freer.';
 
   @override
   String get jiosaavn_source_description => 'Best for South Asian region.';
@@ -1341,16 +1341,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get no_logs_found => 'No logs found';
 
   @override
-  String get youtube_engine => 'DeeMusiq Engine';
+  String get youtube_engine => 'Playback engine';
 
   @override
   String youtube_engine_not_installed_title(Object engine) {
-    return '$engine is not installed';
+    return '$engine engine is not installed';
   }
 
   @override
   String youtube_engine_not_installed_message(Object engine) {
-    return '$engine is not installed in your system.';
+    return '$engine engine is not installed on this device.';
   }
 
   @override
@@ -1363,33 +1363,33 @@ class AppLocalizationsEn extends AppLocalizations {
       'In macOS/Linux/unix like OS\'s, setting path on .zshrc/.bashrc/.bash_profile etc. won\'t work.\nYou need to set the path in the shell configuration file';
 
   @override
-  String get yt_dlp_install_title => 'Setting up yt-dlp';
+  String get yt_dlp_install_title => 'Setting up Drop 1';
 
   @override
   String get yt_dlp_install_phase_checking =>
-      'Checking for an existing yt-dlp install…';
+      'Checking for an existing Drop 1 install…';
 
   @override
   String yt_dlp_install_phase_downloading(Object version) {
-    return 'Downloading yt-dlp $version…';
+    return 'Downloading Drop 1 $version…';
   }
 
   @override
   String get yt_dlp_install_phase_verifying =>
-      'Verifying the downloaded yt-dlp…';
+      'Verifying the downloaded Drop 1…';
 
   @override
   String yt_dlp_install_phase_installing(Object version) {
-    return 'Installing yt-dlp $version…';
+    return 'Installing Drop 1 $version…';
   }
 
   @override
   String yt_dlp_install_phase_done(Object version) {
-    return 'yt-dlp $version is ready';
+    return 'Drop 1 $version is ready';
   }
 
   @override
-  String get yt_dlp_install_phase_failed => 'yt-dlp setup failed';
+  String get yt_dlp_install_phase_failed => 'Drop 1 setup failed';
 
   @override
   String yt_dlp_install_progress(Object received, Object total) {
@@ -1401,19 +1401,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get yt_dlp_install_latest_action =>
-      'Install the latest yt-dlp automatically';
+      'Install the latest Drop 1 automatically';
 
   @override
   String get yt_dlp_install_retry => 'Retry';
 
   @override
   String yt_dlp_install_failed_message(Object error) {
-    return 'yt-dlp could not be installed automatically:\n$error';
+    return 'Drop 1 could not be installed automatically:\n$error';
   }
 
   @override
   String get yt_dlp_install_managed_message =>
-      'DeeMusiq downloads the official yt-dlp release into its own folder and keeps it up to date, so nothing has to be installed system-wide.';
+      'DeeMusiq downloads the official Drop 1 release into its own folder and keeps it up to date, so nothing has to be installed system-wide.';
 
   @override
   String get download => 'Download';
@@ -1651,7 +1651,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get offline_staying_on_device =>
-      'Couldn\'t reach the backend. Continuing on this device with YouTube.';
+      'Couldn\'t reach the backend. Continuing on this device with direct playback.';
 
   @override
   String get wallet_sync_failed_retry =>
