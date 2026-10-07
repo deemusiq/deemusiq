@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=DeeMusiq
+Comment=African music streaming — It's a drop day
+Exec=deemusiq
+Icon=${SNAP}/meta/gui/deemusiq.png
+Type=Application
+Categories=AudioVideo;Audio;Music;Player;
+StartupNotify=true
+Terminal=false

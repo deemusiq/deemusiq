@@ -1,0 +1,41 @@
+# Maintainer: DeeMusiq <deemusiq@protonmail.com>
+pkgname=deemusiq-bin
+pkgver=1.1.0
+pkgrel=1
+pkgdesc="African music streaming — artists keep ownership and get paid fairly"
+arch=('x86_64')
+url="https://deemusiq.co.za"
+license=('BSD')
+depends=('gtk3' 'mpv' 'libnotify' 'libappindicator-gtk3')
+optdepends=('webkit2gtk-4.1: embedded webview windows (OAuth login)'
+            'libsecret: secure credential storage')
+provides=('deemusiq')
+conflicts=('deemusiq')
+source=("https://github.com/deemusiq/deemusiq/releases/download/v${pkgver}/DeeMusiq-linux-x86_64.tar.gz"
+        "deemusiq.desktop")
+sha256sums=('5ea4bf211f7600085ec2deed3934af6769696658d07de8439a02fb78bd6b363f'
+            '3d501b98fdcf89f7993ceb65bff45a549a8d063377d1801c3a9cf40c1935dd7a')
+
+package() {
+  # Flutter bundle; the binary finds its bundled .so files via RUNPATH $ORIGIN/lib
+  install -dm755 "$pkgdir/opt/deemusiq"
+  cp -a "$srcdir/bundle/." "$pkgdir/opt/deemusiq/"
+
+  install -Dm755 /dev/stdin "$pkgdir/usr/bin/deemusiq" <<'EOF'
+#!/bin/sh
+exec /opt/deemusiq/deemusiq "$@"
+EOF
+
+  install -Dm644 "$srcdir/deemusiq.desktop" \
+    "$pkgdir/usr/share/applications/deemusiq.desktop"
+
+  # The release tarball ships no icon; reuse the 1024x1024 branding PNG in the bundle
+  install -Dm644 \
+    "$pkgdir/opt/deemusiq/data/flutter_assets/assets/branding/deemusiq-logo.png" \
+    "$pkgdir/usr/share/icons/hicolor/256x256/apps/deemusiq.png"
+
+  # Aggregated dependency licenses bundled by Flutter; the tarball does not
+  # carry the DeeMusiq BSD-4-Clause text itself (tracked in SUBMIT.md)
+  install -Dm644 "$pkgdir/opt/deemusiq/data/flutter_assets/LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

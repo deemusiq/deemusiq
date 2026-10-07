@@ -1,0 +1,44 @@
+name: deemusiq
+title: DeeMusiq
+version: '1.1.0'
+base: core22
+grade: stable
+confinement: strict
+
+summary: African music streaming — artists keep ownership and get paid fairly
+description: |
+  Stream and download the sound of the continent. DeeMusiq is an African
+  music streaming platform where artists keep ownership and get paid
+  fairly. Built in South Africa. It's a drop day.
+
+license: BSD-4-Clause
+
+architectures:
+  - build-on: amd64
+
+apps:
+  deemusiq:
+    command: bundle/deemusiq
+    # The gnome extension supplies desktop, desktop-legacy, wayland, x11,
+    # opengl and gsettings plugs plus the GTK runtime, so they are not
+    # repeated here.
+    extensions: [gnome]
+    plugs:
+      - network
+      - network-bind
+      - audio-playback
+      - pulseaudio
+      - home
+      - removable-media
+
+parts:
+  deemusiq:
+    plugin: dump
+    source: https://github.com/deemusiq/deemusiq/releases/download/v1.1.0/DeeMusiq-linux-x86_64.tar.gz
+    source-checksum: sha256/5ea4bf211f7600085ec2deed3934af6769696658d07de8439a02fb78bd6b363f
+    # Runtime libs per the Debian package's declared Depends; GTK itself
+    # comes from the gnome platform snap.
+    stage-packages:
+      - libmpv2
+      - libnotify4
+      - libappindicator3-1

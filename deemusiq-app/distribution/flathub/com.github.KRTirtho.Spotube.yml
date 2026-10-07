@@ -1,23 +1,32 @@
-# ─── DRAFT — flathub manifest for DeeMusiq ───────────────────────────────────
+# Flathub manifest for DeeMusiq (repackages the prebuilt Linux release tarball).
 # Flatpak ID intentionally NOT rebranded: com.github.KRTirtho.Spotube is baked
-# into linux/my_application.cc (my_application_id) and the appstream file
-# linux/com.deemusiq.deemusiq.appdata.xml — see AGENTS.md. Keep this filename.
+# into linux/my_application.cc (my_application_id) and the appstream file — see
+# AGENTS.md. Keep this filename.
 #
-# USER MUST FILL BEFORE SUBMITTING:
-#   * <TARBALL_SHA256>     — sha256 of the linux release tarball
-#     (or run: python3 scripts/update_flathub_version.py 1.1.0 from a checkout
-#      containing this file — that script rewrites modules[-1].sources[0]
-#      url+sha256 for you; it expects exactly this layout)
-#   * Verify the tarball URL matches the real GitHub Releases asset:
-#     deemusiq-linux-1.1.0-x86_64.tar.xz
-#   * Finish the flutter SDK module source (git tag/commit pin) below.
-# ──────────────────────────────────────────────────────────────────────────────
+# The desktop file, appdata and icon sources next to this manifest are copies
+# of deemusiq-app/linux/ and deemusiq-app/assets/branding/deemusiq-logo.png;
+# re-copy them on each release (see SUBMIT.md). To bump the version:
+#   python3 scripts/update_flathub_version.py <version>   # run in this directory
+#
+# Runtime note: org.gnome.Platform is required (not org.freedesktop.Platform) —
+# the bundled binary links against GTK 3, WebKitGTK 4.1, libsecret and
+# libnotify, which only the GNOME runtime provides. libmpv is dlopened by
+# media_kit at runtime and libappindicator is linked by tray_manager; neither
+# is in any runtime, so both are built below. Structure follows upstream
+# Spotube's published flathub manifest.
 app-id: com.github.KRTirtho.Spotube
-runtime: org.freedesktop.Platform
-runtime-version: "24.08"
-sdk: org.freedesktop.Sdk
+runtime: org.gnome.Platform
+runtime-version: "50"
+sdk: org.gnome.Sdk
 command: deemusiq
 separate-locales: false
+add-extensions:
+  org.freedesktop.Platform.ffmpeg-full:
+    version: "25.08"
+    directory: lib/ffmpeg
+    add-ld-path: .
+cleanup-commands:
+  - mkdir -p ${FLATPAK_DEST}/lib/ffmpeg
 
 finish-args:
   - --socket=wayland
@@ -28,44 +37,109 @@ finish-args:
   - --filesystem=xdg-download    # downloaded tracks land in ~/Downloads
   - --device=dri                 # hardware accel for the Flutter renderer
   - --talk-name=org.freedesktop.Notifications
+  - --talk-name=org.freedesktop.secrets   # flutter_secure_storage keychain
   - --talk-name=org.kde.StatusNotifierWatcher   # tray icon
+  - --own-name=org.mpris.MediaPlayer2.spotube.*   # MPRIS media keys (internal name kept)
+  - --system-talk-name=org.freedesktop.Avahi.*    # bonsoir local discovery
+  - --filesystem=xdg-run/app/com.discordapp.Discord:create   # discord rich presence
 
 modules:
-  # Flutter SDK — PIN the exact version used by CI (3.38.5) so the flatpak
-  # build matches what GitHub Releases ships.
+  - shared-modules/libappindicator/libappindicator-gtk3-12.10.json
+
+  # libmpv — dlopened as libmpv.so.1/.so.2 by media_kit (Dart FFI); not shipped
+  # in the tarball and not in any runtime. Versions/sha256 copied from upstream
+  # Spotube's flathub manifest (same app engine).
+  - name: libmpv
+    cleanup:
+      - /share/bash-completion
+      - /share/zsh
+      - /share/doc
+      - /share/icons
+      - /share/applications
+    buildsystem: meson
+    config-opts:
+      - -Dlibmpv=true
+      - -Dcplayer=false
+      - -Dlua=disabled
+      - -Ddebug=false
+      - -Dbuild-date=false
+      - -Dalsa=disabled
+      - -Dmanpage-build=disabled
+      - -Dvulkan=enabled
+    sources:
+      - type: archive
+        url: https://github.com/mpv-player/mpv/archive/refs/tags/v0.40.0.tar.gz
+        sha256: 10a0f4654f62140a6dd4d380dcf0bbdbdcf6e697556863dc499c296182f081a3
+    modules:
+      - name: libplacebo
+        buildsystem: meson
+        config-opts:
+          - -Dopengl=enabled
+          - -Dvulkan=enabled
+          - -Dglslang=disabled
+          - -Dd3d11=disabled
+          - -Ddemos=False
+        sources:
+          - type: archive
+            url: https://code.videolan.org/videolan/libplacebo/-/archive/v7.360.1/libplacebo-v7.360.1.tar.gz
+            sha256: 14c0a99f4b01557ec9826ce6b1d52f6de21be274ba03fd5aab7307f18766dc39
+          - type: archive
+            url: https://github.com/pallets/jinja/archive/refs/tags/3.1.6.tar.gz
+            sha256: 2074b22a72caa65474902234b320d73463d6d4c223ee49f4b433495758356337
+            dest: 3rdparty/jinja
+          - type: archive
+            url: https://github.com/Dav1dde/glad/archive/refs/tags/v2.0.8.tar.gz
+            sha256: 44f06f9195427c7017f5028d0894f57eb216b0a8f7c4eda7ce883732aeb2d0fc
+            dest: 3rdparty/glad
+      - name: libass
+        config-opts:
+          - --disable-static
+        sources:
+          - type: archive
+            url: https://github.com/libass/libass/releases/download/0.17.3/libass-0.17.3.tar.gz
+            sha256: da7c348deb6fa6c24507afab2dee7545ba5dd5bbf90a137bfe9e738f7df68537
+
+  # Flutter SDK pin — records the exact toolchain CI used to build the release
+  # tarball below (3.38.5). The flatpak repackages the prebuilt binary, so the
+  # SDK source is fetched for provenance/reproducibility but not installed
+  # (installing it would ship ~1 GB of toolchain inside the app).
   - name: flutter
     buildsystem: simple
     build-commands:
-      - mkdir -p /app/flutter
-      - cp -r . /app/flutter/
+      - "true"
     sources:
       - type: git
         url: https://github.com/flutter/flutter.git
         tag: 3.38.5
-        # DRAFT: add the commit hash for the 3.38.5 tag here after verifying:
-        # commit: <FLUTTER_3.38.5_COMMIT>
+        commit: f6ff1529fd6d8af5f706051d9251ac9231c83407
 
+  # Keep this module LAST: scripts/update_flathub_version.py rewrites
+  # modules[-1].sources[0] (url + sha256) in place.
   - name: deemusiq
     buildsystem: simple
     build-commands:
-      # DRAFT: adjust to the real tarball layout once v1.1.0 linux assets are
-      # published (CI names it deemusiq-linux-<version>-x86_64.tar.xz).
-      - install -Dm755 deemusiq /app/bin/deemusiq
-      - cp -r lib /app/bin/ || true          # flutter bundle data, if present
-      - cp -r data /app/bin/ || true
+      # Tarball layout: bundle/deemusiq (binary), bundle/lib/*.so,
+      # bundle/data/ (flutter_assets + icudtl.dat). The Flutter Linux runtime
+      # resolves lib/ and data/ relative to the executable, so all three land
+      # in /app/bin.
+      - install -Dm755 bundle/deemusiq /app/bin/deemusiq
+      - cp -r bundle/lib /app/bin/
+      - cp -r bundle/data /app/bin/
+      - desktop-file-edit com.github.KRTirtho.Spotube.desktop
+          --set-icon=com.github.KRTirtho.Spotube
       - install -Dm644 com.github.KRTirtho.Spotube.desktop
           /app/share/applications/com.github.KRTirtho.Spotube.desktop
-      - install -Dm644 com.deemusiq.deemusiq.appdata.xml
+      - install -Dm644 com.github.KRTirtho.Spotube.appdata.xml
           /app/share/metainfo/com.github.KRTirtho.Spotube.appdata.xml
-      - install -Dm644 assets/brand/logo-foreGround.png
+      - install -Dm644 deemusiq-icon.png
           /app/share/icons/hicolor/512x512/apps/com.github.KRTirtho.Spotube.png
     sources:
       - type: archive
-        url: https://github.com/deemusiq/deemusiq/releases/download/v1.1.0/deemusiq-linux-1.1.0-x86_64.tar.xz
-        sha256: <TARBALL_SHA256>   # DRAFT — fill in (see header)
-      # These ship inside the repo; adjust paths to where the build drops them.
+        url: https://github.com/deemusiq/deemusiq/releases/download/v1.1.0/DeeMusiq-linux-x86_64.tar.gz
+        sha256: 5ea4bf211f7600085ec2deed3934af6769696658d07de8439a02fb78bd6b363f
       - type: file
-        path: linux/deemusiq.desktop
-        dest-filename: com.github.KRTirtho.Spotube.desktop
+        path: com.github.KRTirtho.Spotube.desktop
       - type: file
-        path: linux/com.deemusiq.deemusiq.appdata.xml
+        path: com.github.KRTirtho.Spotube.appdata.xml
+      - type: file
+        path: deemusiq-icon.png

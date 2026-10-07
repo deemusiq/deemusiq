@@ -16,10 +16,11 @@ with open(YAML_FILENAME, mode="r", encoding="utf-8") as input:
 version = sys.argv[1:][0]
 
 
-tar_url = f"https://github.com/{REPO}/releases/download/v{version}/deemusiq-linux-{version}-x86_64.tar.xz"
+tar_url = f"https://github.com/{REPO}/releases/download/v{version}/DeeMusiq-linux-x86_64.tar.gz"
 tar_sha256 = hashlib.sha256()
-print(f"Downloading file {tar_url} to generete sha256 sum")
+print(f"Downloading file {tar_url} to generate sha256 sum")
 tar = requests.get(tar_url)
+tar.raise_for_status()
 for chunk in tar.iter_content():
     if chunk:
         tar_sha256.update(chunk)
