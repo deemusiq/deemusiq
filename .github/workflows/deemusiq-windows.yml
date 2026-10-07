@@ -150,13 +150,17 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path dist
           $buildDir = "build/windows/x64/runner/Release"
+          # NSIS resolves relative File sources against the .nsi's directory
+          # (dist/), not the step CWD — bake absolute paths into the script.
+          $buildDirAbs = (Resolve-Path $buildDir).Path
+          $distAbs = (Resolve-Path dist).Path
           $version = (Select-String -Path pubspec.yaml -Pattern '^version:').Line -replace 'version:\s*', ''
 
           # Create NSIS installer script
           $nsis = @"
           !include "MUI2.nsh"
           Name "DeeMusiq"
-          OutFile "dist\DeeMusiq-windows-x86_64-setup.exe"
+          OutFile "$distAbs\DeeMusiq-windows-x86_64-setup.exe"
           InstallDir `"`$PROGRAMFILES64\DeeMusiq`"
           RequestExecutionLevel admin
           !insertmacro MUI_PAGE_WELCOME
@@ -166,7 +170,7 @@ jobs:
           !insertmacro MUI_LANGUAGE "English"
           Section "Install"
             SetOutPath `$INSTDIR
-            File /r "$buildDir\*"
+            File /r "$buildDirAbs\*"
             CreateShortCut "`$DESKTOP\DeeMusiq.lnk" "`$INSTDIR\deemusiq.exe"
             CreateDirectory "`$SMPROGRAMS\DeeMusiq"
             CreateShortCut "`$SMPROGRAMS\DeeMusiq\DeeMusiq.lnk" "`$INSTDIR\deemusiq.exe"
@@ -191,6 +195,7 @@ jobs:
           choco install nsis -y --no-progress
           # Build the installer
           & "C:\Program Files (x86)\NSIS\makensis.exe" dist/installer.nsi
+          if ($LASTEXITCODE -ne 0) { throw "makensis exited $LASTEXITCODE" }
 
           # Also create portable zip
           Compress-Archive -Path "$buildDir\*" -DestinationPath "dist/DeeMusiq-windows-x86_64-portable.zip"

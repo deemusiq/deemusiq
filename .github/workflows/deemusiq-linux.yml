@@ -233,6 +233,10 @@ jobs:
           Categories=AudioVideo;
           DESKTOP
 
+          # appimagetool refuses to pack without an icon matching Icon= in the
+          # desktop file — ship the flathub icon as deemusiq.png at AppDir root
+          cp distribution/flathub/deemusiq-icon.png "${APPDIR}/deemusiq.png"
+
           # Download and run appimagetool
           wget -q -O /tmp/appimagetool "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
           chmod +x /tmp/appimagetool
