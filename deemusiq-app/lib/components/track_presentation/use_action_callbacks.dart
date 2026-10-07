@@ -87,7 +87,9 @@ UseActionCallbacks useActionCallbacks(WidgetRef ref) {
       AppLogger.reportError(e, stack);
       rethrow;
     } finally {
-      isLoading.value = false;
+      if (context.mounted) {
+        isLoading.value = false;
+      }
     }
   }, [options, playlistNotifier, historyNotifier]);
 

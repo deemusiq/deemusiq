@@ -13,10 +13,13 @@
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-rWRwtxA29pFvTVdZ2zDApPB8tPZYQkKxDwNTFx8a3To=' 'sha256-tHpwTawQWyxSyhx63MKahElDUoOC5y/vZlYnyXWLDpU='; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self'; form-action 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-HswNBUb8bhBAQlaQf0HHGPpPO98uvxokz1cv+kuWDq0=' 'sha256-tHpwTawQWyxSyhx63MKahElDUoOC5y/vZlYnyXWLDpU='; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self'; form-action 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Resource-Policy: same-origin
-  Cache-Control: public, max-age=3600
+  # HTML is network-first in sw.js so deploys (incl. new download links) are
+  # seen immediately. A 1h edge cache here would pin stale pages for an hour
+  # despite that — keep navigations revalidating, long TTLs only on assets.
+  Cache-Control: public, max-age=0, must-revalidate
 /assets/fonts/*
   Cache-Control: public, max-age=31536000, immutable
 /assets/img/*

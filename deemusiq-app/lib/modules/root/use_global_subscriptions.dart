@@ -216,6 +216,7 @@ void useGlobalSubscriptions(WidgetRef ref) {
       WidgetsBinding.instance.removeObserver(lifecycleWatcher);
       AudioErrorHandler.instance.onUserMessage = null;
       AudioErrorHandler.instance.onPlaybackUnavailable = null;
+      audioPlayerSubscription?.cancel();
       for (final subscription in subscriptions) {
         subscription.cancel();
       }

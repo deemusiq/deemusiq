@@ -12,6 +12,7 @@ import 'package:deemusiq/components/titlebar/titlebar.dart';
 import 'package:deemusiq/components/wallet/wallet_common.dart';
 import 'package:deemusiq/models/wallet/supported_creator.dart';
 import 'package:deemusiq/provider/wallet/wallet_provider.dart';
+import 'package:deemusiq/services/logger/logger.dart';
 
 const _supportPresets = [5, 10, 25, 50];
 
@@ -29,7 +30,8 @@ class CreatorsSupportedPage extends HookConsumerWidget {
         creators.fold<int>(0, (sum, c) => sum + c.totalTokens);
     // The share bars below divide by the top supporter's total — clamp so a
     // creator list whose best total is 0 can't produce a NaN widthFactor.
-    final topTokens = creators.isEmpty ? 1 : math.max(1, creators.first.totalTokens);
+    final topTokens =
+        creators.isEmpty ? 1 : math.max(1, creators.first.totalTokens);
 
     return SafeArea(
       bottom: false,
@@ -118,12 +120,20 @@ class _CreatorTile extends ConsumerWidget {
       builder: (context) => _SupportDialog(creator: creator),
     );
     if (tokens == null) return;
-    final ok = await ref.read(walletProvider.notifier).supportCreator(
-          creatorId: creator.id,
-          name: creator.name,
-          imageUrl: creator.imageUrl,
-          tokens: tokens,
-        );
+    bool ok;
+    try {
+      ok = await ref.read(walletProvider.notifier).supportCreator(
+            creatorId: creator.id,
+            name: creator.name,
+            imageUrl: creator.imageUrl,
+            tokens: tokens,
+          );
+    } catch (e, stack) {
+      // Non-API failures (e.g. local persistence) escape supportCreator —
+      // surface them instead of throwing into the button handler.
+      AppLogger.reportError(e, stack, 'CreatorsSupported.support');
+      ok = false;
+    }
     if (context.mounted) {
       // Online failures (backend refused / unreachable) set lastActionError;
       // otherwise the spend was blocked by the local balance check.
@@ -132,7 +142,8 @@ class _CreatorTile extends ConsumerWidget {
         context,
         ok
             ? "Sent $tokens tokens to ${creator.name}"
-            : reason ?? "Not enough tokens",
+            : reason ??
+                "Couldn't send the tokens — refresh your wallet and try again.",
         icon: DeeMusiqIcons.heart,
       );
     }
@@ -249,7 +260,8 @@ class _SupportDialog extends HookConsumerWidget {
             const Gap(12),
             Row(
               children: [
-                const Icon(DeeMusiqIcons.token, color: deeMusiqOrange, size: 16),
+                const Icon(DeeMusiqIcons.token,
+                    color: deeMusiqOrange, size: 16),
                 const Gap(6),
                 Text("Balance: ${formatTokens(balance)} tokens").small(),
               ],

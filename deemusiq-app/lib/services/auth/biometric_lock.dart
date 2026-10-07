@@ -73,6 +73,10 @@ class BiometricLockService {
   Future<bool> canCheckBiometrics() async {
     try {
       return await _auth.canCheckBiometrics;
+    } on MissingPluginException {
+      // No local_auth implementation on this platform (e.g. Linux desktop) —
+      // not an error, the device simply has no biometrics.
+      return false;
     } on PlatformException catch (e) {
       AppLogger.log.w('biometric canCheck failed: ${e.message}');
       return false;
@@ -82,6 +86,8 @@ class BiometricLockService {
   Future<List<BiometricType>> availableBiometrics() async {
     try {
       return await _auth.getAvailableBiometrics();
+    } on MissingPluginException {
+      return const [];
     } on PlatformException {
       return const [];
     }
@@ -127,6 +133,9 @@ class BiometricLockService {
         } catch (_) {}
       }
       return ok;
+    } on MissingPluginException {
+      // No local_auth on this platform — treat as "cannot authenticate".
+      return false;
     } on PlatformException catch (e, stack) {
       AppLogger.reportError(e, stack, 'biometric authenticate');
       return false;

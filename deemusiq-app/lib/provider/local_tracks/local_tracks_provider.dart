@@ -128,7 +128,10 @@ final localTracksProvider =
                     "deemusiq",
                     ServiceUtils.sanitizeFilename(
                             basenameWithoutExtension(file.path)) +
-                        imgMimeToExt[metadata.picture?.mimeType ?? "image/jpeg"]!,
+                        // Unknown image mime types (bmp/tiff/…) must not throw
+                        // here — that would drop the track from the library.
+                        (imgMimeToExt[metadata.picture?.mimeType ?? "image/jpeg"] ??
+                            ".jpg"),
                   ),
                 );
                 if (!await imageFile.exists() && metadata.picture != null) {

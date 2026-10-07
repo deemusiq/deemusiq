@@ -65,6 +65,7 @@ class ArtistPageTopTracks extends HookConsumerWidget {
         final isRemoteDevice = await showSelectDeviceDialog(context, ref);
 
         if (isRemoteDevice == null) return;
+        if (!context.mounted) return;
 
         if (isRemoteDevice) {
           final remotePlayback = ref.read(connectProvider.notifier);
@@ -101,7 +102,7 @@ class ArtistPageTopTracks extends HookConsumerWidget {
           }
         }
       } finally {
-        isLoading.value = false;
+        if (context.mounted) isLoading.value = false;
       }
     }
 

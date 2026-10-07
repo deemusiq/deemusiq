@@ -145,7 +145,7 @@ class PlaylistCreateDialog extends HookConsumerWidget {
           await playlistNotifier.addTracks(trackIds, onError);
         }
       } finally {
-        isSubmitting.value = false;
+        if (context.mounted) isSubmitting.value = false;
         if (context.mounted &&
             !ref
                 .read(metadataPluginPlaylistProvider(playlistId ?? ""))

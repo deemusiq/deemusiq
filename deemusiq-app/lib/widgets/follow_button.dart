@@ -29,19 +29,23 @@ class FollowArtistButton extends HookConsumerWidget {
         // Precise O(1) check — GET /me/follows/check (falls back to list-scan
         // on older backends that 404 the new route).
         try {
-          isFollowing.value = await WalletApiClient.instance.isFollowing(
+          final following = await WalletApiClient.instance.isFollowing(
             targetKind: "artist",
             targetId: artistId,
           );
+          if (context.mounted) isFollowing.value = following;
         } catch (_) {
           final list = await WalletApiClient.instance.myFollowing();
-          isFollowing.value = list
-              .cast<Map<String, dynamic>>()
-              .any((f) => f["targetKind"] == "artist" && f["targetId"] == artistId);
+          if (context.mounted) {
+            isFollowing.value = list
+                .cast<Map<String, dynamic>>()
+                .any((f) =>
+                    f["targetKind"] == "artist" && f["targetId"] == artistId);
+          }
         }
       } catch (e, st) {
         AppLogger.reportError(e, st, 'load follow state');
-        isFollowing.value = false;
+        if (context.mounted) isFollowing.value = false;
       }
     }
 
@@ -62,15 +66,15 @@ class FollowArtistButton extends HookConsumerWidget {
           await WalletApiClient.instance.followArtist(artistId);
         }
       } on WalletApiException catch (e) {
-        isFollowing.value = wasFollowing; // revert
         if (context.mounted) {
+          isFollowing.value = wasFollowing; // revert
           showWalletToast(context, e.message, icon: DeeMusiqIcons.error);
         }
       } catch (e, st) {
         AppLogger.reportError(e, st, 'toggle follow');
-        isFollowing.value = wasFollowing;
+        if (context.mounted) isFollowing.value = wasFollowing;
       } finally {
-        busy.value = false;
+        if (context.mounted) busy.value = false;
       }
     }
 

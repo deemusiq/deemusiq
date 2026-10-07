@@ -139,6 +139,7 @@ class SettingsStorageSection extends HookConsumerWidget {
                     );
                     if (!confirmed) return;
                     await DownloadStorage.delete(entry);
+                    if (!context.mounted) return;
                     await refresh();
                   },
                 ),
@@ -161,6 +162,7 @@ class SettingsStorageSection extends HookConsumerWidget {
                   );
                   if (!confirmed) return;
                   await DownloadStorage.deleteAll(report.entries);
+                  if (!context.mounted) return;
                   await refresh();
                 },
                 child: const Text("Clear all downloads"),

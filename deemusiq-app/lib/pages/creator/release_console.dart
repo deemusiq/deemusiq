@@ -125,11 +125,11 @@ class _ReleaseCard extends HookConsumerWidget {
       error.value = null;
       try {
         await WalletApiClient.instance.publishSongNow(id);
-        ref.invalidate(mySongsProvider);
+        if (context.mounted) ref.invalidate(mySongsProvider);
       } on WalletApiException catch (e) {
-        error.value = e.friendlyMessage;
+        if (context.mounted) error.value = e.friendlyMessage;
       } finally {
-        busy.value = false;
+        if (context.mounted) busy.value = false;
       }
     }
 
@@ -140,6 +140,7 @@ class _ReleaseCard extends HookConsumerWidget {
         builder: (context) => const _ScheduleDialog(),
       );
       if (publishAt == null) return;
+      if (!context.mounted) return;
       busy.value = true;
       error.value = null;
       try {
@@ -147,11 +148,11 @@ class _ReleaseCard extends HookConsumerWidget {
           songId: id,
           publishAt: publishAt,
         );
-        ref.invalidate(mySongsProvider);
+        if (context.mounted) ref.invalidate(mySongsProvider);
       } on WalletApiException catch (e) {
-        error.value = e.friendlyMessage;
+        if (context.mounted) error.value = e.friendlyMessage;
       } finally {
-        busy.value = false;
+        if (context.mounted) busy.value = false;
       }
     }
 
@@ -177,15 +178,16 @@ class _ReleaseCard extends HookConsumerWidget {
         ),
       );
       if (ok != true) return;
+      if (!context.mounted) return;
       busy.value = true;
       error.value = null;
       try {
         await WalletApiClient.instance.cancelSongRelease(id);
-        ref.invalidate(mySongsProvider);
+        if (context.mounted) ref.invalidate(mySongsProvider);
       } on WalletApiException catch (e) {
-        error.value = e.friendlyMessage;
+        if (context.mounted) error.value = e.friendlyMessage;
       } finally {
-        busy.value = false;
+        if (context.mounted) busy.value = false;
       }
     }
 

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/services.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 
@@ -43,13 +44,15 @@ class SearchPage extends HookConsumerWidget {
     final searchTerm = ref.watch(searchTermStateProvider);
     final searchChipSnapshot = ref.watch(metadataPluginSearchChipsProvider);
     final selectedChip = useState<String?>(
-      searchChipSnapshot.asData?.value.first ?? "all",
+      // firstOrNull: a plugin returning zero chips would otherwise throw
+      // StateError mid-build.
+      searchChipSnapshot.asData?.value.firstOrNull ?? "all",
     );
 
     ref.listen(
       metadataPluginSearchChipsProvider,
       (previous, next) {
-        selectedChip.value = next.asData?.value.first ?? "all";
+        selectedChip.value = next.asData?.value.firstOrNull ?? "all";
       },
     );
 
@@ -176,13 +179,12 @@ class SearchPage extends HookConsumerWidget {
                                           // so clearing never reached the
                                           // provider and stale results stayed
                                           // under an empty query. Reset it
-                                          // post-frame, like the debounce.
-                                          Timer(Duration.zero, () {
-                                            ref
-                                                .read(searchTermStateProvider
-                                                    .notifier)
-                                                .state = "";
-                                          });
+                                          // here (safe: event handlers don't
+                                          // run during build).
+                                          ref
+                                              .read(searchTermStateProvider
+                                                  .notifier)
+                                              .state = "";
                                         },
                                       ),
                                       secondChild:

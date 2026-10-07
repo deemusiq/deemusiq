@@ -43,10 +43,12 @@ Last updated: 2026-09-30.
 3. **Search Console / Bing Webmaster Tools verification.** Add the verification
    meta tag or DNS record once accounts exist, then submit `sitemap.xml`.
 
-4. **Social `sameAs`.** The Organization JSON-LD ships with `"sameAs": []`. Once the
-   official profiles are confirmed (Facebook/Instagram/TikTok/YouTube/X links are in
-   the site footer), add the canonical profile URLs to that array — and recompute the
-   CSP hash (see above).
+4. **Social `sameAs`.** Done (2026-10-07): the Organization JSON-LD lists the
+   official Facebook, TikTok, YouTube and X profiles, and the CSP hash was
+   recomputed in `_headers` + `functions/_middleware.js`. **Instagram is
+   deliberately absent**: the footer links to a third-party news reel
+   (`smwxfanpage`), not a DeeMusiq profile — add it once a real handle exists
+   (and recompute the CSP hash again, see above).
 
 5. **`aggregateRating`**: only add to the SoftwareApplication JSON-LD when there are
    genuine, verifiable user ratings. Fake ratings violate Google's structured-data

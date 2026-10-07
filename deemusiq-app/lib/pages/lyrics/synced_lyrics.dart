@@ -80,7 +80,9 @@ class SyncedLyrics extends HookConsumerWidget {
 
     useEffect(() {
       StreamSubscription? subscription;
+      var disposed = false;
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (disposed) return;
         subscription = audioPlayer.positionStream.listen((event) {
           try {
             if (event > Duration.zero || !controller.hasClients) return;
@@ -95,7 +97,10 @@ class SyncedLyrics extends HookConsumerWidget {
         });
       });
 
-      return subscription?.cancel;
+      return () {
+        disposed = true;
+        subscription?.cancel();
+      };
     }, [controller]);
 
     return Stack(

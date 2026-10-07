@@ -92,10 +92,24 @@ jobs:
         env:
           DEEMUSIQ_BACKEND_URL: ${{ vars.DEEMUSIQ_BACKEND_URL }}
           DEEMUSIQ_CHANNEL_KEY: ${{ secrets.DEEMUSIQ_CHANNEL_KEY }}
+          # Same security defines as Android — an empty payment HMAC ships
+          # fail-closed checkouts, empty update keys ship unsigned updates.
+          DEEMUSIQ_PAYMENT_HMAC_SECRET: ${{ secrets.DEEMUSIQ_PAYMENT_HMAC_SECRET }}
+          DEEMUSIQ_UPDATE_METADATA_URL: ${{ vars.DEEMUSIQ_UPDATE_METADATA_URL }}
+          DEEMUSIQ_UPDATE_URL: ${{ vars.DEEMUSIQ_UPDATE_URL }}
+          DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY: ${{ vars.DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY }}
         run: |
+          $metaUrl = "$env:DEEMUSIQ_UPDATE_METADATA_URL"
+          if (-not $metaUrl) { $metaUrl = "https://deemusiq.co.za/downloads/version.json" }
+          $updateUrl = "$env:DEEMUSIQ_UPDATE_URL"
+          if (-not $updateUrl) { $updateUrl = "https://deemusiq.co.za/#download" }
           flutter build windows --release `
             --dart-define=DEEMUSIQ_BACKEND_URL="$env:DEEMUSIQ_BACKEND_URL" `
-            --dart-define=DEEMUSIQ_CHANNEL_KEY="$env:DEEMUSIQ_CHANNEL_KEY"
+            --dart-define=DEEMUSIQ_CHANNEL_KEY="$env:DEEMUSIQ_CHANNEL_KEY" `
+            --dart-define=DEEMUSIQ_PAYMENT_HMAC_SECRET="$env:DEEMUSIQ_PAYMENT_HMAC_SECRET" `
+            --dart-define=DEEMUSIQ_UPDATE_METADATA_URL="$metaUrl" `
+            --dart-define=DEEMUSIQ_UPDATE_URL="$updateUrl" `
+            --dart-define=DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY="$env:DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY"
 
       - name: Package Windows installer (NSIS)
         shell: pwsh

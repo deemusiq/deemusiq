@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:collection/collection.dart';
@@ -270,7 +271,9 @@ class AudioPlayerNotifier extends Notifier<AudioPlayerState> {
         .toList();
 
     final ci = max(state.currentIndex, 0);
-    final insertIndex = ci + 1;
+    // Clamp to the list length: with an empty queue (or a stale currentIndex)
+    // ci + 1 would point past the end and sublist() would throw.
+    final insertIndex = min(ci + 1, state.tracks.length);
 
     state = state.copyWith(
       tracks: [
@@ -436,30 +439,42 @@ class AudioPlayerNotifier extends Notifier<AudioPlayerState> {
         .asMediaList()
         .unique((a, b) => a.uri == b.uri);
 
+    if (medias.isEmpty) return;
+
+    // Blacklist filtering and URI de-duping above can shrink the list (or the
+    // caller may pass a stale index) — clamp before indexing into it.
+    final clampedIndex = initialIndex.clamp(0, medias.length - 1);
+
     // Giving the initial track a boost so MediaKit won't skip
     // because of timeout
-    final intendedActiveTrack = medias.elementAt(initialIndex);
+    final intendedActiveTrack = medias.elementAt(clampedIndex);
     if (intendedActiveTrack.track is! DeeMusiqLocalTrackObject) {
-      ref.read(
-        sourcedTrackProvider(
-          intendedActiveTrack.track as DeeMusiqFullTrackObject,
-        ).future,
-      );
+      // Fire-and-forget warm-up; a failure is handled inside the provider's
+      // error state, so swallow here to avoid an unhandled async error.
+      unawaited(() async {
+        try {
+          await ref.read(
+            sourcedTrackProvider(
+              intendedActiveTrack.track as DeeMusiqFullTrackObject,
+            ).future,
+          );
+        } catch (e) {
+          AppLogger.log.w('load() track warm-up failed: $e');
+        }
+      }());
     }
-
-    if (medias.isEmpty) return;
 
     state = state.copyWith(
       // These are filtered tracks as well
       tracks: medias.map((media) => media.track).toList(),
-      currentIndex: initialIndex,
+      currentIndex: clampedIndex,
       collections: [],
     );
 
     try {
       await audioPlayer.openPlaylist(
         medias,
-        initialIndex: initialIndex,
+        initialIndex: clampedIndex,
         autoPlay: autoPlay,
       );
     } catch (e, stack) {

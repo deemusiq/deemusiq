@@ -2,6 +2,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:deemusiq/collections/assets.gen.dart';
+import 'package:deemusiq/collections/motion.dart';
 import 'package:deemusiq/components/dialogs/age_restriction_dialog.dart';
 import 'package:deemusiq/components/titlebar/titlebar.dart';
 import 'package:deemusiq/extensions/context.dart';
@@ -23,15 +24,15 @@ class GettingStartedPage extends HookConsumerWidget {
 
     final onNext = useCallback(() {
       pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
+        duration: AppMotion.medium,
+        curve: AppMotion.emphasized,
       );
     }, [pageController]);
 
     final onPrevious = useCallback(() {
       pageController.previousPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
+        duration: AppMotion.medium,
+        curve: AppMotion.emphasized,
       );
     }, [pageController]);
 
@@ -67,8 +68,8 @@ class GettingStartedPage extends HookConsumerWidget {
                             onPressed: () {
                               pageController.animateToPage(
                                 3,
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeInOut,
+                                duration: AppMotion.medium,
+                                curve: AppMotion.emphasized,
                               );
                             },
                             child: Text(context.l10n.skip_this_nonsense),

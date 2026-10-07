@@ -124,7 +124,11 @@ class WalletApiClient {
   static String get paymentHmacSecret => _paymentHmacSecret;
 
   static const _uuid = Uuid();
-  final Map<String, String> _checkoutKeys = {};
+  // In-flight FUTURES, not resolved keys: two concurrent spends with the same
+  // signature must share one key generation, or they race past the
+  // check-then-set in [_loadOrCreateAttemptKey] and mint two keys — defeating
+  // the backend's dedupe exactly in the double-submission case it exists for.
+  final Map<String, Future<String>> _checkoutKeys = {};
 
   bool get isConfigured => PaymentGatewayConfig.backendBaseUrl.isNotEmpty;
 
@@ -616,7 +620,8 @@ class WalletApiClient {
   /// [code] (from the CURRENT authenticator) when re-enrolling while 2FA
   /// is active. Missing proof answers 401 with `step_up_password_required`
   /// / `step_up_code_required` so the UI can prompt for exactly that.
-  Future<Map<String, dynamic>> totpSetup({String? password, String? code}) async {
+  Future<Map<String, dynamic>> totpSetup(
+      {String? password, String? code}) async {
     try {
       final res = await _client().post(
         "/auth/totp/setup",
@@ -866,20 +871,44 @@ class WalletApiClient {
     required String method,
     required String region,
     String? payerPhone,
-  }) async {
-    final signature = _checkoutSignature(
-      packId: packId,
-      method: method,
-      region: region,
-      payerPhone: payerPhone,
+  }) {
+    return _managedAttemptKey(
+      _checkoutSignature(
+        packId: packId,
+        method: method,
+        region: region,
+        payerPhone: payerPhone,
+      ),
     );
-    final cached = _checkoutKeys[signature];
-    if (cached != null) return cached;
+  }
+
+  /// One idempotency key per spend signature, shared by concurrent callers
+  /// and persisted so a retry after an ambiguous failure (timeout where the
+  /// server may have committed) replays instead of double-debiting. Callers
+  /// clear the key via [_clearCheckoutAttempt] once the outcome is known.
+  Future<String> _managedAttemptKey(String signature) {
+    final inFlight = _checkoutKeys[signature];
+    if (inFlight != null) return inFlight;
+    final future = _loadOrCreateAttemptKey(signature);
+    _checkoutKeys[signature] = future;
+    unawaited(
+      future.catchError((Object _) {
+        // A failed generation must not poison the cache — the next attempt
+        // retries the load/create instead of rethrowing a stale error.
+        if (identical(_checkoutKeys[signature], future)) {
+          _checkoutKeys.remove(signature);
+        }
+        return "";
+      }),
+    );
+    return future;
+  }
+
+  Future<String> _loadOrCreateAttemptKey(String signature) async {
     final storageKey = _checkoutStorageKey(signature);
     try {
       final stored = KVStoreService.sharedPreferences.getString(storageKey);
       if (stored != null && RegExp(r'^[A-Za-z0-9_-]{8,64}$').hasMatch(stored)) {
-        _checkoutKeys[signature] = stored;
         return stored;
       }
       final generated = _uuid.v4();
@@ -890,7 +919,6 @@ class WalletApiClient {
       if (!saved) {
         throw const WalletApiException("checkout_idempotency_persist_failed");
       }
-      _checkoutKeys[signature] = generated;
       return generated;
     } catch (error) {
       if (error is WalletApiException) rethrow;
@@ -1221,6 +1249,15 @@ class WalletApiClient {
     required int tokens,
     String? idempotencyKey,
   }) async {
+    // L2 idempotency (same managed-key contract as createCheckout): when the
+    // caller supplies no key, one is managed per spend signature so a retry
+    // after an ambiguous failure (a timeout where the server had already
+    // committed the debit) replays the original result instead of
+    // double-charging. The key clears on success or a definitive 4xx; only
+    // connectivity/5xx outcomes keep it for the retry.
+    final managedSignature =
+        idempotencyKey == null ? "push|$songId|$tokens" : null;
+    final key = idempotencyKey ?? await _managedAttemptKey(managedSignature!);
     try {
       final authed = await _authed();
       final res = await _client().post(
@@ -1237,11 +1274,24 @@ class WalletApiClient {
         },
         options: Options(headers: {
           ...?authed.headers,
-          if (idempotencyKey != null) "Idempotency-Key": idempotencyKey,
+          "Idempotency-Key": key,
         }),
       );
-      return ((res.data as Map)["balance"] as num).toInt();
+      final balance = ((res.data as Map)["balance"] as num).toInt();
+      if (managedSignature != null) {
+        await _clearCheckoutAttempt(managedSignature);
+      }
+      return balance;
     } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      if (managedSignature != null &&
+          status != null &&
+          status >= 400 &&
+          status < 500 &&
+          status != 408 &&
+          status != 429) {
+        await _clearCheckoutAttempt(managedSignature);
+      }
       throw _walletApiException(e);
     }
   }
@@ -1252,6 +1302,10 @@ class WalletApiClient {
     required int tokens,
     String? idempotencyKey,
   }) async {
+    // Same managed-key idempotency contract as pushSong.
+    final managedSignature =
+        idempotencyKey == null ? "support|$creatorId|$tokens" : null;
+    final key = idempotencyKey ?? await _managedAttemptKey(managedSignature!);
     try {
       final authed = await _authed();
       final res = await _client().post(
@@ -1259,11 +1313,24 @@ class WalletApiClient {
         data: {"creatorId": creatorId, "name": name, "tokens": tokens},
         options: Options(headers: {
           ...?authed.headers,
-          if (idempotencyKey != null) "Idempotency-Key": idempotencyKey,
+          "Idempotency-Key": key,
         }),
       );
-      return ((res.data as Map)["balance"] as num).toInt();
+      final balance = ((res.data as Map)["balance"] as num).toInt();
+      if (managedSignature != null) {
+        await _clearCheckoutAttempt(managedSignature);
+      }
+      return balance;
     } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      if (managedSignature != null &&
+          status != null &&
+          status >= 400 &&
+          status < 500 &&
+          status != 408 &&
+          status != 429) {
+        await _clearCheckoutAttempt(managedSignature);
+      }
       throw _walletApiException(e);
     }
   }
@@ -2231,7 +2298,8 @@ class WalletApiClient {
   /// Email-code login hardening: request a one-time code to the account email.
   Future<void> requestEmailCode() async {
     try {
-      await _client().post("/auth/email-code/request", options: await _authed());
+      await _client()
+          .post("/auth/email-code/request", options: await _authed());
     } on DioException catch (e) {
       throw _walletApiException(e);
     }

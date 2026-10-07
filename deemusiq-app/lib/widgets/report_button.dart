@@ -109,10 +109,10 @@ class _ReportDialogState extends State<_ReportDialog> {
         const SnackBar(content: Text("Report submitted. Thank you.")),
       );
     } on WalletApiException catch (e) {
-      setState(() => _error = e.message);
+      if (mounted) setState(() => _error = e.message);
     } catch (e, st) {
       AppLogger.reportError(e, st, 'report content');
-      setState(() => _error = "Network error");
+      if (mounted) setState(() => _error = "Network error");
     } finally {
       if (mounted) setState(() => _busy = false);
     }

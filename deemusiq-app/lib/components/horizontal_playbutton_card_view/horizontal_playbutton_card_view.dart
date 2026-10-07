@@ -168,6 +168,7 @@ class _TrackTileCard extends HookConsumerWidget {
         onTap: () async {
           final isRemoteDevice = await showSelectDeviceDialog(context, ref);
           if (isRemoteDevice == null) return;
+          if (!context.mounted) return;
 
           if (isRemoteDevice) {
             final remotePlayback = ref.read(connectProvider.notifier);

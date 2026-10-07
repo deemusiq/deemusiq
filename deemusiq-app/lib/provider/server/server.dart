@@ -43,7 +43,10 @@ final serverProvider = FutureProvider(
         );
         break;
       } on SocketException catch (e, stack) {
-        if (e.osError?.errorCode == 98 && --maxRetries > 0) {
+        // EADDRINUSE is platform-dependent (98 Linux, 48 macOS, 10048
+        // Windows) — retry on ANY bind failure with a fresh random port
+        // instead of matching one OS's error code.
+        if (--maxRetries > 0) {
           AppLogger.log.w('Port ${DeeMusiqMedia.serverPort} in use, retrying...');
           DeeMusiqMedia.serverPort = Random().nextInt(17500) + 5000;
           continue;

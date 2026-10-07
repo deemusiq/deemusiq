@@ -174,6 +174,11 @@ final syncedLyricsMapProvider =
     FutureProvider.family((ref, DeeMusiqTrackObject? track) async {
   final syncedLyrics = await ref.watch(syncedLyricsProvider(track).future);
 
+  // Tracks without lyrics return an empty list — reduce() would throw.
+  if (syncedLyrics.lyrics.isEmpty) {
+    return (static: true, lyricsMap: <int, String>{});
+  }
+
   final isStaticLyrics =
       syncedLyrics.lyrics.every((l) => l.time == Duration.zero);
 

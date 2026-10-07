@@ -6,7 +6,8 @@ const CACHE_VERSION = 'v4'; // 2026-10-02: v3 → v4 (network-first HTML, SW reg
 const CACHE = `deemusiq-${CACHE_VERSION}`;
 // Core assets for the offline fallback. HTML entries here are only a
 // fallback — navigations are served network-first (see fetch handler).
-const PRECACHE = ['/', '/index.html', '/css/styles.css', '/js/main.js'];
+// '/' and '/index.html' are the same document — precache once.
+const PRECACHE = ['/', '/css/styles.css', '/js/main.js'];
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -42,7 +43,9 @@ function isStaticAsset(request, url) {
 
 function cachePut(request, response) {
   const copy = response.clone();
-  caches.open(CACHE).then(c => c.put(request, copy));
+  // Quota errors or an aborted request stream must not surface as unhandled
+  // rejections — caching is best-effort, the network response is primary.
+  caches.open(CACHE).then(c => c.put(request, copy)).catch(() => {});
 }
 
 self.addEventListener('fetch', e => {

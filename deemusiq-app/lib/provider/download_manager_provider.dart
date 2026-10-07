@@ -75,7 +75,9 @@ class DownloadManagerNotifier extends Notifier<List<DownloadTask>> {
 
   @override
   build() {
+    _disposed = false;
     ref.onDispose(() {
+      _disposed = true;
       for (final task in state) {
         if (task.status == DownloadStatus.downloading) {
           task.cancelToken.cancel();
@@ -258,8 +260,14 @@ class DownloadManagerNotifier extends Notifier<List<DownloadTask>> {
         return;
       }
       final presets = ref.read(audioSourcePresetsProvider);
-      final container =
-          presets.presets[presets.selectedDownloadingContainerIndex];
+      // The persisted container index can outlive a preset list change
+      // (plugin/app upgrade) — bounds-check instead of indexing blindly.
+      final container = presets.presets
+          .elementAtOrNull(presets.selectedDownloadingContainerIndex);
+
+      if (container == null) {
+        throw Exception("No download container found for selected codec");
+      }
 
       final url = track.getUrlOfQuality(
         container,
@@ -304,6 +312,10 @@ class DownloadManagerNotifier extends Notifier<List<DownloadTask>> {
         stagingFile.path,
         cancelToken: task.cancelToken,
         onReceiveProgress: (count, total) {
+          // The provider can be disposed while dio still has queued progress
+          // events — setting state or adding to the closed stream controller
+          // would throw inside dio's callback.
+          if (_disposed) return;
           if (total > 0) {
             state = state.map((e) {
               if (e.track.id == track.query.id && e.totalSizeBytes == null) {
@@ -312,7 +324,9 @@ class DownloadManagerNotifier extends Notifier<List<DownloadTask>> {
               return e;
             }).toList();
           }
-          task._downloadedBytesStreamController.add(count);
+          if (!task._downloadedBytesStreamController.isClosed) {
+            task._downloadedBytesStreamController.add(count);
+          }
         },
         deleteOnError: true,
         fileAccessMode: FileAccessMode.write,
@@ -431,6 +445,7 @@ class DownloadManagerNotifier extends Notifier<List<DownloadTask>> {
   /// while still avoiding a connection storm.
   static const int _maxConcurrentDownloads = 3;
   bool _pumping = false;
+  bool _disposed = false;
 
   Future<void> _startDownloading() async {
     if (_pumping) return;

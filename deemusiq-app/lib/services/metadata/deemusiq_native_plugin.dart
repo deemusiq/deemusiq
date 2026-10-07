@@ -130,6 +130,7 @@ DeeMusiqFullTrackObject _videoToFullTrack(Video video) {
           ? [DeeMusiqImageObject(url: video.thumbnails.highResUrl)]
           : const [],
       albumType: DeeMusiqAlbumType.single,
+      releaseDate: video.uploadDate?.toIso8601String(),
     ),
     durationMs: video.duration?.inMilliseconds ?? 0,
     isrc: "",
@@ -350,6 +351,54 @@ DeeMusiqFullTrackObject _track(Map t) {
   ) as DeeMusiqFullTrackObject;
 }
 
+/// Maps a flat /catalog feed item to a playable track. The feed shape differs
+/// from /metadata track JSON: artist is `artistId`/`artistName` strings and
+/// the source is `youtubeId` or a signed `streamUrl`, never a `source` map.
+DeeMusiqFullTrackObject _catalogFeedTrack(Map s) {
+  final id = (s["id"] ?? "").toString();
+  final title = (s["title"] ?? "").toString();
+  final artist = (s["artistName"] ?? "").toString();
+  final youtubeId = (s["youtubeId"] ?? "").toString();
+  final streamUrl = (s["streamUrl"] ?? "").toString();
+  final playUri = streamUrl.isNotEmpty
+      ? "$_urlPrefix$streamUrl"
+      : "$_ytPrefix$youtubeId";
+  final cover = s["coverUrl"] as String?;
+  final albumRef = s["album"] as Map?;
+  return DeeMusiqTrackObject.full(
+    id: id,
+    name: title,
+    externalUri: playUri,
+    artists: [
+      DeeMusiqSimpleArtistObject(
+        id: (s["artistId"] ?? artist).toString(),
+        name: artist,
+        externalUri: "deemusiq:artist:${s["artistId"] ?? ""}",
+      ),
+    ],
+    album: albumRef != null
+        ? DeeMusiqSimpleAlbumObject(
+            id: albumRef["id"].toString(),
+            name: albumRef["title"].toString(),
+            externalUri: "deemusiq:album:${albumRef["id"]}",
+            artists: const [],
+            images: _images((albumRef["coverUrl"] ?? cover) as String?),
+            albumType: DeeMusiqAlbumType.album,
+          )
+        : DeeMusiqSimpleAlbumObject(
+            id: id,
+            name: title,
+            externalUri: "deemusiq:track:$id",
+            artists: const [],
+            images: _images(cover),
+            albumType: DeeMusiqAlbumType.single,
+          ),
+    durationMs: (s["durationMs"] as num?)?.toInt() ?? 0,
+    isrc: "",
+    explicit: s["explicit"] == true,
+  ) as DeeMusiqFullTrackObject;
+}
+
 DeeMusiqUserObject get _deemusiqOwner => DeeMusiqUserObject(
       id: "deemusiq",
       name: "DeeMusiq",
@@ -420,6 +469,7 @@ class _NativeSearch extends MetadataPluginSearchEndpoint {
             ? [DeeMusiqImageObject(url: video.thumbnails.highResUrl)]
             : const [],
         albumType: DeeMusiqAlbumType.single,
+        releaseDate: video.uploadDate?.toIso8601String(),
       ),
       durationMs: video.duration?.inMilliseconds ?? 0,
       isrc: "",
@@ -635,7 +685,7 @@ class _NativeAlbum extends MetadataPluginAlbumEndpoint {
       images: video.thumbnails.highResUrl.isNotEmpty
           ? [DeeMusiqImageObject(url: video.thumbnails.highResUrl)]
           : const [],
-      releaseDate: "",
+      releaseDate: video.uploadDate?.toIso8601String() ?? "",
       externalUri: "deemusiq:album:$id",
       totalTracks: 1,
       albumType: DeeMusiqAlbumType.single,
@@ -1082,16 +1132,27 @@ class _NativeTrack extends MetadataPluginTrackEndpoint {
   Future<List<DeeMusiqFullTrackObject>> radio(String id) async {
     if (!api.isConfigured) return const [];
     try {
-      final a = await api.artist(id);
-      final topTracks =
-          _list(a?["topTracks"]).map(_track).toList(growable: true);
-      final radio = topTracks.where((t) => t.id != id).take(20).toList();
-      if (radio.isNotEmpty) return radio;
-      // Thin artist page — fall back to the catalog feed.
+      // `id` is a TRACK id — the artist endpoint 404s on those. Resolve the
+      // track first to find its artist (that lookup bug silently killed
+      // endless playback for every catalog track).
+      final t = await api.track(id);
+      final artistId = (t?["artist"] as Map?)?["id"]?.toString() ?? "";
+      if (artistId.isNotEmpty) {
+        final a = await api.artist(artistId);
+        final radio = _list(a?["topTracks"])
+            .map(_track)
+            .where((track) => track.id != id)
+            .take(20)
+            .toList();
+        if (radio.isNotEmpty) return radio;
+      }
+      // Thin artist page — fall back to the catalog feed. Feed items have the
+      // flat /catalog shape, not the /metadata track shape, so they need the
+      // feed mapper (otherwise artist + playable source come out empty).
       final cat = await WalletApiClient.instance.fetchCatalog(limit: 20);
       return _list(cat["items"])
-          .map(_track)
-          .where((t) => t.id != id)
+          .map(_catalogFeedTrack)
+          .where((track) => track.id != id)
           .toList();
     } catch (e, stack) {
       AppLogger.log.w('Radio failed for $id: ${e.toString()}');
@@ -1184,6 +1245,7 @@ class _NativeBrowse extends MetadataPluginBrowseEndpoint {
           ? [DeeMusiqImageObject(url: video.thumbnails.highResUrl)]
           : const [],
       albumType: DeeMusiqAlbumType.single,
+      releaseDate: video.uploadDate?.toIso8601String(),
     );
   }
 

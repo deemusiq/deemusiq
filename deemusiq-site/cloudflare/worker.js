@@ -275,6 +275,15 @@ export default {
     }
 
     if (!upstreamRes || !upstreamRes.ok || !upstreamRes.body) {
+      // An unsatisfiable Range on an unpinned platform must surface as 416
+      // (with Content-Range), not a generic 502 — download managers rely on
+      // the 416 to restart the transfer instead of retrying the bad range.
+      if (upstreamRes && upstreamRes.status === 416) {
+        const h = withSecurityHeaders({ "Content-Type": "text/plain" });
+        const cr = upstreamRes.headers.get("content-range");
+        if (cr) h.set("Content-Range", cr);
+        return new Response("Range not satisfiable", { status: 416, headers: h });
+      }
       return new Response(JSON.stringify({ error: "unavailable" }), {
         status: 502,
         headers: withSecurityHeaders({ "Content-Type": "application/json" }),
@@ -336,6 +345,9 @@ export default {
       const total = body.byteLength;
       const slice = range ? sliceByteRange(range, total) : null;
       if (slice && slice.unsatisfiable) {
+        // Drop the full-body Content-Length copied from the upstream 200 —
+        // a 416 carries no body, and a mismatched length hangs the client.
+        headers.delete("Content-Length");
         headers.set("Content-Range", `bytes */${total}`);
         return new Response(null, { status: 416, headers });
       }

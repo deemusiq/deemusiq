@@ -98,6 +98,9 @@ class ScrobblerNotifier extends AsyncNotifier<Scrobblenaut?> {
             username: username,
             passwordHash: DecryptedText(lastFm.passwordHash!),
           ),
+          // Re-login with a stale row (id 0) still present must replace it,
+          // not crash on the primary-key constraint.
+          mode: InsertMode.replace,
         );
   }
 

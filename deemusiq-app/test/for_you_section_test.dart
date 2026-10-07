@@ -93,7 +93,7 @@ void main() {
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
 
-  const _track = RecommendedTrack(
+  const sampleTrack = RecommendedTrack(
     id: 't1',
     title: 'Song',
     artistName: 'Artist',
@@ -110,7 +110,7 @@ void main() {
     await tester.pumpWidget(
       _app(
         const ForYouSection(),
-        const RecommendationsState(isLoading: false, tracks: [_track]),
+        const RecommendationsState(isLoading: false, tracks: [sampleTrack]),
         likeActions: (
           like: (_) async => throw Exception('backend down'),
           unlike: (_) async {},
@@ -139,7 +139,7 @@ void main() {
     await tester.pumpWidget(
       _app(
         const ForYouSection(),
-        const RecommendationsState(isLoading: false, tracks: [_track]),
+        const RecommendationsState(isLoading: false, tracks: [sampleTrack]),
         likeActions: (
           like: (_) async => liked = true,
           unlike: (_) async => liked = false,

@@ -18,6 +18,7 @@ import 'package:deemusiq/pages/settings/sections/security.dart';
 import 'package:deemusiq/pages/settings/sections/privacy.dart';
 import 'package:deemusiq/pages/settings/sections/storage.dart';
 import 'package:deemusiq/provider/user_preferences/user_preferences_provider.dart';
+import 'package:deemusiq/services/logger/logger.dart';
 import 'package:deemusiq/utils/platform.dart';
 import 'package:auto_route/auto_route.dart';
 
@@ -72,7 +73,25 @@ class SettingsPage extends HookConsumerWidget {
                                   "Reset all settings to their default values? This cannot be undone.",
                             );
                             if (!confirmed) return;
-                            await preferencesNotifier.reset();
+                            try {
+                              await preferencesNotifier.reset();
+                            } catch (e, stack) {
+                              AppLogger.reportError(
+                                  e, stack, 'settings reset');
+                              if (context.mounted) {
+                                showToast(
+                                  context: context,
+                                  location: ToastLocation.bottomCenter,
+                                  builder: (context, overlay) =>
+                                      const SurfaceCard(
+                                    child: Basic(
+                                      title: Text(
+                                          "Couldn't reset settings — try again."),
+                                    ),
+                                  ),
+                                );
+                              }
+                            }
                           },
                           child: Text(context.l10n.restore_defaults),
                         ),

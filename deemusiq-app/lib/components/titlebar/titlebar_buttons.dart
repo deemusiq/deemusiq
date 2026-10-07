@@ -41,7 +41,7 @@ class WindowTitleBarButtons extends HookConsumerWidget {
     useEffect(() {
       if (kIsDesktop) {
         windowManager.isMaximized().then((value) {
-          isMaximized.value = value;
+          if (context.mounted) isMaximized.value = value;
         });
       }
       return null;

@@ -237,6 +237,13 @@ class ServerConnectRoutes {
                     },
                   ) ??
                   false;
+            } catch (e, stack) {
+              // A dialog failure (e.g. navigator unmounted mid-prompt) must
+              // fall through to the denial path below — rethrowing here would
+              // skip the _activeConnections decrement and permanently shrink
+              // the connection cap on every failed prompt.
+              AppLogger.reportError(e, stack, 'Connect pairing dialog');
+              confirmed = false;
             } finally {
               _pairingDialogOpen = false;
             }

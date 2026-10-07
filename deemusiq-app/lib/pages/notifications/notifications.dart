@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 
 import 'package:deemusiq/collections/deemusiq_icons.dart';
+import 'package:deemusiq/collections/routes.gr.dart';
 import 'package:deemusiq/components/fallbacks/error_box.dart';
 import 'package:deemusiq/components/titlebar/titlebar.dart';
 import 'package:deemusiq/components/wallet/wallet_common.dart';
@@ -179,8 +180,25 @@ class _NotificationTile extends ConsumerWidget {
       }
     }
 
+    /// Navigate to the entity the notification points at. Without this the
+    /// tap was a dead-end: the row went read but "New follower"/"Track
+    /// published" notifications couldn't take the user anywhere.
+    void openTarget() {
+      final targetId = notification.targetId;
+      if (targetId == null || targetId.isEmpty) return;
+      switch (notification.targetKind) {
+        case "track":
+          context.pushRoute(TrackRoute(trackId: targetId));
+        case "artist":
+          context.pushRoute(ArtistRoute(artistId: targetId));
+      }
+    }
+
     return GestureDetector(
-      onTap: markRead,
+      onTap: () {
+        markRead();
+        openTarget();
+      },
       child: Card(
         padding: const EdgeInsets.all(12),
         child: Row(

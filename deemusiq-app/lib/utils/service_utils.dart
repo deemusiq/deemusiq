@@ -228,8 +228,14 @@ abstract class ServiceUtils {
   }
 
   static String clearArtistsOfTitle(String title, List<String> artists) {
+    if (artists.isEmpty) return title.trim();
     return title
-        .replaceAll(RegExp(artists.join("|"), caseSensitive: false), "")
+        // RegExp.escape each artist: names like "C(rew" or "A+B" would
+        // otherwise break the pattern or throw at construction time.
+        .replaceAll(
+          RegExp(artists.map(RegExp.escape).join("|"), caseSensitive: false),
+          "",
+        )
         .trim();
   }
 
@@ -367,7 +373,8 @@ abstract class ServiceUtils {
       }
       return {"result": result, "points": points};
     }).sorted(
-      (a, b) => ((a["points"] as int).compareTo(a["points"] as int)),
+      // Highest points first — the best match is picked below.
+      (a, b) => ((b["points"] as int).compareTo(a["points"] as int)),
     );
     final worthyOne = ratedLyrics.first["result"];
 
@@ -418,7 +425,9 @@ abstract class ServiceUtils {
           case SortBy.duration:
             return a.durationMs.compareTo(b.durationMs);
           case SortBy.artist:
-            return a.artists.first.name.compareTo(b.artists.first.name);
+            // Tracks with no artist metadata must not crash the sort.
+            return (a.artists.firstOrNull?.name ?? '')
+                .compareTo(b.artists.firstOrNull?.name ?? '');
           case SortBy.album:
             return a.album.name.compareTo(b.album.name);
           default:

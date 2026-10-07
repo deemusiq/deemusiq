@@ -175,7 +175,7 @@ class _ProviderTile extends HookConsumerWidget {
       try {
         await action();
       } finally {
-        busy.value = false;
+        if (context.mounted) busy.value = false;
       }
     }
     return Card(

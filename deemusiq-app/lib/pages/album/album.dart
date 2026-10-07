@@ -35,6 +35,14 @@ class AlbumPage extends HookConsumerWidget {
     // `.first` would throw and blank the whole page.
     final artistName =
         album.artists.isEmpty ? "" : album.artists.first.name;
+    // releaseDate is null for catalog singles and YouTube-sourced albums —
+    // never interpolate it raw ("Released • null • …").
+    final releaseDate = album.releaseDate;
+    final descriptionParts = [
+      if (releaseDate != null && releaseDate.isNotEmpty)
+        "${context.l10n.released} • $releaseDate",
+      if (artistName.isNotEmpty) artistName,
+    ];
 
     return material.RefreshIndicator.adaptive(
       onRefresh: () async {
@@ -49,8 +57,7 @@ class AlbumPage extends HookConsumerWidget {
             placeholder: ImagePlaceholder.albumArt,
           ),
           title: album.name,
-          description:
-              "${context.l10n.released} • ${album.releaseDate} • $artistName",
+          description: descriptionParts.join(" • "),
           tracks: tracks.asData?.value.items ?? [],
           error: tracks.error,
           pagination: PaginationProps(

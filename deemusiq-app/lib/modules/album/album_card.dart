@@ -123,7 +123,7 @@ class AlbumCard extends HookConsumerWidget {
           historyNotifier.addAlbums([album]);
         }
       } finally {
-        updating.value = false;
+        if (context.mounted) updating.value = false;
       }
     }, [
       isPlaylistPlaying,
@@ -173,7 +173,7 @@ class AlbumCard extends HookConsumerWidget {
           );
         }
       } finally {
-        updating.value = false;
+        if (context.mounted) updating.value = false;
       }
     }, [
       isPlaylistPlaying,

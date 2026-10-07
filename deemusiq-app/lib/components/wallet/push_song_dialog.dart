@@ -7,6 +7,7 @@ import 'package:deemusiq/collections/routes.gr.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/components/wallet/wallet_common.dart';
 import 'package:deemusiq/provider/wallet/wallet_provider.dart';
+import 'package:deemusiq/services/logger/logger.dart';
 
 Future<void> showPushSongDialog(
   BuildContext context, {
@@ -51,29 +52,46 @@ class PushSongDialog extends HookConsumerWidget {
     final balance = ref.watch(walletProvider.select((s) => s.balance));
     final amount = useState(_presets[1]);
     final canAfford = balance >= amount.value;
+    final pushing = useState(false);
 
     Future<void> push() async {
-      final ok = await ref.read(walletProvider.notifier).pushSong(
-            songId: songId,
-            title: title,
-            artist: artist,
-            artistId: artistId,
-            imageUrl: imageUrl,
-            tokens: amount.value,
+      // In-flight guard: the Push button must not launch a second spend while
+      // the first is still on the wire — two concurrent pushes debit twice.
+      if (pushing.value) return;
+      pushing.value = true;
+      try {
+        final ok = await ref.read(walletProvider.notifier).pushSong(
+              songId: songId,
+              title: title,
+              artist: artist,
+              artistId: artistId,
+              imageUrl: imageUrl,
+              tokens: amount.value,
+            );
+        if (!context.mounted) return;
+        if (ok) {
+          showWalletToast(
+            context,
+            "Pushed \"$title\" with ${amount.value} tokens 🚀",
+            icon: DeeMusiqIcons.boost,
           );
-      if (!context.mounted) return;
-      if (ok) {
-        showWalletToast(
-          context,
-          "Pushed \"$title\" with ${amount.value} tokens 🚀",
-          icon: DeeMusiqIcons.boost,
-        );
-        Navigator.pop(context);
-      } else {
-        // Online failures (backend refused / unreachable) set lastActionError;
-        // otherwise the push was blocked by the local balance check.
-        final reason = ref.read(walletProvider.notifier).lastActionError;
-        showWalletToast(context, reason ?? "Not enough tokens for that push");
+          Navigator.pop(context);
+        } else {
+          // Online failures (backend refused / unreachable) set lastActionError;
+          // otherwise the push was blocked by the local balance check.
+          final reason = ref.read(walletProvider.notifier).lastActionError;
+          showWalletToast(context, reason ?? "Not enough tokens for that push");
+        }
+      } catch (e, stack) {
+        AppLogger.reportError(e, stack, 'PushSongDialog.push');
+        if (context.mounted) {
+          showWalletToast(
+            context,
+            "Something went wrong — refresh your wallet before trying again.",
+          );
+        }
+      } finally {
+        if (context.mounted) pushing.value = false;
       }
     }
 
@@ -96,7 +114,8 @@ class PushSongDialog extends HookConsumerWidget {
             const Gap(16),
             Row(
               children: [
-                const Icon(DeeMusiqIcons.token, color: deeMusiqOrange, size: 16),
+                const Icon(DeeMusiqIcons.token,
+                    color: deeMusiqOrange, size: 16),
                 const Gap(6),
                 Text("Balance: ${formatTokens(balance)} tokens").small(),
               ],
@@ -161,8 +180,8 @@ class PushSongDialog extends HookConsumerWidget {
             child: const Text("Get tokens"),
           ),
         Button.primary(
-          onPressed: canAfford ? push : null,
-          child: Text("Push ${amount.value}"),
+          onPressed: canAfford && !pushing.value ? push : null,
+          child: Text(pushing.value ? "Pushing…" : "Push ${amount.value}"),
         ),
       ],
     );

@@ -28,12 +28,12 @@ class SettingsPrivacySection extends HookConsumerWidget {
         return;
       }
       try {
-        consent.value =
-            await WalletApiClient.instance.fetchConsent();
+        final result = await WalletApiClient.instance.fetchConsent();
+        if (context.mounted) consent.value = result;
       } catch (_) {
-        consent.value = null;
+        if (context.mounted) consent.value = null;
       } finally {
-        loading.value = false;
+        if (context.mounted) loading.value = false;
       }
     }
 
@@ -61,7 +61,7 @@ class SettingsPrivacySection extends HookConsumerWidget {
               icon: DeeMusiqIcons.info);
         }
       } finally {
-        busy.value = false;
+        if (context.mounted) busy.value = false;
       }
     }
 
@@ -129,7 +129,7 @@ class SettingsPrivacySection extends HookConsumerWidget {
                                   icon: DeeMusiqIcons.info);
                             }
                           } finally {
-                            busy.value = false;
+                            if (context.mounted) busy.value = false;
                           }
                         },
                   child: const Text("Resend verify link"),
@@ -156,7 +156,7 @@ class SettingsPrivacySection extends HookConsumerWidget {
                                   icon: DeeMusiqIcons.info);
                             }
                           } finally {
-                            busy.value = false;
+                            if (context.mounted) busy.value = false;
                           }
                         },
                   child: const Text("Request login code"),
@@ -193,7 +193,7 @@ class SettingsPrivacySection extends HookConsumerWidget {
                                 icon: DeeMusiqIcons.info);
                           }
                         } finally {
-                          busy.value = false;
+                          if (context.mounted) busy.value = false;
                         }
                       },
                 child: const Text("Confirm code"),
@@ -225,7 +225,7 @@ class SettingsPrivacySection extends HookConsumerWidget {
                             icon: DeeMusiqIcons.info);
                       }
                     } finally {
-                      busy.value = false;
+                      if (context.mounted) busy.value = false;
                     }
                   },
             child: const Text("Verify email with token"),
@@ -279,7 +279,7 @@ class SettingsPrivacySection extends HookConsumerWidget {
                                 icon: DeeMusiqIcons.info);
                           }
                         } finally {
-                          busy.value = false;
+                          if (context.mounted) busy.value = false;
                         }
                       },
                 child: const Text("Reset"),
@@ -311,7 +311,7 @@ class SettingsPrivacySection extends HookConsumerWidget {
                                   icon: DeeMusiqIcons.info);
                             }
                           } finally {
-                            busy.value = false;
+                            if (context.mounted) busy.value = false;
                           }
                         },
                   child: const Text("Export my data"),
@@ -355,7 +355,7 @@ class SettingsPrivacySection extends HookConsumerWidget {
                                   icon: DeeMusiqIcons.info);
                             }
                           } finally {
-                            busy.value = false;
+                            if (context.mounted) busy.value = false;
                           }
                         },
                   child: const Text("Delete account"),

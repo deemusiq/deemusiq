@@ -108,6 +108,7 @@ class PurchaseTokensDialog extends HookConsumerWidget {
         method: method.value,
         payerPhone: payerPhone,
       );
+      if (!context.mounted) return;
       loading.value = false;
       if (res.status == PaymentStatus.success) {
         await applyAndClose("Added ${pack.totalTokens} tokens 🎉");

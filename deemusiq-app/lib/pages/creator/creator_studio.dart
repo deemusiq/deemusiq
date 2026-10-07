@@ -108,7 +108,7 @@ class _GoogleGate extends HookConsumerWidget {
               icon: DeeMusiqIcons.info);
         }
       } finally {
-        loading.value = false;
+        if (context.mounted) loading.value = false;
       }
     }
 
@@ -240,7 +240,7 @@ class _ClaimProfile extends HookConsumerWidget {
       } catch (e, stack) {
         AppLogger.reportError(e, stack, 'claim artist');
       } finally {
-        loading.value = false;
+        if (context.mounted) loading.value = false;
       }
     }
 
@@ -474,7 +474,7 @@ class _SubmitSong extends HookConsumerWidget {
         AppLogger.reportError(e, st, 'upload song');
         error.value = "Upload failed.";
       } finally {
-        loading.value = false;
+        if (context.mounted) loading.value = false;
       }
     }
 
@@ -510,7 +510,7 @@ class _SubmitSong extends HookConsumerWidget {
         AppLogger.reportError(e, st, 'submit song');
         error.value = "Could not submit for review.";
       } finally {
-        loading.value = false;
+        if (context.mounted) loading.value = false;
       }
     }
 
@@ -692,7 +692,7 @@ class _SongTile extends HookConsumerWidget {
       } catch (e, stack) {
         AppLogger.reportError(e, stack, 'manage song');
       } finally {
-        busy.value = false;
+        if (context.mounted) busy.value = false;
       }
     }
 
@@ -902,7 +902,7 @@ class _MonetizationPanel extends HookConsumerWidget {
         error.value =
             e is WalletApiException ? e.friendlyMessage : e.toString();
       } finally {
-        loading.value = false;
+        if (context.mounted) loading.value = false;
       }
     }
 
@@ -950,7 +950,7 @@ class _MonetizationPanel extends HookConsumerWidget {
               icon: DeeMusiqIcons.info);
         }
       } finally {
-        saving.value = false;
+        if (context.mounted) saving.value = false;
       }
     }
 
@@ -981,7 +981,7 @@ class _MonetizationPanel extends HookConsumerWidget {
               icon: DeeMusiqIcons.info);
         }
       } finally {
-        saving.value = false;
+        if (context.mounted) saving.value = false;
       }
     }
 
@@ -1023,7 +1023,7 @@ class _MonetizationPanel extends HookConsumerWidget {
               icon: DeeMusiqIcons.info);
         }
       } finally {
-        saving.value = false;
+        if (context.mounted) saving.value = false;
       }
     }
 

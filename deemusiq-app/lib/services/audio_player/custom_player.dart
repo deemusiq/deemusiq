@@ -136,14 +136,11 @@ class CustomPlayer extends Player {
   }
 
   Stream<int> _buildIndexChangeStream() {
-    int oldIndex = state.playlist.index;
-    return stream.playlist.map((event) => event.index).where((newIndex) {
-      if (newIndex != oldIndex) {
-        oldIndex = newIndex;
-        return true;
-      }
-      return false;
-    });
+    // stream.playlist is broadcast and this stream has multiple listeners
+    // (ad breaks, endless playback). distinct() keeps the dedupe state
+    // per-subscription — a shared closure variable would let the first
+    // listener consume the change and silently starve every later one.
+    return stream.playlist.map((event) => event.index).distinct();
   }
 
   @override

@@ -69,6 +69,11 @@ class CatalogNotifier
       final useStream = streamUrl.isNotEmpty;
       final cover = s["coverUrl"] as String?;
       final durationMs = (s["durationMs"] as int?) ?? 0;
+      // Real catalog album linkage (when the backend feed carries it): tapping
+      // the album opens the full album page. Loose tracks fall back to a
+      // synthesized single-track shell, as before.
+      final albumRef = s["album"] as Map?;
+      final albumCover = (albumRef?["coverUrl"] as String?) ?? cover;
       final ytUri = useStream
           ? streamUrl
           : "https://www.youtube.com/watch?v=$youtubeId";
@@ -110,14 +115,27 @@ class CatalogNotifier
             ),
           ],
           album: DeeMusiqSimpleAlbumObject(
-            albumType: DeeMusiqAlbumType.single,
-            artists: const [],
-            externalUri: ytUri,
-            id: id,
-            name: title,
+            albumType: albumRef != null
+                ? DeeMusiqAlbumType.album
+                : DeeMusiqAlbumType.single,
+            artists: albumRef != null
+                ? [
+                    DeeMusiqSimpleArtistObject(
+                      id: (s["artistId"] as String?) ?? artist,
+                      name: artist,
+                      externalUri: "",
+                      images: null,
+                    ),
+                  ]
+                : const [],
+            externalUri: albumRef != null
+                ? "deemusiq:album:${albumRef["id"]}"
+                : ytUri,
+            id: (albumRef?["id"] as String?) ?? id,
+            name: (albumRef?["title"] as String?) ?? title,
             releaseDate: s["releaseDate"] as String?,
-            images: cover != null
-                ? [DeeMusiqImageObject(height: 300, width: 300, url: cover)]
+            images: albumCover != null
+                ? [DeeMusiqImageObject(height: 300, width: 300, url: albumCover)]
                 : const [],
           ),
           durationMs: durationMs,

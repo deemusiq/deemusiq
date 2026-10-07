@@ -70,13 +70,14 @@ class VerificationPage extends HookConsumerWidget {
       error.value = null;
       try {
         await WalletApiClient.instance.uploadVerificationProof(file.path);
+        if (!context.mounted) return;
         proofUploaded.value = true;
         info.value = "Photo uploaded. Fill in the form and submit.";
         ref.invalidate(myArtistProvider);
       } on WalletApiException catch (e) {
-        error.value = e.friendlyMessage;
+        if (context.mounted) error.value = e.friendlyMessage;
       } finally {
-        busy.value = false;
+        if (context.mounted) busy.value = false;
       }
     }
 
@@ -98,12 +99,13 @@ class VerificationPage extends HookConsumerWidget {
           country: country.text.trim(),
           socials: socials,
         );
+        if (!context.mounted) return;
         info.value = "Submitted. The DeeMusiq team will review shortly.";
         ref.invalidate(myArtistProvider);
       } on WalletApiException catch (e) {
-        error.value = e.friendlyMessage;
+        if (context.mounted) error.value = e.friendlyMessage;
       } finally {
-        busy.value = false;
+        if (context.mounted) busy.value = false;
       }
     }
 

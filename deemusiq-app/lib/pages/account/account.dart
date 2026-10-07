@@ -89,7 +89,7 @@ Future<void> _guard(
           icon: DeeMusiqIcons.error);
     }
   } finally {
-    loading.value = false;
+    if (context.mounted) loading.value = false;
   }
 }
 
@@ -414,7 +414,9 @@ class _GoogleSignInCard extends HookConsumerWidget {
 
     // Check if already signed in with Google.
     useEffect(() {
-      GoogleAuthService.instance.isSignedIn().then((v) => signedIn.value = v);
+      GoogleAuthService.instance.isSignedIn().then((v) {
+        if (context.mounted) signedIn.value = v;
+      });
       return null;
     }, []);
 
@@ -579,7 +581,7 @@ class _SecurityActionsCard extends HookConsumerWidget {
           showWalletToast(context, "Export failed.", icon: DeeMusiqIcons.error);
         }
       } finally {
-        loading.value = false;
+        if (context.mounted) loading.value = false;
       }
     }
 

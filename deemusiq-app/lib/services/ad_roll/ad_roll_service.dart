@@ -41,8 +41,8 @@ class AdRollService {
   static const _songsSinceLastAdKey = 'deemusiq_adroll_songs';
   static const _excludeKey = 'deemusiq_adroll_exclude';
 
-  /// Songs between ad breaks (configurable). Default 6.
-  int songsBetweenAds = 6;
+  /// Songs between ad breaks (configurable). Default 5.
+  int songsBetweenAds = 5;
 
   /// Consecutive skips that count as one listened song toward the ad counter.
   static const int skipsPerSongCredit = 3;

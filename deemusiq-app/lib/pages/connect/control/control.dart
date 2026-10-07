@@ -78,10 +78,17 @@ class ConnectControlPage extends HookConsumerWidget {
       if (connect.asData?.value == null) return null;
 
       final subscription = connect.asData?.value?.stream.listen((message) {
-        final event = WebSocketEvent.fromJson(
-          jsonDecode(message),
-          (data) => data,
-        );
+        final WebSocketEvent event;
+        try {
+          event = WebSocketEvent.fromJson(
+            jsonDecode(message),
+            (data) => data,
+          );
+        } catch (_) {
+          // Ignore malformed frames from a misbehaving peer instead of
+          // crashing the stream listener.
+          return;
+        }
         event.onError((event) {
           if (event.data != "Connection denied") return;
           if (!context.mounted) return;

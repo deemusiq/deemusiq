@@ -39,6 +39,20 @@
       var open = nav.classList.toggle("open");
       burger.setAttribute("aria-expanded", open ? "true" : "false");
       mobile.hidden = !open;
+      // Move focus into the menu on open so keyboard users land on links.
+      if (open) {
+        var first = mobile.querySelector("a");
+        if (first) first.focus();
+      }
+    });
+    // Esc closes the menu and returns focus to the burger.
+    document.addEventListener("keydown", function (ev) {
+      if (ev.key === "Escape" && mobile && !mobile.hidden) {
+        nav.classList.remove("open");
+        burger.setAttribute("aria-expanded", "false");
+        mobile.hidden = true;
+        burger.focus();
+      }
     });
     mobile.querySelectorAll("a").forEach(function (a) {
       a.addEventListener("click", function () {
@@ -114,7 +128,11 @@
 
   /* ---------- OS hint: highlight the matching download button ---------- */
   var ua = navigator.userAgent;
-  var osHint = /android/i.test(ua)            ? "android"
+  // iOS has no native build — detect it first (its UA contains "Mac OS X")
+  // so iPhone/iPad visitors get the note instead of the macOS highlight.
+  var isIOS = /iphone|ipad|ipod/i.test(ua);
+  var osHint = isIOS                          ? null
+             : /android/i.test(ua)            ? "android"
              : /windows/i.test(ua)            ? "windows"
              : /macintosh|mac os x/i.test(ua) ? "macos"
              : /linux/i.test(ua)              ? "linux"
@@ -122,6 +140,9 @@
   if (osHint) {
     var dlBtn = document.querySelector('.dl[data-platform="' + osHint + '"]');
     if (dlBtn) dlBtn.classList.add("dl--active");
+  } else if (isIOS) {
+    var iosNote = document.getElementById("dlNote");
+    if (iosNote) iosNote.textContent = "iOS has no native build yet — join the contact form below for TestFlight news, or use the web player.";
   }
 
   /* ---------- download checksums ----------

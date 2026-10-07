@@ -50,7 +50,7 @@ class WalletPage extends HookConsumerWidget {
       try {
         await ref.read(walletProvider.notifier).syncFromBackend();
       } finally {
-        retrying.value = false;
+        if (context.mounted) retrying.value = false;
       }
     }
 

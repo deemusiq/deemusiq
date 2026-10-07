@@ -87,7 +87,7 @@ class _ServerErrorAdapter implements HttpClientAdapter {
 }
 
 /// Minimal [Video] stand-in carrying only what the direct-YouTube fallback
-/// reads (id, title, author, duration, live flag).
+/// reads (id, title, author, duration, live flag, upload date).
 class _FakeVideo extends Fake implements Video {
   @override
   final VideoId id;
@@ -99,6 +99,8 @@ class _FakeVideo extends Fake implements Video {
   final Duration? duration;
   @override
   bool get isLive => false;
+  @override
+  DateTime? get uploadDate => null;
 
   _FakeVideo({
     required String id,

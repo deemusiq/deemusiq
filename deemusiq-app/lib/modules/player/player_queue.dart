@@ -194,7 +194,7 @@ class PlayerQueue extends HookConsumerWidget {
                                       openFromPlaylist: null,
                                     ),
                                   );
-                                  if (res == true) {
+                                  if (res == true && context.mounted) {
                                     selectedTrackIds.value = {};
                                     selectionMode.value = false;
                                   }

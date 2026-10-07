@@ -822,6 +822,11 @@ class ServerPlaybackRoutes {
         '${file.path}|${stat.size}|${stat.modified.microsecondsSinceEpoch}|$expectedHash|$expectedEtag|$expectedLength|${track.query.id}|${track.info.id}';
     final active = _verificationCache[cacheKey];
     if (active != null) return active;
+    // The key includes the file mtime, which _serveLocalCopy bumps on every
+    // serve — without a bound the map grows by an entry per play, forever.
+    // Clearing only costs re-verification; in-flight futures stay valid for
+    // their own awaiters.
+    if (_verificationCache.length >= 256) _verificationCache.clear();
     final future = _verifyLocalFileUncached(
       file,
       track: track,

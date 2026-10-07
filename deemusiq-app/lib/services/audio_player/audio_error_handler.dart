@@ -698,7 +698,7 @@ class AudioErrorHandler {
               ? const Duration(seconds: 16)
               : backoff;
       _notifyUser(
-        'Retrying in ${delay.inSeconds}s... (${attempt + 1}/$maxRetries)',
+        'Retrying in ${delay.inSeconds}s... ($attempt/$maxRetries)',
         AudioErrorSeverity.warning,
       );
       await Future.delayed(delay);

@@ -94,8 +94,12 @@ class PlainLyrics extends HookConsumerWidget {
                             lyricsQuery.asData?.value.lyrics.mapIndexed((i, e) {
                           final next = lyricsQuery.asData?.value.lyrics
                               .elementAtOrNull(i + 1);
+                          // Paragraph break when the NEXT line starts well
+                          // after this one. `e.time - next.time` is <= 0 for
+                          // chronologically ordered lyrics, so the gap was
+                          // never detected.
                           if (next != null &&
-                              e.time - next.time >
+                              next.time - e.time >
                                   const Duration(milliseconds: 700)) {
                             return "${e.text}\n";
                           }

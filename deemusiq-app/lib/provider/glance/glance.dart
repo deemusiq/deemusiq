@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
@@ -151,7 +152,11 @@ final glanceProvider = Provider((ref) {
     },
   );
 
-  _sendActiveTrack(activeTrack);
+  // Initial push — fire-and-forget, but a failure (image fetch, encode) must
+  // not surface as an unhandled async error from the provider body.
+  unawaited(_sendActiveTrack(activeTrack).catchError((Object e, StackTrace s) {
+    AppLogger.reportError(e, s, 'glance initial activeTrack push');
+  }));
 
   ref.listen(serverProvider, (prev, next) async {
     next.whenData(

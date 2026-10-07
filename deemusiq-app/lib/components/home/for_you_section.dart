@@ -46,10 +46,14 @@ class ForYouSection extends HookConsumerWidget {
       try {
         if (liked) {
           await actions.unlike(trackId);
-          likedTracks.value = {...likedTracks.value}..remove(trackId);
+          if (context.mounted) {
+            likedTracks.value = {...likedTracks.value}..remove(trackId);
+          }
         } else {
           await actions.like(trackId);
-          likedTracks.value = {...likedTracks.value, trackId};
+          if (context.mounted) {
+            likedTracks.value = {...likedTracks.value, trackId};
+          }
         }
         await notifier.refresh();
       } catch (_) {

@@ -93,7 +93,7 @@ class SettingsPlaybackSection extends HookConsumerWidget {
           onChanged: (value) async {
             if (value == null) return;
             await YouTubeAudioQualityService.setQuality(value);
-            youtubeQuality.value = value;
+            if (context.mounted) youtubeQuality.value = value;
           },
         ),
         if (sourcePresets.presets.isNotEmpty) ...[

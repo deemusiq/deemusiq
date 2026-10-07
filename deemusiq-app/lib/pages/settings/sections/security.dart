@@ -64,11 +64,12 @@ class SettingsSecuritySection extends HookConsumerWidget {
         final ok = await BiometricLockService.instance.authenticate(
           reason: 'Enable fingerprint unlock for DeeMusiq',
         );
+        if (!context.mounted) return;
         testing.value = false;
         if (!ok) return;
       }
       await BiometricLockService.instance.setEnabled(v);
-      lockEnabled.value = v;
+      if (context.mounted) lockEnabled.value = v;
     }
 
     return SectionCardWithHeading(

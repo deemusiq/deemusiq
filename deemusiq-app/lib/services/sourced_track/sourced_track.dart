@@ -405,8 +405,12 @@ class SourcedTrack extends BasicSourcedTrack {
     int qualityIndex,
   ) {
     if (sources.isEmpty) return null;
+    if (preset.qualities.isEmpty) return null;
 
-    final quality = preset.qualities[qualityIndex];
+    // qualityIndex comes from persisted preferences and can outlive a preset
+    // list change (plugin/app upgrade) — clamp instead of indexing blindly.
+    final quality =
+        preset.qualities[qualityIndex.clamp(0, preset.qualities.length - 1)];
 
     final exactMatch = sources.firstWhereOrNull(
       (source) {

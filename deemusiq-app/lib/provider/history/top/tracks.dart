@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:collection/collection.dart';
 import 'package:drift/drift.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -7,6 +9,7 @@ import 'package:deemusiq/provider/database/database.dart';
 import 'package:deemusiq/provider/history/top.dart';
 import 'package:deemusiq/provider/metadata_plugin/artist/artist.dart';
 import 'package:deemusiq/provider/metadata_plugin/utils/family_paginated.dart';
+import 'package:deemusiq/services/logger/logger.dart';
 
 typedef PlaybackHistoryTrack = ({int count, DeeMusiqTrackObject track});
 typedef PlaybackHistoryArtist = ({int count, DeeMusiqSimpleArtistObject artist});
@@ -165,7 +168,13 @@ class HistoryTopTracksNotifier extends FamilyPaginatedAsyncNotifier<
   }
 
   List<PlaybackHistoryTrack> getTracksWithCount(List<HistoryTableData> tracks) {
-    fixImageNotLoadingForArtistIssue(tracks);
+    // Fire-and-forget repair pass — a failure here must not surface as an
+    // unhandled async error; the history list works fine unrepaired.
+    unawaited(
+      fixImageNotLoadingForArtistIssue(tracks).catchError((Object e, StackTrace s) {
+        AppLogger.reportError(e, s, 'fixImageNotLoadingForArtistIssue');
+      }),
+    );
 
     return groupBy(
       tracks,

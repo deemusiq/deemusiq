@@ -22,14 +22,17 @@ class AppLockScreen extends HookConsumerWidget {
       failed.value = false;
       try {
         final ok = await BiometricLockService.instance.authenticate();
+        if (!context.mounted) return;
         if (ok) {
           onUnlocked();
         } else {
           failed.value = true;
         }
       } finally {
-        busy.value = false;
-        checked.value = true;
+        if (context.mounted) {
+          busy.value = false;
+          checked.value = true;
+        }
       }
     }
 

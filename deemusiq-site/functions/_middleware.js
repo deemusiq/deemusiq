@@ -12,6 +12,8 @@
 
 // Mirrors `_headers`. CSP note: the two 'sha256-…' hashes cover the inline
 // JSON-LD blocks in index.html — recompute them if those blocks are edited.
+// Cache note: keep the HTML Cache-Control in sync with `_headers`
+// (`public, max-age=0, must-revalidate` — network-first SW, no 1h pin).
 const SECURITY_HEADERS = {
   "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
   "X-Frame-Options": "DENY",
@@ -20,7 +22,7 @@ const SECURITY_HEADERS = {
   "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
   "Content-Security-Policy":
     "default-src 'self'; " +
-    "script-src 'self' 'sha256-rWRwtxA29pFvTVdZ2zDApPB8tPZYQkKxDwNTFx8a3To=' 'sha256-tHpwTawQWyxSyhx63MKahElDUoOC5y/vZlYnyXWLDpU='; " +
+    "script-src 'self' 'sha256-HswNBUb8bhBAQlaQf0HHGPpPO98uvxokz1cv+kuWDq0=' 'sha256-tHpwTawQWyxSyhx63MKahElDUoOC5y/vZlYnyXWLDpU='; " +
     "style-src 'self'; " +
     "font-src 'self'; " +
     "img-src 'self' data:; " +
@@ -31,6 +33,9 @@ const SECURITY_HEADERS = {
     "frame-ancestors 'none'",
   "Cross-Origin-Opener-Policy": "same-origin",
   "Cross-Origin-Resource-Policy": "same-origin",
+  // Same as `_headers` root rule: HTML revalidates (SW is network-first),
+  // long TTLs live only on /assets/*.
+  "Cache-Control": "public, max-age=0, must-revalidate",
 };
 
 export async function onRequest(context) {
@@ -39,7 +44,15 @@ export async function onRequest(context) {
   // response and stamp the security set. Deliberately NO
   // Access-Control-Allow-Origin — nothing here is meant for cross-origin use.
   const out = new Response(response.body, response);
+  // The long-TTL cache rules for /assets/* live in `_headers`. Stamping the
+  // HTML rule (max-age=0) here unconditionally would clobber them: a header
+  // set by a Function and by `_headers` is sent twice, and conflicting
+  // max-age directives on one response are not reliably resolvable. So
+  // Cache-Control is only forced on non-asset responses; /assets/* keeps the
+  // TTLs `_headers` assigns (immutable fonts, 1d images).
+  const isStaticAsset = new URL(context.request.url).pathname.startsWith("/assets/");
   for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
+    if (name === "Cache-Control" && isStaticAsset) continue;
     out.headers.set(name, value);
   }
   return out;
