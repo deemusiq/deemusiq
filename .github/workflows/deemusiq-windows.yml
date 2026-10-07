@@ -88,6 +88,18 @@ jobs:
       - name: Generate code
         run: dart run build_runner build --delete-conflicting-outputs
 
+      - name: Resolve backend TLS pin
+        # Source of truth: committed server-tls-pins.txt (auto-rotated by
+        # cert-pin-watch.yml); repo secret is the fallback.
+        id: tlspin
+        env:
+          SECRET_PIN: ${{ secrets.DEEMUSIQ_SERVER_CERT_SHA256 }}
+        run: |
+          $matches = Select-String -Path server-tls-pins.txt -Pattern '[0-9a-fA-F]{64}' -AllMatches -ErrorAction SilentlyContinue
+          $pin = (($matches | ForEach-Object { $_.Matches.Value } | Sort-Object -Unique) -join ',').ToLower()
+          if (-not $pin) { $pin = "$env:SECRET_PIN" }
+          echo "pin=$pin" >> "$env:GITHUB_OUTPUT"
+
       - name: Build Windows release
         env:
           DEEMUSIQ_BACKEND_URL: ${{ vars.DEEMUSIQ_BACKEND_URL }}
@@ -98,6 +110,7 @@ jobs:
           DEEMUSIQ_UPDATE_METADATA_URL: ${{ vars.DEEMUSIQ_UPDATE_METADATA_URL }}
           DEEMUSIQ_UPDATE_URL: ${{ vars.DEEMUSIQ_UPDATE_URL }}
           DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY: ${{ vars.DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY }}
+          DEEMUSIQ_SERVER_CERT_SHA256: ${{ steps.tlspin.outputs.pin }}
         run: |
           $metaUrl = "$env:DEEMUSIQ_UPDATE_METADATA_URL"
           if (-not $metaUrl) { $metaUrl = "https://deemusiq.co.za/downloads/version.json" }
@@ -109,7 +122,8 @@ jobs:
             --dart-define=DEEMUSIQ_PAYMENT_HMAC_SECRET="$env:DEEMUSIQ_PAYMENT_HMAC_SECRET" `
             --dart-define=DEEMUSIQ_UPDATE_METADATA_URL="$metaUrl" `
             --dart-define=DEEMUSIQ_UPDATE_URL="$updateUrl" `
-            --dart-define=DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY="$env:DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY"
+            --dart-define=DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY="$env:DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY" `
+            --dart-define=DEEMUSIQ_SERVER_CERT_SHA256="$env:DEEMUSIQ_SERVER_CERT_SHA256"
 
       - name: Package Windows installer (NSIS)
         shell: pwsh

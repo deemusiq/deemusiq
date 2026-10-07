@@ -99,6 +99,18 @@ bool validateServerCertSha256(X509Certificate cert) {
   return pins.any((pin) => constantTimeEquals(pin, actual));
 }
 
+const String _backendBaseUrl =
+    String.fromEnvironment("DEEMUSIQ_BACKEND_URL", defaultValue: "");
+
+/// The host the TLS pin applies to, resolved from the same build-time define
+/// the wallet client uses. Define-local (like [BackendCertPinProbe.start]'s
+/// parameter) so this module stays dependency-light.
+String? get _backendPinHost {
+  if (_backendBaseUrl.isEmpty) return null;
+  final host = Uri.tryParse(_backendBaseUrl)?.host;
+  return host == null || host.isEmpty ? null : host;
+}
+
 /// HttpOverrides that enforces TLS certificate pinning for the backend host
 /// AND allows bad certs only for Spotify API hosts.
 ///
@@ -116,7 +128,13 @@ class DeeMusiqHttpOverrides extends HttpOverrides {
       ..badCertificateCallback = (X509Certificate cert, String host, int port) {
         if (kDebugMode && allowList.any((h) => host.endsWith(h))) return true;
 
-        if (serverCertPinningEnabled) {
+        // The pin judges ONLY the backend host. Where this callback fires for
+        // every handshake (Android/iOS), applying it to unrelated hosts would
+        // reject their valid certificates and break playback/metadata calls.
+        final pinnedHost = _backendPinHost;
+        if (serverCertPinningEnabled &&
+            pinnedHost != null &&
+            host == pinnedHost) {
           return validateServerCertSha256(cert);
         }
 

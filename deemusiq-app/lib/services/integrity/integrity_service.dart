@@ -56,14 +56,26 @@ class IntegrityService {
 
   static const MethodChannel _channel = MethodChannel("deemusiq/integrity");
 
+  /// F-Droid build kill switch, set via `--dart-define=DEEMUSIQ_FDROID=true`.
+  /// F-Droid's buildserver compiles from source without any of our signing
+  /// secrets and signs the APK with F-Droid's own key, so the two checks that
+  /// assume OUR release key / OUR published hash — the signing-cert check
+  /// ([expectedCertSha256]) and the published-APK-hash check ([apkHashUrl]) —
+  /// must be disabled or every F-Droid user gets a bricked app / locked
+  /// wallet. Everything else (backend TLS pin probe, payment HMAC, update
+  /// metadata signature) is unaffected by this flag.
+  static const bool isFdroidBuild = bool.fromEnvironment("DEEMUSIQ_FDROID");
+
   /// Expected SHA-256 of the signing certificate (lowercase hex, no colons).
   /// Set via `--dart-define=DEEMUSIQ_CERT_SHA256=...` once a PERMANENT keystore
   /// is in use. Empty => the cert check is informational only, because the
   /// temporary CI keystore produces a different certificate on every build and
   /// cannot be pinned.
-  static final String expectedCertSha256 = _normalizeHash(
-    const String.fromEnvironment("DEEMUSIQ_CERT_SHA256", defaultValue: ""),
-  );
+  static final String expectedCertSha256 = isFdroidBuild
+      ? ""
+      : _normalizeHash(
+          const String.fromEnvironment("DEEMUSIQ_CERT_SHA256", defaultValue: ""),
+        );
 
   /// URL of the published SHA-256 of the release APK. Defaults to the
   /// project site's Cloudflare-proxied copy so the app never references the
@@ -277,6 +289,12 @@ class IntegrityService {
       await _report(certSha: cert, apkSha: null, reason: "cert_mismatch");
       return;
     }
+
+    // F-Droid builds are signed by F-Droid's own key and are never the APK
+    // GitHub published, so the published-hash comparison below could only
+    // ever lock legitimate users' wallets. The cert check above is already
+    // disarmed for these builds (see [isFdroidBuild]).
+    if (isFdroidBuild) return;
 
     String? published;
     try {

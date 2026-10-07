@@ -173,6 +173,19 @@ jobs:
           storeFile=deemusiq.jks
           EOF
 
+      - name: Resolve backend TLS pin
+        # The pin's source of truth is the committed deemusiq-app/
+        # server-tls-pins.txt — cert-pin-watch.yml rewrites it when Cloudflare
+        # rotates the edge cert. The repo secret remains as a fallback for
+        # forks that run the workflow without the file.
+        id: tlspin
+        env:
+          SECRET_PIN: ${{ secrets.DEEMUSIQ_SERVER_CERT_SHA256 }}
+        run: |
+          PIN=$(grep -oiE '[0-9a-f]{64}' server-tls-pins.txt 2>/dev/null | tr 'A-F' 'a-f' | sort -u | paste -sd, -)
+          if [ -z "$PIN" ]; then PIN="$SECRET_PIN"; fi
+          echo "pin=$PIN" >> "$GITHUB_OUTPUT"
+
       - name: Guard — security dart-defines armed
         # Regression guard for the 2026-10 pentest (F1/F2/F6/F7): a release
         # built with empty security defines ships dead anti-tamper, unsigned
@@ -182,7 +195,7 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           DEEMUSIQ_CERT_SHA256: ${{ secrets.DEEMUSIQ_CERT_SHA256 }}
-          DEEMUSIQ_SERVER_CERT_SHA256: ${{ secrets.DEEMUSIQ_SERVER_CERT_SHA256 }}
+          DEEMUSIQ_SERVER_CERT_SHA256: ${{ steps.tlspin.outputs.pin }}
           DEEMUSIQ_PAYMENT_HMAC_SECRET: ${{ secrets.DEEMUSIQ_PAYMENT_HMAC_SECRET }}
           DEEMUSIQ_CHANNEL_KEY: ${{ secrets.DEEMUSIQ_CHANNEL_KEY }}
           DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY: ${{ vars.DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY }}
@@ -223,10 +236,12 @@ jobs:
           # Empty (temp keystore) = check is informational only.
           DEEMUSIQ_CERT_SHA256: ${{ secrets.DEEMUSIQ_CERT_SHA256 }}
           # SHA-256 of the backend's TLS leaf certificate (comma-separated
-          # pins allowed for rotation). When set, the app pins the backend
-          # cert and runs an active probe that locks money features on a
-          # mismatch. Empty = standard PKI validation only.
-          DEEMUSIQ_SERVER_CERT_SHA256: ${{ secrets.DEEMUSIQ_SERVER_CERT_SHA256 }}
+          # pins allowed for rotation). Resolved from the committed
+          # server-tls-pins.txt (auto-rotated by cert-pin-watch.yml), falling
+          # back to the repo secret. When set, the app pins the backend cert
+          # and runs an active probe that locks money features on a mismatch.
+          # Empty = standard PKI validation only.
+          DEEMUSIQ_SERVER_CERT_SHA256: ${{ steps.tlspin.outputs.pin }}
           DEEMUSIQ_UPDATE_METADATA_URL: ${{ vars.DEEMUSIQ_UPDATE_METADATA_URL }}
           DEEMUSIQ_UPDATE_URL: ${{ vars.DEEMUSIQ_UPDATE_URL }}
           DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY: ${{ vars.DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY }}
