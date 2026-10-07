@@ -31,8 +31,13 @@ TLS_PINS=$(grep -oiE '[0-9a-f]{64}' server-tls-pins.txt 2>/dev/null | tr 'A-F' '
 
 # Locate the compiled payload to grep.
 PAYLOAD=""
-cleanup() { [ -n "$PAYLOAD_TMP" ] && rm -f "$PAYLOAD_TMP"; }
 PAYLOAD_TMP=""
+cleanup() {
+  # Must always return 0: with `set -e` the EXIT trap's status becomes the
+  # script's exit code, and a false `[ -n ... ]` would turn a PASS into a
+  # failed build on platforms that never populate PAYLOAD_TMP.
+  if [ -n "$PAYLOAD_TMP" ]; then rm -f "$PAYLOAD_TMP"; fi
+}
 trap cleanup EXIT
 
 case "$PLATFORM" in
