@@ -19,6 +19,6 @@ UpgradeBehavior: install
 Installers:
   - Architecture: x64
     InstallerUrl: https://github.com/deemusiq/deemusiq/releases/download/v1.1.0/DeeMusiq-windows-x86_64-setup.exe
-    InstallerSha256: 0000000000000000000000000000000000000000000000000000000000000000
+    InstallerSha256: e8cf546085afaf46cbb7b58c5d59002878b5afdf1062630e9b17de9b2668d67a
 ManifestType: installer
 ManifestVersion: 1.6.0

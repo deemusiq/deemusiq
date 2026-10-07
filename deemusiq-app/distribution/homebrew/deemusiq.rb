@@ -10,7 +10,7 @@
 
 cask "deemusiq" do
   version "1.1.0"
-  sha256 "0000000000000000000000000000000000000000000000000000000000000000"
+  sha256 "521c3c0471f47519099f6e7577261a36119ff997c35610f3b76c49c29fe23ee2"
 
   url "https://github.com/deemusiq/deemusiq/releases/download/v#{version}/DeeMusiq-macos-universal.dmg"
   name "DeeMusiq"
