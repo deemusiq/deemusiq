@@ -102,7 +102,7 @@ pnpm build
 - Flutter `>=3.29.0` (CI uses 3.38.5 stable)
 - Dart `>=3.0.0 <4.0.0`
 - Java 17 (Zulu) + Rust toolchain + `dart cli/cli.dart install-dependencies` for Android builds
-- `--dart-define` at build time: `DEEMUSIQ_BACKEND_URL`, `DEEMUSIQ_CHANNEL_KEY`, `DEEMUSIQ_CERT_SHA256`, `DEEMUSIQ_SERVER_CERT_SHA256` (TLS pin probe), `DEEMUSIQ_PAYMENT_HMAC_SECRET`, `DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY` (update metadata signature), `DEEMUSIQ_INTEGRITY_ED25519_PUBLIC_KEY` (published-hash signature). The first four come from repo secrets; the two Ed25519 public keys from repo vars.
+- `--dart-define` at build time: `DEEMUSIQ_BACKEND_URL`, `DEEMUSIQ_CHANNEL_KEY`, `DEEMUSIQ_CERT_SHA256`, `DEEMUSIQ_SERVER_CERT_SHA256` (TLS pin probe), `DEEMUSIQ_PAYMENT_HMAC_SECRET`, `DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY` (update metadata signature), `DEEMUSIQ_INTEGRITY_ED25519_PUBLIC_KEY` (published-hash signature). The first four come from repo secrets; the two Ed25519 public keys from repo vars. `DEEMUSIQ_FDROID=true` is the F-Droid kill switch: it disables ONLY the signing-cert check and the published-APK-hash check (F-Droid signs with its own key, so both would brick/lock legitimate users); TLS pin probe, payment HMAC and update signature are untouched. Never set it in our own CI builds.
 - Git-sourced deps via `dependency_overrides` in `pubspec.yaml` (media_kit, bonsoir, flutter_secure_storage_linux, etc.)
 
 ## CI quality gate

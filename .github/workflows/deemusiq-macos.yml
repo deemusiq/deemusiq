@@ -13,8 +13,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  FLUTTER_VERSION: "3.35.2"
-  FLUTTER_CHANNEL: "master"
+  FLUTTER_VERSION: "3.38.5"
+  FLUTTER_CHANNEL: "stable"
 
 defaults:
   run:
@@ -22,7 +22,9 @@ defaults:
 
 jobs:
   check:
-    runs-on: ubuntu-22.04
+    # 24.04: sqlite 3.45 — the drift migration suite (ALTER ... ADD COLUMN with
+    # CHECK/DEFAULT) errors with "SQL logic error" on 22.04's sqlite 3.37.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2.18.0
@@ -49,6 +51,9 @@ jobs:
         run: dart run build_runner build --delete-conflicting-outputs
       - name: Analyze
         run: flutter analyze --no-fatal-infos
+      # Widget tests instantiate the media_kit player, which dlopens libmpv.
+      - name: Install libmpv (media_kit test dependency)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libmpv-dev
       - name: Test
         run: flutter test
 
