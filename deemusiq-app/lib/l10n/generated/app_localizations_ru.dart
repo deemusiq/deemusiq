@@ -964,18 +964,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get song_link => 'Ссылка на песню';
 
   @override
-  String get skip_this_nonsense => 'Пропустить этот бред';
-
-  @override
-  String get freedom_of_music => '“Свобода музыки”';
-
-  @override
-  String get freedom_of_music_palm => '“Свобода музыки в вашей ладони”';
-
-  @override
-  String get get_started => 'Начнем';
-
-  @override
   String get youtube_source_description =>
       'Рекомендуется и лучше всего работает.';
 
@@ -1000,34 +988,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get select_audio_source => 'Выберите аудиоисточник';
 
   @override
-  String get endless_playback_description =>
-      'Автоматически добавляйте новые песни\nв конец очереди';
-
-  @override
-  String get choose_your_region => 'Выберите ваш регион';
-
-  @override
-  String get choose_your_region_description =>
-      'Это поможет DeeMusiq показать вам правильный контент\nдля вашего местоположения.';
-
-  @override
-  String get choose_your_language => 'Выберите ваш язык';
-
-  @override
-  String get help_project_grow => 'Помогите этому проекту расти';
-
-  @override
-  String get help_project_grow_description =>
-      'DeeMusiq - это проект с открытым исходным кодом. Вы можете помочь этому проекту развиваться, внося вклад в проект, сообщая ошибках или предлагая новые функции.';
-
-  @override
   String get contribute_on_github => 'Внести вклад на GitHub';
-
-  @override
-  String get visit_our_website => 'Visit our website';
-
-  @override
-  String get donate_on_open_collective => 'Пожертвовать на Open Collective';
 
   @override
   String get browse_anonymously => 'Анонимно просматривать';
@@ -1190,10 +1151,6 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get streaming_fees_hypothetical =>
-      '*Рассчитано на основе выплат Spotify за стрим\nот \$0.003 до \$0.005. Это гипотетический\nрасчет, чтобы показать пользователю, сколько бы он\nзаплатил артистам, если бы слушал их песни на Spotify.';
-
-  @override
   String get minutes_listened => 'Минут прослушивания';
 
   @override
@@ -1213,10 +1170,6 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get hipotetical_calculation =>
-      '*Это рассчитано на основе средней выплаты за прослушивание на онлайн-платформах для потоковой передачи музыки в размере от 0,003 до 0,005 долларов США. Это гипотетический расчет, чтобы дать пользователю представление о том, сколько бы они заплатили артистам, если бы слушали их песни на разных музыкальных стриминговых платформах.';
-
-  @override
   String count_mins(Object minutes) {
     return '$minutes мин';
   }
@@ -1232,9 +1185,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get summary_streamed_overall => 'Всего стримов';
-
-  @override
-  String get summary_owed_to_artists => 'К выплате артистам\nв этом месяце';
 
   @override
   String get summary_artists => 'артиста';
@@ -1253,11 +1203,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get summary_were_on_repeat => 'Были на повторе';
-
-  @override
-  String total_money(Object money) {
-    return 'Всего $money';
-  }
 
   @override
   String get webview_not_found => 'Webview не найден';
@@ -1461,6 +1406,30 @@ class AppLocalizationsRu extends AppLocalizations {
   String get retry => 'Повторить';
 
   @override
+  String get rate_this_track => 'Rate this track';
+
+  @override
+  String get rating_like => 'Like';
+
+  @override
+  String get rating_dislike => 'Dislike';
+
+  @override
+  String get rating_save_failed => 'Couldn\'t save your rating — try again.';
+
+  @override
+  String rating_summary(int pct, int total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$pct% like this · $total ratings',
+      one: '$pct% like this · 1 rating',
+      zero: 'No ratings yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get no_default_metadata_provider_selected =>
       'Вы не выбрали поставщика метаданных по умолчанию';
 
@@ -1555,9 +1524,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get install => 'Установить';
 
   @override
-  String get install_a_metadata_provider => 'Установить поставщика метаданных';
-
-  @override
   String get no_tracks_playing =>
       'В настоящее время не воспроизводится ни один трек';
 
@@ -1577,10 +1543,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get third_party_plugin_dmca_notice =>
       'Команда DeeMusiq не несет никакой ответственности (в том числе юридической) за какие-либо \"сторонние\" плагины.\nПожалуйста, используйте их на свой страх и риск. О любых ошибках/проблемах сообщайте в репозиторий плагина.\n\nЕсли какой-либо \"сторонний\" плагин нарушает ToS/DMCA какого-либо сервиса/юридического лица, пожалуйста, попросите автора плагина \"стороннего\" или хостинговую платформу, например, GitHub/Codeberg, принять меры. Перечисленные выше (помеченные как \"сторонние\") являются общедоступными/поддерживаемыми сообществом плагинами. Мы не курируем их, поэтому не можем принимать по ним никаких мер.\n\n';
-
-  @override
-  String get input_does_not_match_format =>
-      'Введенные данные не соответствуют требуемому формату';
 
   @override
   String get plugins => 'Плагины';

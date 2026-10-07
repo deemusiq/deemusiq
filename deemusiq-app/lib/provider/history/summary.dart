@@ -12,7 +12,6 @@ class PlaybackHistorySummary {
   final Duration duration;
   final int tracks;
   final int artists;
-  final double fees;
   final int albums;
   final int playlists;
 
@@ -20,7 +19,6 @@ class PlaybackHistorySummary {
     required this.duration,
     required this.tracks,
     required this.artists,
-    required this.fees,
     required this.albums,
     required this.playlists,
   });
@@ -29,7 +27,6 @@ class PlaybackHistorySummary {
     Duration? duration,
     int? tracks,
     int? artists,
-    double? fees,
     int? albums,
     int? playlists,
   }) {
@@ -37,7 +34,6 @@ class PlaybackHistorySummary {
       duration: duration ?? this.duration,
       tracks: tracks ?? this.tracks,
       artists: artists ?? this.artists,
-      fees: fees ?? this.fees,
       albums: albums ?? this.albums,
       playlists: playlists ?? this.playlists,
     );
@@ -52,7 +48,6 @@ class PlaybackHistorySummaryNotifier
 
     final uniqItemIdCountingCol =
         database.historyTable.itemId.count(distinct: true);
-    final itemIdCountingCol = database.historyTable.itemId.count();
     final durationSumJsonColumn =
         database.historyTable.data.jsonExtract<int>(r"$.durationMs").sum();
     final artistCountingCol =
@@ -101,20 +96,6 @@ class PlaybackHistorySummaryNotifier
               ))
             .map((row) => row.read(uniqItemIdCountingCol));
 
-    final oldestDate = DateTime.now().copyWith(day: 1, hour: 0, minute: 0);
-    final newestDate = DateTime.now().copyWith(day: 30, hour: 23, minute: 59);
-    final totalTracksListenedThisMonthQuery =
-        (database.selectOnly(database.historyTable)
-              ..addColumns([itemIdCountingCol])
-              ..where(
-                database.historyTable.type.equals(
-                      HistoryEntryType.track.name,
-                    ) &
-                    database.historyTable.createdAt
-                        .isBetweenValues(oldestDate, newestDate),
-              ))
-            .map((row) => row.read(itemIdCountingCol));
-
     final subscriptions = <StreamSubscription>[
       totalTracksListenedQuery.watchSingle().listen((event) {
         if (event == null || state.asData == null) return;
@@ -146,12 +127,6 @@ class PlaybackHistorySummaryNotifier
           playlists: event,
         ));
       }),
-      totalTracksListenedThisMonthQuery.watchSingle().listen((event) {
-        if (event == null || state.asData == null) return;
-        state = AsyncData(state.asData!.value.copyWith(
-          fees: event * 0.005,
-        ));
-      }),
     ];
 
     ref.onDispose(() {
@@ -177,14 +152,10 @@ class PlaybackHistorySummaryNotifier
       final totalPlaylistsListened =
           await totalPlaylistsListenedQuery.getSingle() ?? 0;
 
-      final totalTracksListenedThisMonth =
-          await totalTracksListenedThisMonthQuery.getSingle() ?? 0;
-
       return PlaybackHistorySummary(
         duration: totalDurationListened,
         tracks: totalTracksListened,
         artists: totalArtistsListened,
-        fees: totalTracksListenedThisMonth * 0.005,
         albums: totalAlbumsListened,
         playlists: totalPlaylistsListened,
       );

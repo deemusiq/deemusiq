@@ -111,6 +111,13 @@ Every branch/PR runs `check` job: `pub get` → create `.env` → `build_runner 
 
 The `android` job builds APK only on `v*` tags or manual dispatch, after `check` passes.
 
+Every build job ends with `tool/verify_release.sh <platform>` — a hard gate that
+fails the run before any artifact uploads when a baked define is wrong: TLS pin
+(from `server-tls-pins.txt`) absent from the binary, channel key / payment HMAC
+define silently empty, APK signing cert ≠ `DEEMUSIQ_CERT_SHA256`, or the sha256
+sidecar disagreeing with the APK. A green build means the artifact is
+distributable; never publish an artifact from a run whose verify step failed.
+
 ## Gotchas
 
 - `flutter analyze --no-fatal-infos` needed — there are known info-level lints (e.g. `avoid_print` in `lib/services/cli/cli.dart`).

@@ -12,6 +12,7 @@ import 'package:deemusiq/components/heart_button/heart_button.dart';
 import 'package:deemusiq/components/image/universal_image.dart';
 import 'package:deemusiq/components/links/artist_link.dart';
 import 'package:deemusiq/components/links/link_text.dart';
+import 'package:deemusiq/components/ratings/track_rating_section.dart';
 import 'package:deemusiq/components/titlebar/titlebar.dart';
 import 'package:deemusiq/components/track_tile/track_options_button.dart';
 import 'package:deemusiq/extensions/context.dart';
@@ -259,6 +260,16 @@ class TrackPage extends HookConsumerWidget {
                             ),
                           ),
                             ],
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+                            child: Center(
+                              child: ConstrainedBox(
+                                constraints:
+                                    const BoxConstraints(maxWidth: 720),
+                                child: TrackRatingSection(trackId: trackId),
+                              ),
+                            ),
                           ),
                           Padding(
                             padding: const EdgeInsets.symmetric(

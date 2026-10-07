@@ -960,18 +960,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String get song_link => 'پیوند آهنگ';
 
   @override
-  String get skip_this_nonsense => 'این احمقانه را بگذرانید';
-
-  @override
-  String get freedom_of_music => '“آزادی موسیقی”';
-
-  @override
-  String get freedom_of_music_palm => '“آزادی موسیقی در دستان شما”';
-
-  @override
-  String get get_started => 'بیایید شروع کنیم';
-
-  @override
   String get youtube_source_description => 'پیشنهاد شده و بهترین عمل می‌کند.';
 
   @override
@@ -994,34 +982,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get select_audio_source => 'انتخاب منبع صوتی';
 
   @override
-  String get endless_playback_description =>
-      'خودکار اضافه کردن آهنگ‌های جدید\nبه انتهای صف';
-
-  @override
-  String get choose_your_region => 'منطقه خود را انتخاب کنید';
-
-  @override
-  String get choose_your_region_description =>
-      'این به DeeMusiq کمک می‌کند تا محتوای مناسبی را برای موقعیت شما نشان دهد.';
-
-  @override
-  String get choose_your_language => 'زبان خود را انتخاب کنید';
-
-  @override
-  String get help_project_grow => 'کمک به رشد این پروژه';
-
-  @override
-  String get help_project_grow_description =>
-      'DeeMusiq یک پروژه متن باز است. شما می‌توانید با به پروژه کمک کردن، گزارش دادن اشکالات یا پیشنهاد ویژگی‌های جدید، به این پروژه کمک کنید.';
-
-  @override
   String get contribute_on_github => 'مشارکت در GitHub';
-
-  @override
-  String get visit_our_website => 'Visit our website';
-
-  @override
-  String get donate_on_open_collective => 'کمک مالی در Open Collective';
 
   @override
   String get browse_anonymously => 'مرور به صورت ناشناس';
@@ -1183,9 +1144,6 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
-  String get streaming_fees_hypothetical => 'هزینه‌های پخش (فرضی)';
-
-  @override
   String get minutes_listened => 'دقایق گوش داده شده';
 
   @override
@@ -1205,10 +1163,6 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
-  String get hipotetical_calculation =>
-      '*این محاسبه بر اساس میانگین پرداخت به ازای هر پخش (0.003 تا 0.005 دلار) در پلتفرم‌های استریم موزیک آنلاین انجام شده است. این یک محاسبه فرضی است که به کاربر دیدی از مقدار پرداختی به هنرمندان در صورت گوش دادن به آهنگ آن‌ها در پلتفرم‌های مختلف ارائه می‌دهد.';
-
-  @override
   String count_mins(Object minutes) {
     return '$minutes دقیقه';
   }
@@ -1224,9 +1178,6 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get summary_streamed_overall => 'پخش شده به طور کلی';
-
-  @override
-  String get summary_owed_to_artists => 'به هنرمندان بدهکار است\nاین ماه';
 
   @override
   String get summary_artists => 'هنرمندان';
@@ -1245,11 +1196,6 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get summary_were_on_repeat => 'در تکرار بودند';
-
-  @override
-  String total_money(Object money) {
-    return 'مجموع $money';
-  }
 
   @override
   String get webview_not_found => 'وب‌ویو پیدا نشد';
@@ -1454,6 +1400,30 @@ class AppLocalizationsFa extends AppLocalizations {
   String get retry => 'دوباره تلاش کن';
 
   @override
+  String get rate_this_track => 'Rate this track';
+
+  @override
+  String get rating_like => 'Like';
+
+  @override
+  String get rating_dislike => 'Dislike';
+
+  @override
+  String get rating_save_failed => 'Couldn\'t save your rating — try again.';
+
+  @override
+  String rating_summary(int pct, int total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$pct% like this · $total ratings',
+      one: '$pct% like this · 1 rating',
+      zero: 'No ratings yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get no_default_metadata_provider_selected =>
       'هیچ ارائه‌دهندهٔ پیش‌فرض متادیتا تعیین نکرده‌اید';
 
@@ -1547,9 +1517,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String get install => 'نصب';
 
   @override
-  String get install_a_metadata_provider => 'نصب یک ارائه‌دهندهٔ متادیتا';
-
-  @override
   String get no_tracks_playing => 'در حال‌ حاضر هیچ تراکی در حال پخش نیست';
 
   @override
@@ -1568,10 +1535,6 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get third_party_plugin_dmca_notice =>
       'تیم DeeMusiq هیچ مسئولیتی (حتی قانونی) در قبال افزونه‌های \"شخص ثالث\" ندارد. از آن‌ها به‌خاطر خود استفاده کنید. برای خطاها/مشکلات، لطفاً در مخزن افزونه گزارش دهید.\n\nاگر هر افزونهٔ \"شخص ثالث\" قوانین ToS/DMCA سرویس یا نهاد قانونی را نقض کند، لطفاً از نویسندهٔ افزونه یا پلتفرم میزبانی (مثل GitHub/Codeberg) درخواست اقدام کنید. افزونه‌هایی که با برچسب \"شخص ثالث\" مشخص شده‌اند، عمومی هستند و توسط جامعه نگهداری می‌شوند؛ ما آن‌ها را تغییر یا مدیریت نمی‌کنیم و نمی‌توانیم دخالت کنیم.\n\n';
-
-  @override
-  String get input_does_not_match_format =>
-      'ورودی با قالب مورد نیاز تطابق ندارد';
 
   @override
   String get plugins => 'افزونه‌ها';

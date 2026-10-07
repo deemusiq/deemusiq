@@ -946,18 +946,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get song_link => '歌曲链接';
 
   @override
-  String get skip_this_nonsense => '跳过此无聊内容';
-
-  @override
-  String get freedom_of_music => '“音乐的自由”';
-
-  @override
-  String get freedom_of_music_palm => '“音乐的自由掌握在您手中”';
-
-  @override
-  String get get_started => '让我们开始吧';
-
-  @override
   String get youtube_source_description => '推荐并且效果最佳。';
 
   @override
@@ -978,32 +966,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get select_audio_source => '选择音频源';
 
   @override
-  String get endless_playback_description => '自动将新歌曲添加到队列的末尾';
-
-  @override
-  String get choose_your_region => '选择您的地区';
-
-  @override
-  String get choose_your_region_description => '这将帮助DeeMusiq为您的位置显示正确的内容。';
-
-  @override
-  String get choose_your_language => '选择您的语言';
-
-  @override
-  String get help_project_grow => '帮助这个项目成长';
-
-  @override
-  String get help_project_grow_description =>
-      'DeeMusiq是一个开源项目。您可以通过为项目做出贡献、报告错误或建议新功能来帮助该项目成长。';
-
-  @override
   String get contribute_on_github => '在GitHub上做出贡献';
-
-  @override
-  String get visit_our_website => 'Visit our website';
-
-  @override
-  String get donate_on_open_collective => '在Open Collective上捐款';
 
   @override
   String get browse_anonymously => '匿名浏览';
@@ -1164,10 +1127,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get streaming_fees_hypothetical =>
-      '*基于 Spotify 每次播放的支付金额\n从 \$0.003 到 \$0.005 计算。这是一个假设性的\n计算，旨在让用户了解如果他们在 Spotify 上收听\n这些歌曲，可能会付给艺术家的金额。';
-
-  @override
   String get minutes_listened => '听的分钟数';
 
   @override
@@ -1187,10 +1146,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get hipotetical_calculation =>
-      '*这是根据在线音乐流媒体平台每流平均支付0.003美元至0.005美元计算得出的。这是一个假设性的计算，旨在让用户了解如果他们在不同的音乐流媒体平台上收听歌曲，他们将需要向艺人支付多少费用。';
-
-  @override
   String count_mins(Object minutes) {
     return '$minutes 分钟';
   }
@@ -1206,9 +1161,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get summary_streamed_overall => '总体流媒体';
-
-  @override
-  String get summary_owed_to_artists => '本月欠艺术家的';
 
   @override
   String get summary_artists => '艺术家的';
@@ -1227,11 +1179,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get summary_were_on_repeat => '已重复播放';
-
-  @override
-  String total_money(Object money) {
-    return '总计 $money';
-  }
 
   @override
   String get webview_not_found => '未找到 Webview';
@@ -1430,6 +1377,30 @@ class AppLocalizationsZh extends AppLocalizations {
   String get retry => '重试';
 
   @override
+  String get rate_this_track => 'Rate this track';
+
+  @override
+  String get rating_like => 'Like';
+
+  @override
+  String get rating_dislike => 'Dislike';
+
+  @override
+  String get rating_save_failed => 'Couldn\'t save your rating — try again.';
+
+  @override
+  String rating_summary(int pct, int total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$pct% like this · $total ratings',
+      one: '$pct% like this · 1 rating',
+      zero: 'No ratings yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get no_default_metadata_provider_selected => '您未设置默认元数据提供者';
 
   @override
@@ -1515,9 +1486,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get install => '安装';
 
   @override
-  String get install_a_metadata_provider => '安装元数据提供者';
-
-  @override
   String get no_tracks_playing => '当前没有播放任何曲目';
 
   @override
@@ -1535,9 +1503,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get third_party_plugin_dmca_notice =>
       'DeeMusiq 团队对任何“第三方”插件不承担任何责任（包括法律责任）。\n请自行承担风险使用。对于任何错误/问题，请向插件存储库报告。\n\n如果任何“第三方”插件违反了任何服务/法律实体的服务条款/DMCA，请要求该“第三方”插件作者或托管平台（例如 GitHub/Codeberg）采取行动。上面列出的（标记为“第三方”）都是公共/社区维护的插件。我们不对此类插件进行管理，因此无法对其采取任何行动。\n\n';
-
-  @override
-  String get input_does_not_match_format => '输入与所需格式不匹配';
 
   @override
   String get plugins => '插件';
@@ -2587,18 +2552,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get song_link => '歌曲連結';
 
   @override
-  String get skip_this_nonsense => '跳過這個無聊內容';
-
-  @override
-  String get freedom_of_music => '“音樂的自由”';
-
-  @override
-  String get freedom_of_music_palm => '「音樂的自由掌握在您手中」';
-
-  @override
-  String get get_started => '我們開始吧';
-
-  @override
   String get youtube_source_description => '建議且效果最佳。';
 
   @override
@@ -2619,29 +2572,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get select_audio_source => '選擇音訊來源';
 
   @override
-  String get endless_playback_description => '自動將新歌曲加入清單的結尾';
-
-  @override
-  String get choose_your_region => '選擇您的所在地區';
-
-  @override
-  String get choose_your_region_description => '這能幫助 DeeMusiq 為您的所在位置顯示正確的內容。';
-
-  @override
-  String get choose_your_language => '選擇您的語言';
-
-  @override
-  String get help_project_grow => '幫助這個專案成長';
-
-  @override
-  String get help_project_grow_description =>
-      'DeeMusiq是一個開源專案。您可以透過為專案做出貢獻、回報錯誤或建議新功能來幫助專案成長。';
-
-  @override
   String get contribute_on_github => '在GitHub上做出貢獻';
-
-  @override
-  String get donate_on_open_collective => '在Open Collective上捐款';
 
   @override
   String get browse_anonymously => '匿名瀏覽';
@@ -2802,10 +2733,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get streaming_fees_hypothetical =>
-      '*基於 Spotify 每次播放的支付金額\n從 \$0.003 到 \$0.005 計算。這是一個假設性的\n計算，旨在讓用戶了解如果他們在 Spotify 上收聽\n這些歌曲，可能會付給作者的金額。';
-
-  @override
   String get minutes_listened => '聽的分鐘數';
 
   @override
@@ -2825,10 +2752,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get hipotetical_calculation =>
-      '*此為根據線上音樂串流平台平均每次播放 \$0.003 至 \$0.005 的收益所計算的假設值。此為一個假設性計算，旨在讓使用者了解若他們在不同的音樂串流平台上收聽同一首歌曲，他們將會支付給藝人多少費用。';
-
-  @override
   String count_mins(Object minutes) {
     return '$minutes 分鐘';
   }
@@ -2844,9 +2767,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get summary_streamed_overall => '整體串流媒體';
-
-  @override
-  String get summary_owed_to_artists => '本月欠藝術家的';
 
   @override
   String get summary_artists => '藝術家的';
@@ -2865,11 +2785,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get summary_were_on_repeat => '已經重複播放';
-
-  @override
-  String total_money(Object money) {
-    return '總計 $money';
-  }
 
   @override
   String get webview_not_found => '未找到 Webview 框架';
@@ -3100,9 +3015,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get install => '安裝';
 
   @override
-  String get install_a_metadata_provider => '安裝中繼資料供應商';
-
-  @override
   String get no_tracks_playing => '目前沒有正在播放的曲目';
 
   @override
@@ -3120,9 +3032,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get third_party_plugin_dmca_notice =>
       'DeeMusiq 團隊對任何「第三方」外掛程式不負任何責任（包括法律責任）。\n請自行承擔使用風險。如有任何錯誤/問題，請向該外掛程式的儲存庫回報。\n\n若有任何「第三方」外掛程式違反任何服務/法律實體的服務條款/DMCA，請向「第三方」外掛程式作者或託管平台（如 GitHub/Codeberg）要求採取行動。以上列出的（標記為「第三方」）外掛程式均為公開/社群維護的外掛程式。我們沒有對其進行審核，因此無法對其採取任何行動。\n\n';
-
-  @override
-  String get input_does_not_match_format => '輸入不符合所需格式';
 
   @override
   String get plugins => '外掛程式';

@@ -962,18 +962,6 @@ class AppLocalizationsFi extends AppLocalizations {
   String get song_link => 'Laulun linkki';
 
   @override
-  String get skip_this_nonsense => 'Ohita tämä hölynpöly';
-
-  @override
-  String get freedom_of_music => '“Musiikin vapaus”';
-
-  @override
-  String get freedom_of_music_palm => '“Musiikin vapaus käsissäsi”';
-
-  @override
-  String get get_started => 'Aloitetaan';
-
-  @override
   String get youtube_source_description => 'Suositeltu ja toimii parhaiten.';
 
   @override
@@ -996,34 +984,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get select_audio_source => 'Valitse äänilähde';
 
   @override
-  String get endless_playback_description =>
-      'Lisää automaattisesti uusia lauluja\njonon perään';
-
-  @override
-  String get choose_your_region => 'Valitse alueesi';
-
-  @override
-  String get choose_your_region_description =>
-      'Tämä auttaa DeeMusiq näyttämään sinulle oikeaa sisältöä\nsijaintiasi varten.';
-
-  @override
-  String get choose_your_language => 'Valitse kielesi';
-
-  @override
-  String get help_project_grow => 'Auta tätä projektia kasvamaan';
-
-  @override
-  String get help_project_grow_description =>
-      'DeeMusiq projekti minkä lähdekoodi on julkisesti saatavilla. Voit autta tätä projektia kasvamaan muutoksilla, ilmoittamalla bugeista, tai ehdottamalla uusia ominaisuuksia.';
-
-  @override
   String get contribute_on_github => 'Auta GitHub:ssa';
-
-  @override
-  String get visit_our_website => 'Visit our website';
-
-  @override
-  String get donate_on_open_collective => 'Lahjoita avoimessa kollektiivissa';
 
   @override
   String get browse_anonymously => 'Selaa anonyyminä';
@@ -1186,10 +1147,6 @@ class AppLocalizationsFi extends AppLocalizations {
   }
 
   @override
-  String get streaming_fees_hypothetical =>
-      'Suoratoiston maksut (hypoteettinen)';
-
-  @override
   String get minutes_listened => 'Kuunneltuja minuutteja';
 
   @override
@@ -1209,10 +1166,6 @@ class AppLocalizationsFi extends AppLocalizations {
   }
 
   @override
-  String get hipotetical_calculation =>
-      '*Tämä on laskettu keskimääräisen musiikin suoratoistopalvelun 0,003–0,005 dollarin kappalekohtaisen maksun perusteella. Tämä on hypoteettinen laskelma, joka antaa käyttäjälle käsityksen siitä, kuinka paljon he olisivat maksaneet artisteille, jos he kuuntelisivat heidän kappaleitaan eri musiikin suoratoistopalveluissa.';
-
-  @override
   String count_mins(Object minutes) {
     return '$minutes min';
   }
@@ -1228,9 +1181,6 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get summary_streamed_overall => 'Suoratoistettu yhteensä';
-
-  @override
-  String get summary_owed_to_artists => 'Maksettava artisteille\nTässä kuussa';
 
   @override
   String get summary_artists => 'artisti';
@@ -1249,11 +1199,6 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get summary_were_on_repeat => 'Olivat toistossa';
-
-  @override
-  String total_money(Object money) {
-    return 'Yhteensä $money';
-  }
 
   @override
   String get webview_not_found => 'Webview ei löydy';
@@ -1457,6 +1402,30 @@ class AppLocalizationsFi extends AppLocalizations {
   String get retry => 'Yritä uudelleen';
 
   @override
+  String get rate_this_track => 'Rate this track';
+
+  @override
+  String get rating_like => 'Like';
+
+  @override
+  String get rating_dislike => 'Dislike';
+
+  @override
+  String get rating_save_failed => 'Couldn\'t save your rating — try again.';
+
+  @override
+  String rating_summary(int pct, int total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$pct% like this · $total ratings',
+      one: '$pct% like this · 1 rating',
+      zero: 'No ratings yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get no_default_metadata_provider_selected =>
       'Et ole asettanut oletusmetatietojen tarjoajaa';
 
@@ -1549,9 +1518,6 @@ class AppLocalizationsFi extends AppLocalizations {
   String get install => 'Asenna';
 
   @override
-  String get install_a_metadata_provider => 'Asenna metatietojen tarjoaja';
-
-  @override
   String get no_tracks_playing => 'Ei kappaletta toistossa tällä hetkellä';
 
   @override
@@ -1570,9 +1536,6 @@ class AppLocalizationsFi extends AppLocalizations {
   @override
   String get third_party_plugin_dmca_notice =>
       'DeeMusiq-tiimi ei ota mitään vastuuta (mukaan lukien oikeudellinen) mistään \"kolmannen osapuolen\" lisäosista.\nKäytä niitä omalla vastuullasi. Ilmoita kaikista virheistä/ongelmista lisäosan arkistoon.\n\nJos jokin \"kolmannen osapuolen\" lisäosa rikkoo jonkin palvelun/oikeushenkilön käyttöehtoja/DMCA:ta, pyydä \"kolmannen osapuolen\" lisäosan tekijää tai isännöintialustaa, esim. GitHubia/Codebergiä, ryhtymään toimiin. Yllä luetellut (\"kolmannen osapuolen\" merkityt) ovat kaikki julkisia/yhteisön ylläpitämiä lisäosia. Emme kuratoi niitä, joten emme voi ryhtyä niihin toimiin.\n\n';
-
-  @override
-  String get input_does_not_match_format => 'Syöte ei vastaa vaadittua muotoa';
 
   @override
   String get plugins => 'Laajennukset';

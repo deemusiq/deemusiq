@@ -969,18 +969,6 @@ class AppLocalizationsTl extends AppLocalizations {
   String get song_link => 'Link ng Kanta';
 
   @override
-  String get skip_this_nonsense => 'Laktawan ang kalokohan na ito';
-
-  @override
-  String get freedom_of_music => '\"Kalayaan ng Musika\"';
-
-  @override
-  String get freedom_of_music_palm => '\"Kalayaan ng Musika sa iyong palad\"';
-
-  @override
-  String get get_started => 'Magsimula na tayo';
-
-  @override
   String get youtube_source_description =>
       'Inirerekomenda at pinakamahusay na gumagana.';
 
@@ -1005,34 +993,7 @@ class AppLocalizationsTl extends AppLocalizations {
   String get select_audio_source => 'Pumili ng Pinagmulan ng Audio';
 
   @override
-  String get endless_playback_description =>
-      'Awtomatikong magdagdag ng mga bagong kanta\nsa dulo ng pila';
-
-  @override
-  String get choose_your_region => 'Piliin ang iyong rehiyon';
-
-  @override
-  String get choose_your_region_description =>
-      'Ito ay tutulong sa DeeMusiq na ipakita sa iyo ang tamang content\npara sa iyong lokasyon.';
-
-  @override
-  String get choose_your_language => 'Piliin ang iyong wika';
-
-  @override
-  String get help_project_grow => 'Tulungan ang proyektong ito na lumago';
-
-  @override
-  String get help_project_grow_description =>
-      'Ang DeeMusiq ay isang open-source na proyekto. Maaari mong tulungan ang proyektong ito na lumago sa pamamagitan ng pag-contribute sa proyekto, pag-ulat ng mga bug, o pagmungkahi ng mga bagong feature.';
-
-  @override
   String get contribute_on_github => 'Mag-contribute sa GitHub';
-
-  @override
-  String get visit_our_website => 'Visit our website';
-
-  @override
-  String get donate_on_open_collective => 'Mag-donate sa Open Collective';
 
   @override
   String get browse_anonymously => 'Mag-browse nang Anonymous';
@@ -1195,10 +1156,6 @@ class AppLocalizationsTl extends AppLocalizations {
   }
 
   @override
-  String get streaming_fees_hypothetical =>
-      'Mga bayarin sa streaming (hypothetical)';
-
-  @override
   String get minutes_listened => 'Mga minutong pinapakinggan';
 
   @override
@@ -1218,10 +1175,6 @@ class AppLocalizationsTl extends AppLocalizations {
   }
 
   @override
-  String get hipotetical_calculation =>
-      '*Ito ay kinakalkula batay sa average na payout ng online music streaming platform na \$0.003 hanggang \$0.005 kada stream. Ito ay isang hypothetical na kalkulasyon upang bigyan ang user ng insight kung magkano ang babayaran nila sa mga artist kung sakaling makinig sila ng kanilang kanta sa iba\'t ibang music streaming platform.';
-
-  @override
   String count_mins(Object minutes) {
     return '$minutes minuto';
   }
@@ -1237,9 +1190,6 @@ class AppLocalizationsTl extends AppLocalizations {
 
   @override
   String get summary_streamed_overall => 'Na-stream sa kabuuan';
-
-  @override
-  String get summary_owed_to_artists => 'Utang sa mga artista\nngayong buwan';
 
   @override
   String get summary_artists => 'artista';
@@ -1258,11 +1208,6 @@ class AppLocalizationsTl extends AppLocalizations {
 
   @override
   String get summary_were_on_repeat => 'Pinu-playlst muli';
-
-  @override
-  String total_money(Object money) {
-    return 'Kabuuang $money';
-  }
 
   @override
   String get webview_not_found => 'Hindi nahanap ang Webview';
@@ -1467,6 +1412,30 @@ class AppLocalizationsTl extends AppLocalizations {
   String get retry => 'Subukang muli';
 
   @override
+  String get rate_this_track => 'Rate this track';
+
+  @override
+  String get rating_like => 'Like';
+
+  @override
+  String get rating_dislike => 'Dislike';
+
+  @override
+  String get rating_save_failed => 'Couldn\'t save your rating — try again.';
+
+  @override
+  String rating_summary(int pct, int total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$pct% like this · $total ratings',
+      one: '$pct% like this · 1 rating',
+      zero: 'No ratings yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get no_default_metadata_provider_selected =>
       'Wala kang nakatakdang default na metadata provider';
 
@@ -1564,9 +1533,6 @@ class AppLocalizationsTl extends AppLocalizations {
   String get install => 'I-install';
 
   @override
-  String get install_a_metadata_provider => 'Mag-install ng Metadata Provider';
-
-  @override
   String get no_tracks_playing => 'Walang Track na kasalukuyang tumutugtog';
 
   @override
@@ -1585,10 +1551,6 @@ class AppLocalizationsTl extends AppLocalizations {
   @override
   String get third_party_plugin_dmca_notice =>
       'Ang DeeMusiq team ay walang hawak na anumang responsibilidad (kabilang ang legal) para sa anumang \"Third-party\" plugins.\nMangyaring gamitin ang mga ito sa iyong sariling peligro. Para sa anumang mga bug/isyu, mangyaring iulat ang mga ito sa repository ng plugin.\n\nKung ang anumang \"Third-party\" plugin ay lumalabag sa ToS/DMCA ng anumang serbisyo/legal na entity, mangyaring hilingin sa \"Third-party\" plugin author o sa hosting platform e.g. GitHub/Codeberg na gumawa ng aksyon. Ang nakalista sa itaas (\"Third-party\" na may label) ay lahat ng pampubliko/komunidad na pinananatiling mga plugin. Hindi namin sila kinukurusado, kaya hindi kami makakagawa ng anumang aksyon sa kanila.\n\n';
-
-  @override
-  String get input_does_not_match_format =>
-      'Ang input ay hindi tumutugma sa kinakailangang format';
 
   @override
   String get plugins => 'Mga plugin';

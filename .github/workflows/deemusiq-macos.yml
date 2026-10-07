@@ -124,6 +124,15 @@ jobs:
             --dart-define=DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY="$DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY" \
             --dart-define=DEEMUSIQ_SERVER_CERT_SHA256="$DEEMUSIQ_SERVER_CERT_SHA256"
 
+      - name: Verify release artifact
+        # Hard gate before packaging/upload: TLS pin, backend URL, channel key
+        # and payment HMAC must actually be baked into the bundle.
+        env:
+          DEEMUSIQ_BACKEND_URL: ${{ vars.DEEMUSIQ_BACKEND_URL }}
+          DEEMUSIQ_CHANNEL_KEY: ${{ secrets.DEEMUSIQ_CHANNEL_KEY }}
+          DEEMUSIQ_PAYMENT_HMAC_SECRET: ${{ secrets.DEEMUSIQ_PAYMENT_HMAC_SECRET }}
+        run: bash tool/verify_release.sh macos
+
       - name: Package macOS .dmg
         run: |
           mkdir -p dist

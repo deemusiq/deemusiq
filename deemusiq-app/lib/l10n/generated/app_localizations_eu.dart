@@ -966,18 +966,6 @@ class AppLocalizationsEu extends AppLocalizations {
   String get song_link => 'Kantaren lotura';
 
   @override
-  String get skip_this_nonsense => 'Utzi txorakeria hau';
-
-  @override
-  String get freedom_of_music => '“Musika Askatasuna”';
-
-  @override
-  String get freedom_of_music_palm => '“Musika Askatasuna zure eskuetan”';
-
-  @override
-  String get get_started => 'Has gaitezen';
-
-  @override
   String get youtube_source_description => 'Gomendatua eta hobekien dabilena.';
 
   @override
@@ -1001,34 +989,7 @@ class AppLocalizationsEu extends AppLocalizations {
   String get select_audio_source => 'Aukeratu Audio Iturria';
 
   @override
-  String get endless_playback_description =>
-      'Gehitu automatikoki kanta berriak\n ilararen bukaeran';
-
-  @override
-  String get choose_your_region => 'Aukeratu zure herrialdea';
-
-  @override
-  String get choose_your_region_description =>
-      'Honekin DeeMusiq-k zure kokalerakuari dagokion edukia\neskeiniko dizu.';
-
-  @override
-  String get choose_your_language => 'Aukeratu zure hizkuntza';
-
-  @override
-  String get help_project_grow => 'Lagundu proiektu honi hazten';
-
-  @override
-  String get help_project_grow_description =>
-      'DeeMusiq kode irekiko proiektu bat da. Proiektu hau hazten lagundu dezakezu, erroreak jakinaraziz edo ezaugarri berriak proposatuz.';
-
-  @override
   String get contribute_on_github => 'GitHub-en lagundu';
-
-  @override
-  String get visit_our_website => 'Visit our website';
-
-  @override
-  String get donate_on_open_collective => 'Open Collective-en diruz lagundu';
 
   @override
   String get browse_anonymously => 'Nabigatu Anonimoki';
@@ -1191,10 +1152,6 @@ class AppLocalizationsEu extends AppLocalizations {
   }
 
   @override
-  String get streaming_fees_hypothetical =>
-      'Streaming ordainketa (hipotetikoa)';
-
-  @override
   String get minutes_listened => 'Entzundako minutuak';
 
   @override
@@ -1214,10 +1171,6 @@ class AppLocalizationsEu extends AppLocalizations {
   }
 
   @override
-  String get hipotetical_calculation =>
-      '*Kalkulu hau online musika-streaming plataformetako batez besteko irteerako ordainari (0,003–0,005 USD) oinarrituta dago. Hipotetikoa da eta erabiltzaileari ideia bat ematen laguntzen dio artista nork zenbat kobratu zuen jakiteko, bere abestia plataform desberdinetan entzungo balu.';
-
-  @override
   String count_mins(Object minutes) {
     return '$minutes minutu';
   }
@@ -1233,9 +1186,6 @@ class AppLocalizationsEu extends AppLocalizations {
 
   @override
   String get summary_streamed_overall => 'Streaming abesti oro har';
-
-  @override
-  String get summary_owed_to_artists => 'Hilabete honetan\nartistei zor zaiena';
 
   @override
   String get summary_artists => 'artisten';
@@ -1254,11 +1204,6 @@ class AppLocalizationsEu extends AppLocalizations {
 
   @override
   String get summary_were_on_repeat => 'Dituzu errepikatze moduan';
-
-  @override
-  String total_money(Object money) {
-    return 'Guztira $money';
-  }
 
   @override
   String get webview_not_found => 'Ez da Webview aurkitu';
@@ -1463,6 +1408,30 @@ class AppLocalizationsEu extends AppLocalizations {
   String get retry => 'Berriro saiatu';
 
   @override
+  String get rate_this_track => 'Rate this track';
+
+  @override
+  String get rating_like => 'Like';
+
+  @override
+  String get rating_dislike => 'Dislike';
+
+  @override
+  String get rating_save_failed => 'Couldn\'t save your rating — try again.';
+
+  @override
+  String rating_summary(int pct, int total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$pct% like this · $total ratings',
+      one: '$pct% like this · 1 rating',
+      zero: 'No ratings yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get no_default_metadata_provider_selected =>
       'Ezarri ez duzu metadaten hornitzaile lehenetsirik';
 
@@ -1558,10 +1527,6 @@ class AppLocalizationsEu extends AppLocalizations {
   String get install => 'Instalatu';
 
   @override
-  String get install_a_metadata_provider =>
-      'Metadaten hornitzaile bat instalatu';
-
-  @override
   String get no_tracks_playing =>
       'Une honetan ez dago abestirik erreproduzitzen';
 
@@ -1581,10 +1546,6 @@ class AppLocalizationsEu extends AppLocalizations {
   @override
   String get third_party_plugin_dmca_notice =>
       'DeeMusiq taldea ezin da arduratu (“hirugarrenen”) plugin-en>gatik (barne legala). Erabili zure arriskuarekin. Erroreak/ arazoak dituzu, jakinarazi pluginaren biltegiari.\n\nPlugin batek edozein zerbitzu/legalki entitate baten ToS/DMCA hautsi baditu, eska iezaiozu pluginaren egileari edo hosting plataformari (adibidez GitHub/Codeberg) neurriak har ditzaten. “Hirugarrena” etiketatutako plugin guztiak komunitate publikoaren bidez mantentzen dira; ez ditugu kuratoriatu, beraz ezin dugu inplikatu.\n\n';
-
-  @override
-  String get input_does_not_match_format =>
-      'Sarrera ezin da beharrezko formatutik desberdina izan';
 
   @override
   String get plugins => 'Pluginak';

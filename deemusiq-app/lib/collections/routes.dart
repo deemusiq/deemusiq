@@ -89,10 +89,6 @@ class AppRouter extends RootStackRouter {
               page: SettingsRoute.page,
             ),
             AutoRoute(
-              path: "settings/metadata-provider/metadata-form",
-              page: SettingsMetadataProviderFormRoute.page,
-            ),
-            AutoRoute(
               path: "settings/blacklist",
               page: BlackListRoute.page,
             ),
@@ -215,10 +211,6 @@ class AppRouter extends RootStackRouter {
               page: StatsStreamsRoute.page,
             ),
             AutoRoute(
-              path: "stats/fees",
-              page: StatsStreamFeesRoute.page,
-            ),
-            AutoRoute(
               path: "stats/artists",
               page: StatsArtistsRoute.page,
             ),
@@ -256,11 +248,6 @@ class AppRouter extends RootStackRouter {
         AutoRoute(
           path: "/mini-player",
           page: MiniLyricsRoute.page,
-          // parentNavigatorKey: rootNavigatorKey,
-        ),
-        AutoRoute(
-          path: "/getting-started",
-          page: GettingStartedRoute.page,
           // parentNavigatorKey: rootNavigatorKey,
         ),
         AutoRoute(

@@ -948,18 +948,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get song_link => '曲のリンク';
 
   @override
-  String get skip_this_nonsense => 'こんなことはスキップ';
-
-  @override
-  String get freedom_of_music => '“音楽の自由”';
-
-  @override
-  String get freedom_of_music_palm => '“音楽の自由を思いのままに”';
-
-  @override
-  String get get_started => 'さあ始めましょう';
-
-  @override
   String get youtube_source_description => '推奨され、最適に機能します。';
 
   @override
@@ -980,33 +968,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get select_audio_source => '音声の提供元を選択';
 
   @override
-  String get endless_playback_description => 'キューの最後に新しい曲を自動で追加';
-
-  @override
-  String get choose_your_region => '地域を選択';
-
-  @override
-  String get choose_your_region_description =>
-      'DeeMusiqがあなたの地域に適したコンテンツを表示します。';
-
-  @override
-  String get choose_your_language => '言語を選択してください';
-
-  @override
-  String get help_project_grow => 'プロジェクトの成長を支援する';
-
-  @override
-  String get help_project_grow_description =>
-      'SpoTubeはオープンソースプロジェクトです。貢献したり、バグ報告したり、新機能を提案することで、プロジェクトの成長に貢献できます。';
-
-  @override
   String get contribute_on_github => 'GitHubで貢献';
-
-  @override
-  String get visit_our_website => 'Visit our website';
-
-  @override
-  String get donate_on_open_collective => 'Open Collectiveで寄付';
 
   @override
   String get browse_anonymously => '匿名で閲覧する';
@@ -1167,9 +1129,6 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get streaming_fees_hypothetical => 'ストリーミング料金 (概算)';
-
-  @override
   String get minutes_listened => '視聴時間';
 
   @override
@@ -1189,10 +1148,6 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get hipotetical_calculation =>
-      '*これは、オンライン音楽ストリーミングプラットフォームの1ストリームあたりの平均支払い額である\$0.003〜\$0.005に基づいて計算されています。これは、ユーザーが異なる音楽ストリーミングプラットフォームで曲を聴いた場合に、アーティストにどれだけ支払ったかを把握するための仮説的な計算です。';
-
-  @override
   String count_mins(Object minutes) {
     return '$minutes 分';
   }
@@ -1208,9 +1163,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get summary_streamed_overall => 'まるごと聴いた';
-
-  @override
-  String get summary_owed_to_artists => '今月アーティストに払う\nべき額';
 
   @override
   String get summary_artists => 'アーティスト';
@@ -1229,11 +1181,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get summary_were_on_repeat => 'をリピートしました';
-
-  @override
-  String total_money(Object money) {
-    return '計 $money';
-  }
 
   @override
   String get webview_not_found => 'Webviewが見つかりません';
@@ -1433,6 +1380,30 @@ class AppLocalizationsJa extends AppLocalizations {
   String get retry => '再試行';
 
   @override
+  String get rate_this_track => 'Rate this track';
+
+  @override
+  String get rating_like => 'Like';
+
+  @override
+  String get rating_dislike => 'Dislike';
+
+  @override
+  String get rating_save_failed => 'Couldn\'t save your rating — try again.';
+
+  @override
+  String rating_summary(int pct, int total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$pct% like this · $total ratings',
+      one: '$pct% like this · 1 rating',
+      zero: 'No ratings yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get no_default_metadata_provider_selected =>
       'デフォルトのメタデータプロバイダーが設定されていません';
 
@@ -1521,9 +1492,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get install => 'インストール';
 
   @override
-  String get install_a_metadata_provider => 'メタデータプロバイダーをインストール';
-
-  @override
   String get no_tracks_playing => '現在再生中のトラックはありません';
 
   @override
@@ -1541,9 +1509,6 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get third_party_plugin_dmca_notice =>
       'DeeMusiqチームは、いかなる「サードパーティ」プラグインについても責任（法的責任を含む）を負いません。\nご自身の責任でご使用ください。バグや問題については、プラグインリポジトリに報告してください。\n\n「サードパーティ」プラグインが何らかのサービス/法人のToS/DMCAを侵害している場合、その「サードパーティ」プラグインの作者またはホスティングプラットフォーム（例：GitHub/Codeberg）に措置を講じるよう依頼してください。上記に記載されている（「サードパーティ」とラベル付けされた）ものはすべて、パブリック/コミュニティによって維持されているプラグインです。私たちはそれらをキュレーションしていないため、それらに対して措置を講じることはできません。\n\n';
-
-  @override
-  String get input_does_not_match_format => '入力が必須フォーマットと一致しません';
 
   @override
   String get plugins => 'プラグイン';

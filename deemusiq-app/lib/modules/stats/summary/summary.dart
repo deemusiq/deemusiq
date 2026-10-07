@@ -83,15 +83,6 @@ class StatsPageSummarySection extends HookConsumerWidget {
                   context.navigateTo(const StatsPlaylistsRoute());
                 },
               ),
-              SummaryCard(
-                title: summaryData.fees,
-                unit: "USD",
-                description: context.l10n.summary_owed_to_artists,
-                color: Colors.green,
-                onTap: () {
-                  context.navigateTo(const StatsStreamFeesRoute());
-                },
-              ),
             ]),
           );
         }),

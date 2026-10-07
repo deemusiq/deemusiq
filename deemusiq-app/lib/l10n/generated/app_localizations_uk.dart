@@ -965,18 +965,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get song_link => 'Посилання на пісню';
 
   @override
-  String get skip_this_nonsense => 'Пропустити цей бред';
-
-  @override
-  String get freedom_of_music => '“Свобода музики”';
-
-  @override
-  String get freedom_of_music_palm => '“Свобода музики у вашій долоні”';
-
-  @override
-  String get get_started => 'Давайте почнемо';
-
-  @override
   String get youtube_source_description =>
       'Рекомендовано та працює краще за все.';
 
@@ -1001,34 +989,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get select_audio_source => 'Виберіть джерело аудіо';
 
   @override
-  String get endless_playback_description =>
-      'Автоматично додавати нові пісні\nв кінець черги';
-
-  @override
-  String get choose_your_region => 'Виберіть ваш регіон';
-
-  @override
-  String get choose_your_region_description =>
-      'Це допоможе DeeMusiq показати вам правильний контент\nдля вашого місцезнаходження.';
-
-  @override
-  String get choose_your_language => 'Виберіть свою мову';
-
-  @override
-  String get help_project_grow => 'Допоможіть цьому проекту рости';
-
-  @override
-  String get help_project_grow_description =>
-      'DeeMusiq - це проект з відкритим кодом. Ви можете допомогти цьому проекту зростати, вносячи свій внесок у проект, повідомляючи про помилки або пропонуючи нові функції.';
-
-  @override
   String get contribute_on_github => 'Долучайтесь на GitHub';
-
-  @override
-  String get visit_our_website => 'Visit our website';
-
-  @override
-  String get donate_on_open_collective => 'Пожертвуйте на Open Collective';
 
   @override
   String get browse_anonymously => 'Анонімно переглядати';
@@ -1190,10 +1151,6 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get streaming_fees_hypothetical =>
-      '*Розраховано на основі виплат Spotify за стримінг\nвід \$0.003 до \$0.005. Це гіпотетичний\nрозрахунок, щоб дати уявлення користувачу про те, скільки б він\nзаплатив артистам, якби слухав їхні пісні на Spotify.';
-
-  @override
   String get minutes_listened => 'Хвилини прослуховування';
 
   @override
@@ -1213,10 +1170,6 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get hipotetical_calculation =>
-      '*Це розраховано на основі середньої виплати за стрім онлайн-платформ для потокового відтворення музики, що становить від \$0,003 до \$0,005. Це гіпотетичний розрахунок, щоб дати користувачеві уявлення про те, скільки б вони заплатили артистам, якщо б слухали їхні пісні на різних музичних стрімінгових платформах.';
-
-  @override
   String count_mins(Object minutes) {
     return '$minutes хв';
   }
@@ -1232,9 +1185,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get summary_streamed_overall => 'Загалом стримів';
-
-  @override
-  String get summary_owed_to_artists => 'Заборгованість артистам\nцього місяця';
 
   @override
   String get summary_artists => 'артистів';
@@ -1253,11 +1203,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get summary_were_on_repeat => 'Були на повторі';
-
-  @override
-  String total_money(Object money) {
-    return 'Загалом $money';
-  }
 
   @override
   String get webview_not_found => 'Webview не знайдено';
@@ -1459,6 +1404,30 @@ class AppLocalizationsUk extends AppLocalizations {
   String get retry => 'Повторити';
 
   @override
+  String get rate_this_track => 'Rate this track';
+
+  @override
+  String get rating_like => 'Like';
+
+  @override
+  String get rating_dislike => 'Dislike';
+
+  @override
+  String get rating_save_failed => 'Couldn\'t save your rating — try again.';
+
+  @override
+  String rating_summary(int pct, int total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$pct% like this · $total ratings',
+      one: '$pct% like this · 1 rating',
+      zero: 'No ratings yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get no_default_metadata_provider_selected =>
       'Ви не встановили провайдера метаданих за замовчуванням';
 
@@ -1553,9 +1522,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get install => 'Встановити';
 
   @override
-  String get install_a_metadata_provider => 'Встановити провайдера метаданих';
-
-  @override
   String get no_tracks_playing => 'Наразі не відтворюється жоден трек';
 
   @override
@@ -1574,10 +1540,6 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get third_party_plugin_dmca_notice =>
       'Команда DeeMusiq не несе жодної відповідальності (включно з юридичною) за будь-які плагіни \"третіх сторін\".\nБудь ласка, використовуйте їх на свій страх і ризик. Про будь-які помилки/проблеми повідомляйте в репозиторій плагіна.\n\nЯкщо якийсь плагін \"третьої сторони\" порушує ToS/DMCA будь-якої служби/юридичної особи, будь ласка, попросіть автора плагіна \"третьої сторони\" або хостингову платформу, наприклад, GitHub/Codeberg, вжити заходів. Усі перераховані вище (позначені як \"треті сторони\") є плагінами, які підтримуються публічно/спільнотою. Ми не куруємо їх, тому не можемо вжити жодних заходів щодо них.\n\n';
-
-  @override
-  String get input_does_not_match_format =>
-      'Введені дані не відповідають необхідному формату';
 
   @override
   String get plugins => 'Плагіни';

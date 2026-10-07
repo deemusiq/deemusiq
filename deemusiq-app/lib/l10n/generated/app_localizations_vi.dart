@@ -967,19 +967,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get song_link => 'Liên kết Bài hát';
 
   @override
-  String get skip_this_nonsense => 'Bỏ qua bớt rối này';
-
-  @override
-  String get freedom_of_music => '“Sự Tự do của Âm nhạc”';
-
-  @override
-  String get freedom_of_music_palm =>
-      '“Sự Tự do của Âm nhạc trong lòng bàn tay của bạn”';
-
-  @override
-  String get get_started => 'Bắt đầu thôi';
-
-  @override
   String get youtube_source_description =>
       'Được đề xuất và hoạt động tốt nhất.';
 
@@ -1003,34 +990,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get select_audio_source => 'Chọn Nguồn Âm thanh';
 
   @override
-  String get endless_playback_description =>
-      'Tự động thêm các bài hát mới\nvào cuối hàng đợi';
-
-  @override
-  String get choose_your_region => 'Chọn khu vực của bạn';
-
-  @override
-  String get choose_your_region_description =>
-      'Điều này sẽ giúp DeeMusiq hiển thị nội dung phù hợp cho vị trí của bạn.';
-
-  @override
-  String get choose_your_language => 'Chọn ngôn ngữ của bạn';
-
-  @override
-  String get help_project_grow => 'Hãy giúp dự án này phát triển';
-
-  @override
-  String get help_project_grow_description =>
-      'DeeMusiq là một dự án mã nguồn mở. Bạn có thể giúp dự án này phát triển bằng cách đóng góp vào dự án, báo cáo lỗi hoặc đề xuất tính năng mới.';
-
-  @override
   String get contribute_on_github => 'Đóng góp trên GitHub';
-
-  @override
-  String get visit_our_website => 'Visit our website';
-
-  @override
-  String get donate_on_open_collective => 'Quyên góp trên Open Collective';
 
   @override
   String get browse_anonymously => 'Duyệt Anonymously';
@@ -1193,10 +1153,6 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get streaming_fees_hypothetical =>
-      '*Tính toán dựa trên thanh toán của Spotify cho mỗi lần phát\ntừ \$0.003 đến \$0.005. Đây là một tính toán giả định để\ngive người dùng cái nhìn về số tiền họ sẽ chi trả cho các nghệ sĩ nếu họ nghe\nbài hát của họ trên Spotify.';
-
-  @override
   String get minutes_listened => 'Thời gian nghe';
 
   @override
@@ -1216,10 +1172,6 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get hipotetical_calculation =>
-      '*Điều này được tính toán dựa trên khoản thanh toán trung bình mỗi luồng của nền tảng phát nhạc trực tuyến là \$0,003 đến \$0,005. Đây là một phép tính giả định để cung cấp cho người dùng cái nhìn sâu sắc về số tiền họ đã trả cho các nghệ sĩ nếu họ nghe bài hát của họ trên các nền tảng phát nhạc trực tuyến khác nhau.';
-
-  @override
   String count_mins(Object minutes) {
     return '$minutes phút';
   }
@@ -1235,9 +1187,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get summary_streamed_overall => 'Stream tổng cộng';
-
-  @override
-  String get summary_owed_to_artists => 'Nợ nghệ sĩ\ntrong tháng này';
 
   @override
   String get summary_artists => 'nghệ sĩ';
@@ -1256,11 +1205,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get summary_were_on_repeat => 'Đã được phát lại';
-
-  @override
-  String total_money(Object money) {
-    return 'Tổng cộng $money';
-  }
 
   @override
   String get webview_not_found => 'Không tìm thấy Webview';
@@ -1463,6 +1407,30 @@ class AppLocalizationsVi extends AppLocalizations {
   String get retry => 'Thử lại';
 
   @override
+  String get rate_this_track => 'Rate this track';
+
+  @override
+  String get rating_like => 'Like';
+
+  @override
+  String get rating_dislike => 'Dislike';
+
+  @override
+  String get rating_save_failed => 'Couldn\'t save your rating — try again.';
+
+  @override
+  String rating_summary(int pct, int total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$pct% like this · $total ratings',
+      one: '$pct% like this · 1 rating',
+      zero: 'No ratings yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get no_default_metadata_provider_selected =>
       'Bạn chưa đặt nhà cung cấp siêu dữ liệu mặc định nào';
 
@@ -1556,10 +1524,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get install => 'Cài đặt';
 
   @override
-  String get install_a_metadata_provider =>
-      'Cài đặt một Nhà cung cấp siêu dữ liệu';
-
-  @override
   String get no_tracks_playing => 'Hiện không có bản nhạc nào đang phát';
 
   @override
@@ -1578,10 +1542,6 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get third_party_plugin_dmca_notice =>
       'Nhóm DeeMusiq không chịu bất kỳ trách nhiệm nào (bao gồm cả pháp lý) đối với bất kỳ plugin \"Bên thứ ba\" nào.\nVui lòng sử dụng chúng với rủi ro của riêng bạn. Đối với bất kỳ lỗi/vấn đề nào, vui lòng báo cáo chúng cho kho lưu trữ plugin.\n\nNếu bất kỳ plugin \"Bên thứ ba\" nào vi phạm ToS/DMCA của bất kỳ dịch vụ/thực thể pháp lý nào, vui lòng yêu cầu tác giả plugin \"Bên thứ ba\" hoặc nền tảng lưu trữ, ví dụ: GitHub/Codeberg, thực hiện hành động. Tất cả các plugin được liệt kê ở trên (được gắn nhãn \"Bên thứ ba\") đều là các plugin công cộng/do cộng đồng duy trì. Chúng tôi không quản lý chúng, vì vậy chúng tôi không thể thực hiện bất kỳ hành động nào đối với chúng.\n\n';
-
-  @override
-  String get input_does_not_match_format =>
-      'Đầu vào không khớp với định dạng yêu cầu';
 
   @override
   String get plugins => 'Tiện ích bổ sung';

@@ -113,7 +113,6 @@ abstract class FakeData {
     duration: Duration(seconds: 1),
     playlists: 1,
     tracks: 1,
-    fees: 1,
   );
 
   static final historyRecentlyPlayedPlaylist = HistoryTableData(

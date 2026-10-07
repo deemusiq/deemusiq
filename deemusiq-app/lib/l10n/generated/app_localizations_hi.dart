@@ -962,18 +962,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get song_link => 'गाने का लिंक';
 
   @override
-  String get skip_this_nonsense => 'इस माया को छोड़ें';
-
-  @override
-  String get freedom_of_music => '“संगीत की स्वतंत्रता”';
-
-  @override
-  String get freedom_of_music_palm => '“हाथ में संगीत की स्वतंत्रता”';
-
-  @override
-  String get get_started => 'आइए शुरू करें';
-
-  @override
   String get youtube_source_description =>
       'सिफारिश किया गया और सबसे अच्छा काम करता है।';
 
@@ -998,34 +986,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get select_audio_source => 'ऑडियो स्रोत चुनें';
 
   @override
-  String get endless_playback_description =>
-      'क्रमबद्ध कतार के अंत में नए गाने स्वचालित रूप से जोड़ें';
-
-  @override
-  String get choose_your_region => 'अपना क्षेत्र चुनें';
-
-  @override
-  String get choose_your_region_description =>
-      'यह DeeMusiq को आपके स्थान के लिए सही सामग्री दिखाने में मदद करेगा।';
-
-  @override
-  String get choose_your_language => 'अपनी भाषा चुनें';
-
-  @override
-  String get help_project_grow => 'इस परियोजना को बढ़ावा दें';
-
-  @override
-  String get help_project_grow_description =>
-      'DeeMusiq एक ओपन सोर्स परियोजना है। आप इस परियोजना को योगदान देकर, बग रिपोर्ट करके या नई विशेषताओं का सुझाव देकर इस परियोजना को बढ़ा सकते हैं।';
-
-  @override
   String get contribute_on_github => 'GitHub पर योगदान करें';
-
-  @override
-  String get visit_our_website => 'Visit our website';
-
-  @override
-  String get donate_on_open_collective => 'ओपन कलेक्टिव पर दान करें';
 
   @override
   String get browse_anonymously => 'बिना नाम के ब्राउज़ करें';
@@ -1188,10 +1149,6 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String get streaming_fees_hypothetical =>
-      '*Spotify की प्रति स्ट्रीम भुगतान के आधार पर\n\$0.003 से \$0.005 तक गणना की गई है। यह एक काल्पनिक\nगणना है जो उपयोगकर्ता को यह जानकारी देती है कि वे कितना भुगतान\nकरते यदि वे Spotify पर गाने सुनते।';
-
-  @override
   String get minutes_listened => 'सुनिएका मिनेटहरू';
 
   @override
@@ -1211,10 +1168,6 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String get hipotetical_calculation =>
-      '*यह औसत ऑनलाइन संगीत स्ट्रीमिंग प्लेटफ़ॉर्म के प्रति स्ट्रीम भुगतान (\$0.003 से \$0.005) के आधार पर गणना की गई है। यह एक काल्पनिक गणना है जो उपयोगकर्ता को यह जानकारी देने के लिए है कि यदि वे विभिन्न संगीत स्ट्रीमिंग प्लेटफ़ॉर्म पर अपने गाने सुनते हैं तो उन्होंने कलाकारों को कितना भुगतान किया होगा।';
-
-  @override
   String count_mins(Object minutes) {
     return '$minutes मिनट';
   }
@@ -1230,9 +1183,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get summary_streamed_overall => 'कुल स्ट्रीम';
-
-  @override
-  String get summary_owed_to_artists => 'कलाकारों को देनदार\nइस महीने';
 
   @override
   String get summary_artists => 'कलाकार';
@@ -1251,11 +1201,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get summary_were_on_repeat => 'दोहराया गया';
-
-  @override
-  String total_money(Object money) {
-    return 'कुल $money';
-  }
 
   @override
   String get webview_not_found => 'वेबव्यू नहीं मिला';
@@ -1460,6 +1405,30 @@ class AppLocalizationsHi extends AppLocalizations {
   String get retry => 'पुनः प्रयास करें';
 
   @override
+  String get rate_this_track => 'Rate this track';
+
+  @override
+  String get rating_like => 'Like';
+
+  @override
+  String get rating_dislike => 'Dislike';
+
+  @override
+  String get rating_save_failed => 'Couldn\'t save your rating — try again.';
+
+  @override
+  String rating_summary(int pct, int total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$pct% like this · $total ratings',
+      one: '$pct% like this · 1 rating',
+      zero: 'No ratings yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get no_default_metadata_provider_selected =>
       'आपने कोई डिफ़ॉल्ट मेटाडेटा प्रदाता सेट नहीं किया है';
 
@@ -1553,9 +1522,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get install => 'स्थापित करें';
 
   @override
-  String get install_a_metadata_provider => 'एक मेटाडेटा प्रदाता स्थापित करें';
-
-  @override
   String get no_tracks_playing => 'वर्तमान में कोई ट्रैक नहीं चल रहा है';
 
   @override
@@ -1574,10 +1540,6 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get third_party_plugin_dmca_notice =>
       'स्पॉट्यूब टीम किसी भी \"तृतीय-पक्ष\" प्लगइन के लिए कोई जिम्मेदारी (कानूनी सहित) नहीं लेती है।\nकृपया उन्हें अपने जोखिम पर उपयोग करें। किसी भी बग/समस्या के लिए, कृपया उन्हें प्लगइन रिपॉजिटरी को रिपोर्ट करें।\n\nयदि कोई \"तृतीय-पक्ष\" प्लगइन किसी सेवा/कानूनी इकाई के ToS/DMCA को तोड़ रहा है, तो कृपया \"तृतीय-पक्ष\" प्लगइन लेखक या होस्टिंग प्लेटफ़ॉर्म जैसे GitHub/Codeberg से कार्रवाई करने के लिए कहें। ऊपर सूचीबद्ध (\"तृतीय-पक्ष\" लेबल वाले) सभी सार्वजनिक/समुदाय-द्वारा-रखरखाव किए गए प्लगइन हैं। हम उन्हें क्यूरेट नहीं कर रहे हैं, इसलिए हम उन पर कोई कार्रवाई नहीं कर सकते हैं।\n\n';
-
-  @override
-  String get input_does_not_match_format =>
-      'इनपुट आवश्यक प्रारूप से मेल नहीं खाता है';
 
   @override
   String get plugins => 'प्लगइन्स';

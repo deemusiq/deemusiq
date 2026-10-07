@@ -1816,6 +1816,54 @@ class WalletApiClient {
     }
   }
 
+  // ── Track quality ratings (`/ratings`) ──────────────────────────────────
+  // A rating is a like/dislike quality signal, NOT a favorite — favorites
+  // stay with the heart button (`/recommendations/like`).
+
+  /// Per-track aggregates (`GET /ratings/:trackId`). The endpoint is public,
+  /// but sending the session token makes the backend include `myRating`.
+  Future<Map<String, dynamic>> fetchTrackRating(String trackId) async {
+    try {
+      final res = await _client().get(
+        "/ratings/${Uri.encodeComponent(trackId)}",
+        options: await _authed(),
+      );
+      return Map<String, dynamic>.from(res.data as Map);
+    } on DioException catch (e) {
+      throw _walletApiException(e);
+    }
+  }
+
+  /// Set or change the caller's rating (`PUT /ratings/:trackId`); [value] is
+  /// "like" or "dislike". Responds with `{rating, stats}`.
+  Future<Map<String, dynamic>> rateTrack(String trackId, String value) async {
+    try {
+      final res = await _client().put(
+        "/ratings/${Uri.encodeComponent(trackId)}",
+        data: {"value": value},
+        options: await _authed(),
+      );
+      return Map<String, dynamic>.from(res.data as Map);
+    } on DioException catch (e) {
+      throw _walletApiException(e);
+    }
+  }
+
+  /// Clear the caller's rating (`DELETE /ratings/:trackId`). Responds with
+  /// `{rating: null, stats}`.
+  Future<Map<String, dynamic>> clearTrackRating(String trackId) async {
+    try {
+      final res = await _client().delete(
+        "/ratings/${Uri.encodeComponent(trackId)}",
+        data: const <String, dynamic>{},
+        options: await _authed(),
+      );
+      return Map<String, dynamic>.from(res.data as Map);
+    } on DioException catch (e) {
+      throw _walletApiException(e);
+    }
+  }
+
   // ── Artist self-serve: uploads, scheduling, verification ────────────────
 
   /// Submit a draft song (audio+cover not yet uploaded). The backend keeps

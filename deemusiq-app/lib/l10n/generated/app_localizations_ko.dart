@@ -949,18 +949,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get song_link => '곡 링크';
 
   @override
-  String get skip_this_nonsense => '이 허튼소리 건너뛰기';
-
-  @override
-  String get freedom_of_music => '“음악의 자유”';
-
-  @override
-  String get freedom_of_music_palm => '“손바닥 안의 음악의 자유”';
-
-  @override
-  String get get_started => '시작합시다';
-
-  @override
   String get youtube_source_description => '추천되며 가장 잘 작동합니다.';
 
   @override
@@ -982,33 +970,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get select_audio_source => '오디오 소스 선택';
 
   @override
-  String get endless_playback_description => '자동으로 새로운 노래를 대기열의 끝에 추가';
-
-  @override
-  String get choose_your_region => '지역 선택';
-
-  @override
-  String get choose_your_region_description =>
-      '이것은 DeeMusiq가 위치에 맞는 콘텐츠를 표시하는 데 도움이 됩니다.';
-
-  @override
-  String get choose_your_language => '언어 선택';
-
-  @override
-  String get help_project_grow => '이 프로젝트 성장에 도움을 주세요';
-
-  @override
-  String get help_project_grow_description =>
-      'DeeMusiq는 오픈 소스 프로젝트입니다. 프로젝트에 기여하거나 버그를 보고하거나 새로운 기능을 제안하여이 프로젝트의 성장에 도움을 줄 수 있습니다.';
-
-  @override
   String get contribute_on_github => 'GitHub에서 기여하기';
-
-  @override
-  String get visit_our_website => 'Visit our website';
-
-  @override
-  String get donate_on_open_collective => 'Open Collective에 기부하기';
 
   @override
   String get browse_anonymously => '익명으로 둘러보기';
@@ -1170,10 +1132,6 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get streaming_fees_hypothetical =>
-      '*이것은 Spotify의 스트림당 지급액\n\$0.003에서 \$0.005를 기준으로 계산된 것입니다.\n이것은 사용자가 Spotify에서 곡을 들었을 때\n아티스트에게 지불했을 금액에 대한 통찰을 제공하기 위한\n가상의 계산입니다.';
-
-  @override
   String get minutes_listened => '청취한 시간';
 
   @override
@@ -1193,10 +1151,6 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get hipotetical_calculation =>
-      '*이것은 온라인 음악 스트리밍 플랫폼의 스트림당 평균 지불액인 \$0.003에서 \$0.005를 기준으로 계산됩니다. 이것은 사용자가 다른 음악 스트리밍 플랫폼에서 노래를 들었다면 아티스트에게 얼마를 지불했을지에 대한 통찰력을 제공하기 위한 가상 계산입니다.';
-
-  @override
   String count_mins(Object minutes) {
     return '$minutes 분';
   }
@@ -1212,9 +1166,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get summary_streamed_overall => '전체 스트리밍';
-
-  @override
-  String get summary_owed_to_artists => '이번 달 아티스트에게 지급해야 할 금액';
 
   @override
   String get summary_artists => '아티스트의';
@@ -1233,11 +1184,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get summary_were_on_repeat => '반복 재생됨';
-
-  @override
-  String total_money(Object money) {
-    return '총 $money';
-  }
 
   @override
   String get webview_not_found => '웹뷰를 찾을 수 없음';
@@ -1437,6 +1383,30 @@ class AppLocalizationsKo extends AppLocalizations {
   String get retry => '다시 시도';
 
   @override
+  String get rate_this_track => 'Rate this track';
+
+  @override
+  String get rating_like => 'Like';
+
+  @override
+  String get rating_dislike => 'Dislike';
+
+  @override
+  String get rating_save_failed => 'Couldn\'t save your rating — try again.';
+
+  @override
+  String rating_summary(int pct, int total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$pct% like this · $total ratings',
+      one: '$pct% like this · 1 rating',
+      zero: 'No ratings yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get no_default_metadata_provider_selected =>
       '기본 메타데이터 제공자가 설정되지 않았습니다';
 
@@ -1525,9 +1495,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get install => '설치';
 
   @override
-  String get install_a_metadata_provider => '메타데이터 제공자 설치';
-
-  @override
   String get no_tracks_playing => '현재 재생 중인 트랙이 없습니다';
 
   @override
@@ -1545,9 +1512,6 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get third_party_plugin_dmca_notice =>
       'DeeMusiq 팀은 어떠한 \"타사\" 플러그인에 대해서도 (법적 포함) 어떠한 책임도 지지 않습니다.\n사용자 자신의 책임하에 사용하시기 바랍니다. 버그/문제에 대해서는 플러그인 리포지토리에 보고해 주세요.\n\n만약 \"타사\" 플러그인이 서비스/법인의 ToS/DMCA를 위반하는 경우, \"타사\" 플러그인 저자 또는 호스팅 플랫폼(예: GitHub/Codeberg)에 조치를 취하도록 요청해 주세요. 위에 나열된 (\"타사\"로 표시된) 플러그인은 모두 공개/커뮤니티에서 유지 관리하는 플러그인입니다. 저희는 이를 큐레이션하지 않으므로 어떠한 조치도 취할 수 없습니다.\n\n';
-
-  @override
-  String get input_does_not_match_format => '입력이 필요한 형식과 일치하지 않습니다';
 
   @override
   String get plugins => '플러그인';

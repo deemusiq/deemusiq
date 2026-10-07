@@ -1917,30 +1917,6 @@ abstract class AppLocalizations {
   /// **'Song Link'**
   String get song_link;
 
-  /// No description provided for @skip_this_nonsense.
-  ///
-  /// In en, this message translates to:
-  /// **'Skip this nonsense'**
-  String get skip_this_nonsense;
-
-  /// No description provided for @freedom_of_music.
-  ///
-  /// In en, this message translates to:
-  /// **'“Freedom of Music”'**
-  String get freedom_of_music;
-
-  /// No description provided for @freedom_of_music_palm.
-  ///
-  /// In en, this message translates to:
-  /// **'“Freedom of Music in the palm of your hand”'**
-  String get freedom_of_music_palm;
-
-  /// No description provided for @get_started.
-  ///
-  /// In en, this message translates to:
-  /// **'Let\'s get started'**
-  String get get_started;
-
   /// No description provided for @youtube_source_description.
   ///
   /// In en, this message translates to:
@@ -1977,59 +1953,11 @@ abstract class AppLocalizations {
   /// **'Select Audio Source'**
   String get select_audio_source;
 
-  /// No description provided for @endless_playback_description.
-  ///
-  /// In en, this message translates to:
-  /// **'Automatically append new songs\nto the end of the queue'**
-  String get endless_playback_description;
-
-  /// No description provided for @choose_your_region.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose your region'**
-  String get choose_your_region;
-
-  /// No description provided for @choose_your_region_description.
-  ///
-  /// In en, this message translates to:
-  /// **'This will help DeeMusiq show you the right content\nfor your location.'**
-  String get choose_your_region_description;
-
-  /// No description provided for @choose_your_language.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose your language'**
-  String get choose_your_language;
-
-  /// No description provided for @help_project_grow.
-  ///
-  /// In en, this message translates to:
-  /// **'Help this project grow'**
-  String get help_project_grow;
-
-  /// No description provided for @help_project_grow_description.
-  ///
-  /// In en, this message translates to:
-  /// **'DeeMusiq is an open-source project. You can help this project grow by contributing to the project, reporting bugs, or suggesting new features.'**
-  String get help_project_grow_description;
-
   /// No description provided for @contribute_on_github.
   ///
   /// In en, this message translates to:
   /// **'Contribute on GitHub'**
   String get contribute_on_github;
-
-  /// No description provided for @visit_our_website.
-  ///
-  /// In en, this message translates to:
-  /// **'Visit our website'**
-  String get visit_our_website;
-
-  /// No description provided for @donate_on_open_collective.
-  ///
-  /// In en, this message translates to:
-  /// **'Donate on Open Collective'**
-  String get donate_on_open_collective;
 
   /// No description provided for @browse_anonymously.
   ///
@@ -2319,12 +2247,6 @@ abstract class AppLocalizations {
   /// **'{count} plays'**
   String count_plays(Object count);
 
-  /// No description provided for @streaming_fees_hypothetical.
-  ///
-  /// In en, this message translates to:
-  /// **'Streaming fees (hypothetical)'**
-  String get streaming_fees_hypothetical;
-
   /// No description provided for @minutes_listened.
   ///
   /// In en, this message translates to:
@@ -2355,12 +2277,6 @@ abstract class AppLocalizations {
   /// **'Copied {shareUrl} to clipboard'**
   String copied_shareurl_to_clipboard(Object shareUrl);
 
-  /// No description provided for @hipotetical_calculation.
-  ///
-  /// In en, this message translates to:
-  /// **'*This is calculated based on average online music streaming platform\'s per stream\npayout of \$0.003 to \$0.005. This is a hypothetical\ncalculation to give user insight about how much they\nwould have paid to the artists if they were to listen\ntheir song in different music streaming platform.'**
-  String get hipotetical_calculation;
-
   /// No description provided for @count_mins.
   ///
   /// In en, this message translates to:
@@ -2390,12 +2306,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Streamed overall'**
   String get summary_streamed_overall;
-
-  /// No description provided for @summary_owed_to_artists.
-  ///
-  /// In en, this message translates to:
-  /// **'Owed to artists\nthis month'**
-  String get summary_owed_to_artists;
 
   /// No description provided for @summary_artists.
   ///
@@ -2432,12 +2342,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Were on repeat'**
   String get summary_were_on_repeat;
-
-  /// No description provided for @total_money.
-  ///
-  /// In en, this message translates to:
-  /// **'Total {money}'**
-  String total_money(Object money);
 
   /// No description provided for @webview_not_found.
   ///
@@ -2775,6 +2679,36 @@ abstract class AppLocalizations {
   /// **'Retry'**
   String get retry;
 
+  /// No description provided for @rate_this_track.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate this track'**
+  String get rate_this_track;
+
+  /// No description provided for @rating_like.
+  ///
+  /// In en, this message translates to:
+  /// **'Like'**
+  String get rating_like;
+
+  /// No description provided for @rating_dislike.
+  ///
+  /// In en, this message translates to:
+  /// **'Dislike'**
+  String get rating_dislike;
+
+  /// No description provided for @rating_save_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save your rating — try again.'**
+  String get rating_save_failed;
+
+  /// No description provided for @rating_summary.
+  ///
+  /// In en, this message translates to:
+  /// **'{total, plural, =0{No ratings yet} one{{pct}% like this · 1 rating} other{{pct}% like this · {total} ratings}}'**
+  String rating_summary(int pct, int total);
+
   /// No description provided for @no_default_metadata_provider_selected.
   ///
   /// In en, this message translates to:
@@ -2937,12 +2871,6 @@ abstract class AppLocalizations {
   /// **'Install'**
   String get install;
 
-  /// No description provided for @install_a_metadata_provider.
-  ///
-  /// In en, this message translates to:
-  /// **'Install a Metadata Provider'**
-  String get install_a_metadata_provider;
-
   /// No description provided for @no_tracks_playing.
   ///
   /// In en, this message translates to:
@@ -2978,12 +2906,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The DeeMusiq team does not hold any responsibility (including legal) for any \"Third-party\" plugins.\nPlease use them at your own risk. For any bugs/issues, please report them to the plugin repository.\n\nIf any \"Third-party\" plugin is breaking ToS/DMCA of any service/legal entity, please ask the \"Third-party\" plugin author or the hosting platform .e.g GitHub/Codeberg to take action. Above listed (\"Third-party\" labelled) are all public/community maintained plugins. We\'re not curating them, so we cannot take any action on them.\n\n'**
   String get third_party_plugin_dmca_notice;
-
-  /// No description provided for @input_does_not_match_format.
-  ///
-  /// In en, this message translates to:
-  /// **'Input doesn\'t match the required format'**
-  String get input_does_not_match_format;
 
   /// No description provided for @plugins.
   ///

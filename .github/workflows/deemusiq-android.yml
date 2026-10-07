@@ -283,6 +283,17 @@ jobs:
           cat dist/DeeMusiq.apk.sha256
           ls -la dist
 
+      - name: Verify release artifact
+        # Hard gate: fails the run before upload if the TLS pin, channel key,
+        # payment HMAC or signing-cert pin didn't bake correctly. See
+        # tool/verify_release.sh for the failure classes this catches.
+        env:
+          DEEMUSIQ_BACKEND_URL: ${{ vars.DEEMUSIQ_BACKEND_URL }}
+          DEEMUSIQ_CHANNEL_KEY: ${{ secrets.DEEMUSIQ_CHANNEL_KEY }}
+          DEEMUSIQ_PAYMENT_HMAC_SECRET: ${{ secrets.DEEMUSIQ_PAYMENT_HMAC_SECRET }}
+          DEEMUSIQ_CERT_SHA256: ${{ secrets.DEEMUSIQ_CERT_SHA256 }}
+        run: bash tool/verify_release.sh android
+
       - uses: actions/upload-artifact@v4
         with:
           name: DeeMusiq-apk

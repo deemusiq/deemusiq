@@ -964,18 +964,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get song_link => 'Şarkı bağlantısı';
 
   @override
-  String get skip_this_nonsense => 'Bu saçmalığı atla';
-
-  @override
-  String get freedom_of_music => '“Müzik özgürlüğü”';
-
-  @override
-  String get freedom_of_music_palm => '“Müzik özgürlüğü avucunuzun içinde”';
-
-  @override
-  String get get_started => 'Haydi başlayalım';
-
-  @override
   String get youtube_source_description =>
       'Tavsiye edilir ve en iyi şekilde çalışır.';
 
@@ -999,34 +987,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get select_audio_source => 'Ses kaynağını seçin';
 
   @override
-  String get endless_playback_description =>
-      'Yeni şarkıları otomatik olarak\nkuyruğun sonuna ekle';
-
-  @override
-  String get choose_your_region => 'Bölgenizi seçin';
-
-  @override
-  String get choose_your_region_description =>
-      'Bu, DeeMusiq\'un konumunuza uygun içerikleri göstermesine yardımcı olacaktır.';
-
-  @override
-  String get choose_your_language => 'Dilinizi seçin';
-
-  @override
-  String get help_project_grow => 'Bu projenin büyümesine yardımcı olun';
-
-  @override
-  String get help_project_grow_description =>
-      'DeeMusiq açık kaynaklı bir projedir. Projeye katkıda bulunarak, hataları bildirerek veya yeni özellikler önererek bu projenin büyümesine yardımcı olabilirsiniz.';
-
-  @override
   String get contribute_on_github => 'GitHub\'da katkıda bulun';
-
-  @override
-  String get visit_our_website => 'Visit our website';
-
-  @override
-  String get donate_on_open_collective => 'Open Collective\'de bağış yap';
 
   @override
   String get browse_anonymously => 'Anonim olarak giriş yap';
@@ -1189,10 +1150,6 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get streaming_fees_hypothetical =>
-      '*Spotify\'ın akış başına ödeme miktarına\n\$0.003 ile \$0.005 arasında hesaplanmıştır. Bu, kullanıcıya\nSpotify\'da şarkılarını dinlerse sanatçılara ne kadar ödeme\nyapmış olabileceğini göstermek için hipotetik bir hesaplamadır.';
-
-  @override
   String get minutes_listened => 'Dinlenilen Dakikalar';
 
   @override
@@ -1212,10 +1169,6 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get hipotetical_calculation =>
-      '*Bu, çevrimiçi müzik akışı platformlarının ortalama akış başına \$0,003 ile \$0,005 arasındaki ödemesine göre hesaplanmıştır. Bu, kullanıcının farklı müzik akışı platformlarında şarkılarını dinleselerdi sanatçılara ne kadar ödeme yapacaklarına dair fikir vermek için yapılan varsayımsal bir hesaplamadır.';
-
-  @override
   String count_mins(Object minutes) {
     return '$minutes dk';
   }
@@ -1231,9 +1184,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get summary_streamed_overall => 'Genel olarak akış';
-
-  @override
-  String get summary_owed_to_artists => 'Sanatçılara borç\nbu ay';
 
   @override
   String get summary_artists => 'sanatçının';
@@ -1252,11 +1202,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get summary_were_on_repeat => 'Tekrarda vardı';
-
-  @override
-  String total_money(Object money) {
-    return 'Toplam $money';
-  }
 
   @override
   String get webview_not_found => 'Webview bulunamadı';
@@ -1462,6 +1407,30 @@ class AppLocalizationsTr extends AppLocalizations {
   String get retry => 'Tekrar dene';
 
   @override
+  String get rate_this_track => 'Rate this track';
+
+  @override
+  String get rating_like => 'Like';
+
+  @override
+  String get rating_dislike => 'Dislike';
+
+  @override
+  String get rating_save_failed => 'Couldn\'t save your rating — try again.';
+
+  @override
+  String rating_summary(int pct, int total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$pct% like this · $total ratings',
+      one: '$pct% like this · 1 rating',
+      zero: 'No ratings yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get no_default_metadata_provider_selected =>
       'Varsayılan bir meta veri sağlayıcısı ayarlanmadı';
 
@@ -1557,9 +1526,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get install => 'Yükle';
 
   @override
-  String get install_a_metadata_provider => 'Bir Meta Veri Sağlayıcısı Yükle';
-
-  @override
   String get no_tracks_playing => 'Şu anda çalınan bir Parça yok';
 
   @override
@@ -1578,9 +1544,6 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get third_party_plugin_dmca_notice =>
       'DeeMusiq ekibi, herhangi bir \"Üçüncü taraf\" eklentisi için herhangi bir sorumluluk (yasal olanlar dahil) kabul etmez.\nLütfen bunları kendi riskinizde kullanın. Herhangi bir hata/sorun için lütfen bunları eklenti deposuna bildirin.\n\nHerhangi bir \"Üçüncü taraf\" eklentisi bir hizmetin/yasal varlığın ToS/DMCA\'sını ihlal ediyorsa, lütfen \"Üçüncü taraf\" eklenti yazarından veya barındırma platformundan, örneğin GitHub/Codeberg\'den harekete geçmesini isteyin. Yukarıda listelenen (\"Üçüncü taraf\" olarak etiketlenen) eklentilerin tümü genel/topluluk tarafından sürdürülen eklentilerdir. Biz bunları küratörlüğünü yapmıyoruz, bu yüzden onlar üzerinde herhangi bir işlem yapamayız.\n\n';
-
-  @override
-  String get input_does_not_match_format => 'Girdi, gerekli biçimle eşleşmiyor';
 
   @override
   String get plugins => 'Eklentiler';

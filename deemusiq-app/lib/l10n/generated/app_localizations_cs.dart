@@ -960,18 +960,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get song_link => 'Odkaz na skladbu';
 
   @override
-  String get skip_this_nonsense => 'Přeskočit tenhle nesmysl';
-
-  @override
-  String get freedom_of_music => '“Svobodná hudba”';
-
-  @override
-  String get freedom_of_music_palm => '“Svobodná hudba ve vaší dlani”';
-
-  @override
-  String get get_started => 'Začít';
-
-  @override
   String get youtube_source_description => 'Doporučeno a funguje nejlépe.';
 
   @override
@@ -994,34 +982,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get select_audio_source => 'Vyberte zdroj zvuku';
 
   @override
-  String get endless_playback_description =>
-      'Automaticky přidávat nové skladby\nna konec fronty';
-
-  @override
-  String get choose_your_region => 'Vyberte svůj region';
-
-  @override
-  String get choose_your_region_description =>
-      'To pomůže DeeMusiq ukázat vám správný obsah\npro vaši lokalitu.';
-
-  @override
-  String get choose_your_language => 'Vyberte svůj jazyk';
-
-  @override
-  String get help_project_grow => 'Pomozte tomuto projektu růst';
-
-  @override
-  String get help_project_grow_description =>
-      'DeeMusiq je open-source projekt. Můžete pomoci tomuto projektu růst tím, že přispějete do projektu, nahlásíte chyby nebo navrhnete nové funkce.';
-
-  @override
   String get contribute_on_github => 'Přispějte na GitHub';
-
-  @override
-  String get visit_our_website => 'Visit our website';
-
-  @override
-  String get donate_on_open_collective => 'Darujte na Open Collective';
 
   @override
   String get browse_anonymously => 'Procházet anonymně';
@@ -1184,10 +1145,6 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String get streaming_fees_hypothetical =>
-      'Poplatky za streamování (hypotetické)';
-
-  @override
   String get minutes_listened => 'Poslouchané minuty';
 
   @override
@@ -1207,10 +1164,6 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String get hipotetical_calculation =>
-      '*Toto je vypočítáno na základě průměrného výplatu za přehrání 0,003–0,005 USD na online hudebních streamovacích platformách. Jedná se o hypotetický výpočet, který má uživateli ukázat, kolik by umělci dostali, pokud by jeho píseň poslouchal na jiné platformě.';
-
-  @override
   String count_mins(Object minutes) {
     return '$minutes minut';
   }
@@ -1226,9 +1179,6 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get summary_streamed_overall => 'Streamováno celkově';
-
-  @override
-  String get summary_owed_to_artists => 'Dluženo umělcům\nTento měsíc';
 
   @override
   String get summary_artists => 'umělců';
@@ -1247,11 +1197,6 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get summary_were_on_repeat => 'Byly na opakování';
-
-  @override
-  String total_money(Object money) {
-    return 'Celkem $money';
-  }
 
   @override
   String get webview_not_found => 'Webview nebyl nalezen';
@@ -1455,6 +1400,30 @@ class AppLocalizationsCs extends AppLocalizations {
   String get retry => 'Zkusit znovu';
 
   @override
+  String get rate_this_track => 'Rate this track';
+
+  @override
+  String get rating_like => 'Like';
+
+  @override
+  String get rating_dislike => 'Dislike';
+
+  @override
+  String get rating_save_failed => 'Couldn\'t save your rating — try again.';
+
+  @override
+  String rating_summary(int pct, int total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$pct% like this · $total ratings',
+      one: '$pct% like this · 1 rating',
+      zero: 'No ratings yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get no_default_metadata_provider_selected =>
       'Nemáte nastaven výchozí poskytovatel metadat';
 
@@ -1548,10 +1517,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get install => 'Instalovat';
 
   @override
-  String get install_a_metadata_provider =>
-      'Nainstalovat poskytovatele metadat';
-
-  @override
   String get no_tracks_playing => 'Momentálně není přehrávána žádná skladba';
 
   @override
@@ -1570,10 +1535,6 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String get third_party_plugin_dmca_notice =>
       'Tým DeeMusiq nenese žádnou odpovědnost (včetně právní) za pluginy „třetích stran“.\nPoužívejte je na vlastní riziko. Pro chyby/problémy je nahlaste do repozitáře pluginu.\n\nPokud jakýkoli plugin „třetí strany“ porušuje podmínky služby nebo DMCA kteréhokoli poskytovatele či právního subjektu, požádejte autora pluginu nebo hostingovou platformu (např. GitHub/Codeberg), aby podnikla kroky. Pluginy označené jako „třetí strana“ jsou otevřené a spravovány komunitou; nespravujeme je, tudíž nemůžeme jednat.\n\n';
-
-  @override
-  String get input_does_not_match_format =>
-      'Vstup neodpovídá požadovanému formátu';
 
   @override
   String get plugins => 'Pluginy';

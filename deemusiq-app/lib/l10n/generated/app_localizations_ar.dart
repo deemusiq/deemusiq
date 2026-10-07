@@ -965,18 +965,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get song_link => 'رابط الأغنية';
 
   @override
-  String get skip_this_nonsense => 'تخطي هذه الهراء';
-
-  @override
-  String get freedom_of_music => '“حرية الموسيقى”';
-
-  @override
-  String get freedom_of_music_palm => '“حرية الموسيقى في متناول يدك”';
-
-  @override
-  String get get_started => 'لنبدأ';
-
-  @override
   String get youtube_source_description => 'موصى به ويعمل بشكل أفضل.';
 
   @override
@@ -998,34 +986,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get select_audio_source => 'اختر مصدر الصوت';
 
   @override
-  String get endless_playback_description =>
-      'إلحاق الأغاني الجديدة تلقائيًا\nإلى نهاية قائمة التشغيل';
-
-  @override
-  String get choose_your_region => 'اختر منطقتك';
-
-  @override
-  String get choose_your_region_description =>
-      'سيساعدك هذا في عرض المحتوى المناسب\nلموقعك.';
-
-  @override
-  String get choose_your_language => 'اختر لغتك';
-
-  @override
-  String get help_project_grow => 'ساعد في نمو هذا المشروع';
-
-  @override
-  String get help_project_grow_description =>
-      'DeeMusiq هو مشروع مفتوح المصدر. يمكنك مساعدة هذا المشروع في النمو عن طريق المساهمة في المشروع، أو الإبلاغ عن الأخطاء، أو اقتراح ميزات جديدة.';
-
-  @override
   String get contribute_on_github => 'المساهمة على GitHub';
-
-  @override
-  String get visit_our_website => 'Visit our website';
-
-  @override
-  String get donate_on_open_collective => 'التبرع على Open Collective';
 
   @override
   String get browse_anonymously => 'تصفح بشكل مجهول';
@@ -1188,9 +1149,6 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get streaming_fees_hypothetical => 'رسوم البث (افتراضية)';
-
-  @override
   String get minutes_listened => 'الدقائق المستمعة';
 
   @override
@@ -1210,10 +1168,6 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get hipotetical_calculation =>
-      '*تمّ الحساب بمعدّل دفعة تتراوح بين 0.003–0.005 دولار أمريكي لكل تشغيل على منصات الموسيقى عبر الإنترنت. هذا حساب افتراضي لتوضيح للمستخدم مقدار ما كان سيدفعه للفنانين لو استمع إلى أغنيتهم على منصات مختلفة.';
-
-  @override
   String count_mins(Object minutes) {
     return '$minutes دقيقة';
   }
@@ -1229,9 +1183,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get summary_streamed_overall => 'بث بشكل عام';
-
-  @override
-  String get summary_owed_to_artists => 'مدين للفنانين\nهذا الشهر';
 
   @override
   String get summary_artists => 'الفنانين';
@@ -1250,11 +1201,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get summary_were_on_repeat => 'كانت على التكرار';
-
-  @override
-  String total_money(Object money) {
-    return 'المجموع $money';
-  }
 
   @override
   String get webview_not_found => 'لم يتم العثور على Webview';
@@ -1456,6 +1402,30 @@ class AppLocalizationsAr extends AppLocalizations {
   String get retry => 'إعادة المحاولة';
 
   @override
+  String get rate_this_track => 'Rate this track';
+
+  @override
+  String get rating_like => 'Like';
+
+  @override
+  String get rating_dislike => 'Dislike';
+
+  @override
+  String get rating_save_failed => 'Couldn\'t save your rating — try again.';
+
+  @override
+  String rating_summary(int pct, int total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$pct% like this · $total ratings',
+      one: '$pct% like this · 1 rating',
+      zero: 'No ratings yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get no_default_metadata_provider_selected =>
       'لم تقُم بتعيين مزود بيانات افتراضي';
 
@@ -1549,9 +1519,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get install => 'تثبيت';
 
   @override
-  String get install_a_metadata_provider => 'تثبيت مزوّد بيانات';
-
-  @override
   String get no_tracks_playing => 'لا توجد مقاطع تعمل حاليًا';
 
   @override
@@ -1570,10 +1537,6 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get third_party_plugin_dmca_notice =>
       'لا تتحمّل فريق DeeMusiq أي مسؤولية (بما في ذلك القانونية) عن أي من الإضافات “لطرف ثالث”.\nاستخدمها على مسؤوليتك الخاصّة. لأيّة أخطاء/مشكلات، يُرجى الإبلاغ عنها في مستودع الإضافة.\n\nإذا كانت أي إضافة “لطرف ثالث” تنتهك شروط الخدمة أو قانون DMCA الخاص بأي خدمة أو كيان قانوني، فيُرجى طلب اتخاذ إجراء من مؤلف الإضافة أو منصة الاستضافة مثل GitHub/Codeberg. الإضافات المدرجة كـ “لطرف ثالث” هي مفعّلة ومُدارة من المجتمع، وليس لدينا صلاحية إدارتها أو التدخل فيها.\n\n';
-
-  @override
-  String get input_does_not_match_format =>
-      'المدخل لا يتوافق مع التنسيق المطلوب';
 
   @override
   String get plugins => 'الإضافات';

@@ -961,18 +961,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get song_link => 'ลิงค์เพลง';
 
   @override
-  String get skip_this_nonsense => 'ข้ามสิ่งไร้สาระนี้';
-
-  @override
-  String get freedom_of_music => '“เสรีภาพแห่งเสียงเพลง”';
-
-  @override
-  String get freedom_of_music_palm => '“เสรีภาพแห่งเสียงเพลง ในมือของคุณ”';
-
-  @override
-  String get get_started => 'เริ่มต้น';
-
-  @override
   String get youtube_source_description => 'แนะนำและใช้งานได้ดีที่สุด';
 
   @override
@@ -995,33 +983,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get select_audio_source => 'เลือกแหล่งเสียง';
 
   @override
-  String get endless_playback_description => 'เพิ่มเพลงใหม่ลงในคิวโดยอัตโนมัติ';
-
-  @override
-  String get choose_your_region => 'เลือกภูมิภาคของคุณ';
-
-  @override
-  String get choose_your_region_description =>
-      'สิ่งนี้จะช่วยให้ DeeMusiq แสดงเนื้อหาที่เหมาะสมสำหรับคุณ';
-
-  @override
-  String get choose_your_language => 'เลือกภาษาของคุณ';
-
-  @override
-  String get help_project_grow => 'ช่วยให้โครงการนี้เติบโต';
-
-  @override
-  String get help_project_grow_description =>
-      'DeeMusiq เป็นโครงการโอเพนซอร์ส คุณสามารถช่วยให้โครงการนี้เติบโตได้โดยการมีส่วนร่วมในโครงการ รายงานข้อบกพร่อง หรือเสนอคุณสมบัติใหม่';
-
-  @override
   String get contribute_on_github => 'มีส่วนร่วมบน GitHub';
-
-  @override
-  String get visit_our_website => 'Visit our website';
-
-  @override
-  String get donate_on_open_collective => 'บริจาคบน Open Collective';
 
   @override
   String get browse_anonymously => 'เรียกดูแบบไม่ระบุตัวตน';
@@ -1183,10 +1145,6 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get streaming_fees_hypothetical =>
-      '*คำนวณจากการจ่ายเงินต่อการสตรีมของ Spotify\nระหว่าง \$0.003 ถึง \$0.005 นี่เป็นการคำนวณสมมุติ\nเพื่อให้ข้อมูลแก่ผู้ใช้เกี่ยวกับจำนวนเงินที่พวกเขา\nอาจจะจ่ายให้กับศิลปินหากพวกเขาฟังเพลงของพวกเขาใน Spotify';
-
-  @override
   String get minutes_listened => 'เวลาที่ฟัง';
 
   @override
@@ -1206,10 +1164,6 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get hipotetical_calculation =>
-      '*การคำนวณนี้อิงจากค่าเฉลี่ยการจ่ายเงินต่อสตรีมของแพลตฟอร์มสตรีมมิ่งเพลงออนไลน์ที่ \$0.003 ถึง \$0.005 นี่เป็นการคำนวณสมมติฐานเพื่อให้ผู้ใช้เข้าใจว่าพวกเขาจะต้องจ่ายเงินให้ศิลปินเท่าไหร่หากพวกเขาฟังเพลงบนแพลตฟอร์มสตรีมมิ่งเพลงที่แตกต่างกัน';
-
-  @override
   String count_mins(Object minutes) {
     return '$minutes นาที';
   }
@@ -1225,9 +1179,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get summary_streamed_overall => 'สตรีมทั้งหมด';
-
-  @override
-  String get summary_owed_to_artists => 'ค้างชำระให้ศิลปิน\nในเดือนนี้';
 
   @override
   String get summary_artists => 'ศิลปิน';
@@ -1246,11 +1197,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get summary_were_on_repeat => 'อยู่ในโหมดซ้ำ';
-
-  @override
-  String total_money(Object money) {
-    return 'รวม $money';
-  }
 
   @override
   String get webview_not_found => 'ไม่พบ Webview';
@@ -1452,6 +1398,30 @@ class AppLocalizationsTh extends AppLocalizations {
   String get retry => 'ลองใหม่';
 
   @override
+  String get rate_this_track => 'Rate this track';
+
+  @override
+  String get rating_like => 'Like';
+
+  @override
+  String get rating_dislike => 'Dislike';
+
+  @override
+  String get rating_save_failed => 'Couldn\'t save your rating — try again.';
+
+  @override
+  String rating_summary(int pct, int total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$pct% like this · $total ratings',
+      one: '$pct% like this · 1 rating',
+      zero: 'No ratings yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get no_default_metadata_provider_selected =>
       'คุณไม่ได้ตั้งค่าผู้ให้บริการเมตาดาต้าเริ่มต้น';
 
@@ -1545,9 +1515,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get install => 'ติดตั้ง';
 
   @override
-  String get install_a_metadata_provider => 'ติดตั้งผู้ให้บริการเมตาดาต้า';
-
-  @override
   String get no_tracks_playing => 'ขณะนี้ไม่มีเพลงที่กำลังเล่นอยู่';
 
   @override
@@ -1566,9 +1533,6 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get third_party_plugin_dmca_notice =>
       'ทีม DeeMusiq ไม่รับผิดชอบใดๆ (รวมถึงทางกฎหมาย) สำหรับปลั๊กอิน \"บุคคลที่สาม\" ใดๆ\nโปรดใช้งานด้วยความเสี่ยงของคุณเอง สำหรับข้อบกพร่อง/ปัญหาใดๆ โปรดรายงานไปยังที่เก็บปลั๊กอิน\n\nหากปลั๊กอิน \"บุคคลที่สาม\" ใดๆ ละเมิด ToS/DMCA ของบริการ/นิติบุคคลใดๆ โปรดขอให้ผู้เขียนปลั๊กอิน \"บุคคลที่สาม\" หรือแพลตฟอร์มโฮสติ้ง เช่น GitHub/Codeberg ดำเนินการ ที่ระบุไว้ข้างต้น (ที่ติดป้าย \"บุคคลที่สาม\") เป็นปลั๊กอินสาธารณะ/ที่ดูแลโดยชุมชนทั้งหมด เราไม่ได้จัดการดูแล ดังนั้นเราจึงไม่สามารถดำเนินการใดๆ กับพวกเขาได้\n\n';
-
-  @override
-  String get input_does_not_match_format => 'อินพุตไม่ตรงกับรูปแบบที่ต้องการ';
 
   @override
   String get plugins => 'ปลั๊กอิน';

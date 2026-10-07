@@ -963,18 +963,16 @@ class _MonetizationPanel extends HookConsumerWidget {
 
   /// Must stay in sync with the backend's payout-method validation
   /// (`payoutMethodSchema` in backend/src/routes/creatorMonetization.ts:
-  /// `z.enum(["payshap", "bank", "manual", "card"])` on PUT
+  /// `z.enum(["payshap", "bank", "manual"])` on PUT
   /// /creator/payouts/method) — anything else is rejected server-side.
+  /// A legacy saved "card" method simply isn't pre-selected in load(); the
+  /// raw value still renders in the "Saved:" line below.
   static const _payoutMethodKinds = {
     "payshap": "PayShap",
     "bank": "Bank transfer",
     "manual": "Manual",
-    "card": "Card",
   };
 
-  /// Cash-out requests accept fewer rails than the saved-method PUT above:
-  /// the backend's payout-request schema rejects "card"
-  /// (payshap/bank/manual only), so the cash-out Select must not offer it.
   static const _cashoutMethodKinds = {
     "payshap": "PayShap",
     "bank": "Bank transfer",
@@ -985,7 +983,6 @@ class _MonetizationPanel extends HookConsumerWidget {
     "payshap": "PayShap phone number",
     "bank": "Account number / branch code",
     "manual": "Payout details",
-    "card": "Card reference",
   };
 
   @override

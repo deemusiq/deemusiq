@@ -964,18 +964,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String get song_link => 'গানের লিংক';
 
   @override
-  String get skip_this_nonsense => 'এই বাকবাস পালান';
-
-  @override
-  String get freedom_of_music => '“সংগীতের স্বাধীনতা”';
-
-  @override
-  String get freedom_of_music_palm => '“তোমার হাতের কাছে সংগীতের স্বাধীনতা”';
-
-  @override
-  String get get_started => 'শুরু করা যাক';
-
-  @override
   String get youtube_source_description => 'প্রস্তাবিত এবং সেরা কাজ করে।';
 
   @override
@@ -997,34 +985,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get select_audio_source => 'অডিও উৎস নির্বাচন করুন';
 
   @override
-  String get endless_playback_description =>
-      'নতুন গান নিজে নিজে প্লেলিস্টের শেষে\nসংযুক্ত করুন';
-
-  @override
-  String get choose_your_region => 'আপনার অঞ্চল নির্বাচন করুন';
-
-  @override
-  String get choose_your_region_description =>
-      'এটি স্পটুবে আপনাকে আপনার অবস্থানের জন্য ঠিক কন্টেন্ট দেখানোর সাহায্য করবে।';
-
-  @override
-  String get choose_your_language => 'আপনার ভাষা নির্বাচন করুন';
-
-  @override
-  String get help_project_grow => 'এই প্রকল্পের বৃদ্ধি করুন';
-
-  @override
-  String get help_project_grow_description =>
-      'স্পটুব একটি ওপেন সোর্স প্রকল্প। আপনি প্রকল্পে অবদান রাখেন, বাগ রিপোর্ট করেন, বা নতুন বৈশিষ্ট্যগুলি সুপারিশ করেন।';
-
-  @override
   String get contribute_on_github => 'গিটহাবে অবদান রাখুন';
-
-  @override
-  String get visit_our_website => 'Visit our website';
-
-  @override
-  String get donate_on_open_collective => 'ওপেন কলেক্টিভে অনুদান করুন';
 
   @override
   String get browse_anonymously => 'অজানে ব্রাউজ করুন';
@@ -1187,9 +1148,6 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
-  String get streaming_fees_hypothetical => 'স্ট্রিমিং ফি (ধারণাগত)';
-
-  @override
   String get minutes_listened => 'শুনেছেন মিনিট';
 
   @override
@@ -1209,10 +1167,6 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
-  String get hipotetical_calculation =>
-      '*এটি নিরূপণ করা হয়েছে গড় অনলাইন মিউজিক স্ট্রিমিং প্ল্যাটফর্মের প্রতি স্ট্রিম 0.003–0.005 USD পেআউটের ভিত্তিতে। এটি একটি কাল্পনিক হিসাব যা ব্যবহারকারীকে ধারণা দিতে পারে তারা অন্যান্য স্ট্রিমিং প্ল্যাটফর্মে একই গান শোনার জন্য শিল্পীদের কত টাকা দিয়েছেন হোক।';
-
-  @override
   String count_mins(Object minutes) {
     return '$minutes মিনিট';
   }
@@ -1228,9 +1182,6 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get summary_streamed_overall => 'মোট স্ট্রিম';
-
-  @override
-  String get summary_owed_to_artists => 'এই মাসে\nশিল্পীদেরকে ঋণী';
 
   @override
   String get summary_artists => 'শিল্পীর';
@@ -1249,11 +1200,6 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get summary_were_on_repeat => 'পুনরাবৃত্তিতে ছিল';
-
-  @override
-  String total_money(Object money) {
-    return 'মোট $money';
-  }
 
   @override
   String get webview_not_found => 'ওয়েবভিউ পাওয়া যায়নি';
@@ -1456,6 +1402,30 @@ class AppLocalizationsBn extends AppLocalizations {
   String get retry => 'পুনরায় চেষ্টা করুন';
 
   @override
+  String get rate_this_track => 'Rate this track';
+
+  @override
+  String get rating_like => 'Like';
+
+  @override
+  String get rating_dislike => 'Dislike';
+
+  @override
+  String get rating_save_failed => 'Couldn\'t save your rating — try again.';
+
+  @override
+  String rating_summary(int pct, int total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$pct% like this · $total ratings',
+      one: '$pct% like this · 1 rating',
+      zero: 'No ratings yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get no_default_metadata_provider_selected =>
       'আপনি কোনো ডিফল্ট মেটাডেটা প্রদানকারী সেট করেননি';
 
@@ -1548,10 +1518,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String get install => 'ইনস্টল করুন';
 
   @override
-  String get install_a_metadata_provider =>
-      'একটি মেটাডেটা প্রদানকারী ইনস্টল করুন';
-
-  @override
   String get no_tracks_playing => 'বর্তমানে কোনো ট্র্যাক শোনা হচ্ছে না';
 
   @override
@@ -1570,10 +1536,6 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get third_party_plugin_dmca_notice =>
       'DeeMusiq দল কোনো “তৃতীয় পক্ষ” প্লাগইনের জন্য কোনো (আইনগত সহ) দায়িত্ব নেয় না। নিজের বিপদে ব্যবহার করুন। কোনো বাগ/সমস্যা হলে প্লাগইন রেপোজিটরিতে জানাতে অনুরোধ করা হচ্ছে।\n\nযদি কোনো “তৃতীয় পক্ষ” প্লাগইন কোনো পরিষেবা/আইনগত সংস্থার ToS/DMCA ভূঙ্গ করে, অনুগ্রহ করে “তৃতীয় পক্ষ” প্লাগইনের লেখক বা হোস্টিং প্ল্যাটফর্মে (যেমন GitHub/Codeberg) পদক্ষেপ নিতে বলুন। “তৃতীয় পক্ষ” লেবেলযুক্ত যুক্তিগুলি সকলই পাবলিক/কমিউনিটি দ্বারা রক্ষণাবেক্ষণ করা হয়; আমরা সেগুলি কিউরেট করি না, তাই আমরা কোনো পদক্ষেপ নিতে পারি না।\n\n';
-
-  @override
-  String get input_does_not_match_format =>
-      'ইনপুট প্রয়োজনীয় ফরম্যাটের সাথে মেলে না';
 
   @override
   String get plugins => 'প্লাগইন';

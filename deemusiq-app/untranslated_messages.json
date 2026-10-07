@@ -1,6 +1,5 @@
 {
   "ar": [
-    "visit_our_website",
     "yt_dlp_install_title",
     "yt_dlp_install_phase_checking",
     "yt_dlp_install_phase_downloading",
@@ -14,6 +13,11 @@
     "yt_dlp_install_retry",
     "yt_dlp_install_failed_message",
     "yt_dlp_install_managed_message",
+    "rate_this_track",
+    "rating_like",
+    "rating_dislike",
+    "rating_save_failed",
+    "rating_summary",
     "confirm_age_18",
     "birth_year_hint",
     "must_enter_valid_birth_year",
@@ -35,7 +39,6 @@
   ],
 
   "bn": [
-    "visit_our_website",
     "yt_dlp_install_title",
     "yt_dlp_install_phase_checking",
     "yt_dlp_install_phase_downloading",
@@ -49,6 +52,11 @@
     "yt_dlp_install_retry",
     "yt_dlp_install_failed_message",
     "yt_dlp_install_managed_message",
+    "rate_this_track",
+    "rating_like",
+    "rating_dislike",
+    "rating_save_failed",
+    "rating_summary",
     "confirm_age_18",
     "birth_year_hint",
     "must_enter_valid_birth_year",
@@ -70,7 +78,6 @@
   ],
 
   "ca": [
-    "visit_our_website",
     "yt_dlp_install_title",
     "yt_dlp_install_phase_checking",
     "yt_dlp_install_phase_downloading",
@@ -84,6 +91,11 @@
     "yt_dlp_install_retry",
     "yt_dlp_install_failed_message",
     "yt_dlp_install_managed_message",
+    "rate_this_track",
+    "rating_like",
+    "rating_dislike",
+    "rating_save_failed",
+    "rating_summary",
     "confirm_age_18",
     "birth_year_hint",
     "must_enter_valid_birth_year",
@@ -105,7 +117,6 @@
   ],
 
   "cs": [
-    "visit_our_website",
     "yt_dlp_install_title",
     "yt_dlp_install_phase_checking",
     "yt_dlp_install_phase_downloading",
@@ -119,6 +130,11 @@
     "yt_dlp_install_retry",
     "yt_dlp_install_failed_message",
     "yt_dlp_install_managed_message",
+    "rate_this_track",
+    "rating_like",
+    "rating_dislike",
+    "rating_save_failed",
+    "rating_summary",
     "confirm_age_18",
     "birth_year_hint",
     "must_enter_valid_birth_year",
@@ -140,7 +156,6 @@
   ],
 
   "de": [
-    "visit_our_website",
     "yt_dlp_install_title",
     "yt_dlp_install_phase_checking",
     "yt_dlp_install_phase_downloading",
@@ -154,6 +169,11 @@
     "yt_dlp_install_retry",
     "yt_dlp_install_failed_message",
     "yt_dlp_install_managed_message",
+    "rate_this_track",
+    "rating_like",
+    "rating_dislike",
+    "rating_save_failed",
+    "rating_summary",
     "confirm_age_18",
     "birth_year_hint",
     "must_enter_valid_birth_year",
@@ -175,7 +195,6 @@
   ],
 
   "es": [
-    "visit_our_website",
     "yt_dlp_install_title",
     "yt_dlp_install_phase_checking",
     "yt_dlp_install_phase_downloading",
@@ -189,6 +208,11 @@
     "yt_dlp_install_retry",
     "yt_dlp_install_failed_message",
     "yt_dlp_install_managed_message",
+    "rate_this_track",
+    "rating_like",
+    "rating_dislike",
+    "rating_save_failed",
+    "rating_summary",
     "confirm_age_18",
     "birth_year_hint",
     "must_enter_valid_birth_year",
@@ -210,7 +234,6 @@
   ],
 
   "eu": [
-    "visit_our_website",
     "yt_dlp_install_title",
     "yt_dlp_install_phase_checking",
     "yt_dlp_install_phase_downloading",
@@ -224,6 +247,11 @@
     "yt_dlp_install_retry",
     "yt_dlp_install_failed_message",
     "yt_dlp_install_managed_message",
+    "rate_this_track",
+    "rating_like",
+    "rating_dislike",
+    "rating_save_failed",
+    "rating_summary",
     "confirm_age_18",
     "birth_year_hint",
     "must_enter_valid_birth_year",
@@ -245,7 +273,6 @@
   ],
 
   "fa": [
-    "visit_our_website",
     "yt_dlp_install_title",
     "yt_dlp_install_phase_checking",
     "yt_dlp_install_phase_downloading",
@@ -259,6 +286,11 @@
     "yt_dlp_install_retry",
     "yt_dlp_install_failed_message",
     "yt_dlp_install_managed_message",
+    "rate_this_track",
+    "rating_like",
+    "rating_dislike",
+    "rating_save_failed",
+    "rating_summary",
     "confirm_age_18",
     "birth_year_hint",
     "must_enter_valid_birth_year",
@@ -280,7 +312,6 @@
   ],
 
   "fi": [
-    "visit_our_website",
     "yt_dlp_install_title",
     "yt_dlp_install_phase_checking",
     "yt_dlp_install_phase_downloading",
@@ -294,6 +325,11 @@
     "yt_dlp_install_retry",
     "yt_dlp_install_failed_message",
     "yt_dlp_install_managed_message",
+    "rate_this_track",
+    "rating_like",
+    "rating_dislike",
+    "rating_save_failed",
+    "rating_summary",
     "confirm_age_18",
     "birth_year_hint",
     "must_enter_valid_birth_year",
@@ -315,7 +351,6 @@
   ],
 
   "fr": [
-    "visit_our_website",
     "yt_dlp_install_title",
     "yt_dlp_install_phase_checking",
     "yt_dlp_install_phase_downloading",
@@ -329,6 +364,11 @@
     "yt_dlp_install_retry",
     "yt_dlp_install_failed_message",
     "yt_dlp_install_managed_message",
+    "rate_this_track",
+    "rating_like",
+    "rating_dislike",
+    "rating_save_failed",
+    "rating_summary",
     "confirm_age_18",
     "birth_year_hint",
     "must_enter_valid_birth_year",
@@ -350,7 +390,6 @@
   ],
 
   "hi": [
-    "visit_our_website",
     "yt_dlp_install_title",
     "yt_dlp_install_phase_checking",
     "yt_dlp_install_phase_downloading",
@@ -364,6 +403,11 @@
     "yt_dlp_install_retry",
     "yt_dlp_install_failed_message",
     "yt_dlp_install_managed_message",
+    "rate_this_track",
+    "rating_like",
+    "rating_dislike",
+    "rating_save_failed",
+    "rating_summary",
     "confirm_age_18",
     "birth_year_hint",
     "must_enter_valid_birth_year",
@@ -385,7 +429,6 @@
   ],
 
   "id": [
-    "visit_our_website",
     "yt_dlp_install_title",
     "yt_dlp_install_phase_checking",
     "yt_dlp_install_phase_downloading",
@@ -399,6 +442,11 @@
     "yt_dlp_install_retry",
     "yt_dlp_install_failed_message",
     "yt_dlp_install_managed_message",
+    "rate_this_track",
+    "rating_like",
+    "rating_dislike",
+    "rating_save_failed",
+    "rating_summary",
     "confirm_age_18",
     "birth_year_hint",
     "must_enter_valid_birth_year",
@@ -420,7 +468,6 @@
   ],
 
   "it": [
-    "visit_our_website",
     "yt_dlp_install_title",
     "yt_dlp_install_phase_checking",
     "yt_dlp_install_phase_downloading",
@@ -434,6 +481,11 @@
     "yt_dlp_install_retry",
     "yt_dlp_install_failed_message",
     "yt_dlp_install_managed_message",
+    "rate_this_track",
+    "rating_like",
+    "rating_dislike",
+    "rating_save_failed",
+    "rating_summary",
     "confirm_age_18",
     "birth_year_hint",
     "must_enter_valid_birth_year",
@@ -455,7 +507,6 @@
   ],
 
   "ja": [
-    "visit_our_website",
     "yt_dlp_install_title",
     "yt_dlp_install_phase_checking",
     "yt_dlp_install_phase_downloading",
@@ -469,6 +520,11 @@
     "yt_dlp_install_retry",
     "yt_dlp_install_failed_message",
     "yt_dlp_install_managed_message",
+    "rate_this_track",
+    "rating_like",
+    "rating_dislike",
+    "rating_save_failed",
+    "rating_summary",
     "confirm_age_18",
     "birth_year_hint",
     "must_enter_valid_birth_year",
@@ -490,7 +546,6 @@
   ],
 
   "ka": [
-    "visit_our_website",
     "yt_dlp_install_title",
     "yt_dlp_install_phase_checking",
     "yt_dlp_install_phase_downloading",
@@ -504,6 +559,11 @@
     "yt_dlp_install_retry",
     "yt_dlp_install_failed_message",
     "yt_dlp_install_managed_message",
+    "rate_this_track",
+    "rating_like",
+    "rating_dislike",
+    "rating_save_failed",
+    "rating_summary",
     "confirm_age_18",
     "birth_year_hint",
     "must_enter_valid_birth_year",
@@ -525,7 +585,6 @@
   ],
 
   "ko": [
-    "visit_our_website",
     "yt_dlp_install_title",
     "yt_dlp_install_phase_checking",
     "yt_dlp_install_phase_downloading",
@@ -539,6 +598,11 @@
     "yt_dlp_install_retry",
     "yt_dlp_install_failed_message",
     "yt_dlp_install_managed_message",
+    "rate_this_track",
+    "rating_like",
+    "rating_dislike",
+    "rating_save_failed",
+    "rating_summary",
     "confirm_age_18",
     "birth_year_hint",
     "must_enter_valid_birth_year",
@@ -560,7 +624,6 @@
   ],
 
   "ne": [
-    "visit_our_website",
     "yt_dlp_install_title",
     "yt_dlp_install_phase_checking",
     "yt_dlp_install_phase_downloading",
@@ -574,6 +637,11 @@
     "yt_dlp_install_retry",
     "yt_dlp_install_failed_message",
     "yt_dlp_install_managed_message",
+    "rate_this_track",
+    "rating_like",
+    "rating_dislike",
+    "rating_save_failed",
+    "rating_summary",
     "confirm_age_18",
     "birth_year_hint",
     "must_enter_valid_birth_year",
@@ -595,7 +663,6 @@
   ],
 
   "nl": [
-    "visit_our_website",
     "yt_dlp_install_title",
     "yt_dlp_install_phase_checking",
     "yt_dlp_install_phase_downloading",
@@ -609,6 +676,11 @@
     "yt_dlp_install_retry",
     "yt_dlp_install_failed_message",
     "yt_dlp_install_managed_message",
+    "rate_this_track",
+    "rating_like",
+    "rating_dislike",
+    "rating_save_failed",
+    "rating_summary",
     "confirm_age_18",
     "birth_year_hint",
     "must_enter_valid_birth_year",
@@ -630,7 +702,6 @@
   ],
 
   "pl": [
-    "visit_our_website",
     "yt_dlp_install_title",
     "yt_dlp_install_phase_checking",
     "yt_dlp_install_phase_downloading",
@@ -644,6 +715,11 @@
     "yt_dlp_install_retry",
     "yt_dlp_install_failed_message",
     "yt_dlp_install_managed_message",
+    "rate_this_track",
+    "rating_like",
+    "rating_dislike",
+    "rating_save_failed",
+    "rating_summary",
     "confirm_age_18",
     "birth_year_hint",
     "must_enter_valid_birth_year",
@@ -665,7 +741,6 @@
   ],
 
   "pt": [
-    "visit_our_website",
     "yt_dlp_install_title",
     "yt_dlp_install_phase_checking",
     "yt_dlp_install_phase_downloading",
@@ -679,6 +754,11 @@
     "yt_dlp_install_retry",
     "yt_dlp_install_failed_message",
     "yt_dlp_install_managed_message",
+    "rate_this_track",
+    "rating_like",
+    "rating_dislike",
+    "rating_save_failed",
+    "rating_summary",
     "confirm_age_18",
     "birth_year_hint",
     "must_enter_valid_birth_year",
@@ -700,7 +780,6 @@
   ],
 
   "ru": [
-    "visit_our_website",
     "yt_dlp_install_title",
     "yt_dlp_install_phase_checking",
     "yt_dlp_install_phase_downloading",
@@ -714,6 +793,11 @@
     "yt_dlp_install_retry",
     "yt_dlp_install_failed_message",
     "yt_dlp_install_managed_message",
+    "rate_this_track",
+    "rating_like",
+    "rating_dislike",
+    "rating_save_failed",
+    "rating_summary",
     "confirm_age_18",
     "birth_year_hint",
     "must_enter_valid_birth_year",
@@ -735,7 +819,6 @@
   ],
 
   "ta": [
-    "visit_our_website",
     "yt_dlp_install_title",
     "yt_dlp_install_phase_checking",
     "yt_dlp_install_phase_downloading",
@@ -749,6 +832,11 @@
     "yt_dlp_install_retry",
     "yt_dlp_install_failed_message",
     "yt_dlp_install_managed_message",
+    "rate_this_track",
+    "rating_like",
+    "rating_dislike",
+    "rating_save_failed",
+    "rating_summary",
     "confirm_age_18",
     "birth_year_hint",
     "must_enter_valid_birth_year",
@@ -770,7 +858,6 @@
   ],
 
   "th": [
-    "visit_our_website",
     "yt_dlp_install_title",
     "yt_dlp_install_phase_checking",
     "yt_dlp_install_phase_downloading",
@@ -784,6 +871,11 @@
     "yt_dlp_install_retry",
     "yt_dlp_install_failed_message",
     "yt_dlp_install_managed_message",
+    "rate_this_track",
+    "rating_like",
+    "rating_dislike",
+    "rating_save_failed",
+    "rating_summary",
     "confirm_age_18",
     "birth_year_hint",
     "must_enter_valid_birth_year",
@@ -805,7 +897,6 @@
   ],
 
   "tl": [
-    "visit_our_website",
     "yt_dlp_install_title",
     "yt_dlp_install_phase_checking",
     "yt_dlp_install_phase_downloading",
@@ -819,6 +910,11 @@
     "yt_dlp_install_retry",
     "yt_dlp_install_failed_message",
     "yt_dlp_install_managed_message",
+    "rate_this_track",
+    "rating_like",
+    "rating_dislike",
+    "rating_save_failed",
+    "rating_summary",
     "confirm_age_18",
     "birth_year_hint",
     "must_enter_valid_birth_year",
@@ -840,7 +936,6 @@
   ],
 
   "tr": [
-    "visit_our_website",
     "yt_dlp_install_title",
     "yt_dlp_install_phase_checking",
     "yt_dlp_install_phase_downloading",
@@ -854,6 +949,11 @@
     "yt_dlp_install_retry",
     "yt_dlp_install_failed_message",
     "yt_dlp_install_managed_message",
+    "rate_this_track",
+    "rating_like",
+    "rating_dislike",
+    "rating_save_failed",
+    "rating_summary",
     "confirm_age_18",
     "birth_year_hint",
     "must_enter_valid_birth_year",
@@ -875,7 +975,6 @@
   ],
 
   "uk": [
-    "visit_our_website",
     "yt_dlp_install_title",
     "yt_dlp_install_phase_checking",
     "yt_dlp_install_phase_downloading",
@@ -889,6 +988,11 @@
     "yt_dlp_install_retry",
     "yt_dlp_install_failed_message",
     "yt_dlp_install_managed_message",
+    "rate_this_track",
+    "rating_like",
+    "rating_dislike",
+    "rating_save_failed",
+    "rating_summary",
     "confirm_age_18",
     "birth_year_hint",
     "must_enter_valid_birth_year",
@@ -910,7 +1014,6 @@
   ],
 
   "vi": [
-    "visit_our_website",
     "yt_dlp_install_title",
     "yt_dlp_install_phase_checking",
     "yt_dlp_install_phase_downloading",
@@ -924,6 +1027,11 @@
     "yt_dlp_install_retry",
     "yt_dlp_install_failed_message",
     "yt_dlp_install_managed_message",
+    "rate_this_track",
+    "rating_like",
+    "rating_dislike",
+    "rating_save_failed",
+    "rating_summary",
     "confirm_age_18",
     "birth_year_hint",
     "must_enter_valid_birth_year",
@@ -945,7 +1053,6 @@
   ],
 
   "zh": [
-    "visit_our_website",
     "yt_dlp_install_title",
     "yt_dlp_install_phase_checking",
     "yt_dlp_install_phase_downloading",
@@ -959,6 +1066,11 @@
     "yt_dlp_install_retry",
     "yt_dlp_install_failed_message",
     "yt_dlp_install_managed_message",
+    "rate_this_track",
+    "rating_like",
+    "rating_dislike",
+    "rating_save_failed",
+    "rating_summary",
     "confirm_age_18",
     "birth_year_hint",
     "must_enter_valid_birth_year",
@@ -980,7 +1092,6 @@
   ],
 
   "zh_TW": [
-    "visit_our_website",
     "yt_dlp_install_title",
     "yt_dlp_install_phase_checking",
     "yt_dlp_install_phase_downloading",
@@ -994,6 +1105,11 @@
     "yt_dlp_install_retry",
     "yt_dlp_install_failed_message",
     "yt_dlp_install_managed_message",
+    "rate_this_track",
+    "rating_like",
+    "rating_dislike",
+    "rating_save_failed",
+    "rating_summary",
     "confirm_age_18",
     "birth_year_hint",
     "must_enter_valid_birth_year",

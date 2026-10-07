@@ -969,18 +969,6 @@ class AppLocalizationsTa extends AppLocalizations {
   String get song_link => 'பாடல் இணைப்பு';
 
   @override
-  String get skip_this_nonsense => 'இந்த அர்த்தமற்றதைத் தவிர்';
-
-  @override
-  String get freedom_of_music => '\"இசையின் சுதந்திரம்\"';
-
-  @override
-  String get freedom_of_music_palm => '\"உங்கள் கைகளில் இசையின் சுதந்திரம்\"';
-
-  @override
-  String get get_started => 'தொடங்குவோம்';
-
-  @override
   String get youtube_source_description =>
       'பரிந்துரைக்கப்படுகிறது மற்றும் சிறப்பாக செயல்படுகிறது.';
 
@@ -1005,35 +993,7 @@ class AppLocalizationsTa extends AppLocalizations {
   String get select_audio_source => 'ஒலி மூலத்தைத் தேர்ந்தெடுக்கவும்';
 
   @override
-  String get endless_playback_description =>
-      'வரிசையின் இறுதியில் புதிய பாடல்களை\nதானாகவே சேர்க்கவும்';
-
-  @override
-  String get choose_your_region => 'உங்கள் பிராந்தியத்தைத் தேர்ந்தெடுக்கவும்';
-
-  @override
-  String get choose_your_region_description =>
-      'இது உங்கள் இருப்பிடத்திற்கான சரியான உள்ளடக்கத்தை\nDeeMusiq காட்ட உதவும்.';
-
-  @override
-  String get choose_your_language => 'உங்கள் மொழியைத் தேர்ந்தெடுக்கவும்';
-
-  @override
-  String get help_project_grow => 'இந்த திட்டம் வளர உதவுங்கள்';
-
-  @override
-  String get help_project_grow_description =>
-      'DeeMusiq ஒரு திறந்த மூல திட்டம். திட்டத்திற்கு பங்களிப்பு செய்வதன் மூலம், பிழைகளைப் புகாரளிப்பதன் மூலம் அல்லது புதிய அம்சங்களைப் பரிந்துரைப்பதன் மூலம் இந்தத் திட்டம் வளர உதவலாம்.';
-
-  @override
   String get contribute_on_github => 'GitHub இல் பங்களியுங்கள்';
-
-  @override
-  String get visit_our_website => 'Visit our website';
-
-  @override
-  String get donate_on_open_collective =>
-      'Open Collective இல் நன்கொடை அளியுங்கள்';
 
   @override
   String get browse_anonymously => 'அநாமதேயமாக உலாவுக';
@@ -1196,9 +1156,6 @@ class AppLocalizationsTa extends AppLocalizations {
   }
 
   @override
-  String get streaming_fees_hypothetical => 'ஸ்ட்ரீமிங் கட்டணங்கள் (கற்பனை)';
-
-  @override
   String get minutes_listened => 'காலம் கேட்டது';
 
   @override
@@ -1218,10 +1175,6 @@ class AppLocalizationsTa extends AppLocalizations {
   }
 
   @override
-  String get hipotetical_calculation =>
-      '*இது சராசரி ஆன்லைன் இசை ஸ்ட்ரீமிங் தளத்தின் ஒரு ஸ்ட்ரீமிற்கான \$0.003 முதல் \$0.005 வரையிலான கட்டணத்தின் அடிப்படையில் கணக்கிடப்படுகிறது. இது ஒரு கற்பனையான கணக்கீடு ஆகும், இது பயனர்கள் வெவ்வேறு இசை ஸ்ட்ரீமிங் தளங்களில் தங்கள் பாடல்களைக் கேட்டால் கலைஞர்களுக்கு எவ்வளவு பணம் செலுத்தியிருப்பார்கள் என்பது குறித்த நுண்ணறிவை வழங்குகிறது.';
-
-  @override
   String count_mins(Object minutes) {
     return '$minutes நிமிடங்கள்';
   }
@@ -1237,9 +1190,6 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get summary_streamed_overall => 'மொத்தமாக ஸ்ட்ரீமிங்';
-
-  @override
-  String get summary_owed_to_artists => 'கலைஞர்களுக்கு\nஇந்த மாதம் சொந்தமானது';
 
   @override
   String get summary_artists => 'கலைஞர்கள்';
@@ -1258,11 +1208,6 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get summary_were_on_repeat => 'மீண்டும் மீண்டும் இருந்தன';
-
-  @override
-  String total_money(Object money) {
-    return 'மொத்தம் $money';
-  }
 
   @override
   String get webview_not_found => 'வெப்வியூ கிடைக்கவில்லை';
@@ -1466,6 +1411,30 @@ class AppLocalizationsTa extends AppLocalizations {
   String get retry => 'மீண்டும் முயற்சிக்கவும்';
 
   @override
+  String get rate_this_track => 'Rate this track';
+
+  @override
+  String get rating_like => 'Like';
+
+  @override
+  String get rating_dislike => 'Dislike';
+
+  @override
+  String get rating_save_failed => 'Couldn\'t save your rating — try again.';
+
+  @override
+  String rating_summary(int pct, int total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$pct% like this · $total ratings',
+      one: '$pct% like this · 1 rating',
+      zero: 'No ratings yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get no_default_metadata_provider_selected =>
       'நீங்கள் எந்த இயல்புநிலை மெட்டாடேட்டா வழங்குநரையும் அமைக்கவில்லை';
 
@@ -1562,9 +1531,6 @@ class AppLocalizationsTa extends AppLocalizations {
   String get install => 'நிறுவவும்';
 
   @override
-  String get install_a_metadata_provider => 'மெட்டாடேட்டா வழங்குநரை நிறுவவும்';
-
-  @override
   String get no_tracks_playing => 'தற்போது எந்த பாடலும் இயங்கவில்லை';
 
   @override
@@ -1583,10 +1549,6 @@ class AppLocalizationsTa extends AppLocalizations {
   @override
   String get third_party_plugin_dmca_notice =>
       'ஸ்பாட்யூப் குழு எந்த \"மூன்றாம் தரப்பு\" பிளகின்களுக்கும் எந்தப் பொறுப்பையும் (சட்டரீதியான உட்பட) ஏற்காது.\nதயவுசெய்து உங்கள் சொந்த ஆபத்தில் அவற்றைப் பயன்படுத்தவும். ஏதேனும் பிழைகள்/சிக்கல்களுக்கு, பிளகின் களஞ்சியத்தில் அவற்றைப் புகாரளிக்கவும்.\n\nஏதேனும் ஒரு \"மூன்றாம் தரப்பு\" பிளகின் ஒரு சேவை/சட்ட நிறுவனத்தின் ToS/DMCA ஐ மீறினால், தயவுசெய்து \"மூன்றாம் தரப்பு\" பிளகின் ஆசிரியரையோ அல்லது ஹோஸ்டிங் தளத்தையோ, எ.கா. GitHub/Codeberg, நடவடிக்கை எடுக்கக் கோரவும். மேலே பட்டியலிடப்பட்ட (\"மூன்றாம் தரப்பு\" என பெயரிடப்பட்ட) அனைத்து பொதுவான/சமூகத்தால் பராமரிக்கப்படும் பிளகின்கள். நாங்கள் அவற்றை க்யூரேட் செய்யவில்லை, எனவே அவற்றின் மீது எந்த நடவடிக்கையும் எடுக்க முடியாது.\n\n';
-
-  @override
-  String get input_does_not_match_format =>
-      'உள்ளீடு தேவையான வடிவத்துடன் பொருந்தவில்லை';
 
   @override
   String get plugins => 'செருகுநிரல்கள்';
