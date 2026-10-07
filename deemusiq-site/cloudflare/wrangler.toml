@@ -18,7 +18,7 @@ routes = [
 #   npx wrangler secret put GITHUB_REPO
 #   npx wrangler secret put DOWNLOADS
 GITHUB_REPO = "deemusiq/deemusiq"
-DOWNLOADS = '{"android":"DeeMusiq.apk","windows":"DeeMusiq-setup.exe","linux":"DeeMusiq.AppImage","macos":"DeeMusiq.dmg"}'
+DOWNLOADS = '{"android":"DeeMusiq.apk","windows":"DeeMusiq-windows-x86_64-setup.exe","windows-portable":"DeeMusiq-windows-x86_64-portable.zip","linux":"DeeMusiq-linux-x86_64.AppImage","linux-deb":"DeeMusiq-linux-amd64.deb","linux-targz":"DeeMusiq-linux-x86_64.tar.gz","macos":"DeeMusiq-macos-universal.dmg","macos-zip":"DeeMusiq-macos-universal.zip"}'
 # Latest version per platform for /downloads/version.json (update check).
 # VERSIONS must bump with each app release (keep in sync with deemusiq-app/pubspec.yaml).
 VERSIONS = '{"android":"1.1.0","windows":"1.1.0","linux":"1.1.0","macos":"1.1.0"}'

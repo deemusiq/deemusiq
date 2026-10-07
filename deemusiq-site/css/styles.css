@@ -241,6 +241,36 @@ a{color:inherit;text-decoration:none}
 .dl__k{font-family:var(--display);font-weight:700;font-size:1.08rem}
 .dl__s{font-size:.78rem;color:var(--muted-2)}
 .dl-hash{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.68rem;letter-spacing:-.01em;cursor:help}
+
+/* per-platform option dropdowns — open on card hover (requested UX), on
+   focus-within for keyboards, and via the caret button for touch (main.js) */
+.dl-item{position:relative}
+.dl__caret{position:absolute;top:.5rem;right:.5rem;width:1.7rem;height:1.7rem;border-radius:50%;
+  border:1px solid var(--line-2);background:transparent;color:var(--muted-2);font-size:.8rem;line-height:1;
+  cursor:pointer;transition:color .2s,border-color .2s}
+.dl__caret:hover,.dl__caret:focus-visible{color:var(--orange);border-color:var(--orange)}
+.dl__menu{position:absolute;top:calc(100% + .5rem);left:50%;z-index:30;min-width:230px;
+  display:flex;flex-direction:column;gap:.15rem;padding:.5rem;
+  background:var(--surface-2);border:1px solid var(--line-2);border-radius:var(--radius);
+  opacity:0;visibility:hidden;transform:translateX(-50%) translateY(4px);
+  transition:opacity .2s,transform .2s,visibility .2s}
+.dl-item:hover .dl__menu,.dl-item:focus-within .dl__menu,.dl-item.open .dl__menu{
+  opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
+.dl__menu a,.dl__soon{display:flex;justify-content:space-between;align-items:baseline;gap:.9rem;
+  padding:.5rem .7rem;border-radius:calc(var(--radius) - 4px);font-size:.85rem;color:var(--cream);text-decoration:none}
+.dl__menu a span,.dl__soon span{color:var(--muted-2);font-size:.72rem;text-align:right}
+.dl__menu a:hover{background:var(--surface);color:var(--orange-2)}
+.dl__soon{opacity:.55;cursor:default}
+
+/* F-Droid repo block under the download grid */
+.fdroid{margin-top:1.8rem;display:flex;gap:1.4rem;align-items:flex-start;max-width:660px;
+  padding:1.2rem 1.4rem;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius)}
+.fdroid__qr{width:140px;height:140px;padding:.35rem;background:#fff;border-radius:8px}
+.fdroid__body h3{font-family:var(--display);font-size:1.05rem;margin-bottom:.4rem}
+.fdroid__body p{font-size:.85rem;color:var(--muted-2);margin-top:.35rem}
+.fdroid__body code{color:var(--cream);word-break:break-all}
+.fdroid__fp{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.72rem}
+@media (max-width:560px){.fdroid{flex-direction:column;align-items:center;text-align:center}}
 .download__alt{margin-top:1.4rem;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;font-size:.82rem;color:var(--muted-2)}
 .download__note{margin-top:1.6rem;font-size:.9rem;color:var(--muted-2);max-width:40em}
 .download__note a{color:var(--orange-2);text-decoration:underline;text-underline-offset:2px}

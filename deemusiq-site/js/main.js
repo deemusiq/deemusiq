@@ -126,6 +126,30 @@
     }
   });
 
+  /* ---------- download option dropdowns (touch + explicit toggle) ----------
+     Hover/focus opens the menus via CSS; the caret button covers touch,
+     and any open menu closes on outside click or Escape. */
+  document.querySelectorAll(".dl__caret").forEach(function (btn) {
+    btn.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      var item = btn.closest(".dl-item");
+      if (!item) return;
+      var open = item.classList.toggle("open");
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+  });
+  var closeDlMenus = function () {
+    document.querySelectorAll(".dl-item.open").forEach(function (item) {
+      item.classList.remove("open");
+      var b = item.querySelector(".dl__caret");
+      if (b) b.setAttribute("aria-expanded", "false");
+    });
+  };
+  document.addEventListener("click", closeDlMenus);
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key === "Escape") closeDlMenus();
+  });
+
   /* ---------- OS hint: highlight the matching download button ---------- */
   var ua = navigator.userAgent;
   // iOS has no native build — detect it first (its UA contains "Mac OS X")

@@ -2,7 +2,7 @@
 // CSS/JS/fonts/images so old caches are purged in `activate` and visitors
 // get fresh assets. (HTML is network-first, so page changes — including
 // download links — are picked up without a bump whenever the visitor is online.)
-const CACHE_VERSION = 'v4'; // 2026-10-02: v3 → v4 (network-first HTML, SW registration, checksum UI)
+const CACHE_VERSION = 'v5'; // 2026-10-07: v4 → v5 (download dropdowns, F-Droid repo block + QR)
 const CACHE = `deemusiq-${CACHE_VERSION}`;
 // Core assets for the offline fallback. HTML entries here are only a
 // fallback — navigations are served network-first (see fetch handler).

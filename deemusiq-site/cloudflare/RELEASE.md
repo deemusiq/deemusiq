@@ -24,9 +24,13 @@ Create the release for tag `vx.y.z` and attach **all** of:
 |---|---|
 | `DeeMusiq.apk` | Android build (`stableFdroid` output copied to `dist/`) |
 | `DeeMusiq.apk.sha256` | `sha256sum DeeMusiq.apk > DeeMusiq.apk.sha256` |
-| `DeeMusiq-setup.exe` | Windows installer |
-| `DeeMusiq.AppImage` | Linux |
-| `DeeMusiq.dmg` | macOS |
+| `DeeMusiq-windows-x86_64-setup.exe` | Windows installer |
+| `DeeMusiq-windows-x86_64-portable.zip` | Windows portable |
+| `DeeMusiq-linux-x86_64.AppImage` | Linux (default `/downloads/linux`) |
+| `DeeMusiq-linux-amd64.deb` | Debian/Ubuntu |
+| `DeeMusiq-linux-x86_64.tar.gz` | Manual install; also the Flathub source |
+| `DeeMusiq-macos-universal.dmg` | macOS (default `/downloads/macos`) |
+| `DeeMusiq-macos-universal.zip` | macOS alt |
 
 Asset filenames must match `DOWNLOADS` in `wrangler.toml` exactly — the worker
 fetches `…/releases/latest/download/<filename>` and `<filename>.sha256`.
@@ -34,7 +38,11 @@ fetches `…/releases/latest/download/<filename>` and `<filename>.sha256`.
 **The `.sha256` sidecar is mandatory**: the worker reads it and sends the
 digest as the `X-Content-SHA256` response header, and the app's anti-tamper
 check fetches `/downloads/android.sha256`. A release without the sidecar
-ships without integrity verification.
+ships without integrity verification. v1.1.0 shipped **only**
+`DeeMusiq.apk.sha256` — generate a sidecar for every asset
+(`for f in DeeMusiq*; do sha256sum "$f" > "$f.sha256"; done`) so the site's
+checksum display and the hash header work for every platform, not just
+Android.
 
 ## 3. Bump versions together
 
