@@ -8,7 +8,9 @@ compatibility_date = "2024-09-01"
 
 routes = [
   { pattern = "deemusiq.co.za/downloads/*", zone_name = "deemusiq.co.za" },
-  { pattern = "www.deemusiq.co.za/downloads/*", zone_name = "deemusiq.co.za" }
+  { pattern = "www.deemusiq.co.za/downloads/*", zone_name = "deemusiq.co.za" },
+  { pattern = "deemusiq.co.za/fdroid/*", zone_name = "deemusiq.co.za" },
+  { pattern = "www.deemusiq.co.za/fdroid/*", zone_name = "deemusiq.co.za" }
 ]
 
 [vars]

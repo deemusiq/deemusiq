@@ -64,31 +64,64 @@ On first run, `fdroid init` generates a **repo signing key** in `keystore.jks`
 - The repo's **fingerprint** (shown by `fdroid update` output and stored in
   the index) is what users verify when adding the repo.
 
-### 5. Host it
+### 5. Host it — worker proxy to GitHub Releases (current setup, 2026-10-07)
 
-The whole `repo/` directory is static files. Two easy targets:
+The repo is **live-ready** at `https://deemusiq.co.za/fdroid/repo`, proxied by
+the download worker (`deemusiq-site/cloudflare/worker.js`,
+`serveFdroidFile`). Neither Cloudflare Pages (25 MB/file) nor GitHub Pages
+(100 MB/file) can host the 122 MB APK, so the worker streams everything from
+GitHub Releases instead:
 
-- **Same domain**: rsync `repo/` to your web server at
-  `https://deemusiq.co.za/fdroid/repo/` (same nginx that serves
-  `/downloads/*`). Users add `https://deemusiq.co.za/fdroid/repo`.
-- **GitHub Pages**: push `repo/` to a `fdroid-repo` branch/repo with Pages
-  enabled → `https://deemusiq.github.io/fdroid/repo`.
+- **Repo files** (index, entry point, icons, diffs) are flattened
+  (`/` → `--`, `fdroid--` prefix, `=` stripped — GitHub removes base64
+  padding from asset names) and attached to the machine-managed **`fdroid`
+  release tag** on `deemusiq/deemusiq`. That tag is file storage, not an app
+  release.
+- **APKs** are NOT on the `fdroid` tag — the worker streams them from the
+  latest app release, so they stay byte-identical to `/downloads/android`
+  (the signed index pins their hashes; a re-signed APK would fail installs).
 
-Either way the URL must be **HTTPS** — F-Droid clients refuse plain HTTP.
+Working repo checkout: `~/fdroid-work` (config.yml, keystore.p12 — **the repo
+signing identity, back it up**; losing it = every user must re-add the repo).
+fdroidserver lives in `~/fdroid-venv`, build-tools in `~/android-sdk`,
+a full JDK (for `jar`) in `~/jdk`.
+
+Repo fingerprint (users verify this when adding the repo):
+
+```
+4C35 C0EE EDCA E6B2 EEAA DB32 A53F 6890 E9E7 8D37 D187 7A74 573C 4F7D 8CEF 40D8
+```
+
+**Publish flow on each app release** (after CI attaches `DeeMusiq.apk` to the
+new `v*` release):
+
+```bash
+cd ~/fdroid-work
+export ANDROID_HOME=~/android-sdk PATH="$HOME/jdk/bin:$PATH"
+curl -L -o repo/DeeMusiq.apk \
+  https://github.com/deemusiq/deemusiq/releases/latest/download/DeeMusiq.apk
+~/fdroid-venv/bin/fdroid update        # re-indexes + re-signs
+cd repo && find . -type f ! -name 'DeeMusiq.apk' ! -path './status/*' | while read -r f; do
+  rel="${f#./}"
+  flat="fdroid--$(printf '%s' "${rel//\//--}" | tr -d '=')"   # GitHub strips "=" from asset names
+  cp "$f" "/tmp/$flat"
+done
+cd /tmp && gh release upload fdroid ./fdroid--* --clobber --repo deemusiq/deemusiq
+rm -f /tmp/fdroid--*
+```
+
+The worker itself deploys with `wrangler deploy` from
+`deemusiq-site/cloudflare/` (routes for `/fdroid/*` are in `wrangler.toml`;
+see `cloudflare/RELEASE.md`).
 
 ### 6. Fingerprint + QR code
 
-```bash
-fdroid update   # prints the repo fingerprint, e.g.:
-# Fingerprint: AB12 CD34 ... (SHA-256 of the repo signing cert)
-```
-
-Generate the add-repo QR code users can scan in the F-Droid client:
+A ready QR encoding
+`https://deemusiq.co.za/fdroid/repo?fingerprint=4C35C0EEEDCAE6B2EEAADB32A53F6890E9E78D37D1877A74573C4F7D8CEF40D8`
+is at `~/fdroid-work/repo-qr.png`. Regenerate after any repo-key change with:
 
 ```bash
-# The QR encodes: https://deemusiq.co.za/fdroid/repo?fingerprint=<FINGERPRINT>
-qrencode -o repo-qr.png \
-  "https://deemusiq.co.za/fdroid/repo?fingerprint=<FINGERPRINT_HEX_NO_SPACES>"
+~/fdroid-venv/bin/python -c "import qrcode; qrcode.make('<url>').save('repo-qr.png')"
 ```
 
 Put `repo-qr.png` and the fingerprint (as text, for manual entry) on the

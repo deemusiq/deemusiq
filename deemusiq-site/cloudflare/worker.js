@@ -1,7 +1,8 @@
 /**
  * DeeMusiq download proxy + hardening worker.
  *
- * Deployed on the zone (route: `deemusiq.co.za/downloads/*`, or as a Pages
+ * Deployed on the zone (routes: `deemusiq.co.za/downloads/*` for binaries,
+ * `deemusiq.co.za/fdroid/*` for the self-hosted F-Droid repo, or as a Pages
  * function). Clients only ever see THIS domain — the GitHub release URLs live
  * solely in worker env vars, never in shipped HTML/JS, never in redirects
  * (the asset is streamed through, not 302'd) and never in response headers
@@ -50,6 +51,81 @@ const PASS_THROUGH_HEADERS = [
 // release (missing asset, upstream outage) sit in the cache for that hour.
 const CACHE_TTL_BY_STATUS = { "200-299": 3600, "404": 60, "500-599": 30 };
 const HASH_CACHE_TTL_BY_STATUS = { "200-299": 300, "404": 60, "500-599": 30 };
+
+const FDROID_CONTENT_TYPES = {
+  ".apk": "application/vnd.android.package-archive",
+  ".css": "text/css; charset=utf-8",
+  ".html": "text/html; charset=utf-8",
+  ".jar": "application/java-archive",
+  ".json": "application/json",
+  ".png": "image/png",
+  ".xml": "application/xml",
+};
+
+// /fdroid/repo/<file> — the self-hosted F-Droid repository. The small repo
+// files (index, entry point, icons) are flattened (`/` → `--`, `fdroid--`
+// prefix) onto the `fdroid` release tag, which is machine-managed storage,
+// not an app release; APKs stream from the latest app release so they stay
+// byte-identical to /downloads/android — the repo index pins their hashes.
+// Index files get the short TTL: they are re-published on every app release.
+async function serveFdroidFile(file, request, env) {
+  if (!env.GITHUB_REPO) {
+    return new Response(JSON.stringify({ error: "unavailable" }), {
+      status: 404,
+      headers: withSecurityHeaders({ "Content-Type": "application/json" }),
+    });
+  }
+  const isApk = file.endsWith(".apk");
+  // GitHub strips "=" from asset names on upload (fdroidserver's hashed icon
+  // names carry base64 padding), so the flattened asset name drops them too.
+  const flattened = `fdroid--${file.replace(/\//g, "--").replace(/=/g, "")}`;
+  const upstream = isApk
+    ? `https://github.com/${env.GITHUB_REPO}/releases/latest/download/${encodeURIComponent(file)}`
+    : `https://github.com/${env.GITHUB_REPO}/releases/download/fdroid/${encodeURIComponent(flattened)}`;
+
+  const upstreamHeaders = new Headers();
+  const range = request.headers.get("range");
+  if (range && isApk) upstreamHeaders.set("range", range);
+
+  let upstreamRes;
+  try {
+    upstreamRes = await fetch(upstream, {
+      redirect: "follow",
+      headers: upstreamHeaders,
+      cf: {
+        cacheEverything: true,
+        cacheTtlByStatus: isApk ? CACHE_TTL_BY_STATUS : HASH_CACHE_TTL_BY_STATUS,
+      },
+    });
+  } catch {
+    // Same contract as the downloads path: upstream DNS/timeout → JSON, not
+    // an unhandled worker exception (which would drop the security headers).
+    upstreamRes = null;
+  }
+  if (!upstreamRes || !upstreamRes.ok || !upstreamRes.body) {
+    if (upstreamRes && upstreamRes.status === 416) {
+      const h = withSecurityHeaders({ "Content-Type": "text/plain" });
+      const cr = upstreamRes.headers.get("content-range");
+      if (cr) h.set("Content-Range", cr);
+      return new Response("Range not satisfiable", { status: 416, headers: h });
+    }
+    return new Response(JSON.stringify({ error: "unavailable" }), {
+      status: 404,
+      headers: withSecurityHeaders({ "Content-Type": "application/json" }),
+    });
+  }
+
+  const headers = withSecurityHeaders({});
+  for (const name of PASS_THROUGH_HEADERS) {
+    const value = upstreamRes.headers.get(name);
+    if (value !== null) headers.set(name, value);
+  }
+  headers.set("Accept-Ranges", "bytes");
+  headers.set("Cache-Control", isApk ? "public, max-age=3600" : "public, max-age=300");
+  const ext = file.slice(file.lastIndexOf("."));
+  headers.set("Content-Type", FDROID_CONTENT_TYPES[ext] || "application/octet-stream");
+  return new Response(upstreamRes.body, { status: upstreamRes.status, headers });
+}
 
 function withSecurityHeaders(headers) {
   const out = new Headers(headers);
@@ -186,6 +262,17 @@ export default {
     if (url.protocol !== "https:" && url.hostname !== "localhost") {
       // Belt & braces on top of Cloudflare "Always Use HTTPS".
       return Response.redirect(`https://${url.host}${url.pathname}${url.search}`, 301);
+    }
+
+    // /fdroid/repo/<file> — self-hosted F-Droid repository (see serveFdroidFile).
+    // Segments are whitelisted and dot-prefixed ones (incl. "..") rejected, so
+    // this route can never proxy arbitrary upstream paths.
+    const fdroidPath = url.pathname.match(/^\/fdroid\/repo((?:\/[A-Za-z0-9._=-]+)*)\/?$/);
+    if (fdroidPath) {
+      const segments = (fdroidPath[1] || "").split("/").filter(Boolean);
+      if (segments.every((s) => !s.startsWith("."))) {
+        return serveFdroidFile(segments.join("/") || "index.html", request, env);
+      }
     }
 
     // /downloads/<platform>          → binary asset (attachment)
