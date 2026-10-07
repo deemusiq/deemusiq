@@ -1653,4 +1653,51 @@ class AppLocalizationsEu extends AppLocalizations {
   @override
   String get takedown_request_sent =>
       'Takedown requested — the song stays live until it is reviewed.';
+
+  @override
+  String get skip_this_nonsense => 'Utzi txorakeria hau';
+
+  @override
+  String get freedom_of_music => '“Musika Askatasuna”';
+
+  @override
+  String get freedom_of_music_palm => '“Musika Askatasuna zure eskuetan”';
+
+  @override
+  String get get_started => 'Has gaitezen';
+
+  @override
+  String get endless_playback_description =>
+      'Gehitu automatikoki kanta berriak\n ilararen bukaeran';
+
+  @override
+  String get choose_your_region => 'Aukeratu zure herrialdea';
+
+  @override
+  String get choose_your_region_description =>
+      'Honekin DeeMusiq-k zure kokalerakuari dagokion edukia\neskeiniko dizu.';
+
+  @override
+  String get choose_your_language => 'Aukeratu zure hizkuntza';
+
+  @override
+  String get help_project_grow => 'Lagundu proiektu honi hazten';
+
+  @override
+  String get help_project_grow_description =>
+      'DeeMusiq kode irekiko proiektu bat da. Proiektu hau hazten lagundu dezakezu, erroreak jakinaraziz edo ezaugarri berriak proposatuz.';
+
+  @override
+  String get visit_our_website => 'Visit our website';
+
+  @override
+  String get donate_on_open_collective => 'Open Collective-en diruz lagundu';
+
+  @override
+  String get install_a_metadata_provider =>
+      'Metadaten hornitzaile bat instalatu';
+
+  @override
+  String get input_does_not_match_format =>
+      'Sarrera ezin da beharrezko formatutik desberdina izan';
 }

@@ -472,5 +472,18 @@
   "configure_plugins": "Kendi meta veri sağlayıcı ve ses kaynağı eklentilerinizi yapılandırın",
   "source": "Kaynak: ",
   "uncompressed": "Sıkıştırılmamış",
-  "dab_music_source_description": "Audiophile'ler için. Yüksek kaliteli/kayıpsız ses akışları sağlar. Doğru ISRC tabanlı parça eşleştirme."
+  "dab_music_source_description": "Audiophile'ler için. Yüksek kaliteli/kayıpsız ses akışları sağlar. Doğru ISRC tabanlı parça eşleştirme.",
+  "skip_this_nonsense": "Bu saçmalığı atla",
+  "freedom_of_music": "“Müzik özgürlüğü”",
+  "freedom_of_music_palm": "“Müzik özgürlüğü avucunuzun içinde”",
+  "get_started": "Haydi başlayalım",
+  "endless_playback_description": "Yeni şarkıları otomatik olarak\nkuyruğun sonuna ekle",
+  "choose_your_region": "Bölgenizi seçin",
+  "choose_your_region_description": "Bu, DeeMusiq'un konumunuza uygun içerikleri göstermesine yardımcı olacaktır.",
+  "choose_your_language": "Dilinizi seçin",
+  "help_project_grow": "Bu projenin büyümesine yardımcı olun",
+  "help_project_grow_description": "DeeMusiq açık kaynaklı bir projedir. Projeye katkıda bulunarak, hataları bildirerek veya yeni özellikler önererek bu projenin büyümesine yardımcı olabilirsiniz.",
+  "donate_on_open_collective": "Open Collective'de bağış yap",
+  "install_a_metadata_provider": "Bir Meta Veri Sağlayıcısı Yükle",
+  "input_does_not_match_format": "Girdi, gerekli biçimle eşleşmiyor"
 }

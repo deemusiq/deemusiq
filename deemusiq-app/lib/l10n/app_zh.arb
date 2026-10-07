@@ -472,5 +472,18 @@
   "configure_plugins": "配置您自己的元数据提供者和音频源插件",
   "source": "来源：",
   "uncompressed": "无损",
-  "dab_music_source_description": "适合发烧友。提供高质量/无损音频流。基于 ISRC 的精确曲目匹配。"
+  "dab_music_source_description": "适合发烧友。提供高质量/无损音频流。基于 ISRC 的精确曲目匹配。",
+  "skip_this_nonsense": "跳过此无聊内容",
+  "freedom_of_music": "“音乐的自由”",
+  "freedom_of_music_palm": "“音乐的自由掌握在您手中”",
+  "get_started": "让我们开始吧",
+  "endless_playback_description": "自动将新歌曲添加到队列的末尾",
+  "choose_your_region": "选择您的地区",
+  "choose_your_region_description": "这将帮助DeeMusiq为您的位置显示正确的内容。",
+  "choose_your_language": "选择您的语言",
+  "help_project_grow": "帮助这个项目成长",
+  "help_project_grow_description": "DeeMusiq是一个开源项目。您可以通过为项目做出贡献、报告错误或建议新功能来帮助该项目成长。",
+  "donate_on_open_collective": "在Open Collective上捐款",
+  "install_a_metadata_provider": "安装元数据提供者",
+  "input_does_not_match_format": "输入与所需格式不匹配"
 }

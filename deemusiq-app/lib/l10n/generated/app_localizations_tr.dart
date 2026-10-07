@@ -1651,4 +1651,49 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get takedown_request_sent =>
       'Takedown requested — the song stays live until it is reviewed.';
+
+  @override
+  String get skip_this_nonsense => 'Bu saçmalığı atla';
+
+  @override
+  String get freedom_of_music => '“Müzik özgürlüğü”';
+
+  @override
+  String get freedom_of_music_palm => '“Müzik özgürlüğü avucunuzun içinde”';
+
+  @override
+  String get get_started => 'Haydi başlayalım';
+
+  @override
+  String get endless_playback_description =>
+      'Yeni şarkıları otomatik olarak\nkuyruğun sonuna ekle';
+
+  @override
+  String get choose_your_region => 'Bölgenizi seçin';
+
+  @override
+  String get choose_your_region_description =>
+      'Bu, DeeMusiq\'un konumunuza uygun içerikleri göstermesine yardımcı olacaktır.';
+
+  @override
+  String get choose_your_language => 'Dilinizi seçin';
+
+  @override
+  String get help_project_grow => 'Bu projenin büyümesine yardımcı olun';
+
+  @override
+  String get help_project_grow_description =>
+      'DeeMusiq açık kaynaklı bir projedir. Projeye katkıda bulunarak, hataları bildirerek veya yeni özellikler önererek bu projenin büyümesine yardımcı olabilirsiniz.';
+
+  @override
+  String get visit_our_website => 'Visit our website';
+
+  @override
+  String get donate_on_open_collective => 'Open Collective\'de bağış yap';
+
+  @override
+  String get install_a_metadata_provider => 'Bir Meta Veri Sağlayıcısı Yükle';
+
+  @override
+  String get input_does_not_match_format => 'Girdi, gerekli biçimle eşleşmiyor';
 }

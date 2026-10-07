@@ -1608,6 +1608,49 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get takedown_request_sent =>
       'Takedown requested — the song stays live until it is reviewed.';
+
+  @override
+  String get skip_this_nonsense => '跳过此无聊内容';
+
+  @override
+  String get freedom_of_music => '“音乐的自由”';
+
+  @override
+  String get freedom_of_music_palm => '“音乐的自由掌握在您手中”';
+
+  @override
+  String get get_started => '让我们开始吧';
+
+  @override
+  String get endless_playback_description => '自动将新歌曲添加到队列的末尾';
+
+  @override
+  String get choose_your_region => '选择您的地区';
+
+  @override
+  String get choose_your_region_description => '这将帮助DeeMusiq为您的位置显示正确的内容。';
+
+  @override
+  String get choose_your_language => '选择您的语言';
+
+  @override
+  String get help_project_grow => '帮助这个项目成长';
+
+  @override
+  String get help_project_grow_description =>
+      'DeeMusiq是一个开源项目。您可以通过为项目做出贡献、报告错误或建议新功能来帮助该项目成长。';
+
+  @override
+  String get visit_our_website => 'Visit our website';
+
+  @override
+  String get donate_on_open_collective => '在Open Collective上捐款';
+
+  @override
+  String get install_a_metadata_provider => '安装元数据提供者';
+
+  @override
+  String get input_does_not_match_format => '输入与所需格式不匹配';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -3075,4 +3118,44 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get dab_music_source_description =>
       '適合音響發燒友。提供高品質/無損音訊串流。精確的 ISRC 曲目比對。';
+
+  @override
+  String get skip_this_nonsense => '跳過這個無聊內容';
+
+  @override
+  String get freedom_of_music => '“音樂的自由”';
+
+  @override
+  String get freedom_of_music_palm => '「音樂的自由掌握在您手中」';
+
+  @override
+  String get get_started => '我們開始吧';
+
+  @override
+  String get endless_playback_description => '自動將新歌曲加入清單的結尾';
+
+  @override
+  String get choose_your_region => '選擇您的所在地區';
+
+  @override
+  String get choose_your_region_description => '這能幫助 DeeMusiq 為您的所在位置顯示正確的內容。';
+
+  @override
+  String get choose_your_language => '選擇您的語言';
+
+  @override
+  String get help_project_grow => '幫助這個專案成長';
+
+  @override
+  String get help_project_grow_description =>
+      'DeeMusiq是一個開源專案。您可以透過為專案做出貢獻、回報錯誤或建議新功能來幫助專案成長。';
+
+  @override
+  String get donate_on_open_collective => '在Open Collective上捐款';
+
+  @override
+  String get install_a_metadata_provider => '安裝中繼資料供應商';
+
+  @override
+  String get input_does_not_match_format => '輸入不符合所需格式';
 }

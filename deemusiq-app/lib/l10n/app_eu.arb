@@ -472,5 +472,18 @@
   "configure_plugins": "Konfiguratu zure metadatu-hornitzaile eta audio-iturburu pluginak",
   "source": "Iturburua: ",
   "uncompressed": "Konprimitu gabea",
-  "dab_music_source_description": "Audiozaleentzat. Kalitate handiko/galerarik gabeko audio-streamak eskaintzen ditu. ISRC oinarritutako pistaren parekatze zehatza."
+  "dab_music_source_description": "Audiozaleentzat. Kalitate handiko/galerarik gabeko audio-streamak eskaintzen ditu. ISRC oinarritutako pistaren parekatze zehatza.",
+  "skip_this_nonsense": "Utzi txorakeria hau",
+  "freedom_of_music": "“Musika Askatasuna”",
+  "freedom_of_music_palm": "“Musika Askatasuna zure eskuetan”",
+  "get_started": "Has gaitezen",
+  "endless_playback_description": "Gehitu automatikoki kanta berriak\n ilararen bukaeran",
+  "choose_your_region": "Aukeratu zure herrialdea",
+  "choose_your_region_description": "Honekin DeeMusiq-k zure kokalerakuari dagokion edukia\neskeiniko dizu.",
+  "choose_your_language": "Aukeratu zure hizkuntza",
+  "help_project_grow": "Lagundu proiektu honi hazten",
+  "help_project_grow_description": "DeeMusiq kode irekiko proiektu bat da. Proiektu hau hazten lagundu dezakezu, erroreak jakinaraziz edo ezaugarri berriak proposatuz.",
+  "donate_on_open_collective": "Open Collective-en diruz lagundu",
+  "install_a_metadata_provider": "Metadaten hornitzaile bat instalatu",
+  "input_does_not_match_format": "Sarrera ezin da beharrezko formatutik desberdina izan"
 }

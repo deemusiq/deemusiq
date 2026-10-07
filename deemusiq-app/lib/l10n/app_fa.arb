@@ -472,5 +472,18 @@
   "configure_plugins": "افزونه‌های منبع صوت و ارائه‌دهنده فراداده خود را پیکربندی کنید",
   "source": "منبع: ",
   "uncompressed": "بدون فشرده‌سازی",
-  "dab_music_source_description": "مخصوص علاقه‌مندان صدا. ارائه‌دهنده استریم‌های باکیفیت/بدون افت. تطبیق دقیق آهنگ بر اساس ISRC."
+  "dab_music_source_description": "مخصوص علاقه‌مندان صدا. ارائه‌دهنده استریم‌های باکیفیت/بدون افت. تطبیق دقیق آهنگ بر اساس ISRC.",
+  "skip_this_nonsense": "این احمقانه را بگذرانید",
+  "freedom_of_music": "“آزادی موسیقی”",
+  "freedom_of_music_palm": "“آزادی موسیقی در دستان شما”",
+  "get_started": "بیایید شروع کنیم",
+  "endless_playback_description": "خودکار اضافه کردن آهنگ‌های جدید\nبه انتهای صف",
+  "choose_your_region": "منطقه خود را انتخاب کنید",
+  "choose_your_region_description": "این به DeeMusiq کمک می‌کند تا محتوای مناسبی را برای موقعیت شما نشان دهد.",
+  "choose_your_language": "زبان خود را انتخاب کنید",
+  "help_project_grow": "کمک به رشد این پروژه",
+  "help_project_grow_description": "DeeMusiq یک پروژه متن باز است. شما می‌توانید با به پروژه کمک کردن، گزارش دادن اشکالات یا پیشنهاد ویژگی‌های جدید، به این پروژه کمک کنید.",
+  "donate_on_open_collective": "کمک مالی در Open Collective",
+  "install_a_metadata_provider": "نصب یک ارائه‌دهندهٔ متادیتا",
+  "input_does_not_match_format": "ورودی با قالب مورد نیاز تطابق ندارد"
 }

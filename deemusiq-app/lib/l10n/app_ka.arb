@@ -472,5 +472,18 @@
   "configure_plugins": "თქვენი საკუთარი მეტამონაცემებისა და აუდიო წყაროს პლაგინების კონფიგურაცია",
   "source": "წყარო: ",
   "uncompressed": "შეუკუმშავი",
-  "dab_music_source_description": "აუდიოფილებისთვის. უზრუნველყოფს მაღალი ხარისხის/უკომპრესო აუდიო სტრიმებს. ზუსტი შესაბამისობა ISRC-ის მიხედვით."
+  "dab_music_source_description": "აუდიოფილებისთვის. უზრუნველყოფს მაღალი ხარისხის/უკომპრესო აუდიო სტრიმებს. ზუსტი შესაბამისობა ISRC-ის მიხედვით.",
+  "skip_this_nonsense": "ამ სისულელის გამოტოვება",
+  "freedom_of_music": "“მუსიკის თავისუფლება”",
+  "freedom_of_music_palm": "“მუსიკის თავისუფლება შენს ხელის გულზე”",
+  "get_started": "დავიწყოთ",
+  "endless_playback_description": "ახალი სიმთერების ავტომატურად რიგის ბოლოში დამატება",
+  "choose_your_region": "აირჩიე შენი რეგიონი",
+  "choose_your_region_description": "This will help DeeMusiq show you the right content\nfor your location.",
+  "choose_your_language": "აირჩიე ენა",
+  "help_project_grow": "დაეხმარეთ ამ პროექტს განვითარებაში",
+  "help_project_grow_description": "DeeMusiq is an open-source project. You can help this project grow by contributing to the project, reporting bugs, or suggesting new features.",
+  "donate_on_open_collective": "Open Collective-ზე დონაცია",
+  "install_a_metadata_provider": "დააყენეთ მეტამონაცემების პროვაიდერი",
+  "input_does_not_match_format": "შეყვანა არ ემთხვევა საჭირო ფორმატს"
 }

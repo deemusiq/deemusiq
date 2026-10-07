@@ -472,5 +472,18 @@
   "configure_plugins": "Cấu hình nhà cung cấp siêu dữ liệu và tiện ích nguồn âm thanh riêng",
   "source": "Nguồn: ",
   "uncompressed": "Không nén",
-  "dab_music_source_description": "Dành cho người yêu âm nhạc chất lượng cao. Cung cấp luồng âm thanh chất lượng cao/không nén. Phù hợp bài hát dựa trên ISRC chính xác."
+  "dab_music_source_description": "Dành cho người yêu âm nhạc chất lượng cao. Cung cấp luồng âm thanh chất lượng cao/không nén. Phù hợp bài hát dựa trên ISRC chính xác.",
+  "skip_this_nonsense": "Bỏ qua bớt rối này",
+  "freedom_of_music": "“Sự Tự do của Âm nhạc”",
+  "freedom_of_music_palm": "“Sự Tự do của Âm nhạc trong lòng bàn tay của bạn”",
+  "get_started": "Bắt đầu thôi",
+  "endless_playback_description": "Tự động thêm các bài hát mới\nvào cuối hàng đợi",
+  "choose_your_region": "Chọn khu vực của bạn",
+  "choose_your_region_description": "Điều này sẽ giúp DeeMusiq hiển thị nội dung phù hợp cho vị trí của bạn.",
+  "choose_your_language": "Chọn ngôn ngữ của bạn",
+  "help_project_grow": "Hãy giúp dự án này phát triển",
+  "help_project_grow_description": "DeeMusiq là một dự án mã nguồn mở. Bạn có thể giúp dự án này phát triển bằng cách đóng góp vào dự án, báo cáo lỗi hoặc đề xuất tính năng mới.",
+  "donate_on_open_collective": "Quyên góp trên Open Collective",
+  "install_a_metadata_provider": "Cài đặt một Nhà cung cấp siêu dữ liệu",
+  "input_does_not_match_format": "Đầu vào không khớp với định dạng yêu cầu"
 }

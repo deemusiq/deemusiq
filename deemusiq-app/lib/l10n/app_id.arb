@@ -472,5 +472,18 @@
   "configure_plugins": "Konfigurasi plugin penyedia metadata dan sumber audio Anda sendiri",
   "source": "Sumber: ",
   "uncompressed": "Tidak terkompresi",
-  "dab_music_source_description": "Untuk audiophile. Menyediakan aliran audio berkualitas tinggi/tanpa kehilangan. Pencocokkan trek yang akurat berdasarkan ISRC."
+  "dab_music_source_description": "Untuk audiophile. Menyediakan aliran audio berkualitas tinggi/tanpa kehilangan. Pencocokkan trek yang akurat berdasarkan ISRC.",
+  "skip_this_nonsense": "Lewati omong kosong ini",
+  "freedom_of_music": "“Kebebasan Musik”",
+  "freedom_of_music_palm": "“Kebebasan Musik di telapak tangan Anda”",
+  "get_started": "Mari kita mulai",
+  "endless_playback_description": "Tambahkan lagu baru secara otomatis\nke akhir antrean",
+  "choose_your_region": "Pilih wilayah Anda",
+  "choose_your_region_description": "Ini akan membantu DeeMusiq menampilkan konten yang tepat\nuntuk lokasi Anda.",
+  "choose_your_language": "Pilih bahasa Anda",
+  "help_project_grow": "Bantu proyek ini berkembang",
+  "help_project_grow_description": "DeeMusiq adalah proyek sumber terbuka. Anda dapat membantu proyek ini berkembang dengan berkontribusi pada proyek, melaporkan bug, atau menyarankan fitur baru.",
+  "donate_on_open_collective": "Donasi di Open Collective",
+  "install_a_metadata_provider": "Instal Penyedia Metadata",
+  "input_does_not_match_format": "Masukan tidak cocok dengan format yang diperlukan"
 }

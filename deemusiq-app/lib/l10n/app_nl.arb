@@ -473,5 +473,18 @@
   "source": "Bron: ",
   "uncompressed": "Ongecomprimeerd",
   "dab_music_source_description": "Voor audiofielen. Biedt hoge kwaliteit/lossless audiostreams. Nauwkeurige trackmatching op basis van ISRC.",
-  "audio_source": "Audiobron"
+  "audio_source": "Audiobron",
+  "skip_this_nonsense": "Deze onzin overslaan",
+  "freedom_of_music": "“Vrijheid van muziek”",
+  "freedom_of_music_palm": "“Vrijheid van muziek in je hand”",
+  "get_started": "Laten we beginnen",
+  "endless_playback_description": "Nieuwe nummers automatisch achteraan de wachtrij toevoegen",
+  "choose_your_region": "Kies je regio",
+  "choose_your_region_description": "Dit helpt DeeMusiq om de juiste inhoud\nvoor jouw locatie te tonen.",
+  "choose_your_language": "Kies je taal",
+  "help_project_grow": "Help dit project met groeien",
+  "help_project_grow_description": "DeeMusiq is een open-source project. Je kunt dit project helpen groeien door eraan bij te dragen, problemen te melden of nieuwe functies voor te stellen.",
+  "donate_on_open_collective": "Doneren on Open Collective",
+  "install_a_metadata_provider": "Een metadata-aanbieder installeren",
+  "input_does_not_match_format": "Invoer komt niet overeen met het vereiste formaat"
 }

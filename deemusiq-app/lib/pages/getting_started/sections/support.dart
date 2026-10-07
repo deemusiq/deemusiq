@@ -6,6 +6,7 @@ import 'package:deemusiq/collections/routes.gr.dart';
 import 'package:deemusiq/modules/getting_started/blur_card.dart';
 import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/services/kv_store/kv_store.dart';
+import 'package:deemusiq/services/wallet/wallet_api.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -108,9 +109,13 @@ class GettingStartedScreenSupportSection extends HookConsumerWidget {
                   leading: const Icon(DeeMusiqIcons.extensions),
                   onPressed: () async {
                     await KVStoreService.setDoneGettingStarted(true);
-                    if (context.mounted) {
-                      context.router.replaceAll([const HomeRoute()]);
-                    }
+                    if (!context.mounted) return;
+                    // First-run flow ends at sign-in; a user who somehow
+                    // revisits the wizard while authenticated goes home.
+                    final signedIn = WalletApiClient.instance.hasToken();
+                    context.router.replaceAll(
+                      [signedIn ? const HomeRoute() : const Auth()],
+                    );
                   },
                   child: Text(context.l10n.install_a_metadata_provider),
                 ),

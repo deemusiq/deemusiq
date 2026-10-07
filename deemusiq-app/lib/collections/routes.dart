@@ -27,13 +27,14 @@ class AppRouter extends RootStackRouter {
               guards: [
                 AutoRouteGuardCallback(
                   (resolver, router) async {
-                    // Only first-run users land on /auth. A configured backend
-                    // without a token must NOT bounce the user back there:
-                    // when the server is unreachable, limited (device)
-                    // sign-in proceeds in offline mode and the token is
-                    // acquired on the next successful sync.
+                    // First-run users land on the getting-started wizard,
+                    // which ends at /auth. A configured backend without a
+                    // token must NOT bounce the user back there: when the
+                    // server is unreachable, limited (device) sign-in
+                    // proceeds in offline mode and the token is acquired on
+                    // the next successful sync.
                     if (!KVStoreService.doneGettingStarted) {
-                      resolver.redirect(const Auth());
+                      resolver.redirect(const GettingStartedRoute());
                     } else {
                       resolver.next(true);
                     }
@@ -87,6 +88,10 @@ class AppRouter extends RootStackRouter {
             AutoRoute(
               path: "settings",
               page: SettingsRoute.page,
+            ),
+            AutoRoute(
+              path: "settings/metadata-provider/metadata-form",
+              page: SettingsMetadataProviderFormRoute.page,
             ),
             AutoRoute(
               path: "settings/blacklist",
@@ -248,6 +253,11 @@ class AppRouter extends RootStackRouter {
         AutoRoute(
           path: "/mini-player",
           page: MiniLyricsRoute.page,
+          // parentNavigatorKey: rootNavigatorKey,
+        ),
+        AutoRoute(
+          path: "/getting-started",
+          page: GettingStartedRoute.page,
           // parentNavigatorKey: rootNavigatorKey,
         ),
         AutoRoute(

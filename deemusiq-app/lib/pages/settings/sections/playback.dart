@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:auto_route/auto_route.dart';
@@ -11,15 +12,19 @@ import 'package:deemusiq/collections/routes.gr.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/components/adaptive/adaptive_select_tile.dart';
 import 'package:deemusiq/models/database/database.dart';
+import 'package:deemusiq/models/metadata/metadata.dart';
 import 'package:deemusiq/modules/settings/playback/edit_connect_port_dialog.dart';
 import 'package:deemusiq/modules/settings/section_card_with_heading.dart';
 import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/modules/settings/youtube_engine_not_installed_dialog.dart';
 import 'package:deemusiq/modules/settings/yt_dlp_install_dialog.dart';
 import 'package:deemusiq/provider/metadata_plugin/audio_source/quality_presets.dart';
+import 'package:deemusiq/provider/metadata_plugin/metadata_plugin_provider.dart';
 import 'package:deemusiq/provider/server/routes/connect.dart';
 import 'package:deemusiq/provider/user_preferences/user_preferences_provider.dart';
 import 'package:deemusiq/services/kv_store/kv_store.dart';
+import 'package:deemusiq/services/logger/logger.dart';
+import 'package:deemusiq/services/metadata/deemusiq_native_plugin.dart';
 import 'package:deemusiq/services/youtube_engine/yt_dlp_engine.dart';
 import 'package:deemusiq/services/audio_player/audio_quality.dart';
 
@@ -245,7 +250,78 @@ class SettingsPlaybackSection extends HookConsumerWidget {
         // M5: revocation path for granted pairings (pairing allowlist + the
         // per-pairing HTTP tokens minted on approval).
         if (preferences.enableConnect) const _PairedDevicesTile(),
+        const _MetadataProviderTile(),
       ],
+    );
+  }
+}
+
+/// Shows the active metadata provider (the built-in DeeMusiq provider today)
+/// and, when that provider exposes configurable fields, a Configure action
+/// opening the metadata-provider form. The native provider currently exposes
+/// none, so the action stays hidden rather than rendering an empty form.
+class _MetadataProviderTile extends ConsumerWidget {
+  const _MetadataProviderTile();
+
+  static String _configKey(String slug) => 'metadata_plugin_config.$slug';
+
+  static Map<String, String> _savedValues(String slug) {
+    final raw = KVStoreService.sharedPreferences.getString(_configKey(slug));
+    if (raw == null || raw.isEmpty) return const {};
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return const {};
+      return decoded.map((k, v) => MapEntry(k.toString(), v.toString()));
+    } catch (e, stack) {
+      AppLogger.log.w('Metadata provider config for $slug is unreadable: $e');
+      AppLogger.reportError(e, stack, '_MetadataProviderTile._savedValues');
+      return const {};
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pluginState = ref.watch(metadataPluginsProvider).valueOrNull;
+    final config = pluginState?.defaultMetadataPluginConfig ??
+        kDeeMusiqNativePluginConfig;
+    final plugin = ref.watch(metadataPluginProvider).valueOrNull;
+    final fields =
+        plugin?.auth.configurationFields ?? const <MetadataFormFieldObject>[];
+
+    return ListTile(
+      leading: const Icon(DeeMusiqIcons.plugin),
+      title: Text(context.l10n.manage_metadata_providers),
+      subtitle: Text("${config.name} ${config.version}"),
+      trailing:
+          fields.isNotEmpty ? const Icon(DeeMusiqIcons.angleRight) : null,
+      onTap: fields.isEmpty
+          ? null
+          : () async {
+              final saved = _savedValues(config.slug);
+              final prefilled = [
+                for (final field in fields)
+                  if (field is MetadataFormFieldInputObject &&
+                      saved.containsKey(field.id))
+                    field.copyWith(defaultValue: saved[field.id])
+                  else
+                    field,
+              ];
+              final result =
+                  await context.pushRoute<List<Map<String, dynamic>>>(
+                SettingsMetadataProviderFormRoute(
+                  title: config.name,
+                  fields: prefilled,
+                ),
+              );
+              if (result == null) return;
+              await KVStoreService.sharedPreferences.setString(
+                _configKey(config.slug),
+                jsonEncode({
+                  for (final entry in result)
+                    entry["id"].toString(): entry["value"]?.toString() ?? "",
+                }),
+              );
+            },
     );
   }
 }

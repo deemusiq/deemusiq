@@ -472,5 +472,18 @@
   "configure_plugins": "Richte deine eigenen Metadatenanbieter- und Audioquellen-Plugins ein",
   "source": "Quelle: ",
   "uncompressed": "Unkomprimiert",
-  "dab_music_source_description": "Für Audiophile. Bietet hochwertige/verlustfreie Audiostreams. Präzises ISRC-basiertes Track-Matching."
+  "dab_music_source_description": "Für Audiophile. Bietet hochwertige/verlustfreie Audiostreams. Präzises ISRC-basiertes Track-Matching.",
+  "skip_this_nonsense": "Diesen Unsinn überspringen",
+  "freedom_of_music": "“Freiheit der Musik”",
+  "freedom_of_music_palm": "“Freiheit der Musik in Ihrer Handfläche”",
+  "get_started": "Lass uns anfangen",
+  "endless_playback_description": "Neue Lieder automatisch\nam Ende der Wiedergabeliste hinzufügen",
+  "choose_your_region": "Wählen Sie Ihre Region",
+  "choose_your_region_description": "Dies wird DeeMusiq helfen, Ihnen den richtigen Inhalt\nfür Ihren Standort anzuzeigen.",
+  "choose_your_language": "Wählen Sie Ihre Sprache",
+  "help_project_grow": "Helfen Sie diesem Projekt zu wachsen",
+  "help_project_grow_description": "DeeMusiq ist ein Open-Source-Projekt. Sie können diesem Projekt helfen, indem Sie zum Projekt beitragen, Fehler melden oder neue Funktionen vorschlagen.",
+  "donate_on_open_collective": "Auf Open Collective spenden",
+  "install_a_metadata_provider": "Einen Metadatenanbieter installieren",
+  "input_does_not_match_format": "Eingabe entspricht nicht dem geforderten Format"
 }

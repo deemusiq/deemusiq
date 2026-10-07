@@ -1649,4 +1649,50 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get takedown_request_sent =>
       'Takedown requested — the song stays live until it is reviewed.';
+
+  @override
+  String get skip_this_nonsense => 'Pomiń tę bzdurę';
+
+  @override
+  String get freedom_of_music => '“Wolność Muzyki”';
+
+  @override
+  String get freedom_of_music_palm => '“Wolność Muzyki w Twojej dłoni”';
+
+  @override
+  String get get_started => 'Zacznijmy';
+
+  @override
+  String get endless_playback_description =>
+      'Automatycznie dodaj nowe utwory na koniec kolejki';
+
+  @override
+  String get choose_your_region => 'Wybierz swoją region';
+
+  @override
+  String get choose_your_region_description =>
+      'To pomoże DeeMusiq pokazać Ci odpowiednią treść dla Twojej lokalizacji.';
+
+  @override
+  String get choose_your_language => 'Wybierz swój język';
+
+  @override
+  String get help_project_grow => 'Pomóż temu projektowi rosnąć';
+
+  @override
+  String get help_project_grow_description =>
+      'DeeMusiq to projekt open-source. Możesz pomóc temu projektowi rosnąć, przyczyniając się do projektu, zgłaszając błędy lub sugerując nowe funkcje.';
+
+  @override
+  String get visit_our_website => 'Visit our website';
+
+  @override
+  String get donate_on_open_collective => 'Dotuj na Open Collective';
+
+  @override
+  String get install_a_metadata_provider => 'Zainstaluj dostawcę metadanych';
+
+  @override
+  String get input_does_not_match_format =>
+      'Wprowadzony tekst nie pasuje do wymaganego formatu';
 }

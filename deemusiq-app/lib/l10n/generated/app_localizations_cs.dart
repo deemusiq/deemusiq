@@ -1642,4 +1642,51 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String get takedown_request_sent =>
       'Takedown requested — the song stays live until it is reviewed.';
+
+  @override
+  String get skip_this_nonsense => 'Přeskočit tenhle nesmysl';
+
+  @override
+  String get freedom_of_music => '“Svobodná hudba”';
+
+  @override
+  String get freedom_of_music_palm => '“Svobodná hudba ve vaší dlani”';
+
+  @override
+  String get get_started => 'Začít';
+
+  @override
+  String get endless_playback_description =>
+      'Automaticky přidávat nové skladby\nna konec fronty';
+
+  @override
+  String get choose_your_region => 'Vyberte svůj region';
+
+  @override
+  String get choose_your_region_description =>
+      'To pomůže DeeMusiq ukázat vám správný obsah\npro vaši lokalitu.';
+
+  @override
+  String get choose_your_language => 'Vyberte svůj jazyk';
+
+  @override
+  String get help_project_grow => 'Pomozte tomuto projektu růst';
+
+  @override
+  String get help_project_grow_description =>
+      'DeeMusiq je open-source projekt. Můžete pomoci tomuto projektu růst tím, že přispějete do projektu, nahlásíte chyby nebo navrhnete nové funkce.';
+
+  @override
+  String get visit_our_website => 'Visit our website';
+
+  @override
+  String get donate_on_open_collective => 'Darujte na Open Collective';
+
+  @override
+  String get install_a_metadata_provider =>
+      'Nainstalovat poskytovatele metadat';
+
+  @override
+  String get input_does_not_match_format =>
+      'Vstup neodpovídá požadovanému formátu';
 }

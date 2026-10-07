@@ -472,5 +472,18 @@
   "configure_plugins": "Настройте собственные плагины провайдеров метаданных и источников аудио",
   "source": "Источник: ",
   "uncompressed": "Несжатый",
-  "dab_music_source_description": "Для аудиофилов. Предоставляет высококачественные/lossless аудиопотоки. Точное совпадение треков по ISRC."
+  "dab_music_source_description": "Для аудиофилов. Предоставляет высококачественные/lossless аудиопотоки. Точное совпадение треков по ISRC.",
+  "skip_this_nonsense": "Пропустить этот бред",
+  "freedom_of_music": "“Свобода музыки”",
+  "freedom_of_music_palm": "“Свобода музыки в вашей ладони”",
+  "get_started": "Начнем",
+  "endless_playback_description": "Автоматически добавляйте новые песни\nв конец очереди",
+  "choose_your_region": "Выберите ваш регион",
+  "choose_your_region_description": "Это поможет DeeMusiq показать вам правильный контент\nдля вашего местоположения.",
+  "choose_your_language": "Выберите ваш язык",
+  "help_project_grow": "Помогите этому проекту расти",
+  "help_project_grow_description": "DeeMusiq - это проект с открытым исходным кодом. Вы можете помочь этому проекту развиваться, внося вклад в проект, сообщая ошибках или предлагая новые функции.",
+  "donate_on_open_collective": "Пожертвовать на Open Collective",
+  "install_a_metadata_provider": "Установить поставщика метаданных",
+  "input_does_not_match_format": "Введенные данные не соответствуют требуемому формату"
 }

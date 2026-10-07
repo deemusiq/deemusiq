@@ -1615,4 +1615,48 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get takedown_request_sent =>
       'Takedown requested — the song stays live until it is reviewed.';
+
+  @override
+  String get skip_this_nonsense => 'こんなことはスキップ';
+
+  @override
+  String get freedom_of_music => '“音楽の自由”';
+
+  @override
+  String get freedom_of_music_palm => '“音楽の自由を思いのままに”';
+
+  @override
+  String get get_started => 'さあ始めましょう';
+
+  @override
+  String get endless_playback_description => 'キューの最後に新しい曲を自動で追加';
+
+  @override
+  String get choose_your_region => '地域を選択';
+
+  @override
+  String get choose_your_region_description =>
+      'DeeMusiqがあなたの地域に適したコンテンツを表示します。';
+
+  @override
+  String get choose_your_language => '言語を選択してください';
+
+  @override
+  String get help_project_grow => 'プロジェクトの成長を支援する';
+
+  @override
+  String get help_project_grow_description =>
+      'SpoTubeはオープンソースプロジェクトです。貢献したり、バグ報告したり、新機能を提案することで、プロジェクトの成長に貢献できます。';
+
+  @override
+  String get visit_our_website => 'Visit our website';
+
+  @override
+  String get donate_on_open_collective => 'Open Collectiveで寄付';
+
+  @override
+  String get install_a_metadata_provider => 'メタデータプロバイダーをインストール';
+
+  @override
+  String get input_does_not_match_format => '入力が必須フォーマットと一致しません';
 }

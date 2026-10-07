@@ -472,5 +472,18 @@
   "configure_plugins": "Configura els teus propis connectors de proveïdor de metadades i de font d'àudio",
   "source": "Font: ",
   "uncompressed": "Sense comprimir",
-  "dab_music_source_description": "Per als audiòfils. Ofereix fluxos d'àudio d'alta qualitat/sense pèrdua. Coincidència precisa de pistes basada en ISRC."
+  "dab_music_source_description": "Per als audiòfils. Ofereix fluxos d'àudio d'alta qualitat/sense pèrdua. Coincidència precisa de pistes basada en ISRC.",
+  "skip_this_nonsense": "Omet aquesta tonteria",
+  "freedom_of_music": "“Llibertat de la música”",
+  "freedom_of_music_palm": "“Llibertat de la música a la palma de la mà”",
+  "get_started": "Comencem",
+  "endless_playback_description": "Afegiu automàticament noves cançons\nal final de la cua",
+  "choose_your_region": "Trieu la vostra regió",
+  "choose_your_region_description": "Això ajudarà a DeeMusiq a mostrar-vos el contingut adequat\nper a la vostra ubicació.",
+  "choose_your_language": "Trieu el vostre idioma",
+  "help_project_grow": "Ajuda a fer créixer aquest projecte",
+  "help_project_grow_description": "DeeMusiq és un projecte de codi obert. Podeu ajudar a fer créixer aquest projecte contribuint al projecte, informant d'errors o suggerint noves funcionalitats.",
+  "donate_on_open_collective": "Fes una donació a Open Collective",
+  "install_a_metadata_provider": "Instal·lar un proveïdor de metadades",
+  "input_does_not_match_format": "L’entrada no coincideix amb el format requerit"
 }

@@ -35,7 +35,7 @@
 - **Anti-tamper**: (1) cert SHA256 pin (offline brick; fails closed when `DEEMUSIQ_CERT_SHA256` is pinned), (2) published APK hash check (online, locks wallet; requires valid `X-Body-Signature` Ed25519 header from the download worker when `DEEMUSIQ_INTEGRITY_ED25519_PUBLIC_KEY` is set), (3) active backend TLS-pin probe (`BackendCertPinProbe` in `lib/collections/http-override.dart` — `badCertificateCallback` alone never fires for valid-but-wrong certs; the probe locks the wallet on mismatch via `IntegrityService`). The pin check is scoped to the backend host only — never widen the callback to other hosts.
 - **TLS pin rotation is automated**: `deemusiq-app/server-tls-pins.txt` is the source of truth for `DEEMUSIQ_SERVER_CERT_SHA256` (the repo secret is only a fallback now). TLS terminates at the Cloudflare edge, which rotates the cert ~every 90 days without overlap; `.github/workflows/cert-pin-watch.yml` polls every 6h, vets the new cert (issuer allowlist + hostname + validity window — a foreign CA is refused), commits the new pin, dispatches all app rebuilds, and opens an issue. The human step that remains: verify the hash in CT logs and publish the artifacts per DISTRIBUTION.md. Never bypass this with `rejectUnauthorized`-style loosening.
 - **Versioning**: `x.y.z+N` in `pubspec.yaml` must match git tag `vx.y.z`. Build number always increments.
-- **Backend is a separate project** at `backend/` (nested git, ignored by root `.gitignore`). Node/Express/Prisma/SQLite. All API routes in `src/index.ts`.
+- **Backend is a separate project** at `backend/` (nested git, ignored by root `.gitignore`). Node/Express/Prisma/PostgreSQL. All API routers are mounted in `src/index.ts`.
 - **Admin console is served by the backend** at `/console` (Next standalone bundled into the API image; `basePath: "/console"` in deemusiq-admin). In production it should sit behind Cloudflare Access (`CF_ACCESS_*` env, JWT verified in `src/middleware/cfAccess.ts`); cookie login remains as break-glass.
 - **CI lives in root `.github/workflows/`**: `deemusiq-android.yml`, `deemusiq-linux.yml`, `deemusiq-macos.yml`, `deemusiq-windows.yml` (Flutter-app builds, `working-directory: deemusiq-app`) and `deploy-site.yml` (site deploy). `deemusiq-app/.github/` holds a copy of the Android workflow for the "upload only `deemusiq-app/` as its own repo" case; GitHub only auto-discovers root workflows, so the app copy never runs in this checkout.
 
@@ -82,7 +82,7 @@ npm run build        # tsc
 npm start            # node dist/index.js
 npm run db:generate  # prisma generate
 npm run db:migrate   # prisma migrate dev
-npm test             # node --test
+npm test             # vitest run
 ```
 
 ### Static site (`deemusiq-site/`)

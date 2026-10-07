@@ -31,9 +31,9 @@ import 'package:deemusiq/services/wallet/wallet_api.dart';
 ///    event ([onAdCompleted]); when no stream could be opened the declared
 ///    `durationSec` timer runs the break out instead.
 /// 4. Skips and completions are reported back to the backend for impression
-///    and campaign-spend accounting — exactly once per serve, and a break
+///    and outcome reporting — exactly once per serve, and a break
 ///    whose ad audio never played (open failure, mid-stream error, watchdog)
-///    is reported as a skip, never as a paid completion. If the backend is
+///    is reported as a skip, never as a completion. If the backend is
 ///    unreachable or has no inventory, the break is skipped silently —
 ///    playback is never interrupted by ad errors.
 ///

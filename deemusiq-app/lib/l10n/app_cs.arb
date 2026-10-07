@@ -472,5 +472,18 @@
   "configure_plugins": "Konfigurujte své vlastní pluginy poskytovatele metadat a zdroje zvuku",
   "source": "Zdroj: ",
   "uncompressed": "Nekomprimováno",
-  "dab_music_source_description": "Pro audiofily. Poskytuje vysoce kvalitní/bezztrátové zvukové toky. Přesná shoda skladeb na základě ISRC."
+  "dab_music_source_description": "Pro audiofily. Poskytuje vysoce kvalitní/bezztrátové zvukové toky. Přesná shoda skladeb na základě ISRC.",
+  "skip_this_nonsense": "Přeskočit tenhle nesmysl",
+  "freedom_of_music": "“Svobodná hudba”",
+  "freedom_of_music_palm": "“Svobodná hudba ve vaší dlani”",
+  "get_started": "Začít",
+  "endless_playback_description": "Automaticky přidávat nové skladby\nna konec fronty",
+  "choose_your_region": "Vyberte svůj region",
+  "choose_your_region_description": "To pomůže DeeMusiq ukázat vám správný obsah\npro vaši lokalitu.",
+  "choose_your_language": "Vyberte svůj jazyk",
+  "help_project_grow": "Pomozte tomuto projektu růst",
+  "help_project_grow_description": "DeeMusiq je open-source projekt. Můžete pomoci tomuto projektu růst tím, že přispějete do projektu, nahlásíte chyby nebo navrhnete nové funkce.",
+  "donate_on_open_collective": "Darujte na Open Collective",
+  "install_a_metadata_provider": "Nainstalovat poskytovatele metadat",
+  "input_does_not_match_format": "Vstup neodpovídá požadovanému formátu"
 }

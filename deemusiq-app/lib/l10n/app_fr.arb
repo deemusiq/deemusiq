@@ -473,5 +473,18 @@
   "configure_plugins": "Configurez vos propres plugins de fournisseur de métadonnées et de source audio",
   "source": "Source : ",
   "uncompressed": "Non compressé",
-  "dab_music_source_description": "Pour les audiophiles. Fournit des flux audio de haute qualité/sans perte. Correspondance précise des pistes basée sur ISRC."
+  "dab_music_source_description": "Pour les audiophiles. Fournit des flux audio de haute qualité/sans perte. Correspondance précise des pistes basée sur ISRC.",
+  "skip_this_nonsense": "Passer cette absurdité",
+  "freedom_of_music": "“Liberté de la musique”",
+  "freedom_of_music_palm": "“Liberté de la musique dans la paume de votre main”",
+  "get_started": "Commençons",
+  "endless_playback_description": "Ajouter automatiquement de nouvelles chansons à la fin de la file d'attente",
+  "choose_your_region": "Choisissez votre région",
+  "choose_your_region_description": "Cela aidera DeeMusiq à vous montrer le bon contenu pour votre emplacement.",
+  "choose_your_language": "Choisissez votre langue",
+  "help_project_grow": "Aidez ce projet à grandir",
+  "help_project_grow_description": "DeeMusiq est un projet open-source. Vous pouvez aider ce projet à grandir en contribuant au projet, en signalant des bugs ou en suggérant de nouvelles fonctionnalités.",
+  "donate_on_open_collective": "Faire un don sur Open Collective",
+  "install_a_metadata_provider": "Installer un fournisseur de métadonnées",
+  "input_does_not_match_format": "L'entrée ne correspond pas au format requis"
 }

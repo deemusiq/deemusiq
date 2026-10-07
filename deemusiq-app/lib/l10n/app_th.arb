@@ -473,5 +473,18 @@
   "configure_plugins": "กำหนดค่าปลั๊กอินผู้ให้บริการเมตาดาต้าและแหล่งเสียงของคุณเอง",
   "source": "แหล่งที่มา: ",
   "uncompressed": "ไม่บีบอัด",
-  "dab_music_source_description": "สำหรับคนรักเสียงเพลง ให้สตรีมเสียงคุณภาพสูง/ไร้การสูญเสียการบีบอัด การจับคู่แทร็กแม่นยำตาม ISRC"
+  "dab_music_source_description": "สำหรับคนรักเสียงเพลง ให้สตรีมเสียงคุณภาพสูง/ไร้การสูญเสียการบีบอัด การจับคู่แทร็กแม่นยำตาม ISRC",
+  "skip_this_nonsense": "ข้ามสิ่งไร้สาระนี้",
+  "freedom_of_music": "“เสรีภาพแห่งเสียงเพลง”",
+  "freedom_of_music_palm": "“เสรีภาพแห่งเสียงเพลง ในมือของคุณ”",
+  "get_started": "เริ่มต้น",
+  "endless_playback_description": "เพิ่มเพลงใหม่ลงในคิวโดยอัตโนมัติ",
+  "choose_your_region": "เลือกภูมิภาคของคุณ",
+  "choose_your_region_description": "สิ่งนี้จะช่วยให้ DeeMusiq แสดงเนื้อหาที่เหมาะสมสำหรับคุณ",
+  "choose_your_language": "เลือกภาษาของคุณ",
+  "help_project_grow": "ช่วยให้โครงการนี้เติบโต",
+  "help_project_grow_description": "DeeMusiq เป็นโครงการโอเพนซอร์ส คุณสามารถช่วยให้โครงการนี้เติบโตได้โดยการมีส่วนร่วมในโครงการ รายงานข้อบกพร่อง หรือเสนอคุณสมบัติใหม่",
+  "donate_on_open_collective": "บริจาคบน Open Collective",
+  "install_a_metadata_provider": "ติดตั้งผู้ให้บริการเมตาดาต้า",
+  "input_does_not_match_format": "อินพุตไม่ตรงกับรูปแบบที่ต้องการ"
 }

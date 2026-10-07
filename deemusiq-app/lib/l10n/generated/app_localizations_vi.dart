@@ -1649,4 +1649,52 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get takedown_request_sent =>
       'Takedown requested — the song stays live until it is reviewed.';
+
+  @override
+  String get skip_this_nonsense => 'Bỏ qua bớt rối này';
+
+  @override
+  String get freedom_of_music => '“Sự Tự do của Âm nhạc”';
+
+  @override
+  String get freedom_of_music_palm =>
+      '“Sự Tự do của Âm nhạc trong lòng bàn tay của bạn”';
+
+  @override
+  String get get_started => 'Bắt đầu thôi';
+
+  @override
+  String get endless_playback_description =>
+      'Tự động thêm các bài hát mới\nvào cuối hàng đợi';
+
+  @override
+  String get choose_your_region => 'Chọn khu vực của bạn';
+
+  @override
+  String get choose_your_region_description =>
+      'Điều này sẽ giúp DeeMusiq hiển thị nội dung phù hợp cho vị trí của bạn.';
+
+  @override
+  String get choose_your_language => 'Chọn ngôn ngữ của bạn';
+
+  @override
+  String get help_project_grow => 'Hãy giúp dự án này phát triển';
+
+  @override
+  String get help_project_grow_description =>
+      'DeeMusiq là một dự án mã nguồn mở. Bạn có thể giúp dự án này phát triển bằng cách đóng góp vào dự án, báo cáo lỗi hoặc đề xuất tính năng mới.';
+
+  @override
+  String get visit_our_website => 'Visit our website';
+
+  @override
+  String get donate_on_open_collective => 'Quyên góp trên Open Collective';
+
+  @override
+  String get install_a_metadata_provider =>
+      'Cài đặt một Nhà cung cấp siêu dữ liệu';
+
+  @override
+  String get input_does_not_match_format =>
+      'Đầu vào không khớp với định dạng yêu cầu';
 }

@@ -471,5 +471,18 @@
   "configure_plugins": "独自のメタデータプロバイダーとオーディオソースプラグインを設定",
   "source": "ソース: ",
   "uncompressed": "非圧縮",
-  "dab_music_source_description": "オーディオファイル向け。高品質/ロスレスオーディオストリームを提供。正確なISRCベースのトラックマッチング。"
+  "dab_music_source_description": "オーディオファイル向け。高品質/ロスレスオーディオストリームを提供。正確なISRCベースのトラックマッチング。",
+  "skip_this_nonsense": "こんなことはスキップ",
+  "freedom_of_music": "“音楽の自由”",
+  "freedom_of_music_palm": "“音楽の自由を思いのままに”",
+  "get_started": "さあ始めましょう",
+  "endless_playback_description": "キューの最後に新しい曲を自動で追加",
+  "choose_your_region": "地域を選択",
+  "choose_your_region_description": "DeeMusiqがあなたの地域に適したコンテンツを表示します。",
+  "choose_your_language": "言語を選択してください",
+  "help_project_grow": "プロジェクトの成長を支援する",
+  "help_project_grow_description": "SpoTubeはオープンソースプロジェクトです。貢献したり、バグ報告したり、新機能を提案することで、プロジェクトの成長に貢献できます。",
+  "donate_on_open_collective": "Open Collectiveで寄付",
+  "install_a_metadata_provider": "メタデータプロバイダーをインストール",
+  "input_does_not_match_format": "入力が必須フォーマットと一致しません"
 }

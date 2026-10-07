@@ -472,5 +472,18 @@
   "configure_plugins": "Määritä omat metatietojen tarjoaja- ja äänilähdelaajennukset",
   "source": "Lähde: ",
   "uncompressed": "Pakkaamaton",
-  "dab_music_source_description": "Audiofiileille. Tarjoaa korkealaatuisia/häviöttömiä äänivirtoja. Tarkka ISRC-pohjainen kappaleiden tunnistus."
+  "dab_music_source_description": "Audiofiileille. Tarjoaa korkealaatuisia/häviöttömiä äänivirtoja. Tarkka ISRC-pohjainen kappaleiden tunnistus.",
+  "skip_this_nonsense": "Ohita tämä hölynpöly",
+  "freedom_of_music": "“Musiikin vapaus”",
+  "freedom_of_music_palm": "“Musiikin vapaus käsissäsi”",
+  "get_started": "Aloitetaan",
+  "endless_playback_description": "Lisää automaattisesti uusia lauluja\njonon perään",
+  "choose_your_region": "Valitse alueesi",
+  "choose_your_region_description": "Tämä auttaa DeeMusiq näyttämään sinulle oikeaa sisältöä\nsijaintiasi varten.",
+  "choose_your_language": "Valitse kielesi",
+  "help_project_grow": "Auta tätä projektia kasvamaan",
+  "help_project_grow_description": "DeeMusiq projekti minkä lähdekoodi on julkisesti saatavilla. Voit autta tätä projektia kasvamaan muutoksilla, ilmoittamalla bugeista, tai ehdottamalla uusia ominaisuuksia.",
+  "donate_on_open_collective": "Lahjoita avoimessa kollektiivissa",
+  "install_a_metadata_provider": "Asenna metatietojen tarjoaja",
+  "input_does_not_match_format": "Syöte ei vastaa vaadittua muotoa"
 }

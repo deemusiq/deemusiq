@@ -1655,4 +1655,50 @@ class AppLocalizationsNe extends AppLocalizations {
   @override
   String get takedown_request_sent =>
       'Takedown requested — the song stays live until it is reviewed.';
+
+  @override
+  String get skip_this_nonsense => 'यस अबश्यकता छोड्नुहोस्';
+
+  @override
+  String get freedom_of_music => '“संगीतको स्वतन्त्रता”';
+
+  @override
+  String get freedom_of_music_palm => '“तपाईंको हातमा संगीतको स्वतन्त्रता”';
+
+  @override
+  String get get_started => 'आइयाँ प्रारम्भ गरौं';
+
+  @override
+  String get endless_playback_description =>
+      'नयाँ गीतहरूलाई स्वचालित रूपमा कताक्षको अन्तमा जोड्नुहोस्';
+
+  @override
+  String get choose_your_region => 'तपाईंको क्षेत्र छनौट गर्नुहोस्';
+
+  @override
+  String get choose_your_region_description =>
+      'यो DeeMusiqलाई तपाईंको स्थानका लागि सहि सामग्री देखाउने मद्दत गर्नेछ।';
+
+  @override
+  String get choose_your_language => 'तपाईंको भाषा छनौट गर्नुहोस्';
+
+  @override
+  String get help_project_grow => 'यस परियोजनामा वृद्धि गराउनुहोस्';
+
+  @override
+  String get help_project_grow_description =>
+      'DeeMusiq एक खुला स्रोतको परियोजना हो। तपाईं परियोजनामा योगदान गरेर, त्रुटिहरू सूचिकै, वा नयाँ सुविधाहरू सुझाव दिएर यस परियोजनामा वृद्धि गर्न सक्नुहुन्छ।';
+
+  @override
+  String get visit_our_website => 'Visit our website';
+
+  @override
+  String get donate_on_open_collective => 'खुला संगठनमा दान गर्नुहोस्';
+
+  @override
+  String get install_a_metadata_provider =>
+      'मेटाडेटा प्रदायक स्थापना गर्नुहोस्';
+
+  @override
+  String get input_does_not_match_format => 'इनपुट आवश्यक ढाँचासँग मेल खाँदैन';
 }

@@ -1658,4 +1658,50 @@ class AppLocalizationsTl extends AppLocalizations {
   @override
   String get takedown_request_sent =>
       'Takedown requested — the song stays live until it is reviewed.';
+
+  @override
+  String get skip_this_nonsense => 'Laktawan ang kalokohan na ito';
+
+  @override
+  String get freedom_of_music => '\"Kalayaan ng Musika\"';
+
+  @override
+  String get freedom_of_music_palm => '\"Kalayaan ng Musika sa iyong palad\"';
+
+  @override
+  String get get_started => 'Magsimula na tayo';
+
+  @override
+  String get endless_playback_description =>
+      'Awtomatikong magdagdag ng mga bagong kanta\nsa dulo ng pila';
+
+  @override
+  String get choose_your_region => 'Piliin ang iyong rehiyon';
+
+  @override
+  String get choose_your_region_description =>
+      'Ito ay tutulong sa DeeMusiq na ipakita sa iyo ang tamang content\npara sa iyong lokasyon.';
+
+  @override
+  String get choose_your_language => 'Piliin ang iyong wika';
+
+  @override
+  String get help_project_grow => 'Tulungan ang proyektong ito na lumago';
+
+  @override
+  String get help_project_grow_description =>
+      'Ang DeeMusiq ay isang open-source na proyekto. Maaari mong tulungan ang proyektong ito na lumago sa pamamagitan ng pag-contribute sa proyekto, pag-ulat ng mga bug, o pagmungkahi ng mga bagong feature.';
+
+  @override
+  String get visit_our_website => 'Visit our website';
+
+  @override
+  String get donate_on_open_collective => 'Mag-donate sa Open Collective';
+
+  @override
+  String get install_a_metadata_provider => 'Mag-install ng Metadata Provider';
+
+  @override
+  String get input_does_not_match_format =>
+      'Ang input ay hindi tumutugma sa kinakailangang format';
 }

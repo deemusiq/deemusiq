@@ -1650,4 +1650,50 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get takedown_request_sent =>
       'Takedown requested — the song stays live until it is reviewed.';
+
+  @override
+  String get skip_this_nonsense => 'Пропустить этот бред';
+
+  @override
+  String get freedom_of_music => '“Свобода музыки”';
+
+  @override
+  String get freedom_of_music_palm => '“Свобода музыки в вашей ладони”';
+
+  @override
+  String get get_started => 'Начнем';
+
+  @override
+  String get endless_playback_description =>
+      'Автоматически добавляйте новые песни\nв конец очереди';
+
+  @override
+  String get choose_your_region => 'Выберите ваш регион';
+
+  @override
+  String get choose_your_region_description =>
+      'Это поможет DeeMusiq показать вам правильный контент\nдля вашего местоположения.';
+
+  @override
+  String get choose_your_language => 'Выберите ваш язык';
+
+  @override
+  String get help_project_grow => 'Помогите этому проекту расти';
+
+  @override
+  String get help_project_grow_description =>
+      'DeeMusiq - это проект с открытым исходным кодом. Вы можете помочь этому проекту развиваться, внося вклад в проект, сообщая ошибках или предлагая новые функции.';
+
+  @override
+  String get visit_our_website => 'Visit our website';
+
+  @override
+  String get donate_on_open_collective => 'Пожертвовать на Open Collective';
+
+  @override
+  String get install_a_metadata_provider => 'Установить поставщика метаданных';
+
+  @override
+  String get input_does_not_match_format =>
+      'Введенные данные не соответствуют требуемому формату';
 }

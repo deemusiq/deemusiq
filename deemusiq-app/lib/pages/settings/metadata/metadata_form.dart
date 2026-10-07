@@ -118,11 +118,12 @@ class SettingsMetadataProviderFormPage extends HookConsumerWidget {
                   SliverToBoxAdapter(
                     child: Button.primary(
                       onPressed: () {
-                        if (formKey.currentState?.saveAndValidate() != true) {
+                        final formState = formKey.currentState;
+                        if (formState == null || !formState.saveAndValidate()) {
                           return;
                         }
 
-                        final data = formKey.currentState!.value.entries
+                        final data = formState.value.entries
                             .map((e) => <String, dynamic>{
                                   "id": e.key,
                                   "value": e.value,

@@ -1647,4 +1647,50 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get takedown_request_sent =>
       'Takedown requested — the song stays live until it is reviewed.';
+
+  @override
+  String get skip_this_nonsense => 'Пропустити цей бред';
+
+  @override
+  String get freedom_of_music => '“Свобода музики”';
+
+  @override
+  String get freedom_of_music_palm => '“Свобода музики у вашій долоні”';
+
+  @override
+  String get get_started => 'Давайте почнемо';
+
+  @override
+  String get endless_playback_description =>
+      'Автоматично додавати нові пісні\nв кінець черги';
+
+  @override
+  String get choose_your_region => 'Виберіть ваш регіон';
+
+  @override
+  String get choose_your_region_description =>
+      'Це допоможе DeeMusiq показати вам правильний контент\nдля вашого місцезнаходження.';
+
+  @override
+  String get choose_your_language => 'Виберіть свою мову';
+
+  @override
+  String get help_project_grow => 'Допоможіть цьому проекту рости';
+
+  @override
+  String get help_project_grow_description =>
+      'DeeMusiq - це проект з відкритим кодом. Ви можете допомогти цьому проекту зростати, вносячи свій внесок у проект, повідомляючи про помилки або пропонуючи нові функції.';
+
+  @override
+  String get visit_our_website => 'Visit our website';
+
+  @override
+  String get donate_on_open_collective => 'Пожертвуйте на Open Collective';
+
+  @override
+  String get install_a_metadata_provider => 'Встановити провайдера метаданих';
+
+  @override
+  String get input_does_not_match_format =>
+      'Введені дані не відповідають необхідному формату';
 }

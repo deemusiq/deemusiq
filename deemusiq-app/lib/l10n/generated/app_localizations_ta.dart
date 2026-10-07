@@ -1656,4 +1656,51 @@ class AppLocalizationsTa extends AppLocalizations {
   @override
   String get takedown_request_sent =>
       'Takedown requested — the song stays live until it is reviewed.';
+
+  @override
+  String get skip_this_nonsense => 'இந்த அர்த்தமற்றதைத் தவிர்';
+
+  @override
+  String get freedom_of_music => '\"இசையின் சுதந்திரம்\"';
+
+  @override
+  String get freedom_of_music_palm => '\"உங்கள் கைகளில் இசையின் சுதந்திரம்\"';
+
+  @override
+  String get get_started => 'தொடங்குவோம்';
+
+  @override
+  String get endless_playback_description =>
+      'வரிசையின் இறுதியில் புதிய பாடல்களை\nதானாகவே சேர்க்கவும்';
+
+  @override
+  String get choose_your_region => 'உங்கள் பிராந்தியத்தைத் தேர்ந்தெடுக்கவும்';
+
+  @override
+  String get choose_your_region_description =>
+      'இது உங்கள் இருப்பிடத்திற்கான சரியான உள்ளடக்கத்தை\nDeeMusiq காட்ட உதவும்.';
+
+  @override
+  String get choose_your_language => 'உங்கள் மொழியைத் தேர்ந்தெடுக்கவும்';
+
+  @override
+  String get help_project_grow => 'இந்த திட்டம் வளர உதவுங்கள்';
+
+  @override
+  String get help_project_grow_description =>
+      'DeeMusiq ஒரு திறந்த மூல திட்டம். திட்டத்திற்கு பங்களிப்பு செய்வதன் மூலம், பிழைகளைப் புகாரளிப்பதன் மூலம் அல்லது புதிய அம்சங்களைப் பரிந்துரைப்பதன் மூலம் இந்தத் திட்டம் வளர உதவலாம்.';
+
+  @override
+  String get visit_our_website => 'Visit our website';
+
+  @override
+  String get donate_on_open_collective =>
+      'Open Collective இல் நன்கொடை அளியுங்கள்';
+
+  @override
+  String get install_a_metadata_provider => 'மெட்டாடேட்டா வழங்குநரை நிறுவவும்';
+
+  @override
+  String get input_does_not_match_format =>
+      'உள்ளீடு தேவையான வடிவத்துடன் பொருந்தவில்லை';
 }

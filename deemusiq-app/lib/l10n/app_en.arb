@@ -498,5 +498,19 @@
   "takedown_request_body": "Published songs are taken down by the DeeMusiq team. Tell us why this song should be removed — it stays live until the request is reviewed.",
   "takedown_reason_hint": "Reason (e.g. rights change, wrong upload)",
   "takedown_reason_required": "Enter a reason for the takedown.",
-  "takedown_request_sent": "Takedown requested — the song stays live until it is reviewed."
+  "takedown_request_sent": "Takedown requested — the song stays live until it is reviewed.",
+  "skip_this_nonsense": "Skip this nonsense",
+  "freedom_of_music": "“Freedom of Music”",
+  "freedom_of_music_palm": "“Freedom of Music in the palm of your hand”",
+  "get_started": "Let's get started",
+  "endless_playback_description": "Automatically append new songs\nto the end of the queue",
+  "choose_your_region": "Choose your region",
+  "choose_your_region_description": "This will help DeeMusiq show you the right content\nfor your location.",
+  "choose_your_language": "Choose your language",
+  "help_project_grow": "Help this project grow",
+  "help_project_grow_description": "DeeMusiq is an open-source project. You can help this project grow by contributing to the project, reporting bugs, or suggesting new features.",
+  "visit_our_website": "Visit our website",
+  "donate_on_open_collective": "Donate on Open Collective",
+  "install_a_metadata_provider": "Install a Metadata Provider",
+  "input_does_not_match_format": "Input doesn't match the required format"
 }

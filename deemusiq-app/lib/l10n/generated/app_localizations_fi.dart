@@ -1643,4 +1643,49 @@ class AppLocalizationsFi extends AppLocalizations {
   @override
   String get takedown_request_sent =>
       'Takedown requested — the song stays live until it is reviewed.';
+
+  @override
+  String get skip_this_nonsense => 'Ohita tämä hölynpöly';
+
+  @override
+  String get freedom_of_music => '“Musiikin vapaus”';
+
+  @override
+  String get freedom_of_music_palm => '“Musiikin vapaus käsissäsi”';
+
+  @override
+  String get get_started => 'Aloitetaan';
+
+  @override
+  String get endless_playback_description =>
+      'Lisää automaattisesti uusia lauluja\njonon perään';
+
+  @override
+  String get choose_your_region => 'Valitse alueesi';
+
+  @override
+  String get choose_your_region_description =>
+      'Tämä auttaa DeeMusiq näyttämään sinulle oikeaa sisältöä\nsijaintiasi varten.';
+
+  @override
+  String get choose_your_language => 'Valitse kielesi';
+
+  @override
+  String get help_project_grow => 'Auta tätä projektia kasvamaan';
+
+  @override
+  String get help_project_grow_description =>
+      'DeeMusiq projekti minkä lähdekoodi on julkisesti saatavilla. Voit autta tätä projektia kasvamaan muutoksilla, ilmoittamalla bugeista, tai ehdottamalla uusia ominaisuuksia.';
+
+  @override
+  String get visit_our_website => 'Visit our website';
+
+  @override
+  String get donate_on_open_collective => 'Lahjoita avoimessa kollektiivissa';
+
+  @override
+  String get install_a_metadata_provider => 'Asenna metatietojen tarjoaja';
+
+  @override
+  String get input_does_not_match_format => 'Syöte ei vastaa vaadittua muotoa';
 }

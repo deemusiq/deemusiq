@@ -3092,6 +3092,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Takedown requested — the song stays live until it is reviewed.'**
   String get takedown_request_sent;
+
+  /// No description provided for @skip_this_nonsense.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip this nonsense'**
+  String get skip_this_nonsense;
+
+  /// No description provided for @freedom_of_music.
+  ///
+  /// In en, this message translates to:
+  /// **'“Freedom of Music”'**
+  String get freedom_of_music;
+
+  /// No description provided for @freedom_of_music_palm.
+  ///
+  /// In en, this message translates to:
+  /// **'“Freedom of Music in the palm of your hand”'**
+  String get freedom_of_music_palm;
+
+  /// No description provided for @get_started.
+  ///
+  /// In en, this message translates to:
+  /// **'Let\'s get started'**
+  String get get_started;
+
+  /// No description provided for @endless_playback_description.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatically append new songs\nto the end of the queue'**
+  String get endless_playback_description;
+
+  /// No description provided for @choose_your_region.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your region'**
+  String get choose_your_region;
+
+  /// No description provided for @choose_your_region_description.
+  ///
+  /// In en, this message translates to:
+  /// **'This will help DeeMusiq show you the right content\nfor your location.'**
+  String get choose_your_region_description;
+
+  /// No description provided for @choose_your_language.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your language'**
+  String get choose_your_language;
+
+  /// No description provided for @help_project_grow.
+  ///
+  /// In en, this message translates to:
+  /// **'Help this project grow'**
+  String get help_project_grow;
+
+  /// No description provided for @help_project_grow_description.
+  ///
+  /// In en, this message translates to:
+  /// **'DeeMusiq is an open-source project. You can help this project grow by contributing to the project, reporting bugs, or suggesting new features.'**
+  String get help_project_grow_description;
+
+  /// No description provided for @visit_our_website.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit our website'**
+  String get visit_our_website;
+
+  /// No description provided for @donate_on_open_collective.
+  ///
+  /// In en, this message translates to:
+  /// **'Donate on Open Collective'**
+  String get donate_on_open_collective;
+
+  /// No description provided for @install_a_metadata_provider.
+  ///
+  /// In en, this message translates to:
+  /// **'Install a Metadata Provider'**
+  String get install_a_metadata_provider;
+
+  /// No description provided for @input_does_not_match_format.
+  ///
+  /// In en, this message translates to:
+  /// **'Input doesn\'t match the required format'**
+  String get input_does_not_match_format;
 }
 
 class _AppLocalizationsDelegate

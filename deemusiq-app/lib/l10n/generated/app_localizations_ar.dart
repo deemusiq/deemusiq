@@ -1644,4 +1644,50 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get takedown_request_sent =>
       'Takedown requested — the song stays live until it is reviewed.';
+
+  @override
+  String get skip_this_nonsense => 'تخطي هذه الهراء';
+
+  @override
+  String get freedom_of_music => '“حرية الموسيقى”';
+
+  @override
+  String get freedom_of_music_palm => '“حرية الموسيقى في متناول يدك”';
+
+  @override
+  String get get_started => 'لنبدأ';
+
+  @override
+  String get endless_playback_description =>
+      'إلحاق الأغاني الجديدة تلقائيًا\nإلى نهاية قائمة التشغيل';
+
+  @override
+  String get choose_your_region => 'اختر منطقتك';
+
+  @override
+  String get choose_your_region_description =>
+      'سيساعدك هذا في عرض المحتوى المناسب\nلموقعك.';
+
+  @override
+  String get choose_your_language => 'اختر لغتك';
+
+  @override
+  String get help_project_grow => 'ساعد في نمو هذا المشروع';
+
+  @override
+  String get help_project_grow_description =>
+      'DeeMusiq هو مشروع مفتوح المصدر. يمكنك مساعدة هذا المشروع في النمو عن طريق المساهمة في المشروع، أو الإبلاغ عن الأخطاء، أو اقتراح ميزات جديدة.';
+
+  @override
+  String get visit_our_website => 'Visit our website';
+
+  @override
+  String get donate_on_open_collective => 'التبرع على Open Collective';
+
+  @override
+  String get install_a_metadata_provider => 'تثبيت مزوّد بيانات';
+
+  @override
+  String get input_does_not_match_format =>
+      'المدخل لا يتوافق مع التنسيق المطلوب';
 }

@@ -472,5 +472,18 @@
   "configure_plugins": "配置您自己的中繼資料提供者和音訊來源外掛程式",
   "source": "來源：",
   "uncompressed": "未壓縮",
-  "dab_music_source_description": "適合音響發燒友。提供高品質/無損音訊串流。精確的 ISRC 曲目比對。"
+  "dab_music_source_description": "適合音響發燒友。提供高品質/無損音訊串流。精確的 ISRC 曲目比對。",
+  "skip_this_nonsense": "跳過這個無聊內容",
+  "freedom_of_music": "“音樂的自由”",
+  "freedom_of_music_palm": "「音樂的自由掌握在您手中」",
+  "get_started": "我們開始吧",
+  "endless_playback_description": "自動將新歌曲加入清單的結尾",
+  "choose_your_region": "選擇您的所在地區",
+  "choose_your_region_description": "這能幫助 DeeMusiq 為您的所在位置顯示正確的內容。",
+  "choose_your_language": "選擇您的語言",
+  "help_project_grow": "幫助這個專案成長",
+  "help_project_grow_description": "DeeMusiq是一個開源專案。您可以透過為專案做出貢獻、回報錯誤或建議新功能來幫助專案成長。",
+  "donate_on_open_collective": "在Open Collective上捐款",
+  "install_a_metadata_provider": "安裝中繼資料供應商",
+  "input_does_not_match_format": "輸入不符合所需格式"
 }

@@ -1617,4 +1617,48 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get takedown_request_sent =>
       'Takedown requested — the song stays live until it is reviewed.';
+
+  @override
+  String get skip_this_nonsense => '이 허튼소리 건너뛰기';
+
+  @override
+  String get freedom_of_music => '“음악의 자유”';
+
+  @override
+  String get freedom_of_music_palm => '“손바닥 안의 음악의 자유”';
+
+  @override
+  String get get_started => '시작합시다';
+
+  @override
+  String get endless_playback_description => '자동으로 새로운 노래를 대기열의 끝에 추가';
+
+  @override
+  String get choose_your_region => '지역 선택';
+
+  @override
+  String get choose_your_region_description =>
+      '이것은 DeeMusiq가 위치에 맞는 콘텐츠를 표시하는 데 도움이 됩니다.';
+
+  @override
+  String get choose_your_language => '언어 선택';
+
+  @override
+  String get help_project_grow => '이 프로젝트 성장에 도움을 주세요';
+
+  @override
+  String get help_project_grow_description =>
+      'DeeMusiq는 오픈 소스 프로젝트입니다. 프로젝트에 기여하거나 버그를 보고하거나 새로운 기능을 제안하여이 프로젝트의 성장에 도움을 줄 수 있습니다.';
+
+  @override
+  String get visit_our_website => 'Visit our website';
+
+  @override
+  String get donate_on_open_collective => 'Open Collective에 기부하기';
+
+  @override
+  String get install_a_metadata_provider => '메타데이터 제공자 설치';
+
+  @override
+  String get input_does_not_match_format => '입력이 필요한 형식과 일치하지 않습니다';
 }

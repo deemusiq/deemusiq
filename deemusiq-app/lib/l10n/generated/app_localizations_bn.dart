@@ -1643,4 +1643,51 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get takedown_request_sent =>
       'Takedown requested — the song stays live until it is reviewed.';
+
+  @override
+  String get skip_this_nonsense => 'এই বাকবাস পালান';
+
+  @override
+  String get freedom_of_music => '“সংগীতের স্বাধীনতা”';
+
+  @override
+  String get freedom_of_music_palm => '“তোমার হাতের কাছে সংগীতের স্বাধীনতা”';
+
+  @override
+  String get get_started => 'শুরু করা যাক';
+
+  @override
+  String get endless_playback_description =>
+      'নতুন গান নিজে নিজে প্লেলিস্টের শেষে\nসংযুক্ত করুন';
+
+  @override
+  String get choose_your_region => 'আপনার অঞ্চল নির্বাচন করুন';
+
+  @override
+  String get choose_your_region_description =>
+      'এটি স্পটুবে আপনাকে আপনার অবস্থানের জন্য ঠিক কন্টেন্ট দেখানোর সাহায্য করবে।';
+
+  @override
+  String get choose_your_language => 'আপনার ভাষা নির্বাচন করুন';
+
+  @override
+  String get help_project_grow => 'এই প্রকল্পের বৃদ্ধি করুন';
+
+  @override
+  String get help_project_grow_description =>
+      'স্পটুব একটি ওপেন সোর্স প্রকল্প। আপনি প্রকল্পে অবদান রাখেন, বাগ রিপোর্ট করেন, বা নতুন বৈশিষ্ট্যগুলি সুপারিশ করেন।';
+
+  @override
+  String get visit_our_website => 'Visit our website';
+
+  @override
+  String get donate_on_open_collective => 'ওপেন কলেক্টিভে অনুদান করুন';
+
+  @override
+  String get install_a_metadata_provider =>
+      'একটি মেটাডেটা প্রদানকারী ইনস্টল করুন';
+
+  @override
+  String get input_does_not_match_format =>
+      'ইনপুট প্রয়োজনীয় ফরম্যাটের সাথে মেলে না';
 }

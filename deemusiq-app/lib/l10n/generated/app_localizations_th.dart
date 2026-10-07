@@ -1640,4 +1640,48 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get takedown_request_sent =>
       'Takedown requested — the song stays live until it is reviewed.';
+
+  @override
+  String get skip_this_nonsense => 'ข้ามสิ่งไร้สาระนี้';
+
+  @override
+  String get freedom_of_music => '“เสรีภาพแห่งเสียงเพลง”';
+
+  @override
+  String get freedom_of_music_palm => '“เสรีภาพแห่งเสียงเพลง ในมือของคุณ”';
+
+  @override
+  String get get_started => 'เริ่มต้น';
+
+  @override
+  String get endless_playback_description => 'เพิ่มเพลงใหม่ลงในคิวโดยอัตโนมัติ';
+
+  @override
+  String get choose_your_region => 'เลือกภูมิภาคของคุณ';
+
+  @override
+  String get choose_your_region_description =>
+      'สิ่งนี้จะช่วยให้ DeeMusiq แสดงเนื้อหาที่เหมาะสมสำหรับคุณ';
+
+  @override
+  String get choose_your_language => 'เลือกภาษาของคุณ';
+
+  @override
+  String get help_project_grow => 'ช่วยให้โครงการนี้เติบโต';
+
+  @override
+  String get help_project_grow_description =>
+      'DeeMusiq เป็นโครงการโอเพนซอร์ส คุณสามารถช่วยให้โครงการนี้เติบโตได้โดยการมีส่วนร่วมในโครงการ รายงานข้อบกพร่อง หรือเสนอคุณสมบัติใหม่';
+
+  @override
+  String get visit_our_website => 'Visit our website';
+
+  @override
+  String get donate_on_open_collective => 'บริจาคบน Open Collective';
+
+  @override
+  String get install_a_metadata_provider => 'ติดตั้งผู้ให้บริการเมตาดาต้า';
+
+  @override
+  String get input_does_not_match_format => 'อินพุตไม่ตรงกับรูปแบบที่ต้องการ';
 }

@@ -1649,4 +1649,51 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get takedown_request_sent =>
       'Takedown requested — the song stays live until it is reviewed.';
+
+  @override
+  String get skip_this_nonsense => 'Lewati omong kosong ini';
+
+  @override
+  String get freedom_of_music => '“Kebebasan Musik”';
+
+  @override
+  String get freedom_of_music_palm =>
+      '“Kebebasan Musik di telapak tangan Anda”';
+
+  @override
+  String get get_started => 'Mari kita mulai';
+
+  @override
+  String get endless_playback_description =>
+      'Tambahkan lagu baru secara otomatis\nke akhir antrean';
+
+  @override
+  String get choose_your_region => 'Pilih wilayah Anda';
+
+  @override
+  String get choose_your_region_description =>
+      'Ini akan membantu DeeMusiq menampilkan konten yang tepat\nuntuk lokasi Anda.';
+
+  @override
+  String get choose_your_language => 'Pilih bahasa Anda';
+
+  @override
+  String get help_project_grow => 'Bantu proyek ini berkembang';
+
+  @override
+  String get help_project_grow_description =>
+      'DeeMusiq adalah proyek sumber terbuka. Anda dapat membantu proyek ini berkembang dengan berkontribusi pada proyek, melaporkan bug, atau menyarankan fitur baru.';
+
+  @override
+  String get visit_our_website => 'Visit our website';
+
+  @override
+  String get donate_on_open_collective => 'Donasi di Open Collective';
+
+  @override
+  String get install_a_metadata_provider => 'Instal Penyedia Metadata';
+
+  @override
+  String get input_does_not_match_format =>
+      'Masukan tidak cocok dengan format yang diperlukan';
 }
