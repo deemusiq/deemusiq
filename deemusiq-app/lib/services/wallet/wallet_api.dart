@@ -53,6 +53,10 @@ class WalletApiException implements Exception {
         return "That request was already sent — refresh your wallet before trying again.";
       case "request_pending":
         return "You already have a request waiting for review.";
+      case "already_published":
+        return "That song is already published — request a takedown instead.";
+      case "published_delete_via_takedown":
+        return "Published songs are removed via a takedown request.";
       case "no_change":
         return "That's already your current setting.";
       case "artist_not_approved":
@@ -1461,6 +1465,25 @@ class WalletApiClient {
     try {
       await _client().delete(
         "/creator/songs/${Uri.encodeComponent(songId)}",
+        options: await _authed(),
+      );
+    } on DioException catch (e) {
+      throw _walletApiException(e);
+    }
+  }
+
+  /// Ask for a PUBLISHED song to be removed from the catalog. The track stays
+  /// live until an operator actions the request — published songs can't be
+  /// hidden or deleted directly (the backend answers 409
+  /// already_published / published_delete_via_takedown).
+  Future<void> requestTakedown({
+    required String songId,
+    required String reason,
+  }) async {
+    try {
+      await _client().post(
+        "/creator/songs/${Uri.encodeComponent(songId)}/takedown-request",
+        data: {"reason": reason},
         options: await _authed(),
       );
     } on DioException catch (e) {

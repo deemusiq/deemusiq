@@ -25,7 +25,13 @@
     "continue_with_device_limited",
     "offline_staying_on_device",
     "wallet_sync_failed_retry",
-    "its_a_drop_day"
+    "its_a_drop_day",
+    "artist_name_required",
+    "takedown_request_title",
+    "takedown_request_body",
+    "takedown_reason_hint",
+    "takedown_reason_required",
+    "takedown_request_sent"
   ],
 
   "bn": [
@@ -54,7 +60,13 @@
     "continue_with_device_limited",
     "offline_staying_on_device",
     "wallet_sync_failed_retry",
-    "its_a_drop_day"
+    "its_a_drop_day",
+    "artist_name_required",
+    "takedown_request_title",
+    "takedown_request_body",
+    "takedown_reason_hint",
+    "takedown_reason_required",
+    "takedown_request_sent"
   ],
 
   "ca": [
@@ -83,7 +95,13 @@
     "continue_with_device_limited",
     "offline_staying_on_device",
     "wallet_sync_failed_retry",
-    "its_a_drop_day"
+    "its_a_drop_day",
+    "artist_name_required",
+    "takedown_request_title",
+    "takedown_request_body",
+    "takedown_reason_hint",
+    "takedown_reason_required",
+    "takedown_request_sent"
   ],
 
   "cs": [
@@ -112,7 +130,13 @@
     "continue_with_device_limited",
     "offline_staying_on_device",
     "wallet_sync_failed_retry",
-    "its_a_drop_day"
+    "its_a_drop_day",
+    "artist_name_required",
+    "takedown_request_title",
+    "takedown_request_body",
+    "takedown_reason_hint",
+    "takedown_reason_required",
+    "takedown_request_sent"
   ],
 
   "de": [
@@ -141,7 +165,13 @@
     "continue_with_device_limited",
     "offline_staying_on_device",
     "wallet_sync_failed_retry",
-    "its_a_drop_day"
+    "its_a_drop_day",
+    "artist_name_required",
+    "takedown_request_title",
+    "takedown_request_body",
+    "takedown_reason_hint",
+    "takedown_reason_required",
+    "takedown_request_sent"
   ],
 
   "es": [
@@ -170,7 +200,13 @@
     "continue_with_device_limited",
     "offline_staying_on_device",
     "wallet_sync_failed_retry",
-    "its_a_drop_day"
+    "its_a_drop_day",
+    "artist_name_required",
+    "takedown_request_title",
+    "takedown_request_body",
+    "takedown_reason_hint",
+    "takedown_reason_required",
+    "takedown_request_sent"
   ],
 
   "eu": [
@@ -199,7 +235,13 @@
     "continue_with_device_limited",
     "offline_staying_on_device",
     "wallet_sync_failed_retry",
-    "its_a_drop_day"
+    "its_a_drop_day",
+    "artist_name_required",
+    "takedown_request_title",
+    "takedown_request_body",
+    "takedown_reason_hint",
+    "takedown_reason_required",
+    "takedown_request_sent"
   ],
 
   "fa": [
@@ -228,7 +270,13 @@
     "continue_with_device_limited",
     "offline_staying_on_device",
     "wallet_sync_failed_retry",
-    "its_a_drop_day"
+    "its_a_drop_day",
+    "artist_name_required",
+    "takedown_request_title",
+    "takedown_request_body",
+    "takedown_reason_hint",
+    "takedown_reason_required",
+    "takedown_request_sent"
   ],
 
   "fi": [
@@ -257,7 +305,13 @@
     "continue_with_device_limited",
     "offline_staying_on_device",
     "wallet_sync_failed_retry",
-    "its_a_drop_day"
+    "its_a_drop_day",
+    "artist_name_required",
+    "takedown_request_title",
+    "takedown_request_body",
+    "takedown_reason_hint",
+    "takedown_reason_required",
+    "takedown_request_sent"
   ],
 
   "fr": [
@@ -286,7 +340,13 @@
     "continue_with_device_limited",
     "offline_staying_on_device",
     "wallet_sync_failed_retry",
-    "its_a_drop_day"
+    "its_a_drop_day",
+    "artist_name_required",
+    "takedown_request_title",
+    "takedown_request_body",
+    "takedown_reason_hint",
+    "takedown_reason_required",
+    "takedown_request_sent"
   ],
 
   "hi": [
@@ -315,7 +375,13 @@
     "continue_with_device_limited",
     "offline_staying_on_device",
     "wallet_sync_failed_retry",
-    "its_a_drop_day"
+    "its_a_drop_day",
+    "artist_name_required",
+    "takedown_request_title",
+    "takedown_request_body",
+    "takedown_reason_hint",
+    "takedown_reason_required",
+    "takedown_request_sent"
   ],
 
   "id": [
@@ -344,7 +410,13 @@
     "continue_with_device_limited",
     "offline_staying_on_device",
     "wallet_sync_failed_retry",
-    "its_a_drop_day"
+    "its_a_drop_day",
+    "artist_name_required",
+    "takedown_request_title",
+    "takedown_request_body",
+    "takedown_reason_hint",
+    "takedown_reason_required",
+    "takedown_request_sent"
   ],
 
   "it": [
@@ -373,7 +445,13 @@
     "continue_with_device_limited",
     "offline_staying_on_device",
     "wallet_sync_failed_retry",
-    "its_a_drop_day"
+    "its_a_drop_day",
+    "artist_name_required",
+    "takedown_request_title",
+    "takedown_request_body",
+    "takedown_reason_hint",
+    "takedown_reason_required",
+    "takedown_request_sent"
   ],
 
   "ja": [
@@ -402,7 +480,13 @@
     "continue_with_device_limited",
     "offline_staying_on_device",
     "wallet_sync_failed_retry",
-    "its_a_drop_day"
+    "its_a_drop_day",
+    "artist_name_required",
+    "takedown_request_title",
+    "takedown_request_body",
+    "takedown_reason_hint",
+    "takedown_reason_required",
+    "takedown_request_sent"
   ],
 
   "ka": [
@@ -431,7 +515,13 @@
     "continue_with_device_limited",
     "offline_staying_on_device",
     "wallet_sync_failed_retry",
-    "its_a_drop_day"
+    "its_a_drop_day",
+    "artist_name_required",
+    "takedown_request_title",
+    "takedown_request_body",
+    "takedown_reason_hint",
+    "takedown_reason_required",
+    "takedown_request_sent"
   ],
 
   "ko": [
@@ -460,7 +550,13 @@
     "continue_with_device_limited",
     "offline_staying_on_device",
     "wallet_sync_failed_retry",
-    "its_a_drop_day"
+    "its_a_drop_day",
+    "artist_name_required",
+    "takedown_request_title",
+    "takedown_request_body",
+    "takedown_reason_hint",
+    "takedown_reason_required",
+    "takedown_request_sent"
   ],
 
   "ne": [
@@ -489,7 +585,13 @@
     "continue_with_device_limited",
     "offline_staying_on_device",
     "wallet_sync_failed_retry",
-    "its_a_drop_day"
+    "its_a_drop_day",
+    "artist_name_required",
+    "takedown_request_title",
+    "takedown_request_body",
+    "takedown_reason_hint",
+    "takedown_reason_required",
+    "takedown_request_sent"
   ],
 
   "nl": [
@@ -518,7 +620,13 @@
     "continue_with_device_limited",
     "offline_staying_on_device",
     "wallet_sync_failed_retry",
-    "its_a_drop_day"
+    "its_a_drop_day",
+    "artist_name_required",
+    "takedown_request_title",
+    "takedown_request_body",
+    "takedown_reason_hint",
+    "takedown_reason_required",
+    "takedown_request_sent"
   ],
 
   "pl": [
@@ -547,7 +655,13 @@
     "continue_with_device_limited",
     "offline_staying_on_device",
     "wallet_sync_failed_retry",
-    "its_a_drop_day"
+    "its_a_drop_day",
+    "artist_name_required",
+    "takedown_request_title",
+    "takedown_request_body",
+    "takedown_reason_hint",
+    "takedown_reason_required",
+    "takedown_request_sent"
   ],
 
   "pt": [
@@ -576,7 +690,13 @@
     "continue_with_device_limited",
     "offline_staying_on_device",
     "wallet_sync_failed_retry",
-    "its_a_drop_day"
+    "its_a_drop_day",
+    "artist_name_required",
+    "takedown_request_title",
+    "takedown_request_body",
+    "takedown_reason_hint",
+    "takedown_reason_required",
+    "takedown_request_sent"
   ],
 
   "ru": [
@@ -605,7 +725,13 @@
     "continue_with_device_limited",
     "offline_staying_on_device",
     "wallet_sync_failed_retry",
-    "its_a_drop_day"
+    "its_a_drop_day",
+    "artist_name_required",
+    "takedown_request_title",
+    "takedown_request_body",
+    "takedown_reason_hint",
+    "takedown_reason_required",
+    "takedown_request_sent"
   ],
 
   "ta": [
@@ -634,7 +760,13 @@
     "continue_with_device_limited",
     "offline_staying_on_device",
     "wallet_sync_failed_retry",
-    "its_a_drop_day"
+    "its_a_drop_day",
+    "artist_name_required",
+    "takedown_request_title",
+    "takedown_request_body",
+    "takedown_reason_hint",
+    "takedown_reason_required",
+    "takedown_request_sent"
   ],
 
   "th": [
@@ -663,7 +795,13 @@
     "continue_with_device_limited",
     "offline_staying_on_device",
     "wallet_sync_failed_retry",
-    "its_a_drop_day"
+    "its_a_drop_day",
+    "artist_name_required",
+    "takedown_request_title",
+    "takedown_request_body",
+    "takedown_reason_hint",
+    "takedown_reason_required",
+    "takedown_request_sent"
   ],
 
   "tl": [
@@ -692,7 +830,13 @@
     "continue_with_device_limited",
     "offline_staying_on_device",
     "wallet_sync_failed_retry",
-    "its_a_drop_day"
+    "its_a_drop_day",
+    "artist_name_required",
+    "takedown_request_title",
+    "takedown_request_body",
+    "takedown_reason_hint",
+    "takedown_reason_required",
+    "takedown_request_sent"
   ],
 
   "tr": [
@@ -721,7 +865,13 @@
     "continue_with_device_limited",
     "offline_staying_on_device",
     "wallet_sync_failed_retry",
-    "its_a_drop_day"
+    "its_a_drop_day",
+    "artist_name_required",
+    "takedown_request_title",
+    "takedown_request_body",
+    "takedown_reason_hint",
+    "takedown_reason_required",
+    "takedown_request_sent"
   ],
 
   "uk": [
@@ -750,7 +900,13 @@
     "continue_with_device_limited",
     "offline_staying_on_device",
     "wallet_sync_failed_retry",
-    "its_a_drop_day"
+    "its_a_drop_day",
+    "artist_name_required",
+    "takedown_request_title",
+    "takedown_request_body",
+    "takedown_reason_hint",
+    "takedown_reason_required",
+    "takedown_request_sent"
   ],
 
   "vi": [
@@ -779,7 +935,13 @@
     "continue_with_device_limited",
     "offline_staying_on_device",
     "wallet_sync_failed_retry",
-    "its_a_drop_day"
+    "its_a_drop_day",
+    "artist_name_required",
+    "takedown_request_title",
+    "takedown_request_body",
+    "takedown_reason_hint",
+    "takedown_reason_required",
+    "takedown_request_sent"
   ],
 
   "zh": [
@@ -808,7 +970,13 @@
     "continue_with_device_limited",
     "offline_staying_on_device",
     "wallet_sync_failed_retry",
-    "its_a_drop_day"
+    "its_a_drop_day",
+    "artist_name_required",
+    "takedown_request_title",
+    "takedown_request_body",
+    "takedown_reason_hint",
+    "takedown_reason_required",
+    "takedown_request_sent"
   ],
 
   "zh_TW": [
@@ -837,6 +1005,12 @@
     "continue_with_device_limited",
     "offline_staying_on_device",
     "wallet_sync_failed_retry",
-    "its_a_drop_day"
+    "its_a_drop_day",
+    "artist_name_required",
+    "takedown_request_title",
+    "takedown_request_body",
+    "takedown_reason_hint",
+    "takedown_reason_required",
+    "takedown_request_sent"
   ]
 }

@@ -82,13 +82,17 @@ class AudioPlayerStreamListeners {
 
   /// Ad breaks happen at track boundaries: when the index changes and enough
   /// songs have been listened, pause playback and start the ad interstitial.
+  /// The ad's audio plays on a dedicated ad player ([AdRollService.startAdPlayback]);
+  /// when no stream can be opened the break falls back to a plain timer.
   StreamSubscription subscribeToTrackChangeForAds() {
     return audioPlayer.currentIndexChangedStream.listen((_) async {
       try {
         final ad = await AdRollService.instance.takeAdBreakIfDue();
         if (ad == null) return;
         await audioPlayer.pause();
-        AdRollService.instance.markAdStarted();
+        final audioPlaying =
+            await AdRollService.instance.startAdPlayback(ref);
+        AdRollService.instance.markAdStarted(audioPlaying: audioPlaying);
       } catch (e, stack) {
         AppLogger.reportError(e, stack, 'ad break at track boundary');
       }

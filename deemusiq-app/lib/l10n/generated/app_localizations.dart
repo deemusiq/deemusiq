@@ -3134,6 +3134,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'It\'s a drop day'**
   String get its_a_drop_day;
+
+  /// No description provided for @artist_name_required.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your artist name.'**
+  String get artist_name_required;
+
+  /// No description provided for @takedown_request_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Request takedown'**
+  String get takedown_request_title;
+
+  /// No description provided for @takedown_request_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Published songs are taken down by the DeeMusiq team. Tell us why this song should be removed — it stays live until the request is reviewed.'**
+  String get takedown_request_body;
+
+  /// No description provided for @takedown_reason_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason (e.g. rights change, wrong upload)'**
+  String get takedown_reason_hint;
+
+  /// No description provided for @takedown_reason_required.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a reason for the takedown.'**
+  String get takedown_reason_required;
+
+  /// No description provided for @takedown_request_sent.
+  ///
+  /// In en, this message translates to:
+  /// **'Takedown requested — the song stays live until it is reviewed.'**
+  String get takedown_request_sent;
 }
 
 class _AppLocalizationsDelegate

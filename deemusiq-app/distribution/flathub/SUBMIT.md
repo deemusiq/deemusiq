@@ -76,15 +76,28 @@ the new `<release>` to the appdata `<releases>` block.
   exception — upstream Spotube already has one for this exact ID; request it
   in the PR). One info: GNOME runtime 51 available (50 is still supported and
   matches upstream).
-- Full `flatpak run org.flatpak.Builder` build — see git notes / SUBMIT
-  history for the result; rerun before opening the PR:
+- Full `flatpak run org.flatpak.Builder build-dir ...` build — **passes**
+  (~10 min cold: SDK download, intltool/dbus-glib/libappindicator and
+  libplacebo/libass/mpv compiles, flutter git clone). Appstream compose
+  succeeds; desktop/icon/metainfo export cleanly. Note: flatpak-builder
+  strips the archive's single top-level `bundle/` directory, so the build
+  commands reference `deemusiq`, `lib/`, `data/` at the build root.
+- `flatpak-builder-lint builddir` on the built tree — two errors, both known
+  and tracked under "Known gaps": `metainfo-missing-screenshots` and
+  `appid-uses-code-hosting-domain`.
+- Link check inside the GNOME 50 sandbox (`flatpak build` + `ldd` on
+  `/app/bin/deemusiq` and every bundled `.so`) — **all NEEDED libraries
+  resolve** (GTK/WebKitGTK/libsecret/libnotify from the runtime,
+  libmpv/libappindicator from the built modules).
+
+Re-run before opening the PR:
   ```bash
   flatpak install --user flathub org.flatpak.Builder
   flatpak run org.flatpak.Builder build-dir \
     --user --install-deps-from=flathub --force-clean \
     com.github.KRTirtho.Spotube.yml
   flatpak run --command=flatpak-builder-lint org.flatpak.Builder \
-    builddir build-dir   # lints the built tree (appstream, desktop, icons)
+    builddir build-dir
   ```
 
 ## Known gaps before the PR

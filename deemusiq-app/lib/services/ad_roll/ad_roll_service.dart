@@ -1,6 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:deemusiq/models/metadata/metadata.dart';
+import 'package:deemusiq/provider/metadata_plugin/metadata_plugin_provider.dart';
+import 'package:deemusiq/services/ad_roll/ad_player.dart';
 import 'package:deemusiq/services/logger/logger.dart';
 import 'package:deemusiq/services/kv_store/kv_store.dart';
 import 'package:deemusiq/services/wallet/payment_service.dart'
@@ -19,13 +23,19 @@ import 'package:deemusiq/services/wallet/wallet_api.dart';
 /// 2. At the next track boundary, [takeAdBreakIfDue] asks the backend for an
 ///    ad once [songsBetweenAds] songs have accumulated, sending an `exclude`
 ///    list of ad ids already heard this session.
-/// 3. The caller pauses playback and calls [markAdStarted]; the service owns
-///    the countdown and fires [onAdCompleted] when the ad ends, so the break
-///    finishes even when the player sheet (and its overlay) is closed.
+/// 3. The caller pauses playback and calls [startAdPlayback], which resolves
+///    the ad's YouTube source through the app's audio-source plugin (the same
+///    engine pipeline tracks use) and plays it on a dedicated [AdPlayer] so
+///    the paused music queue stays untouched. [markAdStarted] then arms the
+///    lifecycle: a real playback ends the break via the player's completion
+///    event ([onAdCompleted]); when no stream could be opened the declared
+///    `durationSec` timer runs the break out instead.
 /// 4. Skips and completions are reported back to the backend for impression
-///    and campaign-spend accounting. If the backend is unreachable or has no
-///    inventory, the break is skipped silently — playback is never interrupted
-///    by ad errors.
+///    and campaign-spend accounting — exactly once per serve, and a break
+///    whose ad audio never played (open failure, mid-stream error, watchdog)
+///    is reported as a skip, never as a paid completion. If the backend is
+///    unreachable or has no inventory, the break is skipped silently —
+///    playback is never interrupted by ad errors.
 ///
 /// ## Backend API
 /// ```
@@ -40,6 +50,12 @@ class AdRollService {
 
   static const _songsSinceLastAdKey = 'deemusiq_adroll_songs';
   static const _excludeKey = 'deemusiq_adroll_exclude';
+  static const _excludeDateKey = 'deemusiq_adroll_exclude_date';
+
+  /// Extra seconds the watchdog waits beyond the declared duration for the
+  /// player to signal completion before ending the break itself — a stalled
+  /// stream must not pin the interstitial open forever.
+  static const int _watchdogSlackSeconds = 30;
 
   /// Songs between ad breaks (configurable). Default 5.
   int songsBetweenAds = 5;
@@ -64,12 +80,26 @@ class AdRollService {
   AdSlot? _currentAd;
   DateTime? _adStartedAt;
   Timer? _adTimer;
+  final AdPlayer _adPlayer = AdPlayer();
+
+  /// Whether the current break's ad audio is actually playing. False in
+  /// timer-fallback mode and after a mid-stream error — such breaks report
+  /// as skips, not completions.
+  bool _audioPlaying = false;
+
+  /// One outcome report per serve, even if skip/completion/watchdog race.
+  bool _outcomeReported = false;
 
   /// Initialize from persistent storage.
   Future<void> init() async {
     enabled = PaymentGatewayConfig.backendBaseUrl.isNotEmpty;
     final prefs = KVStoreService.sharedPreferences;
     _songsSinceLastAd = prefs.getInt(_songsSinceLastAdKey) ?? 0;
+    if (prefs.getString(_excludeDateKey) != _today()) {
+      // The exclude set is per-day: ads heard on earlier days must not keep
+      // shrinking today's inventory into permanent no_ads_available.
+      resetExclude();
+    }
     final raw = prefs.getString(_excludeKey);
     if (raw != null) {
       try {
@@ -78,6 +108,12 @@ class AdRollService {
         AppLogger.log.d('Ad roll exclude-ids parse failed: ${e.toString()}');
       }
     }
+  }
+
+  static String _today() {
+    final now = DateTime.now();
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${now.year}-${two(now.month)}-${two(now.day)}';
   }
 
   /// Call when a track passed the scrobble threshold (counted as listened).
@@ -145,50 +181,142 @@ class AdRollService {
     }
   }
 
-  /// Call when the ad break starts (after pausing playback). The service owns
-  /// the countdown so the break completes even with no overlay on screen.
-  void markAdStarted() {
+  /// Resolves the current ad's YouTube source to an audio stream through the
+  /// app's audio-source plugin (the same engine pipeline tracks use) and
+  /// plays it on the dedicated ad player, leaving the paused music queue
+  /// untouched. Returns false when no playable stream could be opened — the
+  /// caller then starts the break in timer-fallback mode.
+  Future<bool> startAdPlayback(Ref ref) async {
+    final ad = _currentAd;
+    if (ad == null || ad.youtubeId.isEmpty) return false;
+    try {
+      final plugin = await ref.read(audioSourcePluginProvider.future);
+      if (plugin == null) {
+        AppLogger.log.w('AdRoll: no audio source plugin — timer fallback');
+        return false;
+      }
+      final streams = await plugin.audioSource.streams(
+        DeeMusiqAudioSourceMatchObject(
+          id: ad.youtubeId,
+          title: ad.label,
+          artists: const [],
+          duration: Duration(seconds: ad.durationSeconds),
+          externalUri: 'ytsource:${ad.youtubeId}',
+        ),
+      );
+      final url = _bestStreamUrl(streams);
+      if (url == null) {
+        AppLogger.log.w('AdRoll: no playable stream for ad ${ad.id}');
+        return false;
+      }
+      return await _adPlayer.play(
+        url,
+        onCompleted: onAdCompleted,
+        onError: (error) {
+          AppLogger.log.w('AdRoll: ad stream error: $error');
+          onAdPlaybackError();
+        },
+      );
+    } catch (e, stack) {
+      AppLogger.reportError(e, stack, 'AdRoll: start ad playback');
+      return false;
+    }
+  }
+
+  /// Highest-bitrate stream wins — ads are short, so start-up cost dominates
+  /// and the extra bandwidth is negligible.
+  static String? _bestStreamUrl(List<DeeMusiqAudioSourceStreamObject> streams) {
+    DeeMusiqAudioSourceStreamObject? best;
+    for (final stream in streams) {
+      if (stream.url.isEmpty) continue;
+      if (best == null || (stream.bitrate ?? 0) > (best.bitrate ?? 0)) {
+        best = stream;
+      }
+    }
+    return best?.url;
+  }
+
+  /// Call when the ad break starts (after pausing playback and attempting
+  /// [startAdPlayback]). With [audioPlaying] true the break ends on the
+  /// player's completion event and the timer only acts as a stall watchdog;
+  /// otherwise the declared-duration timer runs the break out. Either way the
+  /// break finishes even when the player sheet (and its overlay) is closed.
+  void markAdStarted({bool audioPlaying = false}) {
     final ad = _currentAd;
     if (ad == null) return;
     _adPlaying = true;
     _adStartedAt = DateTime.now();
+    _audioPlaying = audioPlaying;
+    _outcomeReported = false;
     _adTimer?.cancel();
-    _adTimer = Timer(Duration(seconds: ad.durationSeconds), onAdCompleted);
+    _adTimer = Timer(
+      Duration(
+        seconds: audioPlaying
+            ? ad.durationSeconds + _watchdogSlackSeconds
+            : ad.durationSeconds,
+      ),
+      _onTimerElapsed,
+    );
     _adStateController.add(true);
+  }
+
+  /// The ad's audio stream failed mid-break. The interstitial is already up,
+  /// so the break still runs out the remaining declared duration — but the
+  /// outcome is reported as a skip: a partially/never heard ad is not a paid
+  /// completion.
+  void onAdPlaybackError() {
+    final ad = _currentAd;
+    if (ad == null || !_adPlaying) return;
+    _audioPlaying = false;
+    unawaited(_adPlayer.stop());
+    _adTimer?.cancel();
+    final remaining = ad.durationSeconds - adElapsedSeconds;
+    _adTimer = Timer(
+      Duration(seconds: remaining < 1 ? 1 : remaining),
+      _onTimerElapsed,
+    );
   }
 
   /// The user skipped the current ad.
   void onSkipAd() {
-    final adId = _currentAd?.id;
-    _endAd();
-    if (adId != null) {
-      unawaited(
-        WalletApiClient.instance.reportAdSkip(adId).catchError((Object e) {
-          AppLogger.log.d('AdRoll: skip report failed: ${e.toString()}');
-        }),
-      );
-    }
+    _reportOutcome(completed: false);
   }
 
-  /// The ad finished playing naturally.
+  /// The ad audio played to its natural end (player completion event).
   void onAdCompleted() {
+    _reportOutcome(completed: _audioPlaying);
+  }
+
+  /// Timer fallback (no playable stream) or stall watchdog. In both cases the
+  /// ad audio was never fully heard, so the honest outcome is a skip.
+  void _onTimerElapsed() {
+    _reportOutcome(completed: false);
+  }
+
+  void _reportOutcome({required bool completed}) {
+    if (_outcomeReported) return;
+    _outcomeReported = true;
     final adId = _currentAd?.id;
     _endAd();
-    if (adId != null) {
-      unawaited(
-        WalletApiClient.instance.reportAdComplete(adId).catchError((Object e) {
-          AppLogger.log.d('AdRoll: completion report failed: ${e.toString()}');
-        }),
-      );
-    }
+    if (adId == null) return;
+    final report = completed
+        ? WalletApiClient.instance.reportAdComplete(adId)
+        : WalletApiClient.instance.reportAdSkip(adId);
+    unawaited(
+      report.catchError((Object e) {
+        AppLogger.log.d('AdRoll: outcome report failed: ${e.toString()}');
+      }),
+    );
   }
 
   void _endAd() {
     _adTimer?.cancel();
     _adTimer = null;
     _adPlaying = false;
+    _audioPlaying = false;
     _currentAd = null;
     _adStartedAt = null;
+    unawaited(_adPlayer.stop());
     _adStateController.add(false);
   }
 
@@ -211,10 +339,9 @@ class AdRollService {
   }
 
   void _persistExclude() {
-    KVStoreService.sharedPreferences.setString(
-      _excludeKey,
-      jsonEncode(_excludeIds.toList()),
-    );
+    KVStoreService.sharedPreferences
+      ..setString(_excludeKey, jsonEncode(_excludeIds.toList()))
+      ..setString(_excludeDateKey, _today());
   }
 
   /// Resets the exclude set (e.g. on new session / app restart).
@@ -225,6 +352,7 @@ class AdRollService {
 
   void dispose() {
     _adTimer?.cancel();
+    unawaited(_adPlayer.stop());
     _adStateController.close();
   }
 }

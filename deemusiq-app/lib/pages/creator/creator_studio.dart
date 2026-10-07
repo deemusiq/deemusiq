@@ -11,6 +11,7 @@ import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/collections/routes.gr.dart';
 import 'package:deemusiq/components/titlebar/titlebar.dart';
 import 'package:deemusiq/components/wallet/wallet_common.dart';
+import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/models/wallet/linked_account.dart';
 import 'package:deemusiq/provider/creator/creator_provider.dart';
 import 'package:deemusiq/provider/local_favorites/local_favorites_provider.dart';
@@ -223,6 +224,11 @@ class _ClaimProfile extends HookConsumerWidget {
 
     Future<void> claim() async {
       if (loading.value) return;
+      if (name.text.trim().isEmpty) {
+        showWalletToast(context, context.l10n.artist_name_required,
+            icon: DeeMusiqIcons.info);
+        return;
+      }
       loading.value = true;
       try {
         await WalletApiClient.instance
@@ -347,6 +353,38 @@ class _Stat extends StatelessWidget {
   }
 }
 
+/// Extensions the audio picker offers. Sourced from GET
+/// /creator/uploads/formats (`formats[].exts`) so the picker tracks the
+/// backend allowlist; the hardcoded list only applies when the fetch fails.
+Future<List<String>> _allowedAudioExtensions() async {
+  const fallback = [
+    "mp3", "m4a", "aac", "wav", "flac", "ogg", "opus", "webm",
+    "aiff", "aif", "mp4",
+  ];
+  try {
+    final res = await WalletApiClient.instance.fetchUploadFormats();
+    final formats = res["formats"];
+    if (formats is! List) return fallback;
+    final extensions = <String>{};
+    for (final format in formats) {
+      if (format is! Map) continue;
+      final exts = format["exts"];
+      if (exts is! List) continue;
+      for (final ext in exts) {
+        if (ext is String && ext.isNotEmpty) {
+          extensions.add(ext.startsWith(".") ? ext.substring(1) : ext);
+        }
+      }
+    }
+    return extensions.isEmpty ? fallback : extensions.toList();
+  } catch (e, stack) {
+    debugPrint('[CreatorStudio.allowedAudioExtensions] formats fetch failed, '
+        'using fallback: $e');
+    AppLogger.reportError(e, stack, 'upload formats fetch');
+    return fallback;
+  }
+}
+
 /// New upload flow: pick an audio file + cover image, upload to the backend,
 /// then explicitly submit for operator review. Status transitions:
 ///   (none) -> draft -> pending -> approved -> (artist publishes) -> published.
@@ -368,13 +406,10 @@ class _SubmitSong extends HookConsumerWidget {
 
     Future<void> pickAudio() async {
       try {
-        // Multi-format masters: keep in sync with GET /creator/uploads/formats.
+        final extensions = await _allowedAudioExtensions();
         final r = await FilePicker.platform.pickFiles(
           type: FileType.custom,
-          allowedExtensions: const [
-            "mp3", "m4a", "aac", "wav", "flac", "ogg", "opus", "webm",
-            "aiff", "aif", "mp4",
-          ],
+          allowedExtensions: extensions,
         );
         if (r != null && r.files.isNotEmpty) {
           audioPath.value = r.files.first.path;
@@ -795,26 +830,114 @@ class _SongTile extends HookConsumerWidget {
                 ),
               if (status == 'published')
                 Button.ghost(
+                  leading: const Icon(DeeMusiqIcons.flag, size: 14),
+                  onPressed: busy.value
+                      ? null
+                      : () => showDialog(
+                            context: context,
+                            builder: (_) => _TakedownDialog(song: song),
+                          ),
+                  child: Text(context.l10n.takedown_request_title),
+                )
+              else
+                Button.ghost(
+                  leading: const Icon(DeeMusiqIcons.trash, size: 14),
                   onPressed: busy.value
                       ? null
                       : () => run(
-                            () => WalletApiClient.instance.updateSong(
-                              songId: song.id,
-                              status: 'hidden',
-                            ),
-                            "Song hidden",
+                            () => WalletApiClient.instance.deleteSong(song.id),
+                            "Song removed",
                           ),
-                  child: const Text("Hide"),
+                  child: const Text("Remove"),
                 ),
-              Button.ghost(
-                leading: const Icon(DeeMusiqIcons.trash, size: 14),
-                onPressed: busy.value
-                    ? null
-                    : () => run(
-                          () => WalletApiClient.instance.deleteSong(song.id),
-                          "Song removed",
-                        ),
-                child: const Text("Remove"),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Takedown-request dialog for PUBLISHED songs — the only sanctioned removal
+/// path (hide/delete are rejected server-side for published songs). The track
+/// stays live until an operator actions the request.
+class _TakedownDialog extends HookConsumerWidget {
+  final CreatorSong song;
+  const _TakedownDialog({required this.song});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final reason = useTextEditingController();
+    final busy = useState(false);
+    final error = useState<String?>(null);
+
+    Future<void> submit() async {
+      final text = reason.text.trim();
+      if (text.isEmpty) {
+        error.value = context.l10n.takedown_reason_required;
+        return;
+      }
+      if (busy.value) return;
+      busy.value = true;
+      try {
+        await WalletApiClient.instance
+            .requestTakedown(songId: song.id, reason: text);
+        ref.invalidate(mySongsProvider);
+        ref.invalidate(myArtistProvider);
+        if (context.mounted) {
+          Navigator.of(context).pop();
+          showWalletToast(context, context.l10n.takedown_request_sent,
+              icon: DeeMusiqIcons.verified);
+        }
+      } on WalletApiException catch (e) {
+        error.value = e.friendlyMessage;
+      } catch (e, stack) {
+        AppLogger.reportError(e, stack, 'takedown request');
+        if (context.mounted) {
+          error.value = context.l10n.something_went_wrong;
+        }
+      } finally {
+        if (context.mounted) busy.value = false;
+      }
+    }
+
+    return Alert(
+      title: Text(context.l10n.takedown_request_title).h4(),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(context.l10n.takedown_request_body).muted().small(),
+          const Gap(10),
+          TextField(
+            controller: reason,
+            placeholder: Text(context.l10n.takedown_reason_hint),
+            maxLines: 3,
+          ),
+          if (error.value != null) ...[
+            const Gap(8),
+            Text(
+              error.value!,
+              style: const TextStyle(color: Colors.red, fontSize: 12),
+            ),
+          ],
+          const Gap(12),
+          Row(
+            children: [
+              Expanded(
+                child: Button.secondary(
+                  onPressed: busy.value
+                      ? null
+                      : () => Navigator.of(context).pop(),
+                  child: Text(context.l10n.cancel),
+                ),
+              ),
+              const Gap(10),
+              Expanded(
+                child: Button.primary(
+                  onPressed: busy.value ? null : submit,
+                  child: Text(context.l10n.submit),
+                ),
               ),
             ],
           ),
@@ -847,6 +970,15 @@ class _MonetizationPanel extends HookConsumerWidget {
     "bank": "Bank transfer",
     "manual": "Manual",
     "card": "Card",
+  };
+
+  /// Cash-out requests accept fewer rails than the saved-method PUT above:
+  /// the backend's payout-request schema rejects "card"
+  /// (payshap/bank/manual only), so the cash-out Select must not offer it.
+  static const _cashoutMethodKinds = {
+    "payshap": "PayShap",
+    "bank": "Bank transfer",
+    "manual": "Manual",
   };
 
   static const _payoutMethodPlaceholders = {
@@ -894,6 +1026,9 @@ class _MonetizationPanel extends HookConsumerWidget {
         if (savedKind is String &&
             _payoutMethodKinds.containsKey(savedKind)) {
           methodKind.value = savedKind;
+        }
+        if (savedKind is String &&
+            _cashoutMethodKinds.containsKey(savedKind)) {
           payoutMethod.value = savedKind;
         }
         final current = (split.value!["currentCutPct"] as num?)?.toInt() ?? 30;
@@ -1185,16 +1320,16 @@ class _MonetizationPanel extends HookConsumerWidget {
                         if (v != null) payoutMethod.value = v;
                       },
                       itemBuilder: (context, value) =>
-                          Text(_payoutMethodKinds[value]!),
+                          Text(_cashoutMethodKinds[value]!),
                       popup: (context) => SelectPopup(
                         items: SelectItemBuilder(
-                          childCount: _payoutMethodKinds.length,
+                          childCount: _cashoutMethodKinds.length,
                           builder: (context, index) {
                             final k =
-                                _payoutMethodKinds.keys.elementAt(index);
+                                _cashoutMethodKinds.keys.elementAt(index);
                             return SelectItemButton(
                                 value: k,
-                                child: Text(_payoutMethodKinds[k]!));
+                                child: Text(_cashoutMethodKinds[k]!));
                           },
                         ),
                       ),

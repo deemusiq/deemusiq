@@ -1658,4 +1658,25 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get its_a_drop_day => 'It\'s a drop day';
+
+  @override
+  String get artist_name_required => 'Enter your artist name.';
+
+  @override
+  String get takedown_request_title => 'Request takedown';
+
+  @override
+  String get takedown_request_body =>
+      'Published songs are taken down by the DeeMusiq team. Tell us why this song should be removed — it stays live until the request is reviewed.';
+
+  @override
+  String get takedown_reason_hint =>
+      'Reason (e.g. rights change, wrong upload)';
+
+  @override
+  String get takedown_reason_required => 'Enter a reason for the takedown.';
+
+  @override
+  String get takedown_request_sent =>
+      'Takedown requested — the song stays live until it is reviewed.';
 }
