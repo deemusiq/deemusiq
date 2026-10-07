@@ -119,12 +119,14 @@ modules:
     buildsystem: simple
     build-commands:
       # Tarball layout: bundle/deemusiq (binary), bundle/lib/*.so,
-      # bundle/data/ (flutter_assets + icudtl.dat). The Flutter Linux runtime
+      # bundle/data/ (flutter_assets + icudtl.dat). flatpak-builder strips the
+      # archive's single top-level directory on extraction, so the build dir
+      # holds deemusiq, lib/ and data/ directly. The Flutter Linux runtime
       # resolves lib/ and data/ relative to the executable, so all three land
       # in /app/bin.
-      - install -Dm755 bundle/deemusiq /app/bin/deemusiq
-      - cp -r bundle/lib /app/bin/
-      - cp -r bundle/data /app/bin/
+      - install -Dm755 deemusiq /app/bin/deemusiq
+      - cp -r lib /app/bin/
+      - cp -r data /app/bin/
       - desktop-file-edit com.github.KRTirtho.Spotube.desktop
           --set-icon=com.github.KRTirtho.Spotube
       - install -Dm644 com.github.KRTirtho.Spotube.desktop
