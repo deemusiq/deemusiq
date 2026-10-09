@@ -39,17 +39,22 @@ Goals:
 
 ## 2. Deploy the static site (Pages) + download proxy (Worker)
 
-```bash
-cd cloudflare
-npx wrangler login
-
-# Pages (site body) — from the site directory:
-npx wrangler pages deploy .. --project-name=deemusiq-site
+# Pages (site body) — STAGE a clean copy first. Deploying the site directory
+# as-is would publicly serve ops files (cloudflare/worker.js source, README,
+# DEPLOY.md). Stage with excludes, deploy the stage dir:
+rsync -a --delete \
+  --exclude='cloudflare/' --exclude='DEPLOY.md' --exclude='README.md' \
+  --exclude='.nojekyll' --exclude='.well-known/assetlinks.README.txt' \
+  ../ /tmp/deemusiq-pages-site/
+npx wrangler pages deploy /tmp/deemusiq-pages-site --project-name=deemusiq-site --branch=main
 
 # Worker (only /downloads/*):
 npx wrangler secret put GITHUB_REPO      # e.g. deemusiq/deemusiq
 npx wrangler deploy
 ```
+
+`press/*.md` files are NOT excluded — `press/index.html` links to them
+(they are the downloadable press kit).
 
 Optional worker hardening (both are secrets; unset = feature off):
 
