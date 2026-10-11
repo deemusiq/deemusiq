@@ -485,5 +485,8 @@
   "help_project_grow_description": "DeeMusiq açık kaynaklı bir projedir. Projeye katkıda bulunarak, hataları bildirerek veya yeni özellikler önererek bu projenin büyümesine yardımcı olabilirsiniz.",
   "donate_on_open_collective": "Open Collective'de bağış yap",
   "install_a_metadata_provider": "Bir Meta Veri Sağlayıcısı Yükle",
-  "input_does_not_match_format": "Girdi, gerekli biçimle eşleşmiyor"
+  "input_does_not_match_format": "Girdi, gerekli biçimle eşleşmiyor",
+  "auth_mfa_required": "Kimlik doğrulama kodunuzu girin",
+  "auth_mfa_body": "Kimlik doğrulama uygulamasını açın ve giriş yapmayı tamamlamak için 6 haneli kodu girin.",
+  "auth_mfa_verify_action": "Doğrula"
 }

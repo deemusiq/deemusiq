@@ -485,5 +485,8 @@
   "help_project_grow_description": "DeeMusiq to projekt open-source. Możesz pomóc temu projektowi rosnąć, przyczyniając się do projektu, zgłaszając błędy lub sugerując nowe funkcje.",
   "donate_on_open_collective": "Dotuj na Open Collective",
   "install_a_metadata_provider": "Zainstaluj dostawcę metadanych",
-  "input_does_not_match_format": "Wprowadzony tekst nie pasuje do wymaganego formatu"
+  "input_does_not_match_format": "Wprowadzony tekst nie pasuje do wymaganego formatu",
+  "auth_mfa_required": "Wprowadź kod uwierzytelniający",
+  "auth_mfa_body": "Otwórz aplikację uwierzytelniającą i wpisz 6-cyfrowy kod, aby zakończyć logowanie.",
+  "auth_mfa_verify_action": "Zweryfikuj"
 }

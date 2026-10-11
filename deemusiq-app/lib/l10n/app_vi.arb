@@ -485,5 +485,8 @@
   "help_project_grow_description": "DeeMusiq là một dự án mã nguồn mở. Bạn có thể giúp dự án này phát triển bằng cách đóng góp vào dự án, báo cáo lỗi hoặc đề xuất tính năng mới.",
   "donate_on_open_collective": "Quyên góp trên Open Collective",
   "install_a_metadata_provider": "Cài đặt một Nhà cung cấp siêu dữ liệu",
-  "input_does_not_match_format": "Đầu vào không khớp với định dạng yêu cầu"
+  "input_does_not_match_format": "Đầu vào không khớp với định dạng yêu cầu",
+  "auth_mfa_required": "Nhập mã xác thực của bạn",
+  "auth_mfa_body": "Mở ứng dụng xác thực và nhập mã 6 chữ số để hoàn tất đăng nhập.",
+  "auth_mfa_verify_action": "Xác minh"
 }

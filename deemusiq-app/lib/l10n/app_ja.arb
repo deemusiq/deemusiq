@@ -484,5 +484,8 @@
   "help_project_grow_description": "SpoTubeはオープンソースプロジェクトです。貢献したり、バグ報告したり、新機能を提案することで、プロジェクトの成長に貢献できます。",
   "donate_on_open_collective": "Open Collectiveで寄付",
   "install_a_metadata_provider": "メタデータプロバイダーをインストール",
-  "input_does_not_match_format": "入力が必須フォーマットと一致しません"
+  "input_does_not_match_format": "入力が必須フォーマットと一致しません",
+  "auth_mfa_required": "認証コードを入力",
+  "auth_mfa_body": "認証アプリを開いて6桁のコードを入力し、サインインを完了してください。",
+  "auth_mfa_verify_action": "確認"
 }

@@ -485,5 +485,8 @@
   "help_project_grow_description": "DeeMusiq je open-source projekt. Můžete pomoci tomuto projektu růst tím, že přispějete do projektu, nahlásíte chyby nebo navrhnete nové funkce.",
   "donate_on_open_collective": "Darujte na Open Collective",
   "install_a_metadata_provider": "Nainstalovat poskytovatele metadat",
-  "input_does_not_match_format": "Vstup neodpovídá požadovanému formátu"
+  "input_does_not_match_format": "Vstup neodpovídá požadovanému formátu",
+  "auth_mfa_required": "Zadejte ověřovací kód",
+  "auth_mfa_body": "Otevřete ověřovací aplikaci a zadejte 6místný kód pro dokončení přihlášení.",
+  "auth_mfa_verify_action": "Ověřit"
 }

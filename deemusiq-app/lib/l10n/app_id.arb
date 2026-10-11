@@ -485,5 +485,8 @@
   "help_project_grow_description": "DeeMusiq adalah proyek sumber terbuka. Anda dapat membantu proyek ini berkembang dengan berkontribusi pada proyek, melaporkan bug, atau menyarankan fitur baru.",
   "donate_on_open_collective": "Donasi di Open Collective",
   "install_a_metadata_provider": "Instal Penyedia Metadata",
-  "input_does_not_match_format": "Masukan tidak cocok dengan format yang diperlukan"
+  "input_does_not_match_format": "Masukan tidak cocok dengan format yang diperlukan",
+  "auth_mfa_required": "Masukkan kode autentikasi Anda",
+  "auth_mfa_body": "Buka aplikasi autentikator dan masukkan kode 6 digit untuk menyelesaikan masuk.",
+  "auth_mfa_verify_action": "Verifikasi"
 }

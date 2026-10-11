@@ -483,5 +483,8 @@
   "help_project_grow_description": "Ang DeeMusiq ay isang open-source na proyekto. Maaari mong tulungan ang proyektong ito na lumago sa pamamagitan ng pag-contribute sa proyekto, pag-ulat ng mga bug, o pagmungkahi ng mga bagong feature.",
   "donate_on_open_collective": "Mag-donate sa Open Collective",
   "install_a_metadata_provider": "Mag-install ng Metadata Provider",
-  "input_does_not_match_format": "Ang input ay hindi tumutugma sa kinakailangang format"
+  "input_does_not_match_format": "Ang input ay hindi tumutugma sa kinakailangang format",
+  "auth_mfa_required": "Ilagay ang iyong code ng pagpapatotoo",
+  "auth_mfa_body": "Buksan ang iyong authenticator app at ilagay ang 6-digit na code upang matapos ang pag-sign in.",
+  "auth_mfa_verify_action": "Beripika"
 }

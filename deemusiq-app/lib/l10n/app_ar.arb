@@ -485,5 +485,8 @@
   "help_project_grow_description": "DeeMusiq هو مشروع مفتوح المصدر. يمكنك مساعدة هذا المشروع في النمو عن طريق المساهمة في المشروع، أو الإبلاغ عن الأخطاء، أو اقتراح ميزات جديدة.",
   "donate_on_open_collective": "التبرع على Open Collective",
   "install_a_metadata_provider": "تثبيت مزوّد بيانات",
-  "input_does_not_match_format": "المدخل لا يتوافق مع التنسيق المطلوب"
+  "input_does_not_match_format": "المدخل لا يتوافق مع التنسيق المطلوب",
+  "auth_mfa_required": "أدخل رمز المصادقة",
+  "auth_mfa_body": "افتح تطبيق المصادقة وأدخل الرمز المكون من 6 أرقام لإكمال تسجيل الدخول.",
+  "auth_mfa_verify_action": "تحقق"
 }

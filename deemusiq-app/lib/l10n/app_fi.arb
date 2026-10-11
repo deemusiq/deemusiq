@@ -485,5 +485,8 @@
   "help_project_grow_description": "DeeMusiq projekti minkä lähdekoodi on julkisesti saatavilla. Voit autta tätä projektia kasvamaan muutoksilla, ilmoittamalla bugeista, tai ehdottamalla uusia ominaisuuksia.",
   "donate_on_open_collective": "Lahjoita avoimessa kollektiivissa",
   "install_a_metadata_provider": "Asenna metatietojen tarjoaja",
-  "input_does_not_match_format": "Syöte ei vastaa vaadittua muotoa"
+  "input_does_not_match_format": "Syöte ei vastaa vaadittua muotoa",
+  "auth_mfa_required": "Syötä todennuskoodisi",
+  "auth_mfa_body": "Avaa tunnistussovellus ja syötä 6-numeroinen koodi jatkaaksesi kirjautumista.",
+  "auth_mfa_verify_action": "Vahvista"
 }

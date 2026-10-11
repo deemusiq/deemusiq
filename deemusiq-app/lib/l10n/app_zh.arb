@@ -485,5 +485,8 @@
   "help_project_grow_description": "DeeMusiq是一个开源项目。您可以通过为项目做出贡献、报告错误或建议新功能来帮助该项目成长。",
   "donate_on_open_collective": "在Open Collective上捐款",
   "install_a_metadata_provider": "安装元数据提供者",
-  "input_does_not_match_format": "输入与所需格式不匹配"
+  "input_does_not_match_format": "输入与所需格式不匹配",
+  "auth_mfa_required": "输入验证码",
+  "auth_mfa_body": "打开身份验证器应用并输入 6 位验证码以完成登录。",
+  "auth_mfa_verify_action": "验证"
 }

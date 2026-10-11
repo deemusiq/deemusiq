@@ -485,5 +485,8 @@
   "help_project_grow_description": "DeeMusiq یک پروژه متن باز است. شما می‌توانید با به پروژه کمک کردن، گزارش دادن اشکالات یا پیشنهاد ویژگی‌های جدید، به این پروژه کمک کنید.",
   "donate_on_open_collective": "کمک مالی در Open Collective",
   "install_a_metadata_provider": "نصب یک ارائه‌دهندهٔ متادیتا",
-  "input_does_not_match_format": "ورودی با قالب مورد نیاز تطابق ندارد"
+  "input_does_not_match_format": "ورودی با قالب مورد نیاز تطابق ندارد",
+  "auth_mfa_required": "کد احراز هویت خود را وارد کنید",
+  "auth_mfa_body": "برنامه احراز هویت را باز کنید و کد ۶ رقمی را برای ورود وارد کنید.",
+  "auth_mfa_verify_action": "تأیید"
 }

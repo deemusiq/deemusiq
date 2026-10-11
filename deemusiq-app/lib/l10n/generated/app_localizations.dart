@@ -3033,6 +3033,12 @@ abstract class AppLocalizations {
   /// **'Sign in with Google'**
   String get sign_in_with_google;
 
+  /// No description provided for @google_sign_in_mobile_only.
+  ///
+  /// In en, this message translates to:
+  /// **'Google sign-in is available in the DeeMusiq mobile app. Sign in on your phone or tablet to use this feature.'**
+  String get google_sign_in_mobile_only;
+
   /// No description provided for @continue_with_device_limited.
   ///
   /// In en, this message translates to:
@@ -3176,6 +3182,3069 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Input doesn\'t match the required format'**
   String get input_does_not_match_format;
+
+  /// No description provided for @wallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet'**
+  String get wallet;
+
+  /// No description provided for @notifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notifications;
+
+  /// No description provided for @verified.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified'**
+  String get verified;
+
+  /// No description provided for @refresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get refresh;
+
+  /// No description provided for @remove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get remove;
+
+  /// No description provided for @report.
+  ///
+  /// In en, this message translates to:
+  /// **'Report'**
+  String get report;
+
+  /// No description provided for @sign_in.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get sign_in;
+
+  /// No description provided for @sign_out.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get sign_out;
+
+  /// No description provided for @like.
+  ///
+  /// In en, this message translates to:
+  /// **'Like'**
+  String get like;
+
+  /// No description provided for @liked.
+  ///
+  /// In en, this message translates to:
+  /// **'Liked'**
+  String get liked;
+
+  /// No description provided for @unknown_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown title'**
+  String get unknown_title;
+
+  /// No description provided for @please_wait.
+  ///
+  /// In en, this message translates to:
+  /// **'Please wait…'**
+  String get please_wait;
+
+  /// No description provided for @verifying.
+  ///
+  /// In en, this message translates to:
+  /// **'Verifying…'**
+  String get verifying;
+
+  /// No description provided for @get_tokens.
+  ///
+  /// In en, this message translates to:
+  /// **'Get tokens'**
+  String get get_tokens;
+
+  /// No description provided for @continue_action.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get continue_action;
+
+  /// No description provided for @tokens_label.
+  ///
+  /// In en, this message translates to:
+  /// **'tokens'**
+  String get tokens_label;
+
+  /// No description provided for @token_balance.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance: {balance} tokens'**
+  String token_balance(String balance);
+
+  /// No description provided for @native_catalog.
+  ///
+  /// In en, this message translates to:
+  /// **'DeeMusiq'**
+  String get native_catalog;
+
+  /// No description provided for @native_catalog_tagline.
+  ///
+  /// In en, this message translates to:
+  /// **'Exclusive DeeMusiq drops'**
+  String get native_catalog_tagline;
+
+  /// No description provided for @artists_of_the_year.
+  ///
+  /// In en, this message translates to:
+  /// **'Artists of the Year'**
+  String get artists_of_the_year;
+
+  /// No description provided for @creator_studio.
+  ///
+  /// In en, this message translates to:
+  /// **'Creator Studio'**
+  String get creator_studio;
+
+  /// No description provided for @ad_badge.
+  ///
+  /// In en, this message translates to:
+  /// **'Ad'**
+  String get ad_badge;
+
+  /// No description provided for @ad_remaining.
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds}s'**
+  String ad_remaining(int seconds);
+
+  /// No description provided for @ad_skip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip Ad'**
+  String get ad_skip;
+
+  /// No description provided for @ad_skip_in.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip in {seconds}s'**
+  String ad_skip_in(int seconds);
+
+  /// No description provided for @creator_connect_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to become a creator'**
+  String get creator_connect_title;
+
+  /// No description provided for @creator_connect_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Creator Studio needs DeeMusiq\'s backend to be configured.'**
+  String get creator_connect_body;
+
+  /// No description provided for @creator_google_sign_in_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Google sign-in failed'**
+  String get creator_google_sign_in_failed;
+
+  /// No description provided for @creator_become_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Become a DeeMusiq creator'**
+  String get creator_become_title;
+
+  /// No description provided for @creator_become_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with Google to claim your artist profile, submit songs, and track how they\'re doing. Your Google account also carries your likes and library across devices.'**
+  String get creator_become_body;
+
+  /// No description provided for @creator_studio_load_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load your studio'**
+  String get creator_studio_load_failed;
+
+  /// No description provided for @creator_release_console.
+  ///
+  /// In en, this message translates to:
+  /// **'Release Console'**
+  String get creator_release_console;
+
+  /// No description provided for @creator_get_verified.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Verified'**
+  String get creator_get_verified;
+
+  /// No description provided for @creator_your_songs.
+  ///
+  /// In en, this message translates to:
+  /// **'Your songs'**
+  String get creator_your_songs;
+
+  /// No description provided for @creator_profile_created.
+  ///
+  /// In en, this message translates to:
+  /// **'Creator profile created'**
+  String get creator_profile_created;
+
+  /// No description provided for @creator_claim_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Claim your artist name'**
+  String get creator_claim_title;
+
+  /// No description provided for @creator_claim_body.
+  ///
+  /// In en, this message translates to:
+  /// **'This is how listeners will find you. Names are unique.'**
+  String get creator_claim_body;
+
+  /// No description provided for @creator_artist_name_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Artist name'**
+  String get creator_artist_name_hint;
+
+  /// No description provided for @creator_bio_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Short bio (optional)'**
+  String get creator_bio_hint;
+
+  /// No description provided for @creator_create_profile.
+  ///
+  /// In en, this message translates to:
+  /// **'Create profile'**
+  String get creator_create_profile;
+
+  /// No description provided for @creator_stat_songs.
+  ///
+  /// In en, this message translates to:
+  /// **'Songs'**
+  String get creator_stat_songs;
+
+  /// No description provided for @creator_stat_tokens_year.
+  ///
+  /// In en, this message translates to:
+  /// **'Tokens (yr)'**
+  String get creator_stat_tokens_year;
+
+  /// No description provided for @creator_stat_rank_year.
+  ///
+  /// In en, this message translates to:
+  /// **'Rank (yr)'**
+  String get creator_stat_rank_year;
+
+  /// No description provided for @creator_file_picker_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open file picker'**
+  String get creator_file_picker_failed;
+
+  /// No description provided for @creator_title_required.
+  ///
+  /// In en, this message translates to:
+  /// **'Title is required.'**
+  String get creator_title_required;
+
+  /// No description provided for @creator_pick_audio_required.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick an audio file.'**
+  String get creator_pick_audio_required;
+
+  /// No description provided for @creator_pick_cover_required.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a cover image.'**
+  String get creator_pick_cover_required;
+
+  /// No description provided for @creator_pick_audio_missing.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick the missing audio file.'**
+  String get creator_pick_audio_missing;
+
+  /// No description provided for @creator_pick_cover_missing.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick the missing cover image.'**
+  String get creator_pick_cover_missing;
+
+  /// No description provided for @creator_upload_start_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload didn\'t start — please try again.'**
+  String get creator_upload_start_failed;
+
+  /// No description provided for @creator_uploaded_submit_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploaded! Tap Submit for review.'**
+  String get creator_uploaded_submit_hint;
+
+  /// No description provided for @creator_upload_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload failed.'**
+  String get creator_upload_failed;
+
+  /// No description provided for @creator_upload_before_review.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload audio and cover before review.'**
+  String get creator_upload_before_review;
+
+  /// No description provided for @creator_submitted_for_review.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitted for review'**
+  String get creator_submitted_for_review;
+
+  /// No description provided for @creator_submit_review_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not submit for review.'**
+  String get creator_submit_review_failed;
+
+  /// No description provided for @creator_submit_song_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit a song'**
+  String get creator_submit_song_title;
+
+  /// No description provided for @creator_submit_song_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick an audio master (MP3 · M4A · AAC · WAV · FLAC · OGG · Opus · WebM · AIFF) and a cover image. The operator reviews the submission; once approved, you choose when to publish — then add payment, set your cut and track analytics below.'**
+  String get creator_submit_song_body;
+
+  /// No description provided for @creator_song_title_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Song title'**
+  String get creator_song_title_hint;
+
+  /// No description provided for @creator_description_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Description (optional)'**
+  String get creator_description_hint;
+
+  /// No description provided for @creator_pick_audio.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick audio file'**
+  String get creator_pick_audio;
+
+  /// No description provided for @creator_audio_picked.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio: {name}'**
+  String creator_audio_picked(String name);
+
+  /// No description provided for @creator_pick_cover.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick cover image'**
+  String get creator_pick_cover;
+
+  /// No description provided for @creator_cover_picked.
+  ///
+  /// In en, this message translates to:
+  /// **'Cover: {name}'**
+  String creator_cover_picked(String name);
+
+  /// No description provided for @creator_uploading.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading…'**
+  String get creator_uploading;
+
+  /// No description provided for @creator_upload.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload'**
+  String get creator_upload;
+
+  /// No description provided for @creator_retry_upload.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry upload'**
+  String get creator_retry_upload;
+
+  /// No description provided for @creator_submitting.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitting…'**
+  String get creator_submitting;
+
+  /// No description provided for @creator_submit_for_review.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit for review'**
+  String get creator_submit_for_review;
+
+  /// No description provided for @creator_no_songs.
+  ///
+  /// In en, this message translates to:
+  /// **'No songs yet — submit your first above.'**
+  String get creator_no_songs;
+
+  /// No description provided for @creator_status_draft.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft'**
+  String get creator_status_draft;
+
+  /// No description provided for @creator_status_pending.
+  ///
+  /// In en, this message translates to:
+  /// **'In review'**
+  String get creator_status_pending;
+
+  /// No description provided for @creator_status_approved.
+  ///
+  /// In en, this message translates to:
+  /// **'Approved'**
+  String get creator_status_approved;
+
+  /// No description provided for @creator_status_scheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled'**
+  String get creator_status_scheduled;
+
+  /// No description provided for @creator_status_published.
+  ///
+  /// In en, this message translates to:
+  /// **'Published'**
+  String get creator_status_published;
+
+  /// No description provided for @creator_status_hidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden / Cancelled'**
+  String get creator_status_hidden;
+
+  /// No description provided for @creator_publishes_at.
+  ///
+  /// In en, this message translates to:
+  /// **'Publishes {date}'**
+  String creator_publishes_at(String date);
+
+  /// No description provided for @creator_audio_size.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} MB audio'**
+  String creator_audio_size(String size);
+
+  /// No description provided for @creator_review_note.
+  ///
+  /// In en, this message translates to:
+  /// **'Note: {note}'**
+  String creator_review_note(String note);
+
+  /// No description provided for @creator_song_stats.
+  ///
+  /// In en, this message translates to:
+  /// **'{pushes} · {tokens} tokens'**
+  String creator_song_stats(int pushes, String tokens);
+
+  /// No description provided for @creator_open_release_console.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Release Console'**
+  String get creator_open_release_console;
+
+  /// No description provided for @creator_song_removed.
+  ///
+  /// In en, this message translates to:
+  /// **'Song removed'**
+  String get creator_song_removed;
+
+  /// No description provided for @payout_phone_invalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid phone number (e.g. +27 82 123 4567).'**
+  String get payout_phone_invalid;
+
+  /// No description provided for @payout_destination_saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment destination saved'**
+  String get payout_destination_saved;
+
+  /// No description provided for @payout_cut_range_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Cut must be 0–50 (30 = default)'**
+  String get payout_cut_range_hint;
+
+  /// No description provided for @payout_cut_request_sent.
+  ///
+  /// In en, this message translates to:
+  /// **'Cut request sent for approval'**
+  String get payout_cut_request_sent;
+
+  /// No description provided for @payout_enter_tokens.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter tokens to cash out'**
+  String get payout_enter_tokens;
+
+  /// No description provided for @payout_request_result.
+  ///
+  /// In en, this message translates to:
+  /// **'Payout {id} {status}'**
+  String payout_request_result(String id, String status);
+
+  /// No description provided for @payout_request_result_manual.
+  ///
+  /// In en, this message translates to:
+  /// **'Payout {id} {status} (manual review)'**
+  String payout_request_result_manual(String id, String status);
+
+  /// No description provided for @payout_monetization.
+  ///
+  /// In en, this message translates to:
+  /// **'Monetization'**
+  String get payout_monetization;
+
+  /// No description provided for @payout_analytics_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments & analytics'**
+  String get payout_analytics_title;
+
+  /// No description provided for @payout_totals.
+  ///
+  /// In en, this message translates to:
+  /// **'Gross {gross} · fee {fees} · net {net} · {tips} tips · {listens} listens'**
+  String payout_totals(
+      String gross, String fees, String net, String tips, String listens);
+
+  /// No description provided for @payout_destination_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Payout destination'**
+  String get payout_destination_title;
+
+  /// No description provided for @payout_saved_method.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved: {method}'**
+  String payout_saved_method(String method);
+
+  /// No description provided for @payout_method_payshap.
+  ///
+  /// In en, this message translates to:
+  /// **'PayShap'**
+  String get payout_method_payshap;
+
+  /// No description provided for @payout_method_bank.
+  ///
+  /// In en, this message translates to:
+  /// **'Bank transfer'**
+  String get payout_method_bank;
+
+  /// No description provided for @payout_method_manual.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual'**
+  String get payout_method_manual;
+
+  /// No description provided for @payout_hint_payshap.
+  ///
+  /// In en, this message translates to:
+  /// **'PayShap phone number'**
+  String get payout_hint_payshap;
+
+  /// No description provided for @payout_hint_bank.
+  ///
+  /// In en, this message translates to:
+  /// **'Account number / branch code'**
+  String get payout_hint_bank;
+
+  /// No description provided for @payout_hint_manual.
+  ///
+  /// In en, this message translates to:
+  /// **'Payout details'**
+  String get payout_hint_manual;
+
+  /// No description provided for @payout_platform_cut.
+  ///
+  /// In en, this message translates to:
+  /// **'Platform cut'**
+  String get payout_platform_cut;
+
+  /// No description provided for @payout_cut_pending.
+  ///
+  /// In en, this message translates to:
+  /// **'Request pending: {requested}% (current {current}%)'**
+  String payout_cut_pending(String requested, int current);
+
+  /// No description provided for @payout_cut_current.
+  ///
+  /// In en, this message translates to:
+  /// **'Current cut {cut}% (artist keeps {keep}%). Request 30% or a custom 0–50%.'**
+  String payout_cut_current(int cut, int keep);
+
+  /// No description provided for @payout_request_cut.
+  ///
+  /// In en, this message translates to:
+  /// **'Request cut'**
+  String get payout_request_cut;
+
+  /// No description provided for @payout_cash_out_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash out (tokens → ZAR)'**
+  String get payout_cash_out_title;
+
+  /// No description provided for @payout_balance_unavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance unavailable — connect backend to cash out.'**
+  String get payout_balance_unavailable;
+
+  /// No description provided for @payout_balance_summary.
+  ///
+  /// In en, this message translates to:
+  /// **'Payable {payable} tokens (≈ R{amount}) · min {min} · received {received} · pending {pending} · paid out {paid}'**
+  String payout_balance_summary(int payable, String amount, int min,
+      String received, String pending, String paid);
+
+  /// No description provided for @payout_tokens_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tokens'**
+  String get payout_tokens_hint;
+
+  /// No description provided for @payout_cash_out.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash out'**
+  String get payout_cash_out;
+
+  /// No description provided for @payout_settlement_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Settlement details (optional — uses saved method)'**
+  String get payout_settlement_hint;
+
+  /// No description provided for @payout_history_empty.
+  ///
+  /// In en, this message translates to:
+  /// **'No payout requests yet.'**
+  String get payout_history_empty;
+
+  /// No description provided for @payout_history_entry.
+  ///
+  /// In en, this message translates to:
+  /// **'{tokens} tokens → {amount}c · {status}'**
+  String payout_history_entry(String tokens, String amount, String status);
+
+  /// No description provided for @payout_history_entry_ref.
+  ///
+  /// In en, this message translates to:
+  /// **'{tokens} tokens → {amount}c · {status} · {reference}'**
+  String payout_history_entry_ref(
+      String tokens, String amount, String status, String reference);
+
+  /// No description provided for @account_security.
+  ///
+  /// In en, this message translates to:
+  /// **'Account & security'**
+  String get account_security;
+
+  /// No description provided for @account_created_verify.
+  ///
+  /// In en, this message translates to:
+  /// **'Account created — check your email to verify.'**
+  String get account_created_verify;
+
+  /// No description provided for @account_signed_in.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in.'**
+  String get account_signed_in;
+
+  /// No description provided for @account_create_email_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Create an email account'**
+  String get account_create_email_title;
+
+  /// No description provided for @account_have_one_sign_in.
+  ///
+  /// In en, this message translates to:
+  /// **'Have one? Sign in'**
+  String get account_have_one_sign_in;
+
+  /// No description provided for @account_email_body.
+  ///
+  /// In en, this message translates to:
+  /// **'An email + password lets you use this wallet on another device and recover it. Your password is never stored — only a hash.'**
+  String get account_email_body;
+
+  /// No description provided for @account_password_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Password (12+ characters)'**
+  String get account_password_hint;
+
+  /// No description provided for @account_accept_terms.
+  ///
+  /// In en, this message translates to:
+  /// **'I accept the DeeMusiq Terms of Service and Privacy Policy.'**
+  String get account_accept_terms;
+
+  /// No description provided for @account_create.
+  ///
+  /// In en, this message translates to:
+  /// **'Create account'**
+  String get account_create;
+
+  /// No description provided for @account_totp_scan_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan or enter the secret in your authenticator app.'**
+  String get account_totp_scan_hint;
+
+  /// No description provided for @account_totp_enabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Two-factor authentication enabled.'**
+  String get account_totp_enabled;
+
+  /// No description provided for @account_totp_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Two-factor authentication (2FA)'**
+  String get account_totp_title;
+
+  /// No description provided for @account_totp_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Use any authenticator app (Google Authenticator, Authy, Aegis…). 2FA also lets you recover your wallet on a new device.'**
+  String get account_totp_body;
+
+  /// No description provided for @account_stepup_password_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm your account password to continue.'**
+  String get account_stepup_password_body;
+
+  /// No description provided for @account_stepup_password_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Account password'**
+  String get account_stepup_password_hint;
+
+  /// No description provided for @account_stepup_code_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a code from your current authenticator app to replace it.'**
+  String get account_stepup_code_body;
+
+  /// No description provided for @account_stepup_code_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Current 6-digit code'**
+  String get account_stepup_code_hint;
+
+  /// No description provided for @account_totp_setup.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up 2FA'**
+  String get account_totp_setup;
+
+  /// No description provided for @account_totp_secret_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Add this secret to your authenticator app:'**
+  String get account_totp_secret_body;
+
+  /// No description provided for @account_secret_copied.
+  ///
+  /// In en, this message translates to:
+  /// **'Secret copied.'**
+  String get account_secret_copied;
+
+  /// No description provided for @account_totp_code_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'6-digit code'**
+  String get account_totp_code_hint;
+
+  /// No description provided for @account_totp_verify_enable.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify & enable'**
+  String get account_totp_verify_enable;
+
+  /// No description provided for @account_recovered.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovered — welcome back.'**
+  String get account_recovered;
+
+  /// No description provided for @account_recovery_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Recover with your authenticator'**
+  String get account_recovery_title;
+
+  /// No description provided for @account_recovery_body.
+  ///
+  /// In en, this message translates to:
+  /// **'On a new device? Enter your account email and a current 2FA code to restore your wallet.'**
+  String get account_recovery_body;
+
+  /// No description provided for @account_email_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Account email'**
+  String get account_email_hint;
+
+  /// No description provided for @account_recover_action.
+  ///
+  /// In en, this message translates to:
+  /// **'Recover wallet'**
+  String get account_recover_action;
+
+  /// No description provided for @account_google_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Sign-In'**
+  String get account_google_title;
+
+  /// No description provided for @account_google_signed_in.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in with Google.'**
+  String get account_google_signed_in;
+
+  /// No description provided for @account_google_signed_out.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed out of Google. Synced data on this device was cleared.'**
+  String get account_google_signed_out;
+
+  /// No description provided for @account_google_connected_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected. Your liked songs and playlists sync anonymously — only hashed IDs are stored, and playlist names travel inside the encrypted channel. No personal data leaves your device.'**
+  String get account_google_connected_body;
+
+  /// No description provided for @account_google_connect_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with Google to sync your library across devices. We only store anonymized data (hashed song IDs; playlist names travel inside the encrypted channel). No email, name, or location is ever stored.'**
+  String get account_google_connect_body;
+
+  /// No description provided for @account_google_unconfigured_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Sign-In needs backend connectivity. Connect to the DeeMusiq server to enable.'**
+  String get account_google_unconfigured_body;
+
+  /// No description provided for @account_verify_link_sent.
+  ///
+  /// In en, this message translates to:
+  /// **'If your email needs verifying, a link is on its way.'**
+  String get account_verify_link_sent;
+
+  /// No description provided for @account_reset_link_sent.
+  ///
+  /// In en, this message translates to:
+  /// **'If that email has an account, a reset link is on its way.'**
+  String get account_reset_link_sent;
+
+  /// No description provided for @account_logged_out_all.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed out on all devices. Synced data on this device was cleared.'**
+  String get account_logged_out_all;
+
+  /// No description provided for @account_data_exported.
+  ///
+  /// In en, this message translates to:
+  /// **'Data exported to {path}'**
+  String account_data_exported(String path);
+
+  /// No description provided for @account_export_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Export failed.'**
+  String get account_export_failed;
+
+  /// No description provided for @account_delete_confirm_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account?'**
+  String get account_delete_confirm_title;
+
+  /// No description provided for @account_delete_confirm_body.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently deletes your DeeMusiq account, wallet balance, history and linked accounts. This cannot be undone.'**
+  String get account_delete_confirm_body;
+
+  /// No description provided for @account_delete_forever.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete forever'**
+  String get account_delete_forever;
+
+  /// No description provided for @account_deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Account deleted.'**
+  String get account_deleted;
+
+  /// No description provided for @account_security_card_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Security'**
+  String get account_security_card_title;
+
+  /// No description provided for @account_resend_verification.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend verification email'**
+  String get account_resend_verification;
+
+  /// No description provided for @account_reset_email_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Email for password reset'**
+  String get account_reset_email_hint;
+
+  /// No description provided for @account_send_reset_link.
+  ///
+  /// In en, this message translates to:
+  /// **'Email me a password reset link'**
+  String get account_send_reset_link;
+
+  /// No description provided for @account_logout_all.
+  ///
+  /// In en, this message translates to:
+  /// **'Log out on all devices'**
+  String get account_logout_all;
+
+  /// No description provided for @account_export_data.
+  ///
+  /// In en, this message translates to:
+  /// **'Export my data (JSON)'**
+  String get account_export_data;
+
+  /// No description provided for @account_delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get account_delete;
+
+  /// No description provided for @privacy_heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy & data'**
+  String get privacy_heading;
+
+  /// No description provided for @privacy_offline_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect a backend to manage consent, export, and deletion.'**
+  String get privacy_offline_body;
+
+  /// No description provided for @privacy_consent_granted.
+  ///
+  /// In en, this message translates to:
+  /// **'Consent {purpose} granted'**
+  String privacy_consent_granted(String purpose);
+
+  /// No description provided for @privacy_consent_withdrawn.
+  ///
+  /// In en, this message translates to:
+  /// **'Consent {purpose} withdrawn'**
+  String privacy_consent_withdrawn(String purpose);
+
+  /// No description provided for @privacy_purpose_terms.
+  ///
+  /// In en, this message translates to:
+  /// **'terms'**
+  String get privacy_purpose_terms;
+
+  /// No description provided for @privacy_purpose_privacy.
+  ///
+  /// In en, this message translates to:
+  /// **'privacy'**
+  String get privacy_purpose_privacy;
+
+  /// No description provided for @privacy_purpose_marketing.
+  ///
+  /// In en, this message translates to:
+  /// **'marketing'**
+  String get privacy_purpose_marketing;
+
+  /// No description provided for @privacy_blurb_terms.
+  ///
+  /// In en, this message translates to:
+  /// **'Required to run the account. Withdrawing restricts processing.'**
+  String get privacy_blurb_terms;
+
+  /// No description provided for @privacy_blurb_privacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Required privacy policy. Withdrawing restricts processing.'**
+  String get privacy_blurb_privacy;
+
+  /// No description provided for @privacy_blurb_marketing.
+  ///
+  /// In en, this message translates to:
+  /// **'Opt-in recommendations and offers.'**
+  String get privacy_blurb_marketing;
+
+  /// No description provided for @privacy_email_section.
+  ///
+  /// In en, this message translates to:
+  /// **'Email verification & hardening'**
+  String get privacy_email_section;
+
+  /// No description provided for @privacy_verify_link_sent.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification link sent'**
+  String get privacy_verify_link_sent;
+
+  /// No description provided for @privacy_resend_verify.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend verify link'**
+  String get privacy_resend_verify;
+
+  /// No description provided for @privacy_code_sent.
+  ///
+  /// In en, this message translates to:
+  /// **'One-time code sent to email'**
+  String get privacy_code_sent;
+
+  /// No description provided for @privacy_request_code.
+  ///
+  /// In en, this message translates to:
+  /// **'Request login code'**
+  String get privacy_request_code;
+
+  /// No description provided for @privacy_code_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'6-digit email code'**
+  String get privacy_code_hint;
+
+  /// No description provided for @privacy_code_confirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Code confirmed'**
+  String get privacy_code_confirmed;
+
+  /// No description provided for @privacy_confirm_code.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm code'**
+  String get privacy_confirm_code;
+
+  /// No description provided for @privacy_verify_token_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Email-verify token (from link)'**
+  String get privacy_verify_token_hint;
+
+  /// No description provided for @privacy_email_verified.
+  ///
+  /// In en, this message translates to:
+  /// **'Email verified'**
+  String get privacy_email_verified;
+
+  /// No description provided for @privacy_verify_with_token.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify email with token'**
+  String get privacy_verify_with_token;
+
+  /// No description provided for @privacy_reset_section.
+  ///
+  /// In en, this message translates to:
+  /// **'Password reset (emailed token)'**
+  String get privacy_reset_section;
+
+  /// No description provided for @privacy_reset_token_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset token from email'**
+  String get privacy_reset_token_hint;
+
+  /// No description provided for @privacy_new_password_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'New password (12+ chars)'**
+  String get privacy_new_password_hint;
+
+  /// No description provided for @privacy_reset_requirements.
+  ///
+  /// In en, this message translates to:
+  /// **'Token + 12-char password required'**
+  String get privacy_reset_requirements;
+
+  /// No description provided for @privacy_password_reset.
+  ///
+  /// In en, this message translates to:
+  /// **'Password reset'**
+  String get privacy_password_reset;
+
+  /// No description provided for @privacy_reset_action.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get privacy_reset_action;
+
+  /// No description provided for @privacy_export_ready.
+  ///
+  /// In en, this message translates to:
+  /// **'Export ready: {count} sections'**
+  String privacy_export_ready(int count);
+
+  /// No description provided for @privacy_export_data.
+  ///
+  /// In en, this message translates to:
+  /// **'Export my data'**
+  String get privacy_export_data;
+
+  /// No description provided for @privacy_delete_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Anonymizes everything (GDPR Art. 17). JWT dies immediately. Cannot undo.'**
+  String get privacy_delete_body;
+
+  /// No description provided for @release_load_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load your releases'**
+  String get release_load_failed;
+
+  /// No description provided for @release_empty_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to release yet'**
+  String get release_empty_title;
+
+  /// No description provided for @release_empty_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Once an operator approves your submitted songs, they\'ll appear here for you to publish or schedule.'**
+  String get release_empty_body;
+
+  /// No description provided for @release_cancel_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel release?'**
+  String get release_cancel_title;
+
+  /// No description provided for @release_cancel_body.
+  ///
+  /// In en, this message translates to:
+  /// **'The song will be hidden from the catalog. You can resubmit later.'**
+  String get release_cancel_body;
+
+  /// No description provided for @release_keep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep'**
+  String get release_keep;
+
+  /// No description provided for @release_cancel_action.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel release'**
+  String get release_cancel_action;
+
+  /// No description provided for @release_scheduled_for.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled for {date}'**
+  String release_scheduled_for(String date);
+
+  /// No description provided for @release_approved_ready.
+  ///
+  /// In en, this message translates to:
+  /// **'Approved — ready to publish'**
+  String get release_approved_ready;
+
+  /// No description provided for @release_publish_now.
+  ///
+  /// In en, this message translates to:
+  /// **'Publish Now'**
+  String get release_publish_now;
+
+  /// No description provided for @release_reschedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Reschedule'**
+  String get release_reschedule;
+
+  /// No description provided for @release_schedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule'**
+  String get release_schedule;
+
+  /// No description provided for @release_schedule_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule release'**
+  String get release_schedule_title;
+
+  /// No description provided for @release_schedule_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick when this song goes live.'**
+  String get release_schedule_body;
+
+  /// No description provided for @release_pick_date.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a date'**
+  String get release_pick_date;
+
+  /// No description provided for @release_date.
+  ///
+  /// In en, this message translates to:
+  /// **'Release date'**
+  String get release_date;
+
+  /// No description provided for @release_time.
+  ///
+  /// In en, this message translates to:
+  /// **'Release time'**
+  String get release_time;
+
+  /// No description provided for @verification_pick_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not access camera/gallery'**
+  String get verification_pick_failed;
+
+  /// No description provided for @verification_pick_first.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a photo first.'**
+  String get verification_pick_first;
+
+  /// No description provided for @verification_photo_uploaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo uploaded. Fill in the form and submit.'**
+  String get verification_photo_uploaded;
+
+  /// No description provided for @verification_upload_first.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload your proof photo first.'**
+  String get verification_upload_first;
+
+  /// No description provided for @verification_fields_required.
+  ///
+  /// In en, this message translates to:
+  /// **'Legal name and country are required.'**
+  String get verification_fields_required;
+
+  /// No description provided for @verification_submitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitted. The DeeMusiq team will review shortly.'**
+  String get verification_submitted;
+
+  /// No description provided for @verification_done.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re verified!'**
+  String get verification_done;
+
+  /// No description provided for @verification_how_title.
+  ///
+  /// In en, this message translates to:
+  /// **'How verification works'**
+  String get verification_how_title;
+
+  /// No description provided for @verification_how_body.
+  ///
+  /// In en, this message translates to:
+  /// **'1. Take a photo of yourself holding a sign that says \"deemusiq\" (and your artist name).\n2. Upload the photo below.\n3. Submit the form. An operator reviews within a few days.\n4. On approval, the verified badge appears next to your name.'**
+  String get verification_how_body;
+
+  /// No description provided for @verification_status.
+  ///
+  /// In en, this message translates to:
+  /// **'Status: {status}'**
+  String verification_status(String status);
+
+  /// No description provided for @verification_proof_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Proof photo'**
+  String get verification_proof_title;
+
+  /// No description provided for @verification_no_photo.
+  ///
+  /// In en, this message translates to:
+  /// **'No photo selected yet.'**
+  String get verification_no_photo;
+
+  /// No description provided for @verification_take_photo.
+  ///
+  /// In en, this message translates to:
+  /// **'Take photo'**
+  String get verification_take_photo;
+
+  /// No description provided for @verification_from_gallery.
+  ///
+  /// In en, this message translates to:
+  /// **'From gallery'**
+  String get verification_from_gallery;
+
+  /// No description provided for @verification_upload_proof.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload proof'**
+  String get verification_upload_proof;
+
+  /// No description provided for @verification_details_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Your details'**
+  String get verification_details_title;
+
+  /// No description provided for @verification_legal_name_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Legal name (as it appears on your ID)'**
+  String get verification_legal_name_hint;
+
+  /// No description provided for @verification_country_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Country (e.g. South Africa)'**
+  String get verification_country_hint;
+
+  /// No description provided for @verification_socials_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Social links (optional): instagram: https://..., youtube: https://...'**
+  String get verification_socials_hint;
+
+  /// No description provided for @wallet_refresh_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t refresh your wallet'**
+  String get wallet_refresh_failed;
+
+  /// No description provided for @wallet_retrying.
+  ///
+  /// In en, this message translates to:
+  /// **'Retrying…'**
+  String get wallet_retrying;
+
+  /// No description provided for @wallet_tokens_title.
+  ///
+  /// In en, this message translates to:
+  /// **'DeeMusiq tokens'**
+  String get wallet_tokens_title;
+
+  /// No description provided for @wallet_prices_region.
+  ///
+  /// In en, this message translates to:
+  /// **'Prices shown for {region}.'**
+  String wallet_prices_region(String region);
+
+  /// No description provided for @wallet_buy_tokens.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy tokens'**
+  String get wallet_buy_tokens;
+
+  /// No description provided for @wallet_trending.
+  ///
+  /// In en, this message translates to:
+  /// **'Trending'**
+  String get wallet_trending;
+
+  /// No description provided for @wallet_recent_activity.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent activity'**
+  String get wallet_recent_activity;
+
+  /// No description provided for @wallet_activity_totals.
+  ///
+  /// In en, this message translates to:
+  /// **'{purchased} in · {spent} out'**
+  String wallet_activity_totals(int purchased, int spent);
+
+  /// No description provided for @wallet_show_less.
+  ///
+  /// In en, this message translates to:
+  /// **'Show less'**
+  String get wallet_show_less;
+
+  /// No description provided for @wallet_see_all.
+  ///
+  /// In en, this message translates to:
+  /// **'See all'**
+  String get wallet_see_all;
+
+  /// No description provided for @wallet_token_store.
+  ///
+  /// In en, this message translates to:
+  /// **'Token store'**
+  String get wallet_token_store;
+
+  /// No description provided for @wallet_token_store_sub.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy regional packs'**
+  String get wallet_token_store_sub;
+
+  /// No description provided for @wallet_linked_accounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked accounts'**
+  String get wallet_linked_accounts;
+
+  /// No description provided for @wallet_linked_connect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect a service'**
+  String get wallet_linked_connect;
+
+  /// No description provided for @wallet_linked_connected.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} connected'**
+  String wallet_linked_connected(int count);
+
+  /// No description provided for @wallet_security_sub.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in, 2FA, recovery'**
+  String get wallet_security_sub;
+
+  /// No description provided for @wallet_creators_supported.
+  ///
+  /// In en, this message translates to:
+  /// **'Creators you support'**
+  String get wallet_creators_supported;
+
+  /// No description provided for @wallet_creators_sub.
+  ///
+  /// In en, this message translates to:
+  /// **'See your impact'**
+  String get wallet_creators_sub;
+
+  /// No description provided for @wallet_trending_pushes.
+  ///
+  /// In en, this message translates to:
+  /// **'Trending pushes'**
+  String get wallet_trending_pushes;
+
+  /// No description provided for @wallet_pushes_sub.
+  ///
+  /// In en, this message translates to:
+  /// **'Most-pushed songs'**
+  String get wallet_pushes_sub;
+
+  /// No description provided for @wallet_no_activity.
+  ///
+  /// In en, this message translates to:
+  /// **'No activity yet'**
+  String get wallet_no_activity;
+
+  /// No description provided for @wallet_no_activity_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy tokens, then push your favourite songs to support artists.'**
+  String get wallet_no_activity_body;
+
+  /// No description provided for @wallet_buy_first.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy your first tokens'**
+  String get wallet_buy_first;
+
+  /// No description provided for @wallet_integrity_warning.
+  ///
+  /// In en, this message translates to:
+  /// **'This app may have been modified — payments are disabled. Reinstall the official DeeMusiq to use your wallet.'**
+  String get wallet_integrity_warning;
+
+  /// No description provided for @rewards_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Listening rewards'**
+  String get rewards_title;
+
+  /// No description provided for @rewards_earned_today.
+  ///
+  /// In en, this message translates to:
+  /// **'Earned today: {earned} / {cap} tokens'**
+  String rewards_earned_today(int earned, int cap);
+
+  /// No description provided for @rewards_lifetime.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} tokens earned all-time'**
+  String rewards_lifetime(int count);
+
+  /// No description provided for @rewards_per_play.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} tokens per verified play'**
+  String rewards_per_play(int count);
+
+  /// No description provided for @rewards_explainer.
+  ///
+  /// In en, this message translates to:
+  /// **'Tokens are credited automatically for verified listening — there\'s nothing to claim.'**
+  String get rewards_explainer;
+
+  /// No description provided for @rewards_taper_notice.
+  ///
+  /// In en, this message translates to:
+  /// **'New accounts earn at a reduced rate.'**
+  String get rewards_taper_notice;
+
+  /// No description provided for @rewards_load_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load rewards'**
+  String get rewards_load_failed;
+
+  /// No description provided for @rewards_details.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get rewards_details;
+
+  /// No description provided for @leaderboard_empty_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing trending yet'**
+  String get leaderboard_empty_title;
+
+  /// No description provided for @leaderboard_empty_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Push a song from its menu or the player to start the board.'**
+  String get leaderboard_empty_body;
+
+  /// No description provided for @leaderboard_explainer.
+  ///
+  /// In en, this message translates to:
+  /// **'The most-pushed songs rise to the top. Push your favourites to move them up the board.'**
+  String get leaderboard_explainer;
+
+  /// No description provided for @leaderboard_load_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load the board'**
+  String get leaderboard_load_failed;
+
+  /// No description provided for @leaderboard_offline_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Your pushes (offline)'**
+  String get leaderboard_offline_title;
+
+  /// No description provided for @leaderboard_push_count.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{artist} · {count} push} other{{artist} · {count} pushes}}'**
+  String leaderboard_push_count(String artist, int count);
+
+  /// No description provided for @push_action.
+  ///
+  /// In en, this message translates to:
+  /// **'Push'**
+  String get push_action;
+
+  /// No description provided for @store_region_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Token packs are priced fairly per region (purchasing-power adjusted).'**
+  String get store_region_body;
+
+  /// No description provided for @store_za_only.
+  ///
+  /// In en, this message translates to:
+  /// **'DeeMusiq top-ups are available in South Africa (ZAR) for now.'**
+  String get store_za_only;
+
+  /// No description provided for @store_prices_for.
+  ///
+  /// In en, this message translates to:
+  /// **'Prices for {region} · adjusted for your region.'**
+  String store_prices_for(String region);
+
+  /// No description provided for @store_payment_methods_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Cards & crypto'**
+  String get store_payment_methods_title;
+
+  /// No description provided for @store_payment_methods_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay with PayShap instant EFT, PayFast/Stripe cards, or Monero, Ethereum, Bitcoin and USDT. Top-ups are processed securely online by the DeeMusiq backend and are available in South Africa for now — tokens appear once your payment confirms.'**
+  String get store_payment_methods_body;
+
+  /// No description provided for @store_pack_tokens.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} tokens'**
+  String store_pack_tokens(String count);
+
+  /// No description provided for @store_popular.
+  ///
+  /// In en, this message translates to:
+  /// **'Popular'**
+  String get store_popular;
+
+  /// No description provided for @store_pack_bonus.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} · {tokens} + {bonus} bonus'**
+  String store_pack_bonus(String label, int tokens, int bonus);
+
+  /// No description provided for @artists_connect_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to see the board'**
+  String get artists_connect_title;
+
+  /// No description provided for @artists_connect_body.
+  ///
+  /// In en, this message translates to:
+  /// **'The artist leaderboard is live once DeeMusiq\'s backend is configured.'**
+  String get artists_connect_body;
+
+  /// No description provided for @artists_hall_of_fame.
+  ///
+  /// In en, this message translates to:
+  /// **'Hall of Fame'**
+  String get artists_hall_of_fame;
+
+  /// No description provided for @artists_hof_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Best Artist of each past year.'**
+  String get artists_hof_subtitle;
+
+  /// No description provided for @artists_hof_empty.
+  ///
+  /// In en, this message translates to:
+  /// **'No past winners yet.'**
+  String get artists_hof_empty;
+
+  /// No description provided for @artists_no_boosts.
+  ///
+  /// In en, this message translates to:
+  /// **'No boosts yet in {year}'**
+  String artists_no_boosts(int year);
+
+  /// No description provided for @artists_no_boosts_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Boost an artist you love to start the {year} race.'**
+  String artists_no_boosts_body(int year);
+
+  /// No description provided for @artists_leading.
+  ///
+  /// In en, this message translates to:
+  /// **'Leading {year}'**
+  String artists_leading(int year);
+
+  /// No description provided for @artists_supporters.
+  ///
+  /// In en, this message translates to:
+  /// **'{tokens} tokens · {count, plural, one{{count} supporter} other{{count} supporters}}'**
+  String artists_supporters(String tokens, int count);
+
+  /// No description provided for @boost_action.
+  ///
+  /// In en, this message translates to:
+  /// **'Boost'**
+  String get boost_action;
+
+  /// No description provided for @supported_tokens_given.
+  ///
+  /// In en, this message translates to:
+  /// **'tokens given'**
+  String get supported_tokens_given;
+
+  /// No description provided for @supported_creators_backed.
+  ///
+  /// In en, this message translates to:
+  /// **'creators backed'**
+  String get supported_creators_backed;
+
+  /// No description provided for @supported_empty_title.
+  ///
+  /// In en, this message translates to:
+  /// **'No creators supported yet'**
+  String get supported_empty_title;
+
+  /// No description provided for @supported_empty_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Push a song or support an artist directly — your tokens show up here.'**
+  String get supported_empty_body;
+
+  /// No description provided for @supported_sent.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent {tokens} tokens to {name}'**
+  String supported_sent(int tokens, String name);
+
+  /// No description provided for @supported_send_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t send the tokens — refresh your wallet and try again.'**
+  String get supported_send_failed;
+
+  /// No description provided for @supported_contributions.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} contribution} other{{count} contributions}} · {time}'**
+  String supported_contributions(int count, String time);
+
+  /// No description provided for @supported_support_more.
+  ///
+  /// In en, this message translates to:
+  /// **'Support more'**
+  String get supported_support_more;
+
+  /// No description provided for @supported_dialog_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Support {name}'**
+  String supported_dialog_title(String name);
+
+  /// No description provided for @supported_dialog_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose how many tokens to send.'**
+  String get supported_dialog_body;
+
+  /// No description provided for @supported_need_more.
+  ///
+  /// In en, this message translates to:
+  /// **'You need {count} more tokens for this.'**
+  String supported_need_more(int count);
+
+  /// No description provided for @supported_send_amount.
+  ///
+  /// In en, this message translates to:
+  /// **'Send {amount}'**
+  String supported_send_amount(int amount);
+
+  /// No description provided for @linked_connect_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect your accounts on other services to bring your playlists and favourites into DeeMusiq. Connecting opens that provider\'s secure login (OAuth) in your browser, then returns you here.'**
+  String get linked_connect_body;
+
+  /// No description provided for @linked_offline_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Account linking needs a DeeMusiq connection — this build is offline, so connecting is disabled. You can still disconnect accounts stored on this device.'**
+  String get linked_offline_body;
+
+  /// No description provided for @linked_finish_browser.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish connecting {provider} in your browser'**
+  String linked_finish_browser(String provider);
+
+  /// No description provided for @linked_browser_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open your browser — try again'**
+  String get linked_browser_failed;
+
+  /// No description provided for @linked_load_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load linked accounts'**
+  String get linked_load_failed;
+
+  /// No description provided for @linked_disconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'{provider} disconnected'**
+  String linked_disconnected(String provider);
+
+  /// No description provided for @linked_provider_not_enabled.
+  ///
+  /// In en, this message translates to:
+  /// **'This provider isn\'t enabled by the DeeMusiq operator yet — try another one or check back later.'**
+  String get linked_provider_not_enabled;
+
+  /// No description provided for @linked_connected_as.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected as {name}'**
+  String linked_connected_as(String name);
+
+  /// No description provided for @linked_disconnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnecting…'**
+  String get linked_disconnecting;
+
+  /// No description provided for @linked_connecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting…'**
+  String get linked_connecting;
+
+  /// No description provided for @comments_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Comments'**
+  String get comments_title;
+
+  /// No description provided for @comments_empty_title.
+  ///
+  /// In en, this message translates to:
+  /// **'No comments yet'**
+  String get comments_empty_title;
+
+  /// No description provided for @comments_empty_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Be the first to share what you think.'**
+  String get comments_empty_body;
+
+  /// No description provided for @comments_load_more_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load more comments.'**
+  String get comments_load_more_failed;
+
+  /// No description provided for @comments_load_more.
+  ///
+  /// In en, this message translates to:
+  /// **'Load more comments'**
+  String get comments_load_more;
+
+  /// No description provided for @comments_sign_in_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to join the conversation.'**
+  String get comments_sign_in_body;
+
+  /// No description provided for @comments_post_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t post your comment — try again.'**
+  String get comments_post_failed;
+
+  /// No description provided for @comments_add_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a comment…'**
+  String get comments_add_hint;
+
+  /// No description provided for @comments_reply_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Write a reply…'**
+  String get comments_reply_hint;
+
+  /// No description provided for @comments_post.
+  ///
+  /// In en, this message translates to:
+  /// **'Post'**
+  String get comments_post;
+
+  /// No description provided for @comments_reply.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply'**
+  String get comments_reply;
+
+  /// No description provided for @comments_listener.
+  ///
+  /// In en, this message translates to:
+  /// **'Listener'**
+  String get comments_listener;
+
+  /// No description provided for @comments_listener_named.
+  ///
+  /// In en, this message translates to:
+  /// **'Listener {label}'**
+  String comments_listener_named(String label);
+
+  /// No description provided for @comments_replies.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} reply} other{{count} replies}}'**
+  String comments_replies(int count);
+
+  /// No description provided for @comments_no_replies.
+  ///
+  /// In en, this message translates to:
+  /// **'No replies yet.'**
+  String get comments_no_replies;
+
+  /// No description provided for @purchase_confirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment confirmed — tokens added to your wallet 🎉'**
+  String get purchase_confirmed;
+
+  /// No description provided for @purchase_added.
+  ///
+  /// In en, this message translates to:
+  /// **'Added {count} tokens 🎉'**
+  String purchase_added(int count);
+
+  /// No description provided for @purchase_phone_invalid.
+  ///
+  /// In en, this message translates to:
+  /// **'That phone number doesn\'t look right — use a number like +27 82 123 4567.'**
+  String get purchase_phone_invalid;
+
+  /// No description provided for @purchase_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy {count} tokens'**
+  String purchase_title(int count);
+
+  /// No description provided for @purchase_processing.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing…'**
+  String get purchase_processing;
+
+  /// No description provided for @purchase_try_another.
+  ///
+  /// In en, this message translates to:
+  /// **'Try another method'**
+  String get purchase_try_another;
+
+  /// No description provided for @purchase_open_checkout.
+  ///
+  /// In en, this message translates to:
+  /// **'Open checkout'**
+  String get purchase_open_checkout;
+
+  /// No description provided for @purchase_bonus_included.
+  ///
+  /// In en, this message translates to:
+  /// **'incl. {count} bonus'**
+  String purchase_bonus_included(int count);
+
+  /// No description provided for @purchase_choose_method.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose how to pay'**
+  String get purchase_choose_method;
+
+  /// No description provided for @purchase_phone_label.
+  ///
+  /// In en, this message translates to:
+  /// **'PayShap phone number (optional)'**
+  String get purchase_phone_label;
+
+  /// No description provided for @purchase_phone_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'+27 82 123 4567'**
+  String get purchase_phone_hint;
+
+  /// No description provided for @purchase_phone_body.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ll send the payment request to this number. Leave blank to reuse your saved number.'**
+  String get purchase_phone_body;
+
+  /// No description provided for @purchase_unavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Unavailable right now'**
+  String get purchase_unavailable;
+
+  /// No description provided for @purchase_awaiting_deposit.
+  ///
+  /// In en, this message translates to:
+  /// **'Awaiting deposit'**
+  String get purchase_awaiting_deposit;
+
+  /// No description provided for @purchase_checkout_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t start checkout'**
+  String get purchase_checkout_failed;
+
+  /// No description provided for @purchase_almost_there.
+  ///
+  /// In en, this message translates to:
+  /// **'Almost there'**
+  String get purchase_almost_there;
+
+  /// No description provided for @purchase_amount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount: {amount}'**
+  String purchase_amount(String amount);
+
+  /// No description provided for @purchase_address_copied.
+  ///
+  /// In en, this message translates to:
+  /// **'Address copied'**
+  String get purchase_address_copied;
+
+  /// No description provided for @purchase_no_wallet.
+  ///
+  /// In en, this message translates to:
+  /// **'No receiving wallet configured yet — set one in the backend / DEEMUSIQ_WALLET.md to accept this asset.'**
+  String get purchase_no_wallet;
+
+  /// No description provided for @purchase_reference_pending.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference {reference} · tokens appear automatically once the payment confirms.'**
+  String purchase_reference_pending(String reference);
+
+  /// No description provided for @purchase_reference.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference {reference}'**
+  String purchase_reference(String reference);
+
+  /// No description provided for @boost_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Boosted {name} with {tokens} tokens'**
+  String boost_success(String name, int tokens);
+
+  /// No description provided for @boost_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t boost right now'**
+  String get boost_failed;
+
+  /// No description provided for @boost_dialog_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Boost {name}'**
+  String boost_dialog_title(String name);
+
+  /// No description provided for @boost_dialog_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Spend tokens to move this artist up the yearly leaderboard.'**
+  String get boost_dialog_body;
+
+  /// No description provided for @boost_amount.
+  ///
+  /// In en, this message translates to:
+  /// **'Boost {amount}'**
+  String boost_amount(int amount);
+
+  /// No description provided for @boost_artist_tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Boost this artist with tokens'**
+  String get boost_artist_tooltip;
+
+  /// No description provided for @push_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Pushed \"{title}\" with {amount} tokens 🚀'**
+  String push_success(String title, int amount);
+
+  /// No description provided for @push_not_enough.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough tokens for that push'**
+  String get push_not_enough;
+
+  /// No description provided for @push_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong — refresh your wallet before trying again.'**
+  String get push_failed;
+
+  /// No description provided for @push_dialog_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Push this song'**
+  String get push_dialog_title;
+
+  /// No description provided for @push_how_many.
+  ///
+  /// In en, this message translates to:
+  /// **'How many tokens?'**
+  String get push_how_many;
+
+  /// No description provided for @push_explainer.
+  ///
+  /// In en, this message translates to:
+  /// **'Pushing boosts this song on the DeeMusiq trending board and supports {artist}.'**
+  String push_explainer(String artist);
+
+  /// No description provided for @push_the_artist.
+  ///
+  /// In en, this message translates to:
+  /// **'the artist'**
+  String get push_the_artist;
+
+  /// No description provided for @push_need_more.
+  ///
+  /// In en, this message translates to:
+  /// **'You need {count} more tokens for this push.'**
+  String push_need_more(int count);
+
+  /// No description provided for @push_pushing.
+  ///
+  /// In en, this message translates to:
+  /// **'Pushing…'**
+  String get push_pushing;
+
+  /// No description provided for @push_amount.
+  ///
+  /// In en, this message translates to:
+  /// **'Push {amount}'**
+  String push_amount(int amount);
+
+  /// No description provided for @app_lock_title.
+  ///
+  /// In en, this message translates to:
+  /// **'DeeMusiq is locked'**
+  String get app_lock_title;
+
+  /// No description provided for @app_lock_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Use your fingerprint, face or device PIN to continue.'**
+  String get app_lock_body;
+
+  /// No description provided for @app_lock_unlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock'**
+  String get app_lock_unlock;
+
+  /// No description provided for @app_lock_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock failed — try again.'**
+  String get app_lock_failed;
+
+  /// No description provided for @for_you_unlike_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t remove the like — try again'**
+  String get for_you_unlike_failed;
+
+  /// No description provided for @for_you_like_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save the like — try again'**
+  String get for_you_like_failed;
+
+  /// No description provided for @for_you_title.
+  ///
+  /// In en, this message translates to:
+  /// **'For You'**
+  String get for_you_title;
+
+  /// No description provided for @for_you_gmail_linked.
+  ///
+  /// In en, this message translates to:
+  /// **'Gmail linked'**
+  String get for_you_gmail_linked;
+
+  /// No description provided for @for_you_gmail_prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with Gmail for smarter picks'**
+  String get for_you_gmail_prompt;
+
+  /// No description provided for @for_you_empty.
+  ///
+  /// In en, this message translates to:
+  /// **'Like songs to train For You — picks appear here.'**
+  String get for_you_empty;
+
+  /// No description provided for @notifications_offline_title.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline'**
+  String get notifications_offline_title;
+
+  /// No description provided for @notifications_offline_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications live on DeeMusiq — connect to the internet and they\'ll show up here.'**
+  String get notifications_offline_body;
+
+  /// No description provided for @notifications_empty_title.
+  ///
+  /// In en, this message translates to:
+  /// **'No notifications yet'**
+  String get notifications_empty_title;
+
+  /// No description provided for @notifications_empty_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Payouts, publishes, follows and replies will land here.'**
+  String get notifications_empty_body;
+
+  /// No description provided for @notifications_refresh_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t refresh notifications.'**
+  String get notifications_refresh_failed;
+
+  /// No description provided for @notifications_mark_all_read.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all read'**
+  String get notifications_mark_all_read;
+
+  /// No description provided for @security_heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Security & personalization'**
+  String get security_heading;
+
+  /// No description provided for @security_biometrics_unavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Biometrics unavailable'**
+  String get security_biometrics_unavailable;
+
+  /// No description provided for @security_no_biometrics_enrolled.
+  ///
+  /// In en, this message translates to:
+  /// **'No fingerprint or face unlock is enrolled on this device. Set one up in your system settings first.'**
+  String get security_no_biometrics_enrolled;
+
+  /// No description provided for @security_unlock_prompt_reason.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable fingerprint unlock for DeeMusiq'**
+  String get security_unlock_prompt_reason;
+
+  /// No description provided for @security_fingerprint_unlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Fingerprint unlock'**
+  String get security_fingerprint_unlock;
+
+  /// No description provided for @security_lock_enabled.
+  ///
+  /// In en, this message translates to:
+  /// **'DeeMusiq locks on start and after 2 min away.'**
+  String get security_lock_enabled;
+
+  /// No description provided for @security_biometrics_available.
+  ///
+  /// In en, this message translates to:
+  /// **'Available on this device ({biometrics}). Enable to require fingerprint / face / PIN on start.'**
+  String security_biometrics_available(String biometrics);
+
+  /// No description provided for @security_no_biometrics.
+  ///
+  /// In en, this message translates to:
+  /// **'No biometrics enrolled on this device ({biometrics}).'**
+  String security_no_biometrics(String biometrics);
+
+  /// No description provided for @security_biometrics_none.
+  ///
+  /// In en, this message translates to:
+  /// **'none detected'**
+  String get security_biometrics_none;
+
+  /// No description provided for @security_gmail_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Gmail personalization'**
+  String get security_gmail_title;
+
+  /// No description provided for @security_gmail_linked.
+  ///
+  /// In en, this message translates to:
+  /// **'linked · {count} likes'**
+  String security_gmail_linked(int count);
+
+  /// No description provided for @security_gmail_not_linked.
+  ///
+  /// In en, this message translates to:
+  /// **'not linked'**
+  String get security_gmail_not_linked;
+
+  /// No description provided for @security_gmail_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with Google (Creator Studio or Account) to carry likes and listening history across devices — For You recommendations follow your Gmail identity.'**
+  String get security_gmail_body;
+
+  /// No description provided for @security_google_active.
+  ///
+  /// In en, this message translates to:
+  /// **'Google session active on this device.'**
+  String get security_google_active;
+
+  /// No description provided for @security_google_inactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Google session not active.'**
+  String get security_google_inactive;
+
+  /// No description provided for @storage_heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage'**
+  String get storage_heading;
+
+  /// No description provided for @storage_downloaded_music.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloaded music'**
+  String get storage_downloaded_music;
+
+  /// No description provided for @storage_scanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanning…'**
+  String get storage_scanning;
+
+  /// No description provided for @storage_usage.
+  ///
+  /// In en, this message translates to:
+  /// **'{bytes} across {count, plural, one{{count} file} other{{count} files}}'**
+  String storage_usage(String bytes, int count);
+
+  /// No description provided for @storage_license_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline playback license'**
+  String get storage_license_title;
+
+  /// No description provided for @storage_license_valid.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline license valid until {date}'**
+  String storage_license_valid(String date);
+
+  /// No description provided for @storage_license_grace.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline license expired — grace period, reconnect to renew (last confirmed {date})'**
+  String storage_license_grace(String date);
+
+  /// No description provided for @storage_license_locked.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline playback locked since {date} — connect to the internet to renew the license'**
+  String storage_license_locked(String date);
+
+  /// No description provided for @storage_license_unconfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline license not active (no backend confirmation yet)'**
+  String get storage_license_unconfirmed;
+
+  /// No description provided for @storage_pending_sync.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending sync'**
+  String get storage_pending_sync;
+
+  /// No description provided for @storage_pending_sync_body.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} action} other{{count} actions}} will sync when you\'re back online'**
+  String storage_pending_sync_body(int count);
+
+  /// No description provided for @storage_delete_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete download'**
+  String get storage_delete_title;
+
+  /// No description provided for @storage_delete_message.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete \"{name}\" ({size})? This frees the space but the song won\'t be playable offline anymore.'**
+  String storage_delete_message(String name, String size);
+
+  /// No description provided for @storage_clear_all.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear all downloads'**
+  String get storage_clear_all;
+
+  /// No description provided for @storage_clear_all_message.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete all {count, plural, one{{count} downloaded file} other{{count} downloaded files}} ({size})? They won\'t be playable offline anymore.'**
+  String storage_clear_all_message(int count, String size);
+
+  /// No description provided for @storage_scan_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not scan downloads: {error}'**
+  String storage_scan_failed(String error);
+
+  /// No description provided for @pairing_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Paired devices'**
+  String get pairing_title;
+
+  /// No description provided for @pairing_empty.
+  ///
+  /// In en, this message translates to:
+  /// **'No devices paired. Approving a Connect request pairs it.'**
+  String get pairing_empty;
+
+  /// No description provided for @pairing_count.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} paired — revoking also drops its HTTP access token.'**
+  String pairing_count(int count);
+
+  /// No description provided for @pairing_revoke_all.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke all pairings'**
+  String get pairing_revoke_all;
+
+  /// No description provided for @pairing_revoke.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke pairing'**
+  String get pairing_revoke;
+
+  /// No description provided for @playback_youtube_quality.
+  ///
+  /// In en, this message translates to:
+  /// **'YouTube Audio Quality'**
+  String get playback_youtube_quality;
+
+  /// No description provided for @about_built_on.
+  ///
+  /// In en, this message translates to:
+  /// **'Built on'**
+  String get about_built_on;
+
+  /// No description provided for @about_website.
+  ///
+  /// In en, this message translates to:
+  /// **'Website'**
+  String get about_website;
+
+  /// No description provided for @about_made_in_sa.
+  ///
+  /// In en, this message translates to:
+  /// **'Made with ❤️ in South Africa 🇿🇦'**
+  String get about_made_in_sa;
+
+  /// No description provided for @share_nearby_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Send to nearby device'**
+  String get share_nearby_title;
+
+  /// No description provided for @share_nearby_empty.
+  ///
+  /// In en, this message translates to:
+  /// **'No nearby devices found. Open DeeMusiq on the other device and make sure Connect is enabled on both.'**
+  String get share_nearby_empty;
+
+  /// No description provided for @share_nearby_sent.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared with {name}'**
+  String share_nearby_sent(String name);
+
+  /// No description provided for @share_nearby_declined.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} declined the share'**
+  String share_nearby_declined(String name);
+
+  /// No description provided for @share_nearby_unreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach {name}'**
+  String share_nearby_unreachable(String name);
+
+  /// No description provided for @age_restriction_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Age Restriction'**
+  String get age_restriction_title;
+
+  /// No description provided for @age_restriction_explicit.
+  ///
+  /// In en, this message translates to:
+  /// **'This application may contain explicit music content.'**
+  String get age_restriction_explicit;
+
+  /// No description provided for @age_restriction_fpb.
+  ///
+  /// In en, this message translates to:
+  /// **'In compliance with the South African Films and Publications Act (FPB), you must be 18 years or older to access explicit content.'**
+  String get age_restriction_fpb;
+
+  /// No description provided for @age_restriction_confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'By proceeding, you confirm that you are at least 18 years old.'**
+  String get age_restriction_confirm;
+
+  /// No description provided for @age_restriction_under.
+  ///
+  /// In en, this message translates to:
+  /// **'I am under 18'**
+  String get age_restriction_under;
+
+  /// No description provided for @report_artist.
+  ///
+  /// In en, this message translates to:
+  /// **'Report artist'**
+  String get report_artist;
+
+  /// No description provided for @tempo_speed.
+  ///
+  /// In en, this message translates to:
+  /// **'Speed: {value}x'**
+  String tempo_speed(String value);
+
+  /// No description provided for @tempo_pitch.
+  ///
+  /// In en, this message translates to:
+  /// **'Pitch: {value}x'**
+  String tempo_pitch(String value);
+
+  /// No description provided for @seek_to_timestamp.
+  ///
+  /// In en, this message translates to:
+  /// **'Jump to time'**
+  String get seek_to_timestamp;
+
+  /// No description provided for @seek_timestamp_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'mm:ss (e.g. 1:23)'**
+  String get seek_timestamp_hint;
+
+  /// No description provided for @seek_timestamp_invalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Use mm:ss, e.g. 1:23'**
+  String get seek_timestamp_invalid;
+
+  /// No description provided for @logs_clear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear logs'**
+  String get logs_clear;
+
+  /// No description provided for @logs_clear_message.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete all stored logs? This cannot be undone.'**
+  String get logs_clear_message;
+
+  /// No description provided for @home_listening_streak.
+  ///
+  /// In en, this message translates to:
+  /// **'🔥 {days}-day listening streak'**
+  String home_listening_streak(int days);
+
+  /// No description provided for @metadata_providers_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Metadata Providers'**
+  String get metadata_providers_title;
+
+  /// No description provided for @metadata_providers_removed_body.
+  ///
+  /// In en, this message translates to:
+  /// **'External plugins have been removed. DeeMusiq uses its native backend for metadata.'**
+  String get metadata_providers_removed_body;
+
+  /// No description provided for @audio_error_servers_unreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach DeeMusiq servers — check your connection and try again'**
+  String get audio_error_servers_unreachable;
+
+  /// No description provided for @audio_error_unavailable_retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Playback unavailable — retry or download this track'**
+  String get audio_error_unavailable_retry;
+
+  /// No description provided for @audio_error_connection_timeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection timed out — retrying...'**
+  String get audio_error_connection_timeout;
+
+  /// No description provided for @audio_error_connection_refused.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection refused — trying another source...'**
+  String get audio_error_connection_refused;
+
+  /// No description provided for @audio_error_no_internet.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection — please check your network'**
+  String get audio_error_no_internet;
+
+  /// No description provided for @audio_error_network.
+  ///
+  /// In en, this message translates to:
+  /// **'Network error — retrying...'**
+  String get audio_error_network;
+
+  /// No description provided for @audio_error_trying_next_source.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to play this track — trying next source...'**
+  String get audio_error_trying_next_source;
+
+  /// No description provided for @audio_error_track_unavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This track is unavailable — skipping to next'**
+  String get audio_error_track_unavailable;
+
+  /// No description provided for @audio_error_track_not_found.
+  ///
+  /// In en, this message translates to:
+  /// **'Track not found — skipping to next'**
+  String get audio_error_track_not_found;
+
+  /// No description provided for @audio_error_track_removed.
+  ///
+  /// In en, this message translates to:
+  /// **'This track has been removed — skipping to next'**
+  String get audio_error_track_removed;
+
+  /// No description provided for @audio_error_rate_limited.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate limited — waiting before retrying...'**
+  String get audio_error_rate_limited;
+
+  /// No description provided for @audio_error_track_protected.
+  ///
+  /// In en, this message translates to:
+  /// **'This track is protected and cannot be played'**
+  String get audio_error_track_protected;
+
+  /// No description provided for @audio_error_track_corrupt.
+  ///
+  /// In en, this message translates to:
+  /// **'Track file appears to be corrupt — skipping to next'**
+  String get audio_error_track_corrupt;
+
+  /// No description provided for @audio_error_engine_start.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio engine failed to start — please restart the app'**
+  String get audio_error_engine_start;
+
+  /// No description provided for @audio_error_output_device.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio output error — check your speakers or headphones'**
+  String get audio_error_output_device;
+
+  /// No description provided for @audio_error_unsupported_format.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsupported audio format — skipping to next'**
+  String get audio_error_unsupported_format;
+
+  /// No description provided for @audio_error_playback_retrying.
+  ///
+  /// In en, this message translates to:
+  /// **'Playback error — retrying...'**
+  String get audio_error_playback_retrying;
+
+  /// No description provided for @audio_error_generic.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong — please try again'**
+  String get audio_error_generic;
+
+  /// No description provided for @audio_error_multiple_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Multiple tracks failed to play — check your connection and try again'**
+  String get audio_error_multiple_failed;
+
+  /// No description provided for @audio_error_switching_track.
+  ///
+  /// In en, this message translates to:
+  /// **'Switching to next track...'**
+  String get audio_error_switching_track;
+
+  /// No description provided for @audio_error_playback_restored.
+  ///
+  /// In en, this message translates to:
+  /// **'Playback restored'**
+  String get audio_error_playback_restored;
+
+  /// No description provided for @audio_error_engine_restart.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio engine error — please restart the app if this persists'**
+  String get audio_error_engine_restart;
+
+  /// No description provided for @audio_error_download_requested.
+  ///
+  /// In en, this message translates to:
+  /// **'Download requested — retry when it is ready'**
+  String get audio_error_download_requested;
+
+  /// No description provided for @audio_error_retrying_in.
+  ///
+  /// In en, this message translates to:
+  /// **'Retrying in {seconds}s... ({attempt}/{max})'**
+  String audio_error_retrying_in(int seconds, int attempt, int max);
+
+  /// No description provided for @audio_error_fallback_source.
+  ///
+  /// In en, this message translates to:
+  /// **'DeeMusiq servers unreachable — playing from YouTube'**
+  String get audio_error_fallback_source;
+
+  /// No description provided for @profile_linked_connect_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect your Google account'**
+  String get profile_linked_connect_hint;
+
+  /// No description provided for @username_required.
+  ///
+  /// In en, this message translates to:
+  /// **'Username is required'**
+  String get username_required;
+
+  /// No description provided for @password_required.
+  ///
+  /// In en, this message translates to:
+  /// **'Password is required'**
+  String get password_required;
+
+  /// No description provided for @report_dialog_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Report content'**
+  String get report_dialog_title;
+
+  /// No description provided for @report_submitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Report submitted. Thank you.'**
+  String get report_submitted;
+
+  /// No description provided for @report_network_error.
+  ///
+  /// In en, this message translates to:
+  /// **'Network error'**
+  String get report_network_error;
+
+  /// No description provided for @report_what_wrong.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s wrong with {label}?'**
+  String report_what_wrong(String label);
+
+  /// No description provided for @report_reason_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason'**
+  String get report_reason_label;
+
+  /// No description provided for @report_reason_spam.
+  ///
+  /// In en, this message translates to:
+  /// **'Spam or misleading'**
+  String get report_reason_spam;
+
+  /// No description provided for @report_reason_copyright.
+  ///
+  /// In en, this message translates to:
+  /// **'Copyright / DMCA'**
+  String get report_reason_copyright;
+
+  /// No description provided for @report_reason_harassment.
+  ///
+  /// In en, this message translates to:
+  /// **'Harassment or hate'**
+  String get report_reason_harassment;
+
+  /// No description provided for @report_reason_csam.
+  ///
+  /// In en, this message translates to:
+  /// **'Child safety (CSAM)'**
+  String get report_reason_csam;
+
+  /// No description provided for @report_reason_illegal.
+  ///
+  /// In en, this message translates to:
+  /// **'Other illegal content'**
+  String get report_reason_illegal;
+
+  /// No description provided for @report_reason_other.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get report_reason_other;
+
+  /// No description provided for @report_details_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Details (optional)'**
+  String get report_details_label;
+
+  /// No description provided for @report_details_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us what happened'**
+  String get report_details_hint;
+
+  /// No description provided for @report_evidence_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Evidence URL (required for copyright claims)'**
+  String get report_evidence_label;
+
+  /// No description provided for @report_submitting.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitting…'**
+  String get report_submitting;
+
+  /// No description provided for @time_just_now.
+  ///
+  /// In en, this message translates to:
+  /// **'just now'**
+  String get time_just_now;
+
+  /// No description provided for @time_minutes_ago.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}m ago'**
+  String time_minutes_ago(int count);
+
+  /// No description provided for @time_hours_ago.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}h ago'**
+  String time_hours_ago(int count);
+
+  /// No description provided for @time_days_ago.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}d ago'**
+  String time_days_ago(int count);
+
+  /// No description provided for @time_weeks_ago.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}w ago'**
+  String time_weeks_ago(int count);
+
+  /// No description provided for @time_months_ago.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}mo ago'**
+  String time_months_ago(int count);
+
+  /// No description provided for @time_years_ago.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}y ago'**
+  String time_years_ago(int count);
+
+  /// No description provided for @auth_mfa_required.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your authentication code'**
+  String get auth_mfa_required;
+
+  /// No description provided for @auth_mfa_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Open your authenticator app and enter the 6-digit code to finish signing in.'**
+  String get auth_mfa_body;
+
+  /// No description provided for @auth_mfa_verify_action.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify'**
+  String get auth_mfa_verify_action;
+
+  /// No description provided for @supporters_section_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Top Supporters'**
+  String get supporters_section_title;
+
+  /// No description provided for @supporters_empty.
+  ///
+  /// In en, this message translates to:
+  /// **'No supporters yet — be the first to back this artist.'**
+  String get supporters_empty;
+
+  /// No description provided for @supporters_load_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load supporters'**
+  String get supporters_load_failed;
+
+  /// No description provided for @supporter_tier_gold.
+  ///
+  /// In en, this message translates to:
+  /// **'Gold'**
+  String get supporter_tier_gold;
+
+  /// No description provided for @supporter_tier_silver.
+  ///
+  /// In en, this message translates to:
+  /// **'Silver'**
+  String get supporter_tier_silver;
+
+  /// No description provided for @supporter_tier_bronze.
+  ///
+  /// In en, this message translates to:
+  /// **'Bronze'**
+  String get supporter_tier_bronze;
+
+  /// No description provided for @supporter_top_badge.
+  ///
+  /// In en, this message translates to:
+  /// **'Top supporter'**
+  String get supporter_top_badge;
+
+  /// No description provided for @supporter_status_line.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re supporter #{rank} · {tier} tier'**
+  String supporter_status_line(int rank, String tier);
+
+  /// No description provided for @supporter_status_rank_only.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re supporter #{rank}'**
+  String supporter_status_rank_only(int rank);
+
+  /// No description provided for @region_filter_global.
+  ///
+  /// In en, this message translates to:
+  /// **'Global'**
+  String get region_filter_global;
+
+  /// No description provided for @region_filter_my_region.
+  ///
+  /// In en, this message translates to:
+  /// **'My region ({region})'**
+  String region_filter_my_region(String region);
+
+  /// No description provided for @normalize_volume.
+  ///
+  /// In en, this message translates to:
+  /// **'Normalize volume'**
+  String get normalize_volume;
+
+  /// No description provided for @normalize_volume_description.
+  ///
+  /// In en, this message translates to:
+  /// **'Even out loudness between tracks — measured gain on catalog songs, dynamic normalization elsewhere.'**
+  String get normalize_volume_description;
+
+  /// No description provided for @data_saver.
+  ///
+  /// In en, this message translates to:
+  /// **'Data saver'**
+  String get data_saver;
+
+  /// No description provided for @data_saver_description.
+  ///
+  /// In en, this message translates to:
+  /// **'Play lower-bitrate audio, shrink buffers and skip prefetching to use less data.'**
+  String get data_saver_description;
+
+  /// No description provided for @data_saver_off.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get data_saver_off;
+
+  /// No description provided for @data_saver_on.
+  ///
+  /// In en, this message translates to:
+  /// **'On'**
+  String get data_saver_on;
+
+  /// No description provided for @data_saver_auto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto on metered'**
+  String get data_saver_auto;
+
+  /// No description provided for @now_playing_lite.
+  ///
+  /// In en, this message translates to:
+  /// **'Lite'**
+  String get now_playing_lite;
+
+  /// No description provided for @now_playing_lite_tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Playing the lite rendition to save data'**
+  String get now_playing_lite_tooltip;
+
+  /// No description provided for @payout_pending_settlement.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending settlement: {tokens} tokens'**
+  String payout_pending_settlement(int tokens);
+
+  /// No description provided for @payout_settlement_explainer.
+  ///
+  /// In en, this message translates to:
+  /// **'Tips become payable after a 7-day settlement window.'**
+  String get payout_settlement_explainer;
 }
 
 class _AppLocalizationsDelegate

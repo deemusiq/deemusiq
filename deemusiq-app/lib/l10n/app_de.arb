@@ -485,5 +485,8 @@
   "help_project_grow_description": "DeeMusiq ist ein Open-Source-Projekt. Sie können diesem Projekt helfen, indem Sie zum Projekt beitragen, Fehler melden oder neue Funktionen vorschlagen.",
   "donate_on_open_collective": "Auf Open Collective spenden",
   "install_a_metadata_provider": "Einen Metadatenanbieter installieren",
-  "input_does_not_match_format": "Eingabe entspricht nicht dem geforderten Format"
+  "input_does_not_match_format": "Eingabe entspricht nicht dem geforderten Format",
+  "auth_mfa_required": "Gib deinen Bestätigungscode ein",
+  "auth_mfa_body": "Öffne deine Authenticator-App und gib den 6-stelligen Code ein, um dich anzumelden.",
+  "auth_mfa_verify_action": "Bestätigen"
 }

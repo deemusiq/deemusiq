@@ -485,5 +485,8 @@
   "help_project_grow_description": "DeeMusiq is an open-source project. You can help this project grow by contributing to the project, reporting bugs, or suggesting new features.",
   "donate_on_open_collective": "Open Collective-ზე დონაცია",
   "install_a_metadata_provider": "დააყენეთ მეტამონაცემების პროვაიდერი",
-  "input_does_not_match_format": "შეყვანა არ ემთხვევა საჭირო ფორმატს"
+  "input_does_not_match_format": "შეყვანა არ ემთხვევა საჭირო ფორმატს",
+  "auth_mfa_required": "შეიყვანეთ თქვენი ავთენტიფიკაციის კოდი",
+  "auth_mfa_body": "გახსენით ავთენტიფიკაციის აპი და შეიყვანეთ 6-ციფრიანი კოდი შესასვლელად.",
+  "auth_mfa_verify_action": "დადასტურება"
 }

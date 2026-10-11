@@ -485,5 +485,8 @@
   "help_project_grow_description": "DeeMusiq kode irekiko proiektu bat da. Proiektu hau hazten lagundu dezakezu, erroreak jakinaraziz edo ezaugarri berriak proposatuz.",
   "donate_on_open_collective": "Open Collective-en diruz lagundu",
   "install_a_metadata_provider": "Metadaten hornitzaile bat instalatu",
-  "input_does_not_match_format": "Sarrera ezin da beharrezko formatutik desberdina izan"
+  "input_does_not_match_format": "Sarrera ezin da beharrezko formatutik desberdina izan",
+  "auth_mfa_required": "Sartu zure autentikazio-kodea",
+  "auth_mfa_body": "Ireki zure autentifikatzaile aplikazioa eta sartu 6 digituko kodea saioa amaitzeko.",
+  "auth_mfa_verify_action": "Egiaztatu"
 }
