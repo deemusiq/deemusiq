@@ -66,6 +66,7 @@ class LinkedAccountsPage extends HookConsumerWidget {
                             account: byProvider[provider],
                             backendConfigured: backendConfigured,
                           ),
+                        ),
                     const Gap(40),
                   ],
                 ),

@@ -3185,7 +3185,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get pairing_revoke => 'Revoke pairing';
 
   @override
-  String get playback_youtube_quality => 'YouTube Audio Quality';
+  String get playback_youtube_quality => 'Stream Quality';
 
   @override
   String get about_built_on => 'Built on';

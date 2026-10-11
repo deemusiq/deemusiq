@@ -5649,7 +5649,7 @@ abstract class AppLocalizations {
   /// No description provided for @playback_youtube_quality.
   ///
   /// In en, this message translates to:
-  /// **'YouTube Audio Quality'**
+  /// **'Stream Quality'**
   String get playback_youtube_quality;
 
   /// No description provided for @about_built_on.
