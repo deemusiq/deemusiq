@@ -5,6 +5,12 @@ import 'package:deemusiq/services/wallet/payment_service.dart'
     show PaymentGatewayConfig;
 import 'package:deemusiq/services/wallet/wallet_api.dart';
 
+/// Aggregated rating counters for one track — canonical definition lives in
+/// `wallet_api.dart` (shared with the wallet/trending DTOs); re-exported here
+/// so ratings call sites keep a single import.
+export 'package:deemusiq/services/wallet/wallet_api.dart'
+    show TrackRatingStats;
+
 /// The value a user can stamp on a track. The wire format is the lowercase
 /// name (`"like"` / `"dislike"`); unknown server values parse to null so a
 /// newer backend never crashes an older app.
@@ -20,38 +26,6 @@ enum TrackRatingValue {
       if (value.name == raw) return value;
     }
     return null;
-  }
-}
-
-/// Aggregated rating counters for one track (`likes`, `dislikes`, `total`,
-/// `likeRatio` 0..1 or null when unrated).
-class TrackRatingStats {
-  final int likes;
-  final int dislikes;
-  final int total;
-  final double? likeRatio;
-
-  const TrackRatingStats({
-    this.likes = 0,
-    this.dislikes = 0,
-    this.total = 0,
-    this.likeRatio,
-  });
-
-  factory TrackRatingStats.fromJson(Map<String, dynamic> json) {
-    return TrackRatingStats(
-      likes: (json["likes"] as num?)?.toInt() ?? 0,
-      dislikes: (json["dislikes"] as num?)?.toInt() ?? 0,
-      total: (json["total"] as num?)?.toInt() ?? 0,
-      likeRatio: (json["likeRatio"] as num?)?.toDouble(),
-    );
-  }
-
-  /// 0–100 for the "87%" badge, null when the track has no ratings yet.
-  int? get likePercent {
-    final ratio = likeRatio;
-    if (ratio == null || total <= 0) return null;
-    return (ratio * 100).round();
   }
 }
 

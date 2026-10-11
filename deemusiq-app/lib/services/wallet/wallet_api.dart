@@ -301,10 +301,10 @@ class TrackRatingStats {
   final double? likeRatio;
 
   const TrackRatingStats({
-    required this.likes,
-    required this.dislikes,
-    required this.total,
-    required this.likeRatio,
+    this.likes = 0,
+    this.dislikes = 0,
+    this.total = 0,
+    this.likeRatio,
   });
 
   factory TrackRatingStats.fromJson(Map json) => TrackRatingStats(
@@ -315,6 +315,13 @@ class TrackRatingStats {
       );
 
   bool get isRated => total > 0;
+
+  /// 0–100 for the "87%" badge, null when the track has no ratings yet.
+  int? get likePercent {
+    final ratio = likeRatio;
+    if (ratio == null || total <= 0) return null;
+    return (ratio * 100).round();
+  }
 }
 
 /// Window metadata echoed by `GET /ratings/trending` (the thresholds the
