@@ -194,3 +194,49 @@ The balance is correctly computed as `SUM(tokens)` from `WalletTransaction`. No 
 | 9 | MEDIUM | Validation | `pushSong` doesn't verify songId exists in catalog |
 | 10 | MEDIUM | Defense | Wallet route file doesn't self-apply `requireAuth` (relies on index.ts mount) |
 | 11 | MEDIUM | Validation | `POST /recommendations/like` and `/unlike` don't use zod validation |
+
+---
+
+## 8. Earn-to-listen rewards (Phase 4b) — farming interaction map
+
+Rewards grant small token amounts for verified engagement
+(`deemusiq-backend/src/services/rewards.ts`). **Default OFF**
+(`REWARDS_ENABLED=false`) until tuned. How they interact with the existing
+controls:
+
+**Verified plays only.** The reward hook fires from the same commit point as
+the server-observed play counter (`recordPlay`, jti-deduped stream
+redemptions on `GET /metadata/audio/:trackId`) and only when that dedupe
+ACCEPTS the redemption. A replayed signed URL earns nothing. The credit is
+idempotent on a key derived from the play's jti
+(`unique WalletTransaction(userId, idempotencyKey)`), so crash-retries and
+edge replays dedupe at the ledger instead of double-minting. There is no
+client claim endpoint — crediting is internal, so a forged client cannot
+mint rewards directly.
+
+**Cap + taper.** Per-user daily cap (`REWARD_DAILY_CAP_TOKENS`, default 20)
+via a Redis counter keyed per UTC day, incremented BEFORE the credit so a
+credit failure fails closed. Accounts younger than `REWARD_NEW_ACCOUNT_DAYS`
+(default 14) earn `REWARD_NEW_ACCOUNT_PCT` (default 25%, integer floor).
+Cap-hit streaks (3 consecutive cap-hit days, then every 25th) emit a
+`log.security reward_cap_streak` line — observability for the integrity
+watch channel, same posture as the velocity trips.
+
+**Velocity checks.** Rewards feed the SAME wallet balance that push /
+support / boost debit, so reward-funded spends pass through
+`middleware/velocity.ts` unchanged (per-minute spend count, age-scaled daily
+outflow, accounts-per-device). A farm that earns rewards still cannot dump
+them faster than the velocity ceilings allow.
+
+**Settlement hold + payout exclusion.** Reward credits are
+`WalletTransaction type="reward"` rows with `settlesAt = NULL` and NO
+`RevenueLedger` row. Every creator-payable query (`creatorBalanceTx` in
+`routes/payouts.ts`, the admin finance position) derives exclusively from
+`RevenueLedger`, so rewards can never become payable cash directly and never
+enter the `PAYOUT_HOLD_DAYS` settlement pipeline. Honest limit: reward
+tokens are fungible once spent — a reward-funded tip to a catalog artist
+books a normal split row that settles after the hold. The farming drain is
+therefore bounded by the earn rate (tiny, capped, tapered), the spend
+velocity ceilings, and the chargeback-window hold on the downstream tip —
+not by token coloring. Admin visibility: `GET /admin/finance/position`
+reports `rewardsGrantedToday` / `rewardsGrantedTotal`.

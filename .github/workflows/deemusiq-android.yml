@@ -196,6 +196,7 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           DEEMUSIQ_CERT_SHA256: ${{ secrets.DEEMUSIQ_CERT_SHA256 }}
           DEEMUSIQ_SERVER_CERT_SHA256: ${{ steps.tlspin.outputs.pin }}
+          DEEMUSIQ_PINNED_HOST: ${{ vars.DEEMUSIQ_PINNED_HOST }}
           DEEMUSIQ_PAYMENT_HMAC_SECRET: ${{ secrets.DEEMUSIQ_PAYMENT_HMAC_SECRET }}
           DEEMUSIQ_CHANNEL_KEY: ${{ secrets.DEEMUSIQ_CHANNEL_KEY }}
           DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY: ${{ vars.DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY }}
@@ -220,7 +221,10 @@ jobs:
             fi
           done
           if [ -z "$DEEMUSIQ_SERVER_CERT_SHA256" ]; then
-            echo "::warning::DEEMUSIQ_SERVER_CERT_SHA256 unset — TLS pin probe dormant. Set it once api.deemusiq.co.za is live; Cloudflare edge certs rotate, so keep a rotation list and be ready to ship pin updates."
+            echo "::error::DEEMUSIQ_SERVER_CERT_SHA256 unset — the TLS pin probe would ship dormant and the backend would have NO MITM protection. Add the current edge cert SHA-256 to server-tls-pins.txt (source of truth) or the repo secret."; fail=1
+          fi
+          if [ -z "$DEEMUSIQ_PINNED_HOST" ]; then
+            echo "::error::DEEMUSIQ_PINNED_HOST unset — with a pin configured but no pinnable host the probe cannot run. Set the repo var to the backend API hostname (e.g. api.deemusiq.co.za)."; fail=1
           fi
           [ "$fail" -eq 0 ] || exit 1
 
@@ -230,6 +234,7 @@ jobs:
         # Passed via env: (not interpolated into the script body).
         env:
           DEEMUSIQ_BACKEND_URL: ${{ vars.DEEMUSIQ_BACKEND_URL }}
+          DEEMUSIQ_PINNED_HOST: ${{ vars.DEEMUSIQ_PINNED_HOST }}
           DEEMUSIQ_CHANNEL_KEY: ${{ secrets.DEEMUSIQ_CHANNEL_KEY }}
           # SHA-256 of the PERMANENT signing certificate. When set, the app
           # refuses to run if signed with any other key (anti-repackaging).
@@ -261,7 +266,8 @@ jobs:
           --dart-define=DEEMUSIQ_BACKEND_URL="${DEEMUSIQ_BACKEND_URL}"
           --dart-define=DEEMUSIQ_CHANNEL_KEY="${DEEMUSIQ_CHANNEL_KEY}"
           --dart-define=DEEMUSIQ_CERT_SHA256="${DEEMUSIQ_CERT_SHA256}"
-          --dart-define=DEEMUSIQ_SERVER_CERT_SHA256="${DEEMUSIQ_SERVER_CERT_SHA256}"
+          --dart-define=DEEMUSIQ_SERVER_CERT_SHA256="${DEEMUSIQ_SERVER_CERT_SHA256}" \
+          --dart-define=DEEMUSIQ_PINNED_HOST="${DEEMUSIQ_PINNED_HOST}"
           --dart-define=DEEMUSIQ_PAYMENT_HMAC_SECRET="${DEEMUSIQ_PAYMENT_HMAC_SECRET}"
           --dart-define=DEEMUSIQ_UPDATE_METADATA_URL="${DEEMUSIQ_UPDATE_METADATA_URL:-https://deemusiq.co.za/downloads/version.json}"
           --dart-define=DEEMUSIQ_UPDATE_URL="${DEEMUSIQ_UPDATE_URL:-https://deemusiq.co.za/#download}"
@@ -289,6 +295,7 @@ jobs:
         # tool/verify_release.sh for the failure classes this catches.
         env:
           DEEMUSIQ_BACKEND_URL: ${{ vars.DEEMUSIQ_BACKEND_URL }}
+          DEEMUSIQ_PINNED_HOST: ${{ vars.DEEMUSIQ_PINNED_HOST }}
           DEEMUSIQ_CHANNEL_KEY: ${{ secrets.DEEMUSIQ_CHANNEL_KEY }}
           DEEMUSIQ_PAYMENT_HMAC_SECRET: ${{ secrets.DEEMUSIQ_PAYMENT_HMAC_SECRET }}
           DEEMUSIQ_CERT_SHA256: ${{ secrets.DEEMUSIQ_CERT_SHA256 }}

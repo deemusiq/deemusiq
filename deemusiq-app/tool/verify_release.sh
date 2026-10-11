@@ -64,12 +64,22 @@ contains() {
 
 echo "== TLS pin baked =="
 if [ -z "$TLS_PINS" ]; then
-  note "server-tls-pins.txt empty — pin intentionally dormant, skipping"
+  # A release without a pin ships the app with NO MITM protection on the
+  # backend, so this fails the build rather than warning: a green run must
+  # mean the artifact is distributable.
+  bad "server-tls-pins.txt empty — the TLS pin probe would ship dormant, leaving the backend with no MITM protection"
 else
   IFS=',' read -ra pins <<< "$TLS_PINS"
   for pin in "${pins[@]}"; do
     if contains "$pin"; then ok "pin present (${pin:0:12}…)"; else bad "TLS pin ${pin:0:12}… NOT in binary — define lost"; fi
   done
+fi
+
+echo "== Pinned host baked =="
+if [ -n "${DEEMUSIQ_PINNED_HOST:-}" ]; then
+  if contains "$DEEMUSIQ_PINNED_HOST"; then ok "pinned host baked"; else bad "DEEMUSIQ_PINNED_HOST set but NOT in binary — pin cannot be located"; fi
+else
+  bad "DEEMUSIQ_PINNED_HOST unset — with a pin configured the probe cannot resolve a host and locks the wallet"
 fi
 
 echo "== Backend wiring baked =="
