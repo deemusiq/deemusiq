@@ -53,7 +53,11 @@
         <category android:name="android.intent.category.LAUNCHER" />
       </intent-filter>
 
-      <intent-filter>
+      <!-- App Links: verify ownership via /.well-known/assetlinks.json.
+           Without autoVerify ANY installed app can claim https://deemusiq.co.za
+           and intercept these links, which becomes account takeover the
+           moment a redirect-based auth flow is built on them. -->
+      <intent-filter android:autoVerify="true">
         <action android:name="android.intent.action.VIEW" />
 
         <category android:name="android.intent.category.DEFAULT" />
@@ -62,13 +66,6 @@
         <data android:scheme="https" />
         <data android:host="deemusiq.co.za" />
         <data android:host="www.deemusiq.co.za" />
-        <!-- App Links: verify ownership via /.well-known/assetlinks.json.
-             Without this ANY installed app can claim https://deemusiq.co.za
-             and intercept these links, which becomes account takeover the
-             moment a redirect-based auth flow is built on them. -->
-        <meta-data
-            android:name="android.autoVerify"
-            android:value="true" />
       </intent-filter>
 
       <intent-filter>
