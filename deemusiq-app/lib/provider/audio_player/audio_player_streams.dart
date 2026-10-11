@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:deemusiq/models/metadata/metadata.dart';
 import 'package:deemusiq/provider/audio_player/audio_player.dart';
@@ -9,6 +11,7 @@ import 'package:deemusiq/provider/discord_provider.dart';
 import 'package:deemusiq/provider/history/history.dart';
 import 'package:deemusiq/provider/history/monthly_plays.dart';
 import 'package:deemusiq/provider/metadata_plugin/core/scrobble.dart';
+import 'package:deemusiq/provider/metadata_plugin/audio_source/quality_presets.dart';
 import 'package:deemusiq/provider/metadata_plugin/metadata_plugin_provider.dart';
 import 'package:deemusiq/provider/server/sourced_track_provider.dart';
 import 'package:deemusiq/provider/skip_segments/skip_segments.dart';
@@ -16,6 +19,7 @@ import 'package:deemusiq/provider/scrobbler/scrobbler.dart';
 import 'package:deemusiq/provider/user_preferences/user_preferences_provider.dart';
 import 'package:deemusiq/services/audio_player/audio_player.dart';
 import 'package:deemusiq/services/audio_player/audio_error_handler.dart';
+import 'package:deemusiq/services/audio_player/data_saver.dart';
 import 'package:deemusiq/services/ad_roll/ad_roll_service.dart';
 import 'package:deemusiq/services/audio_services/audio_services.dart';
 import 'package:deemusiq/services/logger/logger.dart';
@@ -52,9 +56,30 @@ class AudioPlayerStreamListeners {
       subscribeToUserMessages(),
       subscribeToTrackChangeForAds(),
       subscribeToAdState(),
+      subscribeToVolumeForAds(),
+      subscribeToBufferingWatchdog(),
     ];
 
+    // Toggling "Normalize volume" mid-track must apply/clear the gain now,
+    // not at the next track boundary.
+    ref.listen(userPreferencesProvider, (previous, next) {
+      if (previous?.normalizeAudio == next.normalizeAudio) return;
+      try {
+        _applyLoudnessGain();
+      } catch (e, stack) {
+        AppLogger.reportError(e, stack, 'normalizeAudio change');
+      }
+    });
+
+    // Data saver: shrink mpv's cache/demuxer budgets while active (a lite
+    // stream needs little readahead) and restore them when it turns off.
+    ref.listen(dataSaverActiveProvider, (previous, next) {
+      next.whenData((active) => _applyCacheBudgets(active));
+    });
+    _applyCacheBudgets(DataSaverService.isActiveCached);
+
     ref.onDispose(() {
+      _bufferingWatchdog?.cancel();
       for (final subscription in subscriptions) {
         subscription.cancel();
       }
@@ -68,46 +93,133 @@ class AudioPlayerStreamListeners {
   PlaybackHistoryActions get history =>
       ref.read(playbackHistoryActionsProvider);
 
+  /// Applies the mpv cache/demuxer budget for the current data-saver state,
+  /// keeping the lossless demuxer bump (quality_presets listener) when the
+  /// saver is off.
+  void _applyCacheBudgets(bool lite) {
+    try {
+      final presets = ref.read(audioSourcePresetsProvider);
+      final lossless = presets.presets
+              .elementAtOrNull(presets.selectedStreamingContainerIndex)
+          is DeeMusiqAudioSourceContainerPresetLossless;
+      unawaited(audioPlayer.setCacheBudgets(lite: lite, lossless: lossless));
+    } catch (e, stack) {
+      AppLogger.reportError(e, stack, 'data saver cache budgets');
+    }
+  }
+
   StreamSubscription subscribeToPlaylist() {
     return audioPlayer.playlistStream.listen((mpvPlaylist) {
       try {
         if (audioPlayerState.activeTrack == null) return;
         _notificationService?.addTrack(audioPlayerState.activeTrack!);
         discord.updatePresence(audioPlayerState.activeTrack!);
+        _applyLoudnessGain();
       } catch (e, stack) {
         AppLogger.reportError(e, stack);
       }
     });
   }
 
+  /// Loudness normalization (Phase 4): a catalog track carrying `gainDb` in
+  /// its DTO gets that gain applied as a volume adjustment; anything else
+  /// (YouTube-sourced, unmeasured catalog) keeps the dynaudnorm catch-all.
+  /// Gated by the "Normalize volume" preference.
+  void _applyLoudnessGain() {
+    final track = audioPlayerState.activeTrack;
+    final enabled = preferences.normalizeAudio;
+    final gainDb =
+        track is DeeMusiqFullTrackObject && enabled ? track.gainDb : null;
+    unawaited(audioPlayer.setTrackGainDb(gainDb));
+  }
+
   /// Ad breaks happen at track boundaries: when the index changes and enough
-  /// songs have been listened, pause playback and start the ad interstitial.
-  /// The ad's audio plays on a dedicated ad player ([AdRollService.startAdPlayback]);
-  /// when no stream can be opened the break falls back to a plain timer.
+  /// songs have been listened, the break is armed FIRST (overlay + watchdog
+  /// via [AdRollService.beginBreak]), then playback pauses and the ad's audio
+  /// is resolved+played on a dedicated ad player
+  /// ([AdRollService.startAdPlayback]). A resolution failure or timeout
+  /// aborts the break (reported as a skip) — the player is never left paused
+  /// with no UI and no running timer.
   StreamSubscription subscribeToTrackChangeForAds() {
     return audioPlayer.currentIndexChangedStream.listen((_) async {
       try {
+        // Consumes the ad pre-warmed at the 80% mark when one is ready, so a
+        // due break starts AT the boundary instead of into the next track.
         final ad = await AdRollService.instance.takeAdBreakIfDue();
         if (ad == null) return;
+        AdRollService.instance.beginBreak(wasPlaying: audioPlayer.isPlaying);
         await audioPlayer.pause();
-        final audioPlaying =
-            await AdRollService.instance.startAdPlayback(ref);
-        AdRollService.instance.markAdStarted(audioPlaying: audioPlaying);
+        AdRollService.instance.setAdVolume(audioPlayer.volume);
+        final audioPlaying = await AdRollService.instance.startAdPlayback(ref);
+        if (audioPlaying) {
+          AdRollService.instance.markAdStarted();
+        } else {
+          AdRollService.instance.abortBreak();
+        }
       } catch (e, stack) {
         AppLogger.reportError(e, stack, 'ad break at track boundary');
       }
     });
   }
 
-  /// Resume playback when an ad break ends (skip or natural completion).
+  /// Resume playback when an ad break ends (skip, abort or natural
+  /// completion) — but only in the foreground, and only when playback was
+  /// active before the break; a break ending in the background must not
+  /// start music unprompted.
   StreamSubscription subscribeToAdState() {
     return AdRollService.instance.adStateStream.listen((adPlaying) async {
       if (adPlaying) return;
+      if (!AdRollService.instance.shouldResumeAfterBreak) {
+        AppLogger.log.i(
+          'Ad break ended without resume (backgrounded or playback was '
+          'not active before the break)',
+        );
+        return;
+      }
       try {
         await audioPlayer.resume();
       } catch (e, stack) {
         AppLogger.reportError(e, stack, 'resume after ad break');
       }
+    });
+  }
+
+  /// Ads follow the in-app volume: forward main-player volume changes to the
+  /// ad player so a break never blares at 100% against a lowered volume.
+  StreamSubscription subscribeToVolumeForAds() {
+    return audioPlayer.volumeStream.listen((volume) {
+      AdRollService.instance.setAdVolume(volume);
+    });
+  }
+
+  Timer? _bufferingWatchdog;
+
+  /// mpv's network-timeout bounds connects and read gaps, but a CDN that
+  /// trickles (or silently stalls) leaves the player in `buffering` forever.
+  /// Treat >15s of continuous buffering during playback as a network error
+  /// so the AudioErrorHandler can retry/skip and the user gets a message.
+  StreamSubscription subscribeToBufferingWatchdog() {
+    return audioPlayer.bufferingStream.listen((buffering) {
+      _bufferingWatchdog?.cancel();
+      _bufferingWatchdog = null;
+      if (!buffering || !audioPlayer.isPlaying) return;
+      _bufferingWatchdog = Timer(const Duration(seconds: 15), () {
+        if (!audioPlayer.isBuffering || !audioPlayer.isPlaying) return;
+        AppLogger.log.w(
+          'Buffering watchdog: stalled >15s while playing — '
+          'routing to AudioErrorHandler as a network error',
+        );
+        unawaited(
+          AudioErrorHandler.instance.handleError(
+            TimeoutException(
+              'Buffering stalled while playing',
+              const Duration(seconds: 15),
+            ),
+            StackTrace.current,
+            context: 'buffering watchdog',
+          ),
+        );
+      });
     });
   }
 
@@ -215,8 +327,11 @@ class AudioPlayerStreamListeners {
                 playedAt: DateTime.now(),
               ),
             );
-      } catch (_) {}
-
+      } catch (e) {
+        // Recently-played is a local convenience — a failure must never
+        // break playback, but it is logged for diagnosis.
+        AppLogger.log.w('Failed to record recently-played entry: $e');
+      }
       // Backend listen telemetry (Gmail-linked users get smarter For You).
       // Best-effort: local tracks have no backend id and offline plays retry
       // on the next scrobble — never fail playback on analytics.
@@ -229,7 +344,11 @@ class AudioPlayerStreamListeners {
             durationMs: audioPlayer.duration.inMilliseconds,
           );
         }
-      } catch (_) {}
+      } catch (e) {
+        // Telemetry is best-effort (see above) — the failure is logged so
+        // dropped listen counts are diagnosable.
+        AppLogger.log.w('Backend scrobble failed: $e');
+      }
 
       AdRollService.instance.onTrackListened();
     } catch (e, stack) {
@@ -265,10 +384,22 @@ class AudioPlayerStreamListeners {
 
       // Set guard immediately to prevent concurrent fetches of the same track
       _lastTrack = nextTrack.id;
+
+      // Pre-fetch the ad decision so a due break starts AT the upcoming
+      // boundary instead of seconds into the next track.
+      unawaited(() async {
+        try {
+          await AdRollService.instance.prewarmAdBreak();
+        } catch (e, stack) {
+          AppLogger.reportError(e, stack, 'ad pre-warm');
+        }
+      }());
+
       try {
         await ref.read(
           sourcedTrackProvider(nextTrack).future,
         );
+        unawaited(_warmNextTrackBytes(nextTrack));
       } catch (e, stack) {
         // Clear guard on error so it can be retried on the next position event
         _lastTrack = '';
@@ -276,6 +407,41 @@ class AudioPlayerStreamListeners {
       }
     } catch (e, stack) {
       AppLogger.reportError(e, stack);
+    }
+  }
+
+  /// Byte-warm the next track: pull it through the loopback server now so
+  /// the source resolution and the cache write finish before the boundary —
+  /// the boundary then serves the verified local copy with no network wait.
+  /// Skipped when the current buffer is thin (<10s — the playing track needs
+  /// the bandwidth), on a metered (mobile) connection, when the data saver
+  /// is on (saving bytes is the whole point), or when the music cache is off
+  /// (no cache write to warm). Opportunistic: playback does its own fetch at
+  /// the boundary if this fails.
+  Future<void> _warmNextTrackBytes(DeeMusiqFullTrackObject nextTrack) async {
+    try {
+      if (!preferences.cacheMusic || DeeMusiqMedia.serverPort <= 0) return;
+      final bufferedAhead = audioPlayer.bufferedPosition - audioPlayer.position;
+      if (bufferedAhead < const Duration(seconds: 10)) return;
+      if (await DataSaverService.isActive()) return;
+      final networks = await Connectivity().checkConnectivity();
+      if (networks.contains(ConnectivityResult.mobile)) return;
+      final client = HttpClient();
+      try {
+        final uri = Uri.parse(DeeMusiqMedia(nextTrack).uri);
+        final request = await client
+            .getUrl(uri)
+            .timeout(const Duration(seconds: 15));
+        final response =
+            await request.close().timeout(const Duration(seconds: 15));
+        // Drain fully: the loopback tees this body into the music cache.
+        await response.drain<void>();
+        AppLogger.log.d('byte-warm complete for ${nextTrack.id}');
+      } finally {
+        client.close(force: true);
+      }
+    } catch (e) {
+      AppLogger.log.d('byte-warm for next track skipped: $e');
     }
   }
 

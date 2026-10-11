@@ -7,6 +7,7 @@ import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:shadcn_flutter/shadcn_flutter_extension.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/components/wallet/wallet_common.dart';
+import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/models/wallet/payment_method.dart';
 import 'package:deemusiq/models/wallet/token_pack.dart';
 import 'package:deemusiq/provider/wallet/region_provider.dart';
@@ -31,6 +32,7 @@ class PurchaseTokensDialog extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final region = ref.watch(regionTierProvider);
     // Default to the first rail the backend hasn't told us is down — never
     // pre-select a dead rail.
@@ -77,10 +79,7 @@ class PurchaseTokensDialog extends HookConsumerWidget {
             .trackPaymentIntent(intentId)
             .then((status) {
           if (status == "completed" && context.mounted) {
-            showWalletToast(
-              context,
-              "Payment confirmed — tokens added to your wallet 🎉",
-            );
+            showWalletToast(context, l10n.purchase_confirmed);
           }
         }),
       );
@@ -95,8 +94,7 @@ class PurchaseTokensDialog extends HookConsumerWidget {
         payerPhone =
             DeeMusiqPaymentService.normalizePayerPhone(phoneController.text);
         if (payerPhone == null) {
-          phoneError.value =
-              "That phone number doesn't look right — use a number like +27 82 123 4567.";
+          phoneError.value = l10n.purchase_phone_invalid;
           return;
         }
       }
@@ -111,7 +109,7 @@ class PurchaseTokensDialog extends HookConsumerWidget {
       if (!context.mounted) return;
       loading.value = false;
       if (res.status == PaymentStatus.success) {
-        await applyAndClose("Added ${pack.totalTokens} tokens 🎉");
+        await applyAndClose(l10n.purchase_added(pack.totalTokens));
         return;
       }
       result.value = res;
@@ -129,7 +127,7 @@ class PurchaseTokensDialog extends HookConsumerWidget {
           const Icon(DeeMusiqIcons.token, color: deeMusiqOrange),
           const Gap(8),
           Expanded(
-            child: Text("Buy ${pack.totalTokens} tokens").large(),
+            child: Text(l10n.purchase_title(pack.totalTokens)).large(),
           ),
         ],
       ),
@@ -153,12 +151,14 @@ class PurchaseTokensDialog extends HookConsumerWidget {
           ? [
               Button.outline(
                 onPressed: () => Navigator.pop(context),
-                child: const Text("Cancel"),
+                child: Text(l10n.cancel),
               ),
               Button.primary(
                 onPressed:
                     loading.value || methodUnavailable ? null : runPurchase,
-                child: Text(loading.value ? "Processing…" : "Continue"),
+                child: Text(loading.value
+                    ? l10n.purchase_processing
+                    : l10n.continue_action),
               ),
             ]
           : res.status == PaymentStatus.failed ||
@@ -166,17 +166,17 @@ class PurchaseTokensDialog extends HookConsumerWidget {
               ? [
                   Button.outline(
                     onPressed: () => result.value = null,
-                    child: const Text("Try another method"),
+                    child: Text(l10n.purchase_try_another),
                   ),
                   Button.primary(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text("Close"),
+                    child: Text(l10n.close),
                   ),
                 ]
               : [
                   Button.outline(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text("Close"),
+                    child: Text(l10n.close),
                   ),
                   if (res.actionUrl != null)
                     Button.primary(
@@ -187,7 +187,7 @@ class PurchaseTokensDialog extends HookConsumerWidget {
                         );
                         Navigator.pop(context);
                       },
-                      child: const Text("Open checkout"),
+                      child: Text(l10n.purchase_open_checkout),
                     ),
                 ],
     );
@@ -233,14 +233,14 @@ class _MethodPicker extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 4),
               child: Text(
                 pack.bonusTokens > 0
-                    ? "incl. ${pack.bonusTokens} bonus"
+                    ? context.l10n.purchase_bonus_included(pack.bonusTokens)
                     : pack.label,
               ).muted().small(),
             ),
           ],
         ),
         const Gap(4),
-        const Text("Choose how to pay").muted().small(),
+        Text(context.l10n.purchase_choose_method).muted().small(),
         const Gap(12),
         for (final m in PaymentMethodKind.topUpMethods)
           Padding(
@@ -254,11 +254,11 @@ class _MethodPicker extends StatelessWidget {
           ),
         if (showPhoneField) ...[
           const Gap(4),
-          const Text("PayShap phone number (optional)").small().semiBold(),
+          Text(context.l10n.purchase_phone_label).small().semiBold(),
           const Gap(6),
           TextField(
             controller: phoneController,
-            placeholder: const Text("+27 82 123 4567"),
+            placeholder: Text(context.l10n.purchase_phone_hint),
           ),
           if (phoneError != null) ...[
             const Gap(6),
@@ -269,9 +269,7 @@ class _MethodPicker extends StatelessWidget {
             ).xSmall(),
           ] else ...[
             const Gap(6),
-            const Text(
-              "We'll send the payment request to this number. Leave blank to reuse your saved number.",
-            ).muted().xSmall(),
+            Text(context.l10n.purchase_phone_body).muted().xSmall(),
           ],
         ],
       ],
@@ -332,9 +330,9 @@ class _MethodTile extends StatelessWidget {
                       Text(method.subtitle).muted().xSmall(),
                       if (unavailable) ...[
                         const Gap(2),
-                        const Text(
-                          "Unavailable right now",
-                          style: TextStyle(color: amber, fontSize: 11),
+                        Text(
+                          context.l10n.purchase_unavailable,
+                          style: const TextStyle(color: amber, fontSize: 11),
                         ),
                       ],
                     ],
@@ -367,10 +365,10 @@ class _ResultView extends StatelessWidget {
   Widget build(BuildContext context) {
     final deposit = result.deposit;
     final title = switch (result.status) {
-      PaymentStatus.awaitingDeposit => "Awaiting deposit",
-      PaymentStatus.unavailable => "Unavailable right now",
-      PaymentStatus.failed => "Couldn't start checkout",
-      _ => "Almost there",
+      PaymentStatus.awaitingDeposit => context.l10n.purchase_awaiting_deposit,
+      PaymentStatus.unavailable => context.l10n.purchase_unavailable,
+      PaymentStatus.failed => context.l10n.purchase_checkout_failed,
+      _ => context.l10n.purchase_almost_there,
     };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -404,7 +402,9 @@ class _ResultView extends StatelessWidget {
               children: [
                 Text("${deposit.asset} · ${deposit.network}").semiBold(),
                 const Gap(4),
-                Text("Amount: ${deposit.amountLabel}").muted().small(),
+                Text(context.l10n.purchase_amount(deposit.amountLabel))
+                    .muted()
+                    .small(),
                 const Gap(8),
                 if (deposit.isConfigured)
                   Row(
@@ -423,15 +423,14 @@ class _ResultView extends StatelessWidget {
                           Clipboard.setData(
                             ClipboardData(text: deposit.address),
                           );
-                          showWalletToast(context, "Address copied");
+                          showWalletToast(
+                              context, context.l10n.purchase_address_copied);
                         },
                       ),
                     ],
                   )
                 else
-                  const Text(
-                    "No receiving wallet configured yet — set one in the backend / DEEMUSIQ_WALLET.md to accept this asset.",
-                  ).muted().small(),
+                  Text(context.l10n.purchase_no_wallet).muted().small(),
               ],
             ),
           ),
@@ -439,8 +438,8 @@ class _ResultView extends StatelessWidget {
         const Gap(12),
         Text(
           result.status == PaymentStatus.awaitingDeposit
-              ? "Reference ${result.reference} · tokens appear automatically once the payment confirms."
-              : "Reference ${result.reference}",
+              ? context.l10n.purchase_reference_pending(result.reference)
+              : context.l10n.purchase_reference(result.reference),
         ).muted().xSmall(),
       ],
     );

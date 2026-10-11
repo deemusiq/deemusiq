@@ -52,8 +52,9 @@ class HistoryTopTracksNotifier extends FamilyPaginatedAsyncNotifier<
   Future<void> fixImageNotLoadingForArtistIssue(
     List<HistoryTableData> entries,
   ) async {
+    final validEntries = entries.where((e) => e.track != null).toList();
     final nonImageArtistTracks =
-        entries.where((e) => e.track!.artists.any((a) => a.images == null));
+        validEntries.where((e) => e.track!.artists.any((a) => a.images == null));
 
     if (nonImageArtistTracks.isEmpty) return;
 
@@ -70,11 +71,16 @@ class HistoryTopTracksNotifier extends FamilyPaginatedAsyncNotifier<
         ref
             .read(metadataPluginArtistProvider(id).future)
             .then<DeeMusiqFullArtistObject?>((artist) => artist)
-            .catchError((_) => null),
+            .catchError((Object err, StackTrace st) {
+              AppLogger.reportError(err, st, 'fixImage artist lookup');
+              return null;
+            }),
     ])).whereType<DeeMusiqFullArtistObject>().toList();
 
     final imagedArtistTracks = nonImageArtistTracks.map((e) {
-      var track = e.track!;
+      final current = e.track;
+      if (current == null) return e;
+      var track = current;
       final includedArtists = track.artists
           .map((a) {
             final fullArtist =
@@ -93,8 +99,9 @@ class HistoryTopTracksNotifier extends FamilyPaginatedAsyncNotifier<
     });
 
     assert(
-      imagedArtistTracks
-          .every((e) => e.track!.artists.every((a) => a.images != null)),
+      imagedArtistTracks.every((e) =>
+          e.track == null ||
+          e.track!.artists.every((a) => a.images != null)),
       'Tracks artists should have images',
     );
 
@@ -127,8 +134,9 @@ class HistoryTopTracksNotifier extends FamilyPaginatedAsyncNotifier<
   @override
   build(arg) async {
     final subscription = createTracksQuery().watch().listen((event) {
-      if (state.asData == null) return;
-      state = AsyncData(state.asData!.value.copyWith(
+      final current = state.asData?.value;
+      if (current == null) return;
+      state = AsyncData(current.copyWith(
         items: getTracksWithCount(event),
         hasMore: false,
       ));
@@ -176,8 +184,10 @@ class HistoryTopTracksNotifier extends FamilyPaginatedAsyncNotifier<
       }),
     );
 
+    // Corrupt rows (null track JSON) are dropped, not crashed on.
+    final valid = tracks.where((t) => t.track != null).toList();
     return groupBy(
-      tracks,
+      valid,
       (track) => track.track!.id,
     )
         .entries

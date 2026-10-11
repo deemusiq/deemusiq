@@ -91,12 +91,31 @@ abstract class EncryptedKvStoreService {
       await setEncryptionKey(key);
       return key;
     } catch (e) {
-      AppLogger.log.w(
-        'FlutterSecureStorage unavailable, falling back to SharedPreferences for encryption key',
+      // Keystore unreachable. Falling back to plaintext prefs means the master
+      // key — which protects the wallet ledger and every v2 blob — is readable
+      // by anything with app-prefs access, and that silently voids
+      // `WalletPersistence`'s refusal to write a plaintext wallet.
+      //
+      // That fallback is kept for AVAILABILITY (a locked-out user cannot pay
+      // or even read their balance), but it is no longer silent: it is
+      // recorded and surfaced through [degraded], so the app can warn and the
+      // condition is observable instead of being discovered during an incident.
+      AppLogger.log.e(
+        'EncryptedKvStore: FlutterSecureStorage unavailable; encryption key '
+        'degraded to SharedPreferences. Wallet data is NOT protected at rest.',
       );
+      _degraded = true;
       return KVStoreService.encryptionKey;
     }
   }
+
+  /// True when the master key had to fall back to plaintext SharedPreferences
+  /// because the platform keystore was unreachable.
+  ///
+  /// Deliberately NOT cleared once it flips: a transient keystore failure must
+  /// not make the UI claim protection that is not there.
+  static bool get degraded => _degraded;
+  static bool _degraded = false;
 
   static Future<void> setEncryptionKey(String key) async {
     try {
@@ -116,8 +135,9 @@ abstract class EncryptedKvStoreService {
   static Future<void> _scrubPlaintextCopy() async {
     try {
       await KVStoreService.sharedPreferences.remove(_plainFallbackKey);
-    } catch (_) {
+    } catch (e, st) {
       // Best-effort: a leftover plain copy is less critical than a failed init.
+      AppLogger.reportError(e, st, 'scrub plaintext key copy');
     }
   }
 }

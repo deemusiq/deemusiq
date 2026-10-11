@@ -1,10 +1,11 @@
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
 
-/// External music services a DeeMusiq account can be linked to. Spotify is the
-/// first provider; the rest are scaffolded so linkage is one enum entry + an
-/// OAuth client away. Real linking needs each provider's OAuth client
-/// credentials (see DEEMUSIQ_WALLET.md).
+/// Identity providers a DeeMusiq account can be linked to. Only Google is
+/// offered in the UI (see LinkedAccountsPage); the music-service entries
+/// remain so previously stored links still parse and can be disconnected.
+/// Real linking needs each provider's OAuth client credentials (see
+/// DEEMUSIQ_WALLET.md).
 enum LinkedProvider {
   spotify,
   google,

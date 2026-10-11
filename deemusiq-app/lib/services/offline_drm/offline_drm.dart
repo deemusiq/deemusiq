@@ -330,7 +330,11 @@ class OfflineTrackEncryption {
         if (await temporaryFile.exists()) {
           await temporaryFile.delete();
         }
-      } catch (_) {}
+      } catch (e) {
+        // Cleanup of the temp file is best-effort — the encrypted track
+        // itself was already written and verified above.
+        AppLogger.log.w('Offline DRM temp file cleanup failed: $e');
+      }
     }
     AppLogger.log.i('Encrypted offline track: $fullPath');
     return fullPath;
@@ -475,12 +479,19 @@ class OfflineTrackEncryption {
       } catch (error, stackTrace) {
         try {
           await backup.rename(target.path);
-        } catch (_) {}
+        } catch (rollbackError) {
+          // The original error is rethrown below either way — a failed
+          // rollback additionally leaves the old file at the backup path.
+          AppLogger.log.e('Offline DRM rollback to backup failed: $rollbackError');
+        }
         Error.throwWithStackTrace(error, stackTrace);
       }
       try {
         await backup.delete();
-      } catch (_) {}
+      } catch (e) {
+        // Leftover backup file — harmless, cleaned up on a later run.
+        AppLogger.log.w('Offline DRM backup cleanup failed: $e');
+      }
     }
   }
 

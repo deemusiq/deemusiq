@@ -8,6 +8,7 @@ import 'package:deemusiq/collections/routes.gr.dart';
 import 'package:deemusiq/components/fallbacks/error_box.dart';
 import 'package:deemusiq/components/titlebar/titlebar.dart';
 import 'package:deemusiq/components/wallet/wallet_common.dart';
+import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/provider/wallet/notifications_provider.dart';
 import 'package:deemusiq/services/wallet/wallet_api.dart';
 
@@ -26,9 +27,8 @@ class NotificationsPage extends HookConsumerWidget {
     if (!state.available) {
       body = _card(
         icon: FeatherIcons.bellOff,
-        title: "You're offline",
-        message: "Notifications live on DeeMusiq — connect to the internet "
-            "and they'll show up here.",
+        title: context.l10n.notifications_offline_title,
+        message: context.l10n.notifications_offline_body,
       );
     } else if (state.loading && state.notifications.isEmpty) {
       body = const Padding(
@@ -48,8 +48,8 @@ class NotificationsPage extends HookConsumerWidget {
     } else if (state.notifications.isEmpty) {
       body = _card(
         icon: FeatherIcons.bell,
-        title: "No notifications yet",
-        message: "Payouts, publishes, follows and replies will land here.",
+        title: context.l10n.notifications_empty_title,
+        message: context.l10n.notifications_empty_body,
       );
     } else {
       body = Column(
@@ -70,13 +70,13 @@ class NotificationsPage extends HookConsumerWidget {
                         state.error is WalletApiException
                             ? (state.error as WalletApiException)
                                 .friendlyMessage
-                            : "Couldn't refresh notifications.",
+                            : context.l10n.notifications_refresh_failed,
                       ).small(),
                     ),
                     Button.ghost(
                       leading: const Icon(DeeMusiqIcons.refresh, size: 14),
                       onPressed: notifier.refresh,
-                      child: const Text("Retry"),
+                      child: Text(context.l10n.retry),
                     ),
                   ],
                 ),
@@ -96,7 +96,7 @@ class NotificationsPage extends HookConsumerWidget {
       child: Scaffold(
         headers: [
           TitleBar(
-            title: const Text("Notifications"),
+            title: Text(context.l10n.notifications),
             trailing: [
               if (state.available)
                 IconButton.ghost(
@@ -116,7 +116,7 @@ class NotificationsPage extends HookConsumerWidget {
                       }
                     }
                   },
-                  child: const Text("Mark all read"),
+                  child: Text(context.l10n.notifications_mark_all_read),
                 ),
             ],
           ),
@@ -236,7 +236,8 @@ class _NotificationTile extends ConsumerWidget {
                   if (notification.createdAt != null) ...[
                     const Gap(4),
                     Text(
-                      relativeTime(notification.createdAt!.toLocal()),
+                      relativeTime(
+                          context.l10n, notification.createdAt!.toLocal()),
                       style: TextStyle(
                         color: theme.colorScheme.mutedForeground,
                         fontSize: 11,

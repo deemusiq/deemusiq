@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:deemusiq/models/wallet/payment_method.dart';
 import 'package:deemusiq/models/wallet/region_pricing.dart';
 import 'package:deemusiq/models/wallet/token_pack.dart';
@@ -59,11 +60,6 @@ class PaymentResult {
   final String? actionUrl;
   final String? recoveryUrl;
 
-  /// Whether the UI may offer a "Simulate success (demo)" shortcut. True only
-  /// for the local/no-backend scaffold; false for real backend responses (so a
-  /// user can't fake-credit a real wallet).
-  final bool allowSimulate;
-
   const PaymentResult({
     required this.status,
     required this.reference,
@@ -72,7 +68,6 @@ class PaymentResult {
     this.deposit,
     this.actionUrl,
     this.recoveryUrl,
-    this.allowSimulate = false,
   });
 }
 
@@ -141,7 +136,6 @@ abstract class PaymentService {
 
 /// Default implementation.
 ///
-/// - `demoCredit` settles instantly so the wallet is fully usable offline.
 /// - Fiat rails return [PaymentStatus.requiresBackend]: a real build POSTs to
 ///   [PaymentGatewayConfig.backendBaseUrl] to open a PayShap/PayFast/Stripe
 ///   checkout.
@@ -267,8 +261,8 @@ class DeeMusiqPaymentService implements PaymentService {
   }
 
   /// Talks to the DeeMusiq backend `/payments/checkout`. Maps the server's
-  /// response to a [PaymentResult]. No `allowSimulate` here — real settlement
-  /// only happens through the provider + webhook.
+  /// response to a [PaymentResult]. Real settlement only happens through the
+  /// provider + webhook.
   Future<PaymentResult> _purchaseViaBackend({
     required TokenPack pack,
     required RegionTier region,
@@ -282,83 +276,99 @@ class DeeMusiqPaymentService implements PaymentService {
         region: region.code,
         payerPhone: payerPhone,
       );
-      final reference = (res["intentId"] as String?) ?? _reference();
-      final recoveryUrl = _recoveryUrl(res);
-
-      switch (res["status"] as String?) {
-        case "redirect":
-          unavailableMethods.remove(method);
-          return PaymentResult(
-            status: PaymentStatus.requiresBackend,
-            reference: reference,
-            message:
-                "Open the secure ${method.label} checkout to pay. Tokens are added once payment confirms.",
-            actionUrl: (res["payUrl"] as String?) ?? recoveryUrl,
-            recoveryUrl: recoveryUrl,
-          );
-        case "crypto":
-          unavailableMethods.remove(method);
-          final d = res["deposit"] as Map?;
-          return PaymentResult(
-            status: PaymentStatus.awaitingDeposit,
-            reference: reference,
-            message: "Send the exact amount below to confirm your top-up.",
-            deposit: CryptoDepositInfo(
-              asset: (d?["asset"] ?? method.label).toString(),
-              network: (d?["network"] ?? method.label).toString(),
-              address: (d?["address"] ?? "").toString(),
-              amountLabel: (d?["amountLabel"] ?? "").toString(),
-              payAmount: d?["payAmount"]?.toString(),
-            ),
-            recoveryUrl: recoveryUrl,
-          );
-        case "pending":
-          return PaymentResult(
-            status: PaymentStatus.requiresBackend,
-            reference: reference,
-            message:
-                "Checkout is still being prepared. Use the recovery link to check its status.",
-            actionUrl: recoveryUrl,
-            recoveryUrl: recoveryUrl,
-          );
-        case "requires_config":
-        case "unavailable":
-          // Config-level refusal (provider keys missing, no receiving wallet,
-          // region not served): remember it so the picker can mark this rail
-          // "unavailable right now", and never offer an "Open checkout" action
-          // — the recovery link is a status page, not a payment page.
-          unavailableMethods.add(method);
-          return PaymentResult(
-            status: PaymentStatus.unavailable,
-            reference: reference,
-            message: (res["message"] ??
-                    "${method.label} isn't available right now — pick another method or try again later.")
-                .toString(),
-            recoveryUrl: recoveryUrl,
-          );
-        case "completed":
-          return PaymentResult(
-            status: PaymentStatus.requiresBackend,
-            reference: reference,
-            message:
-                "Payment completed. Tokens will appear after confirmation.",
-            recoveryUrl: recoveryUrl,
-          );
-        default:
-          return PaymentResult(
-            status: PaymentStatus.failed,
-            reference: reference,
-            message:
-                (res["message"] ?? "Checkout could not be started.").toString(),
-            recoveryUrl: recoveryUrl,
-          );
-      }
+      return checkoutResponseToResult(
+        res,
+        method: method,
+        reference: (res["intentId"] as String?) ?? _reference(),
+        recoveryUrl: _recoveryUrl(res),
+      );
     } on WalletApiException catch (e) {
       return PaymentResult(
         status: PaymentStatus.failed,
         reference: _reference(),
         message: e.friendlyMessage,
       );
+    }
+  }
+
+  /// Maps a `/payments/checkout` response body to a [PaymentResult]. The
+  /// backend answers business refusals (`region_unavailable`,
+  /// `provider_not_configured`, `crypto_wallet_not_configured`) with HTTP
+  /// 409/503 but the SAME body shape as a 200 — [WalletApiClient.createCheckout]
+  /// lets those through, so this switch is the single mapping for both.
+  @visibleForTesting
+  static PaymentResult checkoutResponseToResult(
+    Map<String, dynamic> res, {
+    required PaymentMethodKind method,
+    required String reference,
+    String? recoveryUrl,
+  }) {
+    switch (res["status"] as String?) {
+      case "redirect":
+        unavailableMethods.remove(method);
+        return PaymentResult(
+          status: PaymentStatus.requiresBackend,
+          reference: reference,
+          message:
+              "Open the secure ${method.label} checkout to pay. Tokens are added once payment confirms.",
+          actionUrl: (res["payUrl"] as String?) ?? recoveryUrl,
+          recoveryUrl: recoveryUrl,
+        );
+      case "crypto":
+        unavailableMethods.remove(method);
+        final d = res["deposit"] as Map?;
+        return PaymentResult(
+          status: PaymentStatus.awaitingDeposit,
+          reference: reference,
+          message: "Send the exact amount below to confirm your top-up.",
+          deposit: CryptoDepositInfo(
+            asset: (d?["asset"] ?? method.label).toString(),
+            network: (d?["network"] ?? method.label).toString(),
+            address: (d?["address"] ?? "").toString(),
+            amountLabel: (d?["amountLabel"] ?? "").toString(),
+            payAmount: d?["payAmount"]?.toString(),
+          ),
+          recoveryUrl: recoveryUrl,
+        );
+      case "pending":
+        return PaymentResult(
+          status: PaymentStatus.requiresBackend,
+          reference: reference,
+          message:
+              "Checkout is still being prepared. Use the recovery link to check its status.",
+          actionUrl: recoveryUrl,
+          recoveryUrl: recoveryUrl,
+        );
+      case "requires_config":
+      case "unavailable":
+        // Config-level refusal (provider keys missing, no receiving wallet,
+        // region not served): remember it so the picker can mark this rail
+        // "unavailable right now", and never offer an "Open checkout" action
+        // — the recovery link is a status page, not a payment page.
+        unavailableMethods.add(method);
+        return PaymentResult(
+          status: PaymentStatus.unavailable,
+          reference: reference,
+          message: (res["message"] ??
+                  "${method.label} isn't available right now — pick another method or try again later.")
+              .toString(),
+          recoveryUrl: recoveryUrl,
+        );
+      case "completed":
+        return PaymentResult(
+          status: PaymentStatus.requiresBackend,
+          reference: reference,
+          message: "Payment completed. Tokens will appear after confirmation.",
+          recoveryUrl: recoveryUrl,
+        );
+      default:
+        return PaymentResult(
+          status: PaymentStatus.failed,
+          reference: reference,
+          message:
+              (res["message"] ?? "Checkout could not be started.").toString(),
+          recoveryUrl: recoveryUrl,
+        );
     }
   }
 }

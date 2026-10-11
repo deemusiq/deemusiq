@@ -9,6 +9,7 @@ import 'package:deemusiq/collections/routes.gr.dart';
 import 'package:deemusiq/components/wallet/wallet_common.dart';
 import 'package:deemusiq/models/wallet/linked_account.dart';
 import 'package:deemusiq/pages/auth/birth_year.dart';
+import 'package:deemusiq/pages/auth/mfa_prompt.dart';
 import 'package:deemusiq/provider/local_favorites/local_favorites_provider.dart';
 import 'package:deemusiq/provider/wallet/wallet_provider.dart';
 import 'package:deemusiq/services/auth/google_auth.dart';
@@ -100,6 +101,14 @@ class AuthPage extends HookConsumerWidget {
                   icon: DeeMusiqIcons.info,
                 );
               }
+            } else if (e.code == 'mfa_required' && e.mfaToken != null) {
+              // The device owns a key but the account has 2FA: collect the
+              // authenticator code and finish the login rather than bailing.
+              if (!context.mounted) return;
+              final code = await promptMfaCode(context);
+              if (code == null) return;
+              await WalletApiClient.instance
+                  .mfaVerify(mfaToken: e.mfaToken!, code: code);
             } else if (context.mounted) {
               showWalletToast(context, e.message,
                   icon: DeeMusiqIcons.error);

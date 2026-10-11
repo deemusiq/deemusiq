@@ -101,8 +101,9 @@ final metadataPluginSavedTrackIdsProvider = FutureProvider<Set<String>>(
       final all =
           await ref.read(metadataPluginSavedTracksProvider.notifier).fetchAll();
       return all.map((t) => t.id).toSet();
-    } catch (_) {
+    } catch (e, st) {
       // Partial library is better than failing every heart button.
+      AppLogger.reportError(e, st, 'saved track ids fallback');
       return savedTracks.items.map((t) => t.id).toSet();
     }
   },

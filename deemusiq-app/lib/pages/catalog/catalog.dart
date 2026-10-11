@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:deemusiq/components/track_presentation/presentation_props.dart';
 import 'package:deemusiq/components/track_presentation/track_presentation.dart';
+import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/models/metadata/metadata.dart';
 import 'package:deemusiq/provider/catalog/catalog_provider.dart';
 import 'package:deemusiq/provider/metadata_plugin/utils/common.dart';
@@ -24,12 +25,12 @@ class CatalogPage extends HookConsumerWidget {
 
     final collection = DeeMusiqSimplePlaylistObject(
       id: "deemusiq-catalog",
-      name: "DeeMusiq",
-      description: "Exclusive DeeMusiq drops",
+      name: context.l10n.native_catalog,
+      description: context.l10n.native_catalog_tagline,
       externalUri: "",
       owner: DeeMusiqUserObject(
         id: "deemusiq",
-        name: "DeeMusiq",
+        name: context.l10n.native_catalog,
         externalUri: "",
       ),
     );
@@ -49,9 +50,9 @@ class CatalogPage extends HookConsumerWidget {
       child: TrackPresentation(
         options: TrackPresentationOptions(
           collection: collection,
-          title: "DeeMusiq",
-          description: "Exclusive DeeMusiq drops",
-          owner: "DeeMusiq",
+          title: context.l10n.native_catalog,
+          description: context.l10n.native_catalog_tagline,
+          owner: context.l10n.native_catalog,
           image: "assets/branding/deemusiq-logo.png",
           tracks: tracks,
           error: catalog.error,

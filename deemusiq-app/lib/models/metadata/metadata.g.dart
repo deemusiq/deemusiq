@@ -501,6 +501,9 @@ _$DeeMusiqFullTrackObjectImpl _$$DeeMusiqFullTrackObjectImplFromJson(
       durationMs: (json['durationMs'] as num).toInt(),
       isrc: json['isrc'] as String,
       explicit: json['explicit'] as bool,
+      loudnessDb: (json['loudnessDb'] as num?)?.toDouble(),
+      gainDb: (json['gainDb'] as num?)?.toDouble(),
+      liteUrl: json['liteUrl'] as String?,
       $type: json['runtimeType'] as String?,
     );
 
@@ -515,6 +518,9 @@ Map<String, dynamic> _$$DeeMusiqFullTrackObjectImplToJson(
       'durationMs': instance.durationMs,
       'isrc': instance.isrc,
       'explicit': instance.explicit,
+      'loudnessDb': instance.loudnessDb,
+      'gainDb': instance.gainDb,
+      'liteUrl': instance.liteUrl,
       'runtimeType': instance.$type,
     };
 

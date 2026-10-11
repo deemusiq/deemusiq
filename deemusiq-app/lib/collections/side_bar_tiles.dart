@@ -35,7 +35,7 @@ List<SideBarTiles> getSidebarTileList(AppLocalizations l10n) => [
         pathPrefix: "/catalog",
         route: const CatalogRoute(),
         icon: DeeMusiqIcons.verified,
-        title: "DeeMusiq",
+        title: l10n.native_catalog,
       ),
       SideBarTiles(
         id: "search",
@@ -63,21 +63,21 @@ List<SideBarTiles> getSidebarTileList(AppLocalizations l10n) => [
         pathPrefix: "/wallet",
         route: const WalletRoute(),
         icon: DeeMusiqIcons.wallet,
-        title: "Wallet",
+        title: l10n.wallet,
       ),
       SideBarTiles(
         id: "artists-of-the-year",
         pathPrefix: "/wallet/artists-of-the-year",
         route: const ArtistLeaderboardRoute(),
         icon: DeeMusiqIcons.trophy,
-        title: "Artists of the Year",
+        title: l10n.artists_of_the_year,
       ),
       SideBarTiles(
         id: "creator-studio",
         pathPrefix: "/creator-studio",
         route: const CreatorStudioRoute(),
         icon: DeeMusiqIcons.upload,
-        title: "Creator Studio",
+        title: l10n.creator_studio,
       ),
       SideBarTiles(
         id: "settings",

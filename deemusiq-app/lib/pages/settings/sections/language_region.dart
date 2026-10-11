@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:collection/collection.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
@@ -11,6 +13,8 @@ import 'package:deemusiq/extensions/constrains.dart';
 import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/l10n/l10n.dart';
 import 'package:deemusiq/provider/user_preferences/user_preferences_provider.dart';
+import 'package:deemusiq/provider/wallet/leaderboard_provider.dart';
+import 'package:deemusiq/services/logger/logger.dart';
 
 final localWithName = L10n.all.map((e) {
   final isoCodeName =
@@ -59,6 +63,17 @@ class SettingsLanguageRegionSection extends HookConsumerWidget {
           onChanged: (value) {
             if (value == null) return;
             preferencesNotifier.setRecommendationMarket(value);
+            // Same pick goes to the server-side preferences so the "My
+            // region" leaderboard chip resolves to this market.
+            unawaited(() async {
+              try {
+                await ref
+                    .read(userRegionProvider.notifier)
+                    .setRegion(value.name);
+              } catch (e, stack) {
+                AppLogger.reportError(e, stack, 'settings region sync');
+              }
+            }());
           },
           options: marketsMap
               .map(

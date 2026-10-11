@@ -84,9 +84,10 @@ class ConnectControlPage extends HookConsumerWidget {
             jsonDecode(message),
             (data) => data,
           );
-        } catch (_) {
+        } catch (e) {
           // Ignore malformed frames from a misbehaving peer instead of
           // crashing the stream listener.
+          debugPrint('[ConnectControl] malformed frame skipped: $e');
           return;
         }
         event.onError((event) {
@@ -366,12 +367,13 @@ class ConnectControlPage extends HookConsumerWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       sliver: SliverToBoxAdapter(
                         child: Consumer(builder: (context, ref, _) {
-                          final volume = ref.watch(volumeProvider);
+                          final volume = ref.watch(remoteVolumeProvider);
                           return VolumeSlider(
                             fullWidth: true,
                             value: volume,
                             onChanged: (value) {
-                              ref.read(volumeProvider.notifier).state = value;
+                              ref.read(remoteVolumeProvider.notifier).state =
+                                  value;
                               connectNotifier.setVolume(value);
                             },
                           );

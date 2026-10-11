@@ -48,8 +48,9 @@ class HistoryTopPlaylistsNotifier extends FamilyPaginatedAsyncNotifier<
   @override
   build(arg) async {
     final subscription = createPlaylistsQuery().watch().listen((event) {
-      if (state.asData == null) return;
-      state = AsyncData(state.asData!.value.copyWith(
+      final current = state.asData?.value;
+      if (current == null) return;
+      state = AsyncData(current.copyWith(
         items: getPlaylistsWithCount(event),
         hasMore: false,
       ));
@@ -65,7 +66,9 @@ class HistoryTopPlaylistsNotifier extends FamilyPaginatedAsyncNotifier<
   List<PlaybackHistoryPlaylist> getPlaylistsWithCount(
     List<HistoryTableData> playlists,
   ) {
-    return groupBy(playlists, (playlist) => playlist.playlist!.id)
+    // Corrupt rows (null playlist JSON) are dropped, not crashed on.
+    final valid = playlists.where((p) => p.playlist != null).toList();
+    return groupBy(valid, (playlist) => playlist.playlist!.id)
         .entries
         .map((entry) {
           return (

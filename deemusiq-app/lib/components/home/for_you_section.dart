@@ -3,7 +3,9 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:deemusiq/components/fallbacks/error_box.dart';
 import 'package:deemusiq/components/wallet/wallet_common.dart';
+import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/provider/recommendations/for_you.dart';
+import 'package:deemusiq/services/logger/logger.dart';
 import 'package:deemusiq/services/wallet/wallet_api.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
 
@@ -56,13 +58,14 @@ class ForYouSection extends HookConsumerWidget {
           }
         }
         await notifier.refresh();
-      } catch (_) {
+      } catch (e, stack) {
+        AppLogger.reportError(e, stack, 'ForYou.toggleLike');
         if (context.mounted) {
           showWalletToast(
             context,
             liked
-                ? "Couldn't remove the like — try again"
-                : "Couldn't save the like — try again",
+                ? context.l10n.for_you_unlike_failed
+                : context.l10n.for_you_like_failed,
             icon: DeeMusiqIcons.heart,
           );
         }
@@ -76,7 +79,7 @@ class ForYouSection extends HookConsumerWidget {
         children: [
           Row(
             children: [
-              Expanded(child: const Text("For You").semiBold()),
+              Expanded(child: Text(context.l10n.for_you_title).semiBold()),
               if (state.gmailLinked)
                 Flexible(
                   child: Container(
@@ -86,7 +89,7 @@ class ForYouSection extends HookConsumerWidget {
                       color: colorScheme.primary.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(999),
                     ),
-                    child: Text("Gmail linked",
+                    child: Text(context.l10n.for_you_gmail_linked,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style:
@@ -95,9 +98,9 @@ class ForYouSection extends HookConsumerWidget {
                 )
               else
                 Flexible(
-                  child: const Text(
-                    "Sign in with Gmail for smarter picks",
-                    style: TextStyle(fontSize: 11),
+                  child: Text(
+                    context.l10n.for_you_gmail_prompt,
+                    style: const TextStyle(fontSize: 11),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ).muted(),
@@ -108,7 +111,7 @@ class ForYouSection extends HookConsumerWidget {
                 leading: state.isRefreshing
                     ? const CircularProgressIndicator(size: 14)
                     : null,
-                child: const Text("Refresh"),
+                child: Text(context.l10n.refresh),
               ),
             ],
           ),
@@ -124,9 +127,7 @@ class ForYouSection extends HookConsumerWidget {
               onRetry: () => notifier.load(force: true),
             ),
           if (!state.isLoading && state.error == null && state.tracks.isEmpty)
-            const Text("Like songs to train For You — picks appear here.")
-                .muted()
-                .small(),
+            Text(context.l10n.for_you_empty).muted().small(),
           for (final t in state.tracks.take(8))
             _ForYouTile(
               title: t.title,
@@ -167,7 +168,7 @@ class _ForYouTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title.isEmpty ? "Unknown title" : title,
+                Text(title.isEmpty ? context.l10n.unknown_title : title,
                     maxLines: 1, overflow: TextOverflow.ellipsis),
                 if (reasons.isNotEmpty)
                   Text(reasons.first,
@@ -187,7 +188,7 @@ class _ForYouTile extends StatelessWidget {
               liked ? DeeMusiqIcons.heartFilled : DeeMusiqIcons.heart,
               size: 14,
             ),
-            child: Text(liked ? "Liked" : "Like"),
+            child: Text(liked ? context.l10n.liked : context.l10n.like),
           ),
         ],
       ),

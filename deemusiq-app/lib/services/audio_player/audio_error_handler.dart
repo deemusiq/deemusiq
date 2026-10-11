@@ -9,6 +9,70 @@ const audioPlaybackDownloadActionHeader = 'x-deemusiq-playback-action';
 const audioPlaybackPrimaryErrorHeader = 'x-deemusiq-playback-primary-error';
 const audioPlaybackOfflineHeader = 'x-deemusiq-playback-offline';
 
+/// Stable keys for user-facing playback copy. The audio pipeline runs without
+/// a BuildContext, so messages travel as keys and are resolved to localized
+/// text at the UI edge (`audioUserMessage` in lib/extensions/).
+enum AudioErrorMessage {
+  serversUnreachable,
+  unavailableRetryOrDownload,
+  connectionTimedOut,
+  connectionRefused,
+  noInternet,
+  networkError,
+  tryingNextSource,
+  trackUnavailableSkip,
+  trackNotFoundSkip,
+  trackRemovedSkip,
+  rateLimited,
+  trackProtected,
+  trackCorrupt,
+  engineFailedStart,
+  audioOutputError,
+  unsupportedFormat,
+  playbackErrorRetrying,
+  generic,
+  multipleTracksFailed,
+  switchingTrack,
+  playbackRestored,
+  engineRestartHint,
+  downloadRequested,
+  retryingIn,
+  fallbackSource,
+}
+
+/// A user-facing playback message: a localizable [key], a [raw] sentence
+/// supplied by the server (already English copy), or retry parameters for
+/// [AudioErrorMessage.retryingIn].
+class AudioUserMessage {
+  const AudioUserMessage(this.key)
+      : raw = null,
+        seconds = null,
+        attempt = null,
+        maxRetries = null;
+
+  const AudioUserMessage.raw(this.raw)
+      : key = null,
+        seconds = null,
+        attempt = null,
+        maxRetries = null;
+
+  const AudioUserMessage.retrying({
+    required this.seconds,
+    required this.attempt,
+    required this.maxRetries,
+  })  : key = AudioErrorMessage.retryingIn,
+        raw = null;
+
+  final AudioErrorMessage? key;
+  final String? raw;
+  final int? seconds;
+  final int? attempt;
+  final int? maxRetries;
+
+  @override
+  String toString() => raw ?? 'AudioErrorMessage.${key?.name}';
+}
+
 class PlaybackUnavailableError {
   final int statusCode;
   final String state;
@@ -183,7 +247,11 @@ class PlaybackUnavailableError {
       if (response.statusCode == 503) {
         try {
           body = await response.transform(utf8.decoder).join().timeout(timeout);
-        } catch (_) {}
+        } catch (e) {
+          // The 503 classification still stands from the status line — only
+          // the optional detail body is lost.
+          AppLogger.log.w('[AudioError] 503 response body unreadable: $e');
+        }
       } else {
         await response.drain<void>().timeout(timeout);
       }
@@ -223,7 +291,10 @@ class PlaybackUnavailableError {
     try {
       final decoded = jsonDecode(value.substring(start, end + 1));
       if (decoded is Map) return Map<String, dynamic>.from(decoded);
-    } catch (_) {}
+    } catch (e) {
+      // Malformed embedded JSON in an error header/body — treated as absent.
+      AppLogger.log.d('[AudioError] embedded JSON undecodable: $e');
+    }
     return null;
   }
 
@@ -340,12 +411,13 @@ class AudioErrorHandler {
   /// errors. Used for silent source switches — e.g. the direct-YouTube
   /// fallback when the DeeMusiq backend is unreachable — so the user can see
   /// why the track is still playing.
-  void notifyPlaybackFallback(String message) =>
+  void notifyPlaybackFallback(AudioUserMessage message) =>
       _notifyUser(message, AudioErrorSeverity.info);
 
   /// Callback invoked when the user should be shown a message.
   /// Set this from the UI layer (e.g., to show a toast/snackbar).
-  void Function(String message, AudioErrorSeverity severity)? onUserMessage;
+  void Function(AudioUserMessage message, AudioErrorSeverity severity)?
+      onUserMessage;
 
   /// Callback invoked when the player should skip to the next track
   /// because the current one is unplayable.
@@ -358,33 +430,34 @@ class AudioErrorHandler {
       onPlaybackUnavailable;
 
   /// Maps error types to user-friendly messages.
-  static String userMessageFor(
+  static AudioUserMessage userMessageFor(
     Object error,
     AudioErrorCategory category,
   ) {
     if (error is PlaybackUnavailableError) {
       if (error.offline) {
-        return "Couldn't reach DeeMusiq servers — check your connection and try again";
+        return const AudioUserMessage(AudioErrorMessage.serversUnreachable);
       }
-      return 'Playback unavailable — retry or download this track';
+      return const AudioUserMessage(
+          AudioErrorMessage.unavailableRetryOrDownload);
     }
 
     // Network / connectivity errors
     if (category == AudioErrorCategory.network) {
       final s = error.toString().toLowerCase();
       if (s.contains('timeout') || s.contains('timed out')) {
-        return 'Connection timed out — retrying...';
+        return const AudioUserMessage(AudioErrorMessage.connectionTimedOut);
       }
       if (s.contains('refused') || s.contains('reset')) {
-        return 'Connection refused — trying another source...';
+        return const AudioUserMessage(AudioErrorMessage.connectionRefused);
       }
       if (s.contains('no internet') ||
           s.contains('host') ||
           s.contains('resolve') ||
           s.contains('dns')) {
-        return 'No internet connection — please check your network';
+        return const AudioUserMessage(AudioErrorMessage.noInternet);
       }
-      return 'Network error — retrying...';
+      return const AudioUserMessage(AudioErrorMessage.networkError);
     }
 
     // Stream / source errors
@@ -398,45 +471,45 @@ class AudioErrorHandler {
           s.contains('ytdl') ||
           s.contains('innertube') ||
           s.contains('resolver')) {
-        return 'Unable to play this track — trying next source...';
+        return const AudioUserMessage(AudioErrorMessage.tryingNextSource);
       }
       if (s.contains('403') || s.contains('forbidden')) {
-        return 'This track is unavailable — skipping to next';
+        return const AudioUserMessage(AudioErrorMessage.trackUnavailableSkip);
       }
       if (s.contains('404') || s.contains('not found')) {
-        return 'Track not found — skipping to next';
+        return const AudioUserMessage(AudioErrorMessage.trackNotFoundSkip);
       }
       if (s.contains('410') || s.contains('gone')) {
-        return 'This track has been removed — skipping to next';
+        return const AudioUserMessage(AudioErrorMessage.trackRemovedSkip);
       }
       if (s.contains('429') || s.contains('too many')) {
-        return 'Rate limited — waiting before retrying...';
+        return const AudioUserMessage(AudioErrorMessage.rateLimited);
       }
       if (s.contains('drm') || s.contains('protected') || s.contains('encrypted')) {
-        return 'This track is protected and cannot be played';
+        return const AudioUserMessage(AudioErrorMessage.trackProtected);
       }
       if (s.contains('corrupt') || s.contains('invalid') || s.contains('decode')) {
-        return 'Track file appears to be corrupt — skipping to next';
+        return const AudioUserMessage(AudioErrorMessage.trackCorrupt);
       }
-      return 'Unable to play this track — trying next source...';
+      return const AudioUserMessage(AudioErrorMessage.tryingNextSource);
     }
 
     // Player / mpv errors
     if (category == AudioErrorCategory.player) {
       final s = error.toString().toLowerCase();
       if (s.contains('init') || s.contains('load') || s.contains('library')) {
-        return 'Audio engine failed to start — please restart the app';
+        return const AudioUserMessage(AudioErrorMessage.engineFailedStart);
       }
       if (s.contains('device') || s.contains('output')) {
-        return 'Audio output error — check your speakers or headphones';
+        return const AudioUserMessage(AudioErrorMessage.audioOutputError);
       }
       if (s.contains('format') || s.contains('codec') || s.contains('unsupported')) {
-        return 'Unsupported audio format — skipping to next';
+        return const AudioUserMessage(AudioErrorMessage.unsupportedFormat);
       }
-      return 'Playback error — retrying...';
+      return const AudioUserMessage(AudioErrorMessage.playbackErrorRetrying);
     }
 
-    return 'Something went wrong — please try again';
+    return const AudioUserMessage(AudioErrorMessage.generic);
   }
 
   /// Determines the category of an error based on its type and message.
@@ -560,12 +633,15 @@ class AudioErrorHandler {
           _lastSkipTime = skipNow;
           if (_consecutiveSkips > _maxConsecutiveSkips) {
             _notifyUser(
-              'Multiple tracks failed to play — check your connection and try again',
+              const AudioUserMessage(AudioErrorMessage.multipleTracksFailed),
               AudioErrorSeverity.error,
             );
             return true;
           }
-          _notifyUser('Switching to next track...', AudioErrorSeverity.info);
+          _notifyUser(
+            const AudioUserMessage(AudioErrorMessage.switchingTrack),
+            AudioErrorSeverity.info,
+          );
           onSkipRequested?.call();
           return true;
         }
@@ -577,13 +653,16 @@ class AudioErrorHandler {
           if (retryOk) {
             final success = await onRetryPlayback?.call() ?? false;
             if (success) {
-              _notifyUser('Playback restored', AudioErrorSeverity.info);
+              _notifyUser(
+                const AudioUserMessage(AudioErrorMessage.playbackRestored),
+                AudioErrorSeverity.info,
+              );
               return true;
             }
           }
         }
         _notifyUser(
-          'Audio engine error — please restart the app if this persists',
+          const AudioUserMessage(AudioErrorMessage.engineRestartHint),
           AudioErrorSeverity.error,
         );
         return false;
@@ -614,9 +693,11 @@ class AudioErrorHandler {
       // offering a download is pointless — say so and stop.
       if (error.offline) {
         _noteNetworkFailure();
+        final serverMessage = error.message;
         _notifyUser(
-          error.message ??
-              "Couldn't reach DeeMusiq servers — check your connection and try again",
+          serverMessage != null
+              ? AudioUserMessage.raw(serverMessage)
+              : const AudioUserMessage(AudioErrorMessage.serversUnreachable),
           AudioErrorSeverity.error,
         );
         return true;
@@ -636,13 +717,14 @@ class AudioErrorHandler {
       switch (action ?? AudioUnavailableAction.retry) {
         case AudioUnavailableAction.retry:
           _notifyUser(
-            'Playback unavailable — retry or download this track',
+            const AudioUserMessage(
+                AudioErrorMessage.unavailableRetryOrDownload),
             AudioErrorSeverity.warning,
           );
           break;
         case AudioUnavailableAction.downloadQueued:
           _notifyUser(
-            'Download requested — retry when it is ready',
+            const AudioUserMessage(AudioErrorMessage.downloadRequested),
             AudioErrorSeverity.info,
           );
           break;
@@ -673,7 +755,7 @@ class AudioErrorHandler {
     _noteNetworkFailure();
     if (_consecutiveNetworkFailures > maxRetries) {
       _notifyUser(
-        "Couldn't reach DeeMusiq servers — check your connection and try again",
+        const AudioUserMessage(AudioErrorMessage.serversUnreachable),
         AudioErrorSeverity.error,
       );
       return true;
@@ -698,7 +780,11 @@ class AudioErrorHandler {
               ? const Duration(seconds: 16)
               : backoff;
       _notifyUser(
-        'Retrying in ${delay.inSeconds}s... ($attempt/$maxRetries)',
+        AudioUserMessage.retrying(
+          seconds: delay.inSeconds,
+          attempt: attempt,
+          maxRetries: maxRetries,
+        ),
         AudioErrorSeverity.warning,
       );
       await Future.delayed(delay);
@@ -710,7 +796,7 @@ class AudioErrorHandler {
     }
   }
 
-  void _notifyUser(String message, AudioErrorSeverity severity) {
+  void _notifyUser(AudioUserMessage message, AudioErrorSeverity severity) {
     onUserMessage?.call(message, severity);
   }
 

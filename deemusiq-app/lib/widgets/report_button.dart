@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/services/logger/logger.dart';
 import 'package:deemusiq/services/wallet/wallet_api.dart';
 
@@ -20,7 +21,7 @@ class ReportButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       icon: const Icon(Icons.flag_outlined, size: 18),
-      tooltip: "Report",
+      tooltip: context.l10n.report,
       onPressed: () => _open(context),
     );
   }
@@ -75,12 +76,12 @@ class _ReportDialogState extends State<_ReportDialog> {
   String? _error;
 
   static const _reasons = [
-    ("spam", "Spam or misleading"),
-    ("copyright", "Copyright / DMCA"),
-    ("harassment", "Harassment or hate"),
-    ("csam", "Child safety (CSAM)"),
-    ("illegal", "Other illegal content"),
-    ("other", "Other"),
+    "spam",
+    "copyright",
+    "harassment",
+    "csam",
+    "illegal",
+    "other",
   ];
 
   @override
@@ -106,13 +107,13 @@ class _ReportDialogState extends State<_ReportDialog> {
       if (!mounted) return;
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Report submitted. Thank you.")),
+        SnackBar(content: Text(context.l10n.report_submitted)),
       );
     } on WalletApiException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } catch (e, st) {
       AppLogger.reportError(e, st, 'report content');
-      if (mounted) setState(() => _error = "Network error");
+      if (mounted) setState(() => _error = context.l10n.report_network_error);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -120,20 +121,31 @@ class _ReportDialogState extends State<_ReportDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final reasonLabels = {
+      "spam": l10n.report_reason_spam,
+      "copyright": l10n.report_reason_copyright,
+      "harassment": l10n.report_reason_harassment,
+      "csam": l10n.report_reason_csam,
+      "illegal": l10n.report_reason_illegal,
+      "other": l10n.report_reason_other,
+    };
+    final error = _error;
     return AlertDialog(
-      title: const Text("Report content"),
+      title: Text(l10n.report_dialog_title),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text("What's wrong with ${widget.targetLabel}?",
+            Text(l10n.report_what_wrong(widget.targetLabel),
                 style: const TextStyle(fontSize: 13)),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               initialValue: _reason,
-              decoration: const InputDecoration(labelText: "Reason"),
+              decoration: InputDecoration(labelText: l10n.report_reason_label),
               items: _reasons
-                  .map((r) => DropdownMenuItem(value: r.$1, child: Text(r.$2)))
+                  .map((r) => DropdownMenuItem(
+                      value: r, child: Text(reasonLabels[r] ?? r)))
                   .toList(),
               onChanged: (v) => setState(() => _reason = v ?? "spam"),
             ),
@@ -141,24 +153,24 @@ class _ReportDialogState extends State<_ReportDialog> {
             TextField(
               controller: _details,
               maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: "Details (optional)",
-                hintText: "Tell us what happened",
+              decoration: InputDecoration(
+                labelText: l10n.report_details_label,
+                hintText: l10n.report_details_hint,
               ),
             ),
             if (_reason == "copyright") ...[
               const SizedBox(height: 8),
               TextField(
                 controller: _evidence,
-                decoration: const InputDecoration(
-                  labelText: "Evidence URL (required for copyright claims)",
+                decoration: InputDecoration(
+                  labelText: l10n.report_evidence_label,
                   hintText: "https://example.com/your-original-track",
                 ),
               ),
             ],
-            if (_error != null) ...[
+            if (error != null) ...[
               const SizedBox(height: 8),
-              Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 12)),
+              Text(error, style: const TextStyle(color: Colors.red, fontSize: 12)),
             ],
           ],
         ),
@@ -166,11 +178,11 @@ class _ReportDialogState extends State<_ReportDialog> {
       actions: [
         TextButton(
           onPressed: _busy ? null : () => Navigator.of(context).pop(),
-          child: const Text("Cancel"),
+          child: Text(l10n.cancel),
         ),
         FilledButton(
           onPressed: _busy ? null : _submit,
-          child: Text(_busy ? "Submitting…" : "Submit"),
+          child: Text(_busy ? l10n.report_submitting : l10n.submit),
         ),
       ],
     );

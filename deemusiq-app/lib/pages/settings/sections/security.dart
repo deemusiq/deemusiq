@@ -1,9 +1,11 @@
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
+import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/modules/settings/section_card_with_heading.dart';
 import 'package:deemusiq/services/auth/biometric_lock.dart';
 import 'package:deemusiq/services/auth/google_auth.dart';
+import 'package:deemusiq/services/logger/logger.dart';
 import 'package:deemusiq/services/wallet/wallet_api.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
 
@@ -15,6 +17,7 @@ class SettingsSecuritySection extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final lockEnabled = useState<bool?>(null);
     final canBiometric = useState(false);
     final biometrics = useState<String>("…");
@@ -28,13 +31,18 @@ class SettingsSecuritySection extends HookConsumerWidget {
             await BiometricLockService.instance.canCheckBiometrics();
         final types =
             await BiometricLockService.instance.availableBiometrics();
-        biometrics.value =
-            types.isEmpty ? "none detected" : types.map((t) => t.name).join(", ");
+        biometrics.value = types.isEmpty
+            ? l10n.security_biometrics_none
+            : types.map((t) => t.name).join(", ");
         if (WalletApiClient.instance.isConfigured) {
           try {
             gmail.value = await WalletApiClient.instance
                 .fetchRecommendationProfile();
-          } catch (_) {}
+          } catch (e) {
+            // The linked-account badge is decorative here — the settings page
+            // still renders without it.
+            AppLogger.log.w('[SecuritySettings] recommendation profile fetch failed: $e');
+          }
         }
       }();
       return null;
@@ -46,13 +54,10 @@ class SettingsSecuritySection extends HookConsumerWidget {
           context: context,
           location: ToastLocation.topRight,
           builder: (context, overlay) {
-            return const SurfaceCard(
+            return SurfaceCard(
               child: Basic(
-                title: Text("Biometrics unavailable"),
-                subtitle: Text(
-                  "No fingerprint or face unlock is enrolled on this device. "
-                  "Set one up in your system settings first.",
-                ),
+                title: Text(context.l10n.security_biometrics_unavailable),
+                subtitle: Text(context.l10n.security_no_biometrics_enrolled),
               ),
             );
           },
@@ -62,7 +67,7 @@ class SettingsSecuritySection extends HookConsumerWidget {
       if (v) {
         testing.value = true;
         final ok = await BiometricLockService.instance.authenticate(
-          reason: 'Enable fingerprint unlock for DeeMusiq',
+          reason: context.l10n.security_unlock_prompt_reason,
         );
         if (!context.mounted) return;
         testing.value = false;
@@ -73,23 +78,24 @@ class SettingsSecuritySection extends HookConsumerWidget {
     }
 
     return SectionCardWithHeading(
-      heading: "Security & personalization",
+      heading: context.l10n.security_heading,
       children: [
         Checkbox(
           state: lockEnabled.value == true
               ? CheckboxState.checked
               : CheckboxState.unchecked,
           onChanged: (s) => toggle(s == CheckboxState.checked),
-          trailing: const Text("Fingerprint unlock"),
+          trailing: Text(context.l10n.security_fingerprint_unlock),
         ),
         Padding(
           padding: const EdgeInsets.only(left: 40, bottom: 8),
           child: Text(
             lockEnabled.value == true
-                ? "DeeMusiq locks on start and after 2 min away. ${testing.value ? "Verifying…" : ""}"
+                ? "${context.l10n.security_lock_enabled}${testing.value ? " ${context.l10n.verifying}" : ""}"
                 : canBiometric.value
-                    ? "Available on this device (${biometrics.value}). Enable to require fingerprint / face / PIN on start."
-                    : "No biometrics enrolled on this device (${biometrics.value}).",
+                    ? context.l10n
+                        .security_biometrics_available(biometrics.value)
+                    : context.l10n.security_no_biometrics(biometrics.value),
           ).muted().xSmall(),
         ),
         const Divider(),
@@ -97,27 +103,27 @@ class SettingsSecuritySection extends HookConsumerWidget {
           children: [
             const Icon(DeeMusiqIcons.google, size: 16),
             const Gap(8),
-            const Expanded(child: Text("Gmail personalization")),
+            Expanded(child: Text(context.l10n.security_gmail_title)),
             if (gmail.value != null)
               Text(
                 (gmail.value!["gmailLinked"] == true)
-                    ? "linked · ${gmail.value!["likes"] ?? 0} likes"
-                    : "not linked",
+                    ? context.l10n.security_gmail_linked(
+                        (gmail.value!["likes"] as num?)?.toInt() ?? 0)
+                    : context.l10n.security_gmail_not_linked,
               ).muted().xSmall(),
           ],
         ),
         Padding(
           padding: const EdgeInsets.only(left: 32, top: 4),
-          child: const Text(
-            "Sign in with Google (Creator Studio or Account) to carry likes and listening history "
-            "across devices — For You recommendations follow your Gmail identity.",
-          ).muted().xSmall(),
+          child: Text(context.l10n.security_gmail_body).muted().xSmall(),
         ),
         const Gap(4),
         FutureBuilder<bool>(
           future: GoogleAuthService.instance.isSignedIn(),
           builder: (context, snap) => Text(
-            snap.data == true ? "Google session active on this device." : "Google session not active.",
+            snap.data == true
+                ? context.l10n.security_google_active
+                : context.l10n.security_google_inactive,
           ).muted().xSmall(),
         ),
       ],

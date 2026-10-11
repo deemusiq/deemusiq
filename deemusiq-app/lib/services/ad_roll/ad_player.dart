@@ -72,4 +72,39 @@ class AdPlayer {
       AppLogger.reportError(e, stack, 'AdPlayer.dispose');
     }
   }
+
+  /// Pauses ad audio (interruptions, app backgrounding). No-op when no ad
+  /// stream is open.
+  Future<void> pause() async {
+    final player = _player;
+    if (player == null) return;
+    try {
+      await player.pause();
+    } catch (e, stack) {
+      AppLogger.reportError(e, stack, 'AdPlayer.pause');
+    }
+  }
+
+  /// Resumes ad audio after a [pause]. No-op when no ad stream is open.
+  Future<void> resume() async {
+    final player = _player;
+    if (player == null) return;
+    try {
+      await player.play();
+    } catch (e, stack) {
+      AppLogger.reportError(e, stack, 'AdPlayer.resume');
+    }
+  }
+
+  /// Volume 0–100, following the main player's level during a break.
+  /// No-op when no ad stream is open.
+  Future<void> setVolume(double volume) async {
+    final player = _player;
+    if (player == null) return;
+    try {
+      await player.setVolume(volume);
+    } catch (e, stack) {
+      AppLogger.reportError(e, stack, 'AdPlayer.setVolume');
+    }
+  }
 }

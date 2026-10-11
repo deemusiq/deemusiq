@@ -348,7 +348,8 @@ abstract class ServiceUtils {
       optimizeQuery: optimizeQuery,
       authHeader: authHeader,
     );
-    if (results == null) return null;
+    if (results == null || results.isEmpty) return null;
+    if (artists.isEmpty) return null;
     title = getTitle(
       title,
       artists: artists,
@@ -372,13 +373,18 @@ abstract class ServiceUtils {
         if (criteria) points++;
       }
       return {"result": result, "points": points};
-    }).sorted(
+    }    ).sorted(
       // Highest points first — the best match is picked below.
       (a, b) => ((b["points"] as int).compareTo(a["points"] as int)),
     );
+    if (ratedLyrics.isEmpty) return null;
     final worthyOne = ratedLyrics.first["result"];
 
-    String? lyrics = await extractLyrics(Uri.parse(worthyOne["url"]));
+    final urlRaw = worthyOne["url"];
+    if (urlRaw is! String || urlRaw.isEmpty) return null;
+    final uri = Uri.tryParse(urlRaw);
+    if (uri == null) return null;
+    String? lyrics = await extractLyrics(uri);
     return lyrics;
   }
 

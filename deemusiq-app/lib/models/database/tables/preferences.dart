@@ -50,8 +50,11 @@ class PreferencesTable extends Table {
   BoolColumn get amoledDarkTheme =>
       boolean().withDefault(const Constant(false))();
   BoolColumn get checkUpdate => boolean().withDefault(const Constant(true))();
+  // "Normalize volume" is opt-OUT since Phase 4 (catalog gainDb + dynaudnorm
+  // catch-all). The default applies to fresh installs; existing rows keep the
+  // value the user already had (SQLite column defaults never rewrite rows).
   BoolColumn get normalizeAudio =>
-      boolean().withDefault(const Constant(false))();
+      boolean().withDefault(const Constant(true))();
   BoolColumn get showSystemTrayIcon =>
       boolean().withDefault(const Constant(false))();
   BoolColumn get systemTitleBar =>
@@ -97,7 +100,7 @@ class PreferencesTable extends Table {
       albumColorSync: true,
       amoledDarkTheme: false,
       checkUpdate: true,
-      normalizeAudio: false,
+      normalizeAudio: true,
       showSystemTrayIcon: false,
       systemTitleBar: false,
       skipNonMusic: false,

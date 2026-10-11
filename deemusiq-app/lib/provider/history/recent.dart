@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:collection/collection.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:deemusiq/models/database/database.dart';
@@ -28,10 +29,16 @@ class RecentlyPlayedItemNotifier extends AsyncNotifier<List<HistoryTableData>> {
     ).map((rows) async {
       return await rows.map((row) {
         final type = row.read<String>('type');
+        final entryType = HistoryEntryType.values
+            .where((e) => e.name == type)
+            .firstOrNull;
+        if (entryType == null) {
+          throw FormatException('unknown history type: $type');
+        }
         return HistoryTableData(
           id: row.read<int>('id'),
           itemId: row.read<String>('item_id'),
-          type: HistoryEntryType.values.firstWhere((e) => e.name == type),
+          type: entryType,
           createdAt: row.read<DateTime>('created_at'),
           data: jsonDecode(row.read<String>('data')) as Map<String, dynamic>,
         );

@@ -28,8 +28,8 @@ Future<void> glanceBackgroundCallback(Uri? data) async {
     // background intent), so the target address is validated before use:
     // it must be a loopback address AND exactly the value this app last
     // persisted for the widget — anything else is ignored.
-    final serverAddress = data.queryParameters["serverAddress"]!;
-    if (!_isLoopbackServerAddress(serverAddress)) {
+    final serverAddress = data.queryParameters["serverAddress"];
+    if (serverAddress == null || !_isLoopbackServerAddress(serverAddress)) {
       logger.w(
         "[GlanceBackgroundCallback] rejected non-loopback address: $serverAddress",
       );
@@ -45,7 +45,14 @@ Future<void> glanceBackgroundCallback(Uri? data) async {
       return;
     }
 
+    if (data.pathSegments.isEmpty) {
+      logger.w("[GlanceBackgroundCallback] rejected command-less URI: $data");
+      return;
+    }
     final command = data.pathSegments.first;
+    // Loopback-only cleartext: the embedded on-device playback server has no
+    // TLS. _isLoopbackServerAddress is enforced by the caller; never use this
+    // path for routable hosts.
     final res = await get(
       Uri.parse(
         "http://$serverAddress/playback/$command",

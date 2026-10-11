@@ -141,6 +141,9 @@ class CatalogNotifier
           durationMs: durationMs,
           isrc: "",
           explicit: false,
+          loudnessDb: (s["loudnessDb"] as num?)?.toDouble(),
+          gainDb: (s["gainDb"] as num?)?.toDouble(),
+          liteUrl: s["liteUrl"] as String?,
         ) as DeeMusiqFullTrackObject,
       );
     }

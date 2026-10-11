@@ -11,64 +11,67 @@ abstract class FamilyPaginatedAsyncNotifier<K, A>
   Future<DeeMusiqPaginationResponseObject<K>> fetch(int offset, int limit);
 
   Future<void> fetchMore() async {
-    if (state.value == null || !state.value!.hasMore) return;
-
-    final oldState = state.value;
+    final current = state.value;
+    if (current == null || !current.hasMore) return;
+    // hasMore without a nextOffset would loop on the same page — stop instead.
+    final nextOffset = current.nextOffset;
+    if (nextOffset == null) return;
 
     try {
-      state = AsyncLoadingNext(state.asData!.value);
+      state = AsyncLoadingNext(current);
 
-      final newState = await fetch(
-        state.value!.nextOffset!,
-        state.value!.limit,
-      );
+      final newState = await fetch(nextOffset, current.limit);
 
-      final oldItems =
-          state.value!.items.isEmpty ? <K>[] : state.value!.items.cast<K>();
       final items = newState.items.isEmpty ? <K>[] : newState.items.cast<K>();
 
-      state = AsyncData(newState.copyWith(items: <K>[...oldItems, ...items]));
+      state = AsyncData(
+        newState.copyWith(items: <K>[...current.items.cast<K>(), ...items]),
+      );
     } catch (e, stack) {
       AppLogger.reportError(e, stack);
-      state = AsyncData(oldState!);
+      state = AsyncData(current);
     }
   }
 
   Future<List<K>> fetchAll() async {
-    if (state.value == null) return [];
-    if (!state.value!.hasMore) return state.value!.items.cast<K>();
+    final initial = state.value;
+    if (initial == null) return [];
+    if (!initial.hasMore) return initial.items.cast<K>();
+
+    var current = initial;
 
     bool hasMore = true;
     while (hasMore) {
+      final nextOffset = current.nextOffset;
+      if (nextOffset == null) break;
       final newState = await fetch(
-        state.value!.nextOffset!,
-        max(state.value!.limit, 100),
+        nextOffset,
+        max(current.limit, 100),
       )
           .catchError(
-            (e) => fetch(state.value!.nextOffset!, max(state.value!.limit, 50)),
+            (e) => fetch(nextOffset, max(current.limit, 50)),
           )
           .catchError(
-            (e) => fetch(state.value!.nextOffset!, state.value!.limit),
+            (e) => fetch(nextOffset, current.limit),
           )
           .catchError(
         (e) async {
           await Future.delayed(const Duration(milliseconds: 500));
-          return fetch(state.value!.nextOffset!, state.value!.limit);
+          return fetch(nextOffset, current.limit);
         },
       );
 
       hasMore = newState.hasMore;
 
-      final oldItems =
-          state.value!.items.isEmpty ? <K>[] : state.value!.items.cast<K>();
       final items = newState.items.isEmpty ? <K>[] : newState.items.cast<K>();
 
-      state = AsyncData(
-        newState.copyWith(items: [...oldItems, ...items]),
+      current = newState.copyWith(
+        items: [...current.items.cast<K>(), ...items],
       );
+      state = AsyncData(current);
     }
 
-    return state.value!.items.cast<K>();
+    return current.items.cast<K>();
   }
 }
 
@@ -78,63 +81,67 @@ abstract class AutoDisposeFamilyPaginatedAsyncNotifier<K, A>
   Future<DeeMusiqPaginationResponseObject<K>> fetch(int offset, int limit);
 
   Future<void> fetchMore() async {
-    if (state.value == null || !state.value!.hasMore) return;
-    final oldState = state.value;
+    final current = state.value;
+    if (current == null || !current.hasMore) return;
+    // hasMore without a nextOffset would loop on the same page — stop instead.
+    final nextOffset = current.nextOffset;
+    if (nextOffset == null) return;
 
     try {
-      state = AsyncLoadingNext(state.value!);
+      state = AsyncLoadingNext(current);
 
-      final newState = await fetch(
-        state.value!.nextOffset!,
-        state.value!.limit,
-      );
+      final newState = await fetch(nextOffset, current.limit);
 
       state = AsyncData(
         newState.copyWith(items: [
-          ...state.value!.items.cast<K>(),
+          ...current.items.cast<K>(),
           ...newState.items.cast<K>(),
         ]),
       );
     } catch (e, stack) {
       AppLogger.reportError(e, stack);
-      state = AsyncData(oldState!);
+      state = AsyncData(current);
     }
   }
 
   Future<List<K>> fetchAll() async {
-    if (state.value == null) return [];
-    if (!state.value!.hasMore) return state.value!.items.cast<K>();
+    final initial = state.value;
+    if (initial == null) return [];
+    if (!initial.hasMore) return initial.items.cast<K>();
+
+    var current = initial;
 
     bool hasMore = true;
     while (hasMore) {
+      final nextOffset = current.nextOffset;
+      if (nextOffset == null) break;
       final newState = await fetch(
-        state.value!.nextOffset!,
-        max(state.value!.limit, 100),
+        nextOffset,
+        max(current.limit, 100),
       )
           .catchError(
-            (e) => fetch(state.value!.nextOffset!, max(state.value!.limit, 50)),
+            (e) => fetch(nextOffset, max(current.limit, 50)),
           )
           .catchError(
-            (e) => fetch(state.value!.nextOffset!, state.value!.limit),
+            (e) => fetch(nextOffset, current.limit),
           )
           .catchError(
         (e) async {
           await Future.delayed(const Duration(milliseconds: 500));
-          return fetch(state.value!.nextOffset!, state.value!.limit);
+          return fetch(nextOffset, current.limit);
         },
       );
 
       hasMore = newState.hasMore;
 
-      final oldItems =
-          state.value!.items.isEmpty ? <K>[] : state.value!.items.cast<K>();
       final items = newState.items.isEmpty ? <K>[] : newState.items.cast<K>();
 
-      state = AsyncData(
-        newState.copyWith(items: [...oldItems, ...items]),
+      current = newState.copyWith(
+        items: [...current.items.cast<K>(), ...items],
       );
+      state = AsyncData(current);
     }
 
-    return state.value!.items.cast<K>();
+    return current.items.cast<K>();
   }
 }

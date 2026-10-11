@@ -1,5 +1,6 @@
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
+import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/services/kv_store/kv_store.dart';
 import 'package:deemusiq/services/logger/logger.dart';
 
@@ -34,35 +35,28 @@ class AgeRestrictionDialog extends StatelessWidget {
         children: [
           const Icon(DeeMusiqIcons.warning, color: Colors.amber),
           const Gap(8),
-          const Text('Age Restriction').semiBold(),
+          Text(context.l10n.age_restriction_title).semiBold(),
         ],
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'This application may contain explicit music content.',
-          ).large(),
+          Text(context.l10n.age_restriction_explicit).large(),
           const Gap(8),
-          const Text(
-            'In compliance with the South African Films and Publications Act '
-            '(FPB), you must be 18 years or older to access explicit content.',
-          ).muted(),
+          Text(context.l10n.age_restriction_fpb).muted(),
           const Gap(12),
-          const Text(
-            'By proceeding, you confirm that you are at least 18 years old.',
-          ).semiBold(),
+          Text(context.l10n.age_restriction_confirm).semiBold(),
         ],
       ),
       actions: [
         Button.secondary(
           onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('I am under 18'),
+          child: Text(context.l10n.age_restriction_under),
         ),
         Button.primary(
           onPressed: () => Navigator.of(context).pop(true),
-          child: const Text('I am 18 or older'),
+          child: Text(context.l10n.confirm_age_18),
         ),
       ],
     );

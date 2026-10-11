@@ -12,7 +12,20 @@ class SelectDeviceDialog extends HookConsumerWidget {
     final isRemoteService = useState(false);
 
     final connectClients = ref.watch(connectClientsProvider);
-    final remoteService = connectClients.asData!.value.resolvedService!;
+    final resolved = connectClients.asData?.value.resolvedService;
+    if (resolved == null) {
+      return AlertDialog(
+        title: Text(context.l10n.choose_the_device),
+        content: Text(context.l10n.this_device),
+        actions: [
+          Button.primary(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(context.l10n.select),
+          ),
+        ],
+      );
+    }
+    final remoteService = resolved;
 
     return AlertDialog(
       title: Text(context.l10n.choose_the_device),

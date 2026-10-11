@@ -48,7 +48,11 @@ final queueProvider = StateProvider<AudioPlayerState>(
   ),
 );
 
-final volumeProvider = StateProvider<double>(
+/// Remote (LAN peer) volume mirror for the Connect controller UI. Distinct
+/// from the local persisted [volumeProvider] in `provider/volume_provider.dart`
+/// — same Dart name in different libraries was confusing the two, so the
+/// remote one carries the `remote` prefix.
+final remoteVolumeProvider = StateProvider<double>(
   (ref) => 1.0,
 );
 
@@ -145,7 +149,7 @@ class ConnectNotifier extends AsyncNotifier<ConnectState?> {
           });
 
           event.onVolume((event) {
-            ref.read(volumeProvider.notifier).state = event.data;
+            ref.read(remoteVolumeProvider.notifier).state = event.data;
           });
 
           event.onPaired((event) {

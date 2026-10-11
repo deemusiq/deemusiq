@@ -1,4 +1,5 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:shadcn_flutter/shadcn_flutter_extension.dart';
@@ -6,7 +7,9 @@ import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/components/image/universal_image.dart';
 import 'package:deemusiq/components/titlebar/titlebar.dart';
 import 'package:deemusiq/components/wallet/push_song_dialog.dart';
+import 'package:deemusiq/components/wallet/region_filter_chips.dart';
 import 'package:deemusiq/components/wallet/wallet_common.dart';
+import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/models/wallet/pushed_song.dart';
 import 'package:deemusiq/provider/wallet/leaderboard_provider.dart';
 import 'package:deemusiq/provider/wallet/wallet_provider.dart';
@@ -31,17 +34,17 @@ class PushLeaderboardPage extends HookConsumerWidget {
         lastPushedAt: DateTime.fromMillisecondsSinceEpoch(0),
       );
 
-  Widget _emptyCard() {
+  Widget _emptyCard(BuildContext context) {
     return Card(
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
           const Icon(DeeMusiqIcons.boost, size: 32, color: deeMusiqOrange),
           const Gap(10),
-          const Text("Nothing trending yet").semiBold(),
+          Text(context.l10n.leaderboard_empty_title).semiBold(),
           const Gap(4),
-          const Text(
-            "Push a song from its menu or the player to start the board.",
+          Text(
+            context.l10n.leaderboard_empty_body,
             textAlign: TextAlign.center,
           ),
         ],
@@ -52,12 +55,15 @@ class PushLeaderboardPage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final online = WalletApiClient.instance.isConfigured;
+    // Null = the global board; a chip selects an ISO alpha-2 region and the
+    // board refetches with `?region=`.
+    final region = useState<String?>(null);
 
     return SafeArea(
       bottom: false,
       child: Scaffold(
-        headers: const [
-          TitleBar(title: Text("Trending pushes")),
+        headers: [
+          TitleBar(title: Text(context.l10n.wallet_trending_pushes)),
         ],
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -77,28 +83,32 @@ class PushLeaderboardPage extends HookConsumerWidget {
                           const Icon(DeeMusiqIcons.trophy,
                               color: deeMusiqOrange),
                           const Gap(10),
-                          const Expanded(
-                            child: Text(
-                              "The most-pushed songs rise to the top. Push your "
-                              "favourites to move them up the board.",
-                            ),
+                          Expanded(
+                            child: Text(context.l10n.leaderboard_explainer),
                           ),
                           if (online)
                             Button.ghost(
                               leading:
                                   const Icon(DeeMusiqIcons.refresh, size: 16),
-                              onPressed: () =>
-                                  ref.invalidate(leaderboardProvider),
-                              child: const Text("Refresh"),
+                              onPressed: () => ref.invalidate(
+                                  leaderboardProvider(region.value)),
+                              child: Text(context.l10n.refresh),
                             ),
                         ],
                       ),
                     ),
+                    if (online) ...[
+                      const Gap(10),
+                      RegionFilterChips(
+                        selected: region.value,
+                        onChanged: (value) => region.value = value,
+                      ),
+                    ],
                     const Gap(16),
                     if (online)
-                      _globalBoard(ref)
+                      _globalBoard(context, ref, region.value)
                     else
-                      _localBoard(ref),
+                      _localBoard(context, ref),
                     const Gap(40),
                   ],
                 ),
@@ -111,8 +121,8 @@ class PushLeaderboardPage extends HookConsumerWidget {
   }
 
   /// The global cross-user board from the backend, with loading/error states.
-  Widget _globalBoard(WidgetRef ref) {
-    final board = ref.watch(leaderboardProvider);
+  Widget _globalBoard(BuildContext context, WidgetRef ref, String? region) {
+    final board = ref.watch(leaderboardProvider(region));
     return board.when(
       loading: () => const Padding(
         padding: EdgeInsets.symmetric(vertical: 32),
@@ -124,7 +134,7 @@ class PushLeaderboardPage extends HookConsumerWidget {
           children: [
             const Icon(DeeMusiqIcons.info, size: 28, color: deeMusiqOrange),
             const Gap(10),
-            const Text("Couldn't load the board").semiBold(),
+            Text(context.l10n.leaderboard_load_failed).semiBold(),
             const Gap(4),
             Text(
               error is WalletApiException
@@ -134,14 +144,14 @@ class PushLeaderboardPage extends HookConsumerWidget {
             ).muted().small(),
             const Gap(12),
             Button.outline(
-              onPressed: () => ref.invalidate(leaderboardProvider),
-              child: const Text("Retry"),
+              onPressed: () => ref.invalidate(leaderboardProvider(region)),
+              child: Text(context.l10n.retry),
             ),
           ],
         ),
       ),
       data: (entries) => entries.isEmpty
-          ? _emptyCard()
+          ? _emptyCard(context)
           : Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -159,7 +169,7 @@ class PushLeaderboardPage extends HookConsumerWidget {
   }
 
   /// Offline fallback: this device's own pushes, clearly labelled.
-  Widget _localBoard(WidgetRef ref) {
+  Widget _localBoard(BuildContext context, WidgetRef ref) {
     final pushed = ref.watch(walletProvider.select((s) => s.pushedSongs));
     final ranked = [...pushed]
       ..sort((a, b) => b.totalTokens.compareTo(a.totalTokens));
@@ -167,10 +177,10 @@ class PushLeaderboardPage extends HookConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text("Your pushes (offline)").muted().xSmall(),
+        Text(context.l10n.leaderboard_offline_title).muted().xSmall(),
         const Gap(8),
         if (ranked.isEmpty)
-          _emptyCard()
+          _emptyCard(context)
         else
           for (final entry in ranked.asMap().entries)
             Padding(
@@ -246,7 +256,8 @@ class _LeaderTile extends ConsumerWidget {
               children: [
                 Text(song.title, maxLines: 1).semiBold(),
                 Text(
-                  "${song.artist} · ${song.pushCount} push${song.pushCount == 1 ? "" : "es"}",
+                  context.l10n
+                      .leaderboard_push_count(song.artist, song.pushCount),
                   maxLines: 1,
                 ).muted().xSmall(),
               ],
@@ -283,7 +294,7 @@ class _LeaderTile extends ConsumerWidget {
                   artistId: song.artistId,
                   imageUrl: song.imageUrl,
                 ),
-                child: const Text("Push"),
+                child: Text(context.l10n.push_action),
               ),
             ],
           ),

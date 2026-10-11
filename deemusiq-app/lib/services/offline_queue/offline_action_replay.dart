@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:deemusiq/models/database/database.dart';
 import 'package:deemusiq/services/logger/logger.dart';
@@ -65,11 +64,8 @@ class OfflineActionReplayService {
         final Map<String, dynamic> payload;
         try {
           type = OfflineActionType.fromWireName(action.actionType);
-          final decoded = jsonDecode(action.payloadJson);
-          if (decoded is! Map) {
-            throw const FormatException('payload is not a JSON object');
-          }
-          payload = Map<String, dynamic>.from(decoded);
+          // Encrypted at rest (AES-256-GCM); legacy plaintext rows still parse.
+          payload = openActionPayload(action.payloadJson);
         } catch (e, stack) {
           // Corrupt row — drop it instead of retrying forever.
           AppLogger.reportError(

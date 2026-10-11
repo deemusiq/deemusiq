@@ -11,6 +11,11 @@ import 'package:deemusiq/services/logger/logger.dart';
 
 final serverProvider = FutureProvider(
   (ref) async {
+    // Bind-once: this provider only re-runs when the connect preferences
+    // change (watched below) or after a failed bind — callers must NOT
+    // invalidate it per queue load, because a re-bind can change
+    // DeeMusiqMedia.serverPort and every Media URI already in the playlist
+    // embeds the port it was created with.
     final enabledRemoteConnect = ref.watch(
       userPreferencesProvider.select((value) => value.enableConnect),
     );

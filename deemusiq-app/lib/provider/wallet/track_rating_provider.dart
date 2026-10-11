@@ -203,3 +203,77 @@ final trackRatingProvider = NotifierProvider.autoDispose
     .family<TrackRatingNotifier, TrackRatingState, String>(
   TrackRatingNotifier.new,
 );
+
+// ── Bulk surfaces ────────────────────────────────────────────────────────────
+//
+// The three endpoints above were built server-side but had no client, so a
+// ratings section could only ever show ONE track's numbers. These providers
+// expose the list-shaped reads without touching the per-track notifier (whose
+// contract stays a single aggregate + myRating).
+
+/// The caller's own ratings (`GET /ratings/mine`) as a `trackId -> value` map.
+///
+/// One call restores like/dislike state for a whole screen. Loading this is
+/// best-effort: a signed-out caller just gets an empty map.
+class MyRatingsNotifier extends AsyncNotifier<Map<String, TrackRatingValue>> {
+  @override
+  Future<Map<String, TrackRatingValue>> build() async {
+    if (!WalletApiClient.instance.isConfigured) return const {};
+    final rows = await WalletApiClient.instance.fetchMyRatings();
+    return {
+      for (final r in rows)
+        r.trackId: r.rating == "like"
+            ? TrackRatingValue.like
+            : TrackRatingValue.dislike,
+    };
+  }
+
+  /// Fold a just-written rating into the cached map so a list tile updates
+  /// without a refetch. [value] null means the rating was cleared.
+  void applyLocal(String trackId, TrackRatingValue? value) {
+    final current = state.valueOrNull;
+    if (current == null) return;
+    final next = Map<String, TrackRatingValue>.from(current);
+    if (value == null) {
+      next.remove(trackId);
+    } else {
+      next[trackId] = value;
+    }
+    state = AsyncData(next);
+  }
+}
+
+final myRatingsProvider =
+    AsyncNotifierProvider<MyRatingsNotifier, Map<String, TrackRatingValue>>(
+  MyRatingsNotifier.new,
+);
+
+/// Aggregate counts for a visible page of tracks (`POST /ratings/batch`).
+///
+/// The alternative is one `GET /ratings/:trackId` per tile, which on a 20-row
+/// list is 20 round trips for data that is public and identical for everyone.
+///
+/// A plain [FutureProvider.family] keyed on the id list: this is a pure
+/// read with no optimistic state to reconcile, so it needs no notifier.
+final ratingBatchProvider = FutureProvider.autoDispose.family<
+    Map<String, TrackRatingStats>, List<String>>((ref, trackIds) async {
+  if (trackIds.isEmpty) return const {};
+  return WalletApiClient.instance.fetchRatingsBatch(trackIds);
+});
+
+/// Trending feed (`GET /ratings/trending`) — the best-rated tracks in the
+/// server's configured window, with the thresholds echoed back so the UI can
+/// explain an empty list ("needs 5+ ratings") instead of showing nothing.
+class TrendingNotifier extends AsyncNotifier<List<TrendingTrack>> {
+  @override
+  Future<List<TrendingTrack>> build() async {
+    if (!WalletApiClient.instance.isConfigured) return const [];
+    final result = await WalletApiClient.instance.fetchTrendingTracks();
+    return result.tracks;
+  }
+}
+
+final trendingTracksProvider =
+    AsyncNotifierProvider<TrendingNotifier, List<TrendingTrack>>(
+  TrendingNotifier.new,
+);

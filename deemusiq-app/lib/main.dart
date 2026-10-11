@@ -28,6 +28,7 @@ import 'package:deemusiq/hooks/configurators/use_get_storage_perms.dart';
 import 'package:deemusiq/hooks/configurators/use_has_touch.dart';
 import 'package:deemusiq/models/database/database.dart';
 import 'package:deemusiq/modules/settings/color_scheme_picker_dialog.dart';
+import 'package:deemusiq/modules/settings/deemusiq_theme.dart';
 import 'package:deemusiq/components/auth/app_lock_screen.dart';
 import 'package:deemusiq/pages/integrity/tampered.dart';
 import 'package:deemusiq/services/auth/biometric_lock.dart';
@@ -77,6 +78,14 @@ Future<void> main(List<String> rawArgs) async {
   final arguments = await startCLI(rawArgs);
   AppLogger.initialize(arguments["verbose"]);
 
+  // Install the TLS-pinning HttpOverrides BEFORE the zone body can create any
+  // client. It used to be assigned inside the zone, which meant the zone began
+  // executing first: anything constructing an HttpClient in that gap would
+  // inherit the DEFAULT client and bypass both the backend pin and the
+  // Spotify debug allowlist. Nothing does today, so this was latent rather
+  // than exploitable — but the guarantee should be structural, not accidental.
+  HttpOverrides.global = DeeMusiqHttpOverrides();
+
   AppLogger.runZoned(() async {
     final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
 
@@ -96,14 +105,11 @@ Future<void> main(List<String> rawArgs) async {
             final pid = int.tryParse(pidStr);
             if (pid == null) continue;
             // Never kill arbitrary processes that merely share the port range —
-            // only our own control-server / app processes.
-            String cmdline = '';
-            try {
-              cmdline =
-                  await File('/proc/$pid/cmdline').readAsString().catchError(
-                        (_) => '',
-                      );
-            } catch (_) {}
+            // only our own control-server / app processes. An unreadable
+            // cmdline resolves to '' so the pid is treated as not ours below.
+            final cmdline = await File('/proc/$pid/cmdline').readAsString().catchError(
+                  (_) => '',
+                );
             final looksLikeOurs = cmdline.contains('deemusiq') ||
                 cmdline.contains('spotube') ||
                 cmdline.contains('DeeMusiq');
@@ -127,13 +133,8 @@ Future<void> main(List<String> rawArgs) async {
       }());
     }
 
-    // Apply TLS cert pinning in ALL build modes. DeeMusiqHttpOverrides only
-    // relaxes validation for Spotify hosts when kDebugMode, and only pins the
-    // backend when DEEMUSIQ_SERVER_CERT_SHA256 is set — so this is safe to
-    // install unconditionally and gives release builds real MITM protection.
-    HttpOverrides.global = DeeMusiqHttpOverrides();
-
-    // await registerWindowsScheme("spotify");
+    // (TLS cert pinning is installed above, before this zone body runs —
+    // see the note at the top of main().)
 
     tz.initializeTimeZones();
 
@@ -368,9 +369,10 @@ class DeeMusiq extends HookConsumerWidget {
       darkTheme: ThemeData(
         radius: .5,
         iconTheme: const IconThemeProperties(),
-        colorScheme:
-            colorSchemeMap[accentMaterialColor.name]?.call(ThemeMode.dark) ??
-                LegacyColorSchemes.darkSlate(),
+        colorScheme: DeeMusiqTheme.liftDarkControls(
+          colorSchemeMap[accentMaterialColor.name]?.call(ThemeMode.dark) ??
+              LegacyColorSchemes.darkSlate(),
+        ),
         surfaceOpacity: .8,
         surfaceBlur: 10,
       ),
@@ -499,7 +501,8 @@ class _AppLockGateState extends State<AppLockGate>
           _checked = true;
         });
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[AppLockGate.check] $e');
       if (mounted) setState(() => _checked = true);
     }
   }

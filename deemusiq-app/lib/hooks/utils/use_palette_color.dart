@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:palette_generator/palette_generator.dart';
 import 'package:deemusiq/components/image/universal_image.dart';
+import 'package:deemusiq/extensions/color.dart';
 
 final _paletteColorState = StateProvider<PaletteColor>(
   (ref) {
@@ -36,6 +37,19 @@ PaletteColor usePaletteColor(String imageUrl, WidgetRef ref) {
   }, [imageUrl]);
 
   return paletteColor;
+}
+
+/// Readable foreground for text drawn over a [PaletteColor] wash.
+///
+/// Dark washes get lightened, light washes get darkened, so the "powered by"
+/// labels on the lyrics wash stay legible no matter the album art.
+Color readableOnPaletteColor(PaletteColor palette) {
+  final base = palette.color;
+  if (base.isDark()) return base.lighten(0.55);
+  if (base.isLight()) return base.darken(0.55);
+  // Unreachable with the current 0.5 luminance split, but keeps the helper
+  // total if the threshold ever becomes a mid-luminance band.
+  return base;
 }
 
 PaletteGenerator usePaletteGenerator(String imageUrl) {

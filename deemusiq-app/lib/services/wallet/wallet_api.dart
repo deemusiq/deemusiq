@@ -15,10 +15,361 @@ import 'package:deemusiq/services/wallet/device_identity.dart';
 import 'package:deemusiq/services/wallet/secure_channel.dart';
 import 'package:uuid/uuid.dart';
 
+/// One day of server-side listening history (`GET /me/history`).
+///
+/// `track` is the standard metadata-plugin track DTO, so it is kept as a raw
+/// map and handed to the same mapper every other track source uses.
+class ServerListenEntry {
+  final String day;
+  final int listenedMs;
+  final int? durationMs;
+  final bool skipped;
+  final String source;
+  final Map<String, dynamic> track;
+
+  const ServerListenEntry({
+    required this.day,
+    required this.listenedMs,
+    required this.durationMs,
+    required this.skipped,
+    required this.source,
+    required this.track,
+  });
+
+  factory ServerListenEntry.fromJson(Map json) => ServerListenEntry(
+        day: json["day"] as String,
+        listenedMs: (json["listenedMs"] as num?)?.toInt() ?? 0,
+        durationMs: (json["durationMs"] as num?)?.toInt(),
+        skipped: json["skipped"] == true,
+        source: (json["source"] as String?) ?? "app",
+        track: Map<String, dynamic>.from(json["track"] as Map),
+      );
+}
+
+/// One point of the per-day listening chart.
+class ListenDayTotal {
+  final String day;
+  final int listenedMs;
+
+  const ListenDayTotal({required this.day, required this.listenedMs});
+
+  factory ListenDayTotal.fromJson(Map json) => ListenDayTotal(
+        day: json["day"] as String,
+        listenedMs: (json["listenedMs"] as num?)?.toInt() ?? 0,
+      );
+}
+
+/// A ranked track in the stats response.
+class ListenTopTrack {
+  final int listenedMs;
+  final int days;
+  final Map<String, dynamic> track;
+
+  const ListenTopTrack({
+    required this.listenedMs,
+    required this.days,
+    required this.track,
+  });
+
+  factory ListenTopTrack.fromJson(Map json) => ListenTopTrack(
+        listenedMs: (json["listenedMs"] as num?)?.toInt() ?? 0,
+        days: (json["days"] as num?)?.toInt() ?? 0,
+        track: Map<String, dynamic>.from(json["track"] as Map),
+      );
+}
+
+/// A ranked artist in the stats response (already folded from its tracks).
+class ListenTopArtist {
+  final String id;
+  final String name;
+  final int listenedMs;
+  final int tracks;
+
+  const ListenTopArtist({
+    required this.id,
+    required this.name,
+    required this.listenedMs,
+    required this.tracks,
+  });
+
+  factory ListenTopArtist.fromJson(Map json) => ListenTopArtist(
+        id: json["id"] as String,
+        name: (json["name"] as String?) ?? "",
+        listenedMs: (json["listenedMs"] as num?)?.toInt() ?? 0,
+        tracks: (json["tracks"] as num?)?.toInt() ?? 0,
+      );
+}
+
+/// Server-side listening totals (`GET /me/stats`).
+class ServerListenStats {
+  final int days;
+
+  /// Distinct track-DAYS listened (skips excluded). NOT raw play events: the
+  /// server's ListenHistory is unique per (user, track, UTC day).
+  final int listens;
+
+  /// The same count with short skips added back.
+  final int listensIncludingSkips;
+
+  /// Total listened time in ms, excluding skips.
+  final int listenedMs;
+  final List<ListenDayTotal> byDay;
+  final List<ListenTopTrack> topTracks;
+  final List<ListenTopArtist> topArtists;
+
+  const ServerListenStats({
+    required this.days,
+    required this.listens,
+    required this.listensIncludingSkips,
+    required this.listenedMs,
+    required this.byDay,
+    required this.topTracks,
+    required this.topArtists,
+  });
+
+  factory ServerListenStats.fromJson(Map json) => ServerListenStats(
+        days: (json["days"] as num?)?.toInt() ?? 0,
+        listens: (json["listens"] as num?)?.toInt() ?? 0,
+        listensIncludingSkips:
+            (json["listensIncludingSkips"] as num?)?.toInt() ?? 0,
+        listenedMs: (json["listenedMs"] as num?)?.toInt() ?? 0,
+        byDay: ((json["byDay"] as List<dynamic>? ?? const []))
+            .map((raw) => ListenDayTotal.fromJson(raw as Map))
+            .toList(),
+        topTracks: ((json["topTracks"] as List<dynamic>? ?? const []))
+            .map((raw) => ListenTopTrack.fromJson(raw as Map))
+            .toList(),
+        topArtists: ((json["topArtists"] as List<dynamic>? ?? const []))
+            .map((raw) => ListenTopArtist.fromJson(raw as Map))
+            .toList(),
+      );
+
+  Duration get totalTime =>
+      Duration(milliseconds: listenedMs);
+}
+
+/// The account's saved queue + resume position (`GET /me/playback`).
+class RemotePlaybackState {
+  final List<Map<String, dynamic>> queue;
+  final String? currentTrackId;
+  final int positionMs;
+  final bool playing;
+
+  /// Ids the server filtered out (taken down / unpublished). The caller should
+  /// prune these rather than render a row it cannot play.
+  final List<String> droppedTrackIds;
+  final DateTime? updatedAt;
+
+  /// True when the stored state is older than the server's staleness window.
+  final bool stale;
+
+  const RemotePlaybackState({
+    required this.queue,
+    required this.currentTrackId,
+    required this.positionMs,
+    required this.playing,
+    required this.droppedTrackIds,
+    required this.updatedAt,
+    required this.stale,
+  });
+
+  factory RemotePlaybackState.fromJson(Map json) => RemotePlaybackState(
+        queue: ((json["queue"] as List<dynamic>? ?? const []))
+            .map((raw) => Map<String, dynamic>.from(raw as Map))
+            .toList(),
+        currentTrackId: json["currentTrackId"] as String?,
+        positionMs: (json["positionMs"] as num?)?.toInt() ?? 0,
+        playing: json["playing"] == true,
+        droppedTrackIds:
+            ((json["droppedTrackIds"] as List<dynamic>? ?? const []))
+                .cast<String>(),
+        updatedAt: json["updatedAt"] == null
+            ? null
+            : DateTime.parse(json["updatedAt"] as String),
+        stale: json["stale"] == true,
+      );
+
+  /// Nothing worth resuming: no queue, or the server filtered all of it out.
+  bool get isEmpty => queue.isEmpty;
+
+  Duration get resumeAt => Duration(milliseconds: positionMs);
+}
+
+/// A playlist this account collaborates on (`GET /shared`).
+class SharedPlaylist {
+  final String id;
+  final String title;
+  final String? description;
+  final String? coverUrl;
+
+  /// "owner" or "editor" — decides whether destructive actions are offered.
+  final String myRole;
+
+  const SharedPlaylist({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.coverUrl,
+    required this.myRole,
+  });
+
+  factory SharedPlaylist.fromJson(Map json) => SharedPlaylist(
+        id: json["id"] as String,
+        title: (json["title"] as String?) ?? "",
+        description: json["description"] as String?,
+        coverUrl: json["coverUrl"] as String?,
+        myRole: (json["myRole"] as String?) ?? "editor",
+      );
+
+  bool get canEdit => myRole == "owner" || myRole == "editor";
+
+  /// Only an owner may reshare or rename.
+  bool get isOwner => myRole == "owner";
+}
+
+/// A pending share invitation (`GET /invites`).
+class PlaylistInvite {
+  final String playlistId;
+  final String title;
+  final String? description;
+  final DateTime invitedAt;
+
+  const PlaylistInvite({
+    required this.playlistId,
+    required this.title,
+    required this.description,
+    required this.invitedAt,
+  });
+
+  factory PlaylistInvite.fromJson(Map json) => PlaylistInvite(
+        playlistId: json["playlistId"] as String,
+        title: (json["title"] as String?) ?? "",
+        description: json["description"] as String?,
+        invitedAt: DateTime.parse(json["invitedAt"] as String),
+      );
+}
+
+/// The onboarding taste profile (`GET/PUT /recommendations/preferences`).
+class TasteProfile {
+  final List<String> genres;
+  final List<String> artistIds;
+
+  /// Decade bucket like "2010s", or null for no preference.
+  final String? era;
+
+  /// When false the engine ignores this profile (the user declined
+  /// personalisation). It is still stored, so the choice can be reversed.
+  final bool personalizationEnabled;
+
+  /// ISO alpha-2 region used for the regional leaderboards/charts, or null
+  /// for the global board.
+  final String? region;
+
+  const TasteProfile({
+    this.genres = const [],
+    this.artistIds = const [],
+    this.era,
+    this.personalizationEnabled = true,
+    this.region,
+  });
+
+  factory TasteProfile.fromJson(Map json) => TasteProfile(
+        genres: ((json["genres"] as List<dynamic>? ?? const []))
+            .map((e) => e as String)
+            .toList(),
+        artistIds: ((json["artistIds"] as List<dynamic>? ?? const []))
+            .map((e) => e as String)
+            .toList(),
+        era: json["era"] as String?,
+        personalizationEnabled: json["personalizationEnabled"] != false,
+        region: json["region"] as String?,
+      );
+
+  bool get isEmpty =>
+      genres.isEmpty && artistIds.isEmpty && era == null;
+}
+
+/// Aggregate like/dislike counts for one track (shape from `/ratings`).
+class TrackRatingStats {
+  final int likes;
+  final int dislikes;
+  final int total;
+
+  /// Share of ratings that are likes, or null when nothing has rated it yet —
+  /// the backend sends null (not 0) so the UI can say "unrated" instead of
+  /// showing a misleading 0%.
+  final double? likeRatio;
+
+  const TrackRatingStats({
+    required this.likes,
+    required this.dislikes,
+    required this.total,
+    required this.likeRatio,
+  });
+
+  factory TrackRatingStats.fromJson(Map json) => TrackRatingStats(
+        likes: (json["likes"] as num?)?.toInt() ?? 0,
+        dislikes: (json["dislikes"] as num?)?.toInt() ?? 0,
+        total: (json["total"] as num?)?.toInt() ?? 0,
+        likeRatio: (json["likeRatio"] as num?)?.toDouble(),
+      );
+
+  bool get isRated => total > 0;
+}
+
+/// Window metadata echoed by `GET /ratings/trending` (the thresholds the
+/// server applied), so the UI can explain why a track is or isn't listed.
+class TrendingWindow {
+  final int days;
+  final int minRatings;
+  final int minLikePct;
+  final int minAccountAgeHours;
+
+  const TrendingWindow({
+    required this.days,
+    required this.minRatings,
+    required this.minLikePct,
+    required this.minAccountAgeHours,
+  });
+
+  factory TrendingWindow.fromJson(Map json) => TrendingWindow(
+        days: (json["days"] as num?)?.toInt() ?? 0,
+        minRatings: (json["minRatings"] as num?)?.toInt() ?? 0,
+        minLikePct: (json["minLikePct"] as num?)?.toInt() ?? 0,
+        minAccountAgeHours: (json["minAccountAgeHours"] as num?)?.toInt() ?? 0,
+      );
+}
+
+/// One entry from the trending feed (`GET /ratings/trending`).
+///
+/// The endpoint returns the normal metadata-plugin track DTO with an extra
+/// `rating` block merged in, so [track] is passed straight to the plugin's
+/// track mapper and [rating] is read separately for the badge.
+class TrendingTrack {
+  final Map<String, dynamic> track;
+  final TrackRatingStats rating;
+
+  const TrendingTrack({required this.track, required this.rating});
+
+  factory TrendingTrack.fromJson(Map json) => TrendingTrack(
+        track: Map<String, dynamic>.from(json),
+        rating: TrackRatingStats.fromJson(
+          (json["rating"] as Map?) ?? const {},
+        ),
+      );
+}
+
 class WalletApiException implements Exception {
   final String message;
   final int? statusCode;
   final String? code;
+
+  /// Set when [code] is `mfa_required`: the server accepted the first factor
+  /// and handed back a short-lived challenge instead of a session token.
+  /// Exchange it via [WalletApiClient.mfaVerify] to finish the login. It is
+  /// NOT an error — [statusCode] is left null on purpose so this never counts
+  /// against [_guardCredentialAttempts]'s strike counter.
+  final String? mfaToken;
 
   /// True when the failure came from the network itself (connection error /
   /// timeout / TLS handshake) rather than a server response. Offline-capable
@@ -30,6 +381,7 @@ class WalletApiException implements Exception {
     this.statusCode,
     this.code,
     this.isConnectivity = false,
+    this.mfaToken,
   });
 
   /// User-readable rendering for toasts/banners. The server sends machine
@@ -71,6 +423,16 @@ class WalletApiException implements Exception {
         return "Too many attempts — give it a moment and try again.";
       case "security_state_unavailable":
         return "DeeMusiq is temporarily unavailable — try again shortly.";
+      case "session_revoked":
+        return "You've been signed out on this device. Sign in again.";
+      case "processing_restricted":
+        return "Payments are paused because consent was withdrawn. Delete your account in Settings to complete erasure.";
+      case "logged_out":
+        return message;
+      case "account_frozen":
+        return "This account is frozen. Contact support@deemusiq.co.za.";
+      case "account_banned":
+        return "This account has been banned. Contact support@deemusiq.co.za.";
       case "under_min_age":
         return "You're below the minimum age for a DeeMusiq account.";
       case "stale_timestamp":
@@ -78,8 +440,6 @@ class WalletApiException implements Exception {
       case "missing_payment_signature":
       case "bad_signature":
         return "This build can't start payments — please update the app.";
-      case "logged_out":
-        return message;
     }
     switch (statusCode) {
       case 402:
@@ -210,9 +570,14 @@ class WalletApiClient {
           if (response.headers.value(SecureChannel.zwHeaderName) == "1" &&
               SecureChannel.isZwEnvelope(data)) {
             try {
-              data = jsonDecode(
-                SecureChannel.zwDecode((data as Map)["zw"] as String)!,
-              );
+              final carrier =
+                  SecureChannel.zwDecode((data as Map)["zw"] as String);
+              if (carrier == null) {
+                throw const WalletApiException(
+                  "Malformed zero-width response carrier.",
+                );
+              }
+              data = jsonDecode(carrier);
               response.data = data;
             } catch (e) {
               handler.reject(
@@ -257,9 +622,14 @@ class WalletApiClient {
             if (resp.headers.value(SecureChannel.zwHeaderName) == "1" &&
                 SecureChannel.isZwEnvelope(data)) {
               try {
-                data = jsonDecode(
-                  SecureChannel.zwDecode((data as Map)["zw"] as String)!,
-                );
+                final carrier =
+                    SecureChannel.zwDecode((data as Map)["zw"] as String);
+                if (carrier == null) {
+                  throw const WalletApiException(
+                    "Malformed zero-width error carrier.",
+                  );
+                }
+                data = jsonDecode(carrier);
                 resp.data = data;
               } catch (err) {
                 AppLogger.log.w('Failed to decode zero-width error envelope');
@@ -281,7 +651,15 @@ class WalletApiClient {
           // A cached JWT that expired/was revoked → 401. Drop it so the next
           // call re-authenticates (Ed25519 challenge-response) instead of
           // cascading 401s forever.
-          if (e.response?.statusCode == 401) _token = null;
+          //
+          // Only when the request ACTUALLY carried the session token:
+          // `/auth/mfa/verify`, `/auth/totp/enable` and `/auth/step-up` answer
+          // 401 for a wrong code or missing step-up proof while the session is
+          // perfectly valid. Dropping the token on those discarded a live
+          // session and forced a full device re-authentication.
+          if (e.response?.statusCode == 401 && _requestCarriedAuth(e)) {
+            _token = null;
+          }
           handler.next(e);
         },
       ),
@@ -408,7 +786,12 @@ class WalletApiClient {
     _deviceIdCache = id;
     try {
       prefs.setString(_deviceKey, id);
-    } catch (_) {}
+    } catch (e) {
+      // Plain-storage fallback failed — only the secure-store write below
+      // keeps the id; if that also fails the device id changes next launch
+      // and the backend device-auth binding breaks.
+      AppLogger.log.w('deviceId plain store write failed: ${e.toString()}');
+    }
     unawaited(_persistDeviceId(id));
     return id;
   }
@@ -427,7 +810,12 @@ class WalletApiClient {
         _deviceIdCache = secure;
         try {
           await KVStoreService.sharedPreferences.remove(_deviceKey);
-        } catch (_) {}
+        } catch (e) {
+          // Stale plain copy survives — harmless for the binding, but the
+          // migration to secure storage will retry every launch until it is
+          // removed; logged for diagnosis.
+          AppLogger.log.w('deviceId plain store cleanup failed: ${e.toString()}');
+        }
       }
     } catch (e) {
       AppLogger.log.w('deviceId keystore hydrate skipped: ${e.toString()}');
@@ -445,7 +833,12 @@ class WalletApiClient {
       }
       try {
         await KVStoreService.sharedPreferences.remove(_deviceKey);
-      } catch (_) {}
+      } catch (e) {
+        // Stale plain copy survives alongside the secure one — both hold the
+        // same id so the device-auth binding is unaffected, but cleanup is
+        // retried on every launch; logged for diagnosis.
+        AppLogger.log.w('deviceId plain store cleanup failed: ${e.toString()}');
+      }
     } catch (e) {
       AppLogger.log.w('deviceId secure store write failed: ${e.toString()}');
     }
@@ -474,6 +867,10 @@ class WalletApiClient {
 
   String? _token;
 
+  /// In-flight device-login future, so concurrent `_authToken` callers share
+  /// one round trip instead of each minting their own JWT.
+  Future<String>? _inFlightAuth;
+
   /// The cached backend JWT, or null when this device hasn't authenticated
   /// yet. This NEVER triggers a login — it exists for fire-and-forget calls
   /// (e.g. the play-count scrobble) that attach auth when it happens to be in
@@ -486,8 +883,31 @@ class WalletApiClient {
   ///
   /// H2: after a "log out on all devices" / sign-out tombstone this refuses to
   /// silently re-authenticate — explicit login flows pass [explicitLogin].
+  ///
+  /// Single-flight: the in-flight future is cached in [_inFlightAuth] so
+  /// concurrent callers share ONE challenge/response round trip. Without it
+  /// this was a check-then-await-act race — every caller observing
+  /// `_token == null` issued its own `/auth/device/challenge` +
+  /// `/auth/device/login`, so a burst of parallel calls after a 401 (queue
+  /// replay + wallet sync + scrobble) multiplied into a login storm and a
+  /// backend rate-limit trip. Same pattern as `_managedAttemptKey`, which
+  /// already guards the checkout path.
   Future<String> _authToken({bool explicitLogin = false}) async {
-    if (_token != null) return _token!;
+    final cached = _token;
+    if (cached != null) return cached;
+    final pending = _inFlightAuth;
+    if (pending != null) return pending;
+    final future = _performDeviceLogin(explicitLogin: explicitLogin);
+    _inFlightAuth = future;
+    try {
+      return await future;
+    } finally {
+      // Clear only if still ours: a later login may have replaced it.
+      if (identical(_inFlightAuth, future)) _inFlightAuth = null;
+    }
+  }
+
+  Future<String> _performDeviceLogin({required bool explicitLogin}) async {
     if (!explicitLogin && await isLoggedOut()) {
       throw const WalletApiException(
         "This device was signed out. Sign in again to reconnect.",
@@ -524,7 +944,7 @@ class WalletApiClient {
           if (att.apk != null) "apkSha256": att.apk,
         },
       );
-      final token = (loginRes.data as Map)["token"] as String;
+      final token = _sessionTokenFrom(loginRes.data as Map);
       _token = token;
       return token;
     } on DioException catch (e) {
@@ -569,7 +989,7 @@ class WalletApiClient {
           "/auth/login",
           data: {"email": email, "password": password},
         );
-        _token = (res.data as Map)["token"] as String;
+        _token = _sessionTokenFrom(res.data as Map);
         await _clearLoggedOut();
       } on DioException catch (e) {
         throw _walletApiException(e);
@@ -587,6 +1007,69 @@ class WalletApiClient {
 
   static const _authLockoutThreshold = 3;
   static const _authLockoutDuration = Duration(seconds: 10);
+
+  /// Read the session token out of a login response, or raise the second
+  /// factor challenge the server returned instead.
+  ///
+  /// Every auth entrypoint (email, device, Google) funnels through this so a
+  /// 2FA-enrolled account can never be signed in by its first factor alone —
+  /// the server answers `200 {mfa_required, mfaToken}` rather than a token.
+  String _sessionTokenFrom(Map<dynamic, dynamic> data) {
+    if (data["mfa_required"] == true) {
+      final challenge = data["mfaToken"];
+      if (challenge is String && challenge.isNotEmpty) {
+        throw WalletApiException(
+          "Two-factor authentication required.",
+          code: "mfa_required",
+          mfaToken: challenge,
+        );
+      }
+    }
+    final token = data["token"];
+    if (token is! String || token.isEmpty) {
+      throw const WalletApiException("server_error");
+    }
+    return token;
+  }
+
+  /// Finish a challenge started by a login attempt: exchanges the short-lived
+  /// MFA challenge for a real session token and caches it.
+  Future<void> mfaVerify({
+    required String mfaToken,
+    required String code,
+  }) async {
+    await _guardCredentialAttempts(() async {
+      try {
+        final res = await _client().post(
+          "/auth/mfa/verify",
+          data: {"mfaToken": mfaToken, "code": code},
+        );
+        _token = _sessionTokenFrom(res.data as Map);
+        await _clearLoggedOut();
+      } on DioException catch (e) {
+        throw _walletApiException(e);
+      }
+    });
+  }
+
+  /// True when the failed request actually carried the session token.
+  ///
+  /// A 401 from an UNAUTHENTICATED call (e.g. a wrong MFA code, or a
+  /// step-up that demands a password) says nothing about the cached JWT's
+  /// validity, so it must not invalidate a live session.
+  bool _requestCarriedAuth(DioException e) {
+    final headers = e.requestOptions.headers;
+    final auth = headers['Authorization'] ?? headers['authorization'];
+    if (auth is String && auth.trim().isNotEmpty) return true;
+    // Dio lowercases header names, but a caller may have set it directly.
+    for (final entry in headers.entries) {
+      if (entry.key.toLowerCase() == 'authorization') {
+        final v = entry.value;
+        if (v is String && v.trim().isNotEmpty) return true;
+      }
+    }
+    return false;
+  }
 
   Future<T> _guardCredentialAttempts<T>(Future<T> Function() fn) async {
     final lockedUntil = _authLockedUntil;
@@ -619,19 +1102,51 @@ class WalletApiClient {
   }
 
   /// Begin TOTP enrollment. Returns `{secret, otpauthUri}` to render a QR.
-  /// The backend requires step-up proof when the account already has a
-  /// factor: [password] when an email+password is attached,
-  /// [code] (from the CURRENT authenticator) when re-enrolling while 2FA
-  /// is active. Missing proof answers 401 with `step_up_password_required`
-  /// / `step_up_code_required` so the UI can prompt for exactly that.
+  ///
+  /// The backend requires step-up proof: [password] when an email+password is
+  /// attached, [code] (from the CURRENT authenticator) when re-enrolling while
+  /// 2FA is active, and for a DEVICE-ONLY account a device-key signature over
+  /// a fresh challenge (obtained automatically here). Missing proof answers
+  /// 401 with `step_up_password_required` / `step_up_code_required` /
+  /// `step_up_device_required` so the UI can prompt for exactly that.
+  ///
+  /// The device step-up is fetched here rather than pushed onto callers
+  /// because it needs the Ed25519 key, which lives in the secure enclave: the
+  /// honest owner always has it, so this cannot lock them out.
   Future<Map<String, dynamic>> totpSetup(
       {String? password, String? code}) async {
+    final hasPassword = password != null && password.isNotEmpty;
     try {
+      // Device-only accounts have no password to send, so preemptively fetch
+      // the device-key step-up. A 401 here (an account WITH a password takes
+      // the password path) is non-fatal — the body below simply omits it.
+      Map<String, String> deviceStepUp = const {};
+      if (!hasPassword) {
+        try {
+          final chal = await _client().post(
+            "/auth/step-up/challenge",
+            options: await _authed(),
+          );
+          final challenge =
+              (chal.data as Map)["challenge"] as String? ?? "";
+          if (challenge.isNotEmpty) {
+            deviceStepUp = {
+              "deviceChallenge": challenge,
+              "deviceSignature": await DeviceIdentity.instance.sign(challenge),
+              "devicePublicKey": await DeviceIdentity.instance.publicKeyBase64(),
+            };
+          }
+        } on DioException catch (e) {
+          AppLogger.log.w(
+              'Device step-up challenge unavailable; server will decide: ${e.toString()}');
+        }
+      }
       final res = await _client().post(
         "/auth/totp/setup",
         data: {
-          if (password != null && password.isNotEmpty) "password": password,
+          if (hasPassword) "password": password,
           if (code != null && code.isNotEmpty) "code": code,
+          ...deviceStepUp,
         },
         options: await _authed(),
       );
@@ -654,16 +1169,22 @@ class WalletApiClient {
     }
   }
 
-  /// Recover wallet access on a new device via email + a TOTP code.
+  /// Recover wallet access on a new device via email + password + a TOTP code.
+  ///
+  /// The password is REQUIRED, not optional: the server treats a TOTP code on
+  /// its own as a single factor, so recovery demands both. Sending the code
+  /// alone would authenticate the holder of a phished/shoulder-surfed code.
   Future<void> totpRecover(
-      {required String email, required String code}) async {
+      {required String email,
+      required String password,
+      required String code}) async {
     await _guardCredentialAttempts(() async {
       try {
         final res = await _client().post(
           "/auth/totp/recover",
-          data: {"email": email, "code": code},
+          data: {"email": email, "password": password, "code": code},
         );
-        _token = (res.data as Map)["token"] as String;
+        _token = _sessionTokenFrom(res.data as Map);
         await _clearLoggedOut();
       } on DioException catch (e) {
         throw _walletApiException(e);
@@ -990,12 +1511,39 @@ class WalletApiClient {
       final res = await _client().post(
         "/payments/checkout",
         data: body,
-        options: Options(headers: headers),
+        options: Options(
+          headers: headers,
+          // Business refusals (region_unavailable / provider_not_configured /
+          // crypto_wallet_not_configured) arrive as 409/503 with a JSON body
+          // the caller switches on to grey out the rail — not transport
+          // errors, so let the body through instead of throwing.
+          validateStatus: (status) =>
+              status != null &&
+              ((status >= 200 && status < 400) ||
+                  status == 409 ||
+                  status == 503),
+        ),
       );
       if (res.data is! Map) {
         throw const WalletApiException("checkout_invalid_response");
       }
       final result = Map<String, dynamic>.from(res.data as Map);
+      final httpStatus = res.statusCode ?? 200;
+      if (httpStatus >= 400 && result["status"] is! String) {
+        // Error-shaped refusal (e.g. idempotency_key_reused), not a checkout
+        // business response — route it through the friendly-code mapping
+        // exactly as the old throwing path did.
+        if (managedKey && httpStatus < 500) {
+          await _clearCheckoutAttempt(attemptSignature);
+        }
+        final bodyMessage = result["message"] ?? result["error"];
+        final bodyCode = result["error"] ?? result["code"];
+        throw WalletApiException(
+          bodyMessage is String ? bodyMessage : "checkout_failed",
+          statusCode: httpStatus,
+          code: bodyCode is String ? bodyCode : null,
+        );
+      }
       final intentId = result["intentId"];
       if (result["recoveryUrl"] == null &&
           result["recoveryPath"] == null &&
@@ -1369,12 +1917,19 @@ class WalletApiClient {
   }
 
   /// The artist leaderboard for a calendar [year] (defaults to the current year).
-  /// Returns `{year, isCurrentYear, entries:[...]}`.
-  Future<Map<String, dynamic>> fetchArtistLeaderboard({int? year}) async {
+  /// Pass [region] (ISO alpha-2) for a regional board; the response echoes it
+  /// back as `"region"`. Returns `{year, isCurrentYear, region, entries:[...]}`.
+  Future<Map<String, dynamic>> fetchArtistLeaderboard({
+    int? year,
+    String? region,
+  }) async {
     try {
       final res = await _client().get(
         "/leaderboard/artists",
-        queryParameters: year != null ? {"year": year} : null,
+        queryParameters: {
+          if (year != null) "year": year,
+          if (region != null) "region": region,
+        },
       );
       return Map<String, dynamic>.from(res.data as Map);
     } on DioException catch (e) {
@@ -1541,7 +2096,7 @@ class WalletApiClient {
             ? Options(headers: {"Authorization": "Bearer $_token"})
             : null,
       );
-      final token = (res.data as Map)["token"] as String;
+      final token = _sessionTokenFrom(res.data as Map);
       _token = token;
       await _clearLoggedOut();
       return token;
@@ -1665,7 +2220,10 @@ class WalletApiClient {
   }) async {
     try {
       await _client().patch(
-        "/sync/playlists/$id",
+        // encodeComponent: every other path in this file encodes ids; these two
+        // were the exceptions, so an id containing "/" or ".." would alter the
+        // request path (and the secure channel seals bodies, not the path).
+        "/sync/playlists/${Uri.encodeComponent(id)}",
         data: {
           if (name != null) "name": name,
           if (songHashes != null) "songHashes": songHashes,
@@ -1681,7 +2239,7 @@ class WalletApiClient {
   Future<void> syncDeletePlaylist(String id) async {
     try {
       await _client().delete(
-        "/sync/playlists/$id",
+        "/sync/playlists/${Uri.encodeComponent(id)}",
         options: await _authed(),
       );
     } on DioException catch (e) {
@@ -1703,10 +2261,48 @@ class WalletApiClient {
     }
   }
 
-  Future<List<dynamic>> fetchLeaderboard() async {
+  Future<List<dynamic>> fetchLeaderboard({String? region}) async {
     try {
-      final res = await _client().get("/leaderboard");
+      final res = await _client().get(
+        "/leaderboard",
+        queryParameters: {if (region != null) "region": region},
+      );
       return (res.data as Map)["entries"] as List<dynamic>;
+    } on DioException catch (e) {
+      throw _walletApiException(e);
+    }
+  }
+
+  // ── Supporter badges (`/artists/:id/supporters`) ─────────────────────────
+
+  /// The artist's ranked supporter board. Public endpoint.
+  /// Returns `{artistId, tiers: {gold, silver, bronze}, entries: [{rank, name,
+  /// totalTokens, tier, badge}]}` — names are anonymized server-side.
+  Future<Map<String, dynamic>> fetchSupporters(
+    String artistId, {
+    int limit = 10,
+  }) async {
+    try {
+      final res = await _client().get(
+        "/artists/${Uri.encodeComponent(artistId)}/supporters",
+        queryParameters: {"limit": limit},
+      );
+      return Map<String, dynamic>.from(res.data as Map);
+    } on DioException catch (e) {
+      throw _walletApiException(e);
+    }
+  }
+
+  /// The caller's own supporter standing with this artist (Bearer).
+  /// Returns `{artistId, tiers, rank, totalTokens, tier, badge}` — `rank` is
+  /// null when the caller has never tipped this artist.
+  Future<Map<String, dynamic>> fetchMySupport(String artistId) async {
+    try {
+      final res = await _client().get(
+        "/artists/${Uri.encodeComponent(artistId)}/supporters/me",
+        options: await _authed(),
+      );
+      return Map<String, dynamic>.from(res.data as Map);
     } on DioException catch (e) {
       throw _walletApiException(e);
     }
@@ -1859,6 +2455,77 @@ class WalletApiClient {
         options: await _authed(),
       );
       return Map<String, dynamic>.from(res.data as Map);
+    } on DioException catch (e) {
+      throw _walletApiException(e);
+    }
+  }
+
+  /// Every rating the caller has set (`GET /ratings/mine`), newest first.
+  /// Lets the app restore like/dislike state for a whole screen in ONE call
+  /// instead of `GET /ratings/:trackId` per visible tile.
+  Future<List<({String trackId, String rating, DateTime updatedAt})>>
+      fetchMyRatings() async {
+    try {
+      final res = await _client().get(
+        "/ratings/mine",
+        options: await _authed(),
+      );
+      final rows = (res.data as Map)["ratings"] as List<dynamic>;
+      return rows.map((raw) {
+        final r = raw as Map;
+        return (
+          trackId: r["trackId"] as String,
+          rating: r["rating"] as String,
+          updatedAt: DateTime.parse(r["updatedAt"] as String),
+        );
+      }).toList();
+    } on DioException catch (e) {
+      throw _walletApiException(e);
+    }
+  }
+
+  /// Aggregate ratings for many tracks at once (`POST /ratings/batch`).
+  /// Returns `trackId -> {likes, dislikes, total, likeRatio}`. The body is
+  /// deliberately a POST: a long track list does not belong in a URL.
+  Future<Map<String, TrackRatingStats>> fetchRatingsBatch(
+      List<String> trackIds) async {
+    if (trackIds.isEmpty) return const {};
+    try {
+      final res = await _client().post(
+        "/ratings/batch",
+        data: {"trackIds": trackIds},
+      );
+      final stats = (res.data as Map)["stats"] as Map;
+      return stats.map((key, value) => MapEntry(
+            key as String,
+            TrackRatingStats.fromJson(value as Map),
+          ));
+    } on DioException catch (e) {
+      throw _walletApiException(e);
+    }
+  }
+
+  /// Time-windowed trending tracks (`GET /ratings/trending`). Public — the
+  /// aggregates carry no per-user data, so no session token is sent.
+  Future<({List<TrendingTrack> tracks, TrendingWindow window})>
+      fetchTrendingTracks({int limit = 30}) async {
+    try {
+      final res = await _client().get(
+        "/ratings/trending",
+        queryParameters: {"limit": limit},
+      );
+      final body = res.data as Map;
+      // The feed is a FLAT track DTO with a `rating` block merged in, not a
+      // `{track, stats}` envelope — see ratingsRouter GET /trending.
+      final rows = body["items"] as List<dynamic>;
+      return (
+        tracks: rows
+            .map((raw) => TrendingTrack.fromJson(raw as Map))
+            .toList(),
+        window: TrendingWindow.fromJson(
+          (body["window"] as Map?) ?? const {},
+        ),
+      );
     } on DioException catch (e) {
       throw _walletApiException(e);
     }
@@ -2074,6 +2741,254 @@ class WalletApiClient {
         options: await _authed(),
       );
       return Map<String, dynamic>.from((res.data as Map)["song"] as Map);
+    } on DioException catch (e) {
+      throw _walletApiException(e);
+    }
+  }
+
+  // ── Server-side listening history & stats (GET /me/history, /me/stats) ────
+
+  /// The caller's server-side listening history, newest day first.
+  ///
+  /// This is the cross-device counterpart to the on-device (Drift) history:
+  /// it survives a reinstall and follows the account to a new phone.
+  ///
+  /// [before] is the opaque day cursor from a previous page's `nextBefore`.
+  Future<List<ServerListenEntry>> fetchListeningHistory({
+    int limit = 50,
+    String? before,
+    int? days,
+  }) async {
+    try {
+      final res = await _client().get(
+        "/me/history",
+        queryParameters: {
+          "limit": limit,
+          if (before != null) "before": before,
+          if (days != null) "days": days,
+        },
+        options: await _authed(),
+      );
+      final body = res.data as Map;
+      final entries = body["entries"] as List<dynamic>;
+      return entries
+          .map((raw) => ServerListenEntry.fromJson(raw as Map))
+          .toList();
+    } on DioException catch (e) {
+      throw _walletApiException(e);
+    }
+  }
+
+  /// Server-side listening totals: minutes, per-day chart, top tracks and top
+  /// artists over the last [days].
+  ///
+  /// Note the server reports `listens` as track-DAYS, not raw plays —
+  /// ListenHistory is unique per (user, track, UTC day). `listensIncludingSkips`
+  /// is the count with short skips added back in.
+  Future<ServerListenStats> fetchListenStats({int days = 30}) async {
+    try {
+      final res = await _client().get(
+        "/me/stats",
+        queryParameters: {"days": days},
+        options: await _authed(),
+      );
+      return ServerListenStats.fromJson(res.data as Map);
+    } on DioException catch (e) {
+      throw _walletApiException(e);
+    }
+  }
+
+  // ── Cross-device playback state (GET/PUT/DELETE /me/playback) ─────────────
+
+  /// Read the saved queue + resume position.
+  ///
+  /// [stale] is advisory: the server's state is older than its configured
+  /// window, so the UI can offer resume with a caveat rather than pretending
+  /// it's current. [droppedTrackIds] are ids the server filtered out (taken
+  /// down or unpublished) and the caller should prune locally.
+  Future<RemotePlaybackState> fetchPlaybackState() async {
+    try {
+      final res = await _client().get(
+        "/me/playback",
+        options: await _authed(),
+      );
+      return RemotePlaybackState.fromJson(res.data as Map);
+    } on DioException catch (e) {
+      throw _walletApiException(e);
+    }
+  }
+
+  /// Save the queue and position so another device can continue.
+  ///
+  /// Last-write-wins by design (two devices playing at once is inherently a
+  /// race); the client always sends its whole state.
+  ///
+  /// Throws [WalletApiException] with `current_track_not_in_queue` if
+  /// [currentTrackId] is not in [trackIds] — a caller bug, surfaced rather
+  /// than silently storing an inconsistent pair.
+  Future<void> savePlaybackState({
+    required List<String> trackIds,
+    String? currentTrackId,
+    int positionMs = 0,
+    bool playing = false,
+  }) async {
+    try {
+      await _client().put(
+        "/me/playback",
+        data: {
+          "queue": trackIds,
+          "currentTrackId": currentTrackId,
+          "positionMs": positionMs,
+          "playing": playing,
+        },
+        options: await _authed(),
+      );
+    } on DioException catch (e) {
+      throw _walletApiException(e);
+    }
+  }
+
+  /// Clear the stored state (e.g. the user finished or dismissed the resume).
+  Future<void> clearPlaybackState() async {
+    try {
+      await _client().delete(
+        "/me/playback",
+        options: await _authed(),
+      );
+    } on DioException catch (e) {
+      throw _walletApiException(e);
+    }
+  }
+
+  // ── Collaborative playlists ────────────────────────────────────────────────
+
+  /// Playlists this account collaborates on (owned or accepted as editor).
+  Future<List<SharedPlaylist>> fetchSharedPlaylists() async {
+    try {
+      final res = await _client().get("/shared", options: await _authed());
+      final rows = (res.data as Map)["playlists"] as List<dynamic>;
+      return rows
+          .map((raw) => SharedPlaylist.fromJson(raw as Map))
+          .toList();
+    } on DioException catch (e) {
+      throw _walletApiException(e);
+    }
+  }
+
+  /// Pending share invitations awaiting acceptance.
+  Future<List<PlaylistInvite>> fetchPlaylistInvites() async {
+    try {
+      final res = await _client().get("/invites", options: await _authed());
+      final rows = (res.data as Map)["invites"] as List<dynamic>;
+      return rows
+          .map((raw) => PlaylistInvite.fromJson(raw as Map))
+          .toList();
+    } on DioException catch (e) {
+      throw _walletApiException(e);
+    }
+  }
+
+  /// Accept an invitation. Until this is called the invite confers no access.
+  Future<void> acceptPlaylistInvite(String playlistId) async {
+    try {
+      await _client().post(
+        "/invites/${Uri.encodeComponent(playlistId)}/accept",
+        options: await _authed(),
+      );
+    } on DioException catch (e) {
+      throw _walletApiException(e);
+    }
+  }
+
+  /// Add tracks to a playlist this account can edit.
+  /// Throws on a track the server refuses (taken down / invisible).
+  Future<void> addTracksToSharedPlaylist(
+    String playlistId,
+    List<String> trackIds,
+  ) async {
+    try {
+      await _client().post(
+        "/collaboration/${Uri.encodeComponent(playlistId)}/tracks",
+        data: {"trackIds": trackIds},
+        options: await _authed(),
+      );
+    } on DioException catch (e) {
+      throw _walletApiException(e);
+    }
+  }
+
+  Future<void> removeTrackFromSharedPlaylist(
+    String playlistId,
+    String trackId,
+  ) async {
+    try {
+      await _client().delete(
+        "/collaboration/${Uri.encodeComponent(playlistId)}/tracks/${Uri.encodeComponent(trackId)}",
+        options: await _authed(),
+      );
+    } on DioException catch (e) {
+      throw _walletApiException(e);
+    }
+  }
+
+  // ── Onboarding taste profile ──────────────────────────────────────────────
+
+  /// The account's declared taste profile. Empty lists mean "no profile yet",
+  /// which is a normal state the onboarding step renders — not an error.
+  Future<TasteProfile> fetchTasteProfile() async {
+    try {
+      final res = await _client().get(
+        "/recommendations/preferences",
+        options: await _authed(),
+      );
+      return TasteProfile.fromJson(res.data as Map);
+    } on DioException catch (e) {
+      throw _walletApiException(e);
+    }
+  }
+
+  /// Create or replace the profile. Also invalidates the server's cached
+  /// For You page, so the next read reflects it immediately.
+  Future<TasteProfile> saveTasteProfile(TasteProfile profile) async {
+    try {
+      final res = await _client().put(
+        "/recommendations/preferences",
+        data: {
+          "genres": profile.genres,
+          "artistIds": profile.artistIds,
+          "era": profile.era,
+          "personalizationEnabled": profile.personalizationEnabled,
+          if (profile.region != null) "region": profile.region,
+        },
+        options: await _authed(),
+      );
+      return TasteProfile.fromJson(res.data as Map);
+    } on DioException catch (e) {
+      throw _walletApiException(e);
+    }
+  }
+
+  /// Set just the caller's leaderboard region (`PUT
+  /// /recommendations/preferences {"region": "ZA"|null}`) without touching
+  /// the taste fields. Null returns to the global boards.
+  Future<void> saveRegion(String? region) async {
+    try {
+      await _client().put(
+        "/recommendations/preferences",
+        data: {"region": region},
+        options: await _authed(),
+      );
+    } on DioException catch (e) {
+      throw _walletApiException(e);
+    }
+  }
+
+  Future<void> clearTasteProfile() async {
+    try {
+      await _client().delete(
+        "/recommendations/preferences",
+        options: await _authed(),
+      );
     } on DioException catch (e) {
       throw _walletApiException(e);
     }
@@ -2407,13 +3322,16 @@ class WalletApiClient {
   }
 
   /// Verify an email address with an emailed token.
-  /// GET /auth/verify?token=xxx → {ok: true}
+  /// POST /auth/verify {token} → {ok: true}
+  ///
+  /// The token goes in the BODY, not a query string. Query strings are exempt
+  /// from the secure channel (it seals bodies only, see `secure_channel.dart`)
+  /// and they land in every proxy/CDN access log and in `Referer` on any
+  /// navigation away from the page — so a GET would write a live
+  /// email-verification token into third-party logs.
   Future<void> verifyEmail(String token) async {
     try {
-      await _client().get(
-        "/auth/verify",
-        queryParameters: {"token": token},
-      );
+      await _client().post("/auth/verify", data: {"token": token});
     } on DioException catch (e) {
       throw _walletApiException(e);
     }
@@ -2508,13 +3426,19 @@ class WalletApiClient {
 
   /// Request a cash-out. Uses saved payout method when details omitted.
   /// POST /creator/payouts/request {artistId, tokens, method, details?}
+  /// Pass a caller-owned Idempotency-Key kept STABLE per form intent: a retry
+  /// after a timeout then replays against the original request (backend
+  /// answers the original row with deduped: true) instead of creating a
+  /// duplicate pending payout.
   Future<Map<String, dynamic>> requestPayout({
     required String artistId,
     required int tokens,
     required String method,
     String? details,
+    String? idempotencyKey,
   }) async {
     try {
+      final authed = await _authed();
       final res = await _client().post(
         "/creator/payouts/request",
         data: {
@@ -2523,7 +3447,10 @@ class WalletApiClient {
           "method": method,
           if (details != null && details.isNotEmpty) "details": details,
         },
-        options: await _authed(),
+        options: Options(headers: {
+          ...?authed.headers,
+          if (idempotencyKey != null) "Idempotency-Key": idempotencyKey,
+        }),
       );
       return Map<String, dynamic>.from(res.data as Map);
     } on DioException catch (e) {
@@ -2604,6 +3531,32 @@ class WalletApiClient {
       );
       return Map<String, dynamic>.from(res.data as Map);
     } on DioException catch (e) {
+      throw _walletApiException(e);
+    }
+  }
+
+  // ── Earn-to-listen rewards (`/rewards`) ──────────────────────────────────
+
+  /// The caller's earn-to-listen status (`GET /rewards/status`, Bearer).
+  /// Returns `{enabled, earnedToday, dailyCap, perPlay, newAccountTaper,
+  /// lifetimeEarned}`. Crediting happens server-side inside the verified-play
+  /// path — there is no claim endpoint to call from here.
+  ///
+  /// A 404 means the backend predates the rewards feature: returns null so
+  /// the caller can hide the UI instead of crashing on an absent endpoint.
+  /// 401/429/503 still throw [WalletApiException] for the caller to fold.
+  Future<Map<String, dynamic>?> fetchRewardsStatus() async {
+    try {
+      final res = await _client().get(
+        "/rewards/status",
+        options: await _authed(),
+      );
+      if (res.data is! Map) {
+        throw const WalletApiException("rewards_status_invalid_response");
+      }
+      return Map<String, dynamic>.from(res.data as Map);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
       throw _walletApiException(e);
     }
   }

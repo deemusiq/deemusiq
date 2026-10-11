@@ -4,6 +4,7 @@ import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:deemusiq/collections/fake.dart';
 import 'package:deemusiq/collections/routes.gr.dart';
+import 'package:deemusiq/components/fallbacks/error_box.dart';
 import 'package:deemusiq/modules/stats/summary/summary_card.dart';
 import 'package:deemusiq/extensions/constrains.dart';
 import 'package:deemusiq/extensions/context.dart';
@@ -15,6 +16,22 @@ class StatsPageSummarySection extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, ref) {
     final summary = ref.watch(playbackHistorySummaryProvider);
+
+    if (summary.hasError && summary.asData?.value == null) {
+      return SliverToBoxAdapter(
+        child: Center(
+          child: ErrorBox(
+            error: summary.error!,
+            onRetry: () {
+              ref.invalidate(playbackHistorySummaryProvider);
+            },
+          ),
+        ),
+      );
+    }
+
+    // FakeData is only a loading skeleton — a provider error takes the
+    // ErrorBox branch above and never renders fabricated numbers.
     final summaryData = summary.asData?.value ?? FakeData.historySummary;
 
     return Skeletonizer.sliver(

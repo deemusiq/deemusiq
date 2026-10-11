@@ -39,11 +39,29 @@ extension DurationToHumanReadableString on Duration {
 }
 
 extension ParseDuration on Duration {
+  /// Parses `ss`, `mm:ss` or `h:mm:ss` (whitespace trimmed). Throws a
+  /// [FormatException] with context on bad input — callers must catch and
+  /// show a user-visible fallback, never let it crash the player.
   static Duration fromString(String duration) {
-    final parts = duration.split(':').reversed.toList();
-    final seconds = int.parse(parts[0]);
-    final minutes = parts.length > 1 ? int.parse(parts[1]) : 0;
-    final hours = parts.length > 2 ? int.parse(parts[2]) : 0;
-    return Duration(hours: hours, minutes: minutes, seconds: seconds);
+    final parts = duration.trim().split(':').reversed.toList();
+    if (parts.isEmpty || parts.length > 3) {
+      throw FormatException('Expected ss, mm:ss or h:mm:ss', duration);
+    }
+    final numbers = <int>[];
+    for (final part in parts) {
+      final value = int.tryParse(part.trim());
+      if (value == null || value < 0) {
+        throw FormatException('Expected ss, mm:ss or h:mm:ss', duration);
+      }
+      numbers.add(value);
+    }
+    if (numbers.length > 1 && (numbers[0] > 59 || numbers[1] > 59)) {
+      throw FormatException('Minutes and seconds must be 0-59', duration);
+    }
+    return Duration(
+      hours: numbers.length > 2 ? numbers[2] : 0,
+      minutes: numbers.length > 1 ? numbers[1] : 0,
+      seconds: numbers[0],
+    );
   }
 }

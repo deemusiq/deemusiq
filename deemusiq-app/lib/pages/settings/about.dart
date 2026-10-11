@@ -7,6 +7,7 @@ import 'package:deemusiq/components/links/hyper_link.dart';
 import 'package:deemusiq/components/titlebar/titlebar.dart';
 import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/hooks/controllers/use_package_info.dart';
+import 'package:deemusiq/services/metadata/deemusiq_native_plugin.dart';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:auto_route/auto_route.dart';
@@ -47,6 +48,30 @@ class AboutDeeMusiqPage extends HookConsumerWidget {
                   height: 200,
                   width: 200,
                 ),
+                const SizedBox(height: 12),
+                // Launcher icons (full icon + adaptive foreground layer).
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: Assets.icons.appIcon.image(
+                        height: 52,
+                        width: 52,
+                        excludeFromSemantics: true,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: Assets.icons.appIconFg.image(
+                        height: 52,
+                        width: 52,
+                        excludeFromSemantics: true,
+                      ),
+                    ),
+                  ],
+                ),
                 Center(
                   child: Column(
                     children: [
@@ -61,11 +86,12 @@ class AboutDeeMusiqPage extends HookConsumerWidget {
                         defaultRowHeight: const FixedTableSize(40),
                         rows: [
                           // BSD-4-Clause attribution to upstream (NOTICE.md)
-                          const TableRow(
+                          TableRow(
                             cells: [
-                              TableCell(child: Text("Built on")),
-                              colon,
                               TableCell(
+                                  child: Text(context.l10n.about_built_on)),
+                              colon,
+                              const TableCell(
                                 child: Hyperlink(
                                   "Spotube by KRTirtho",
                                   "https://github.com/team-spotube/spotube",
@@ -97,11 +123,12 @@ class AboutDeeMusiqPage extends HookConsumerWidget {
                               )
                             ],
                           ),
-                          const TableRow(
+                          TableRow(
                             cells: [
-                              TableCell(child: Text("Website")),
-                              colon,
                               TableCell(
+                                  child: Text(context.l10n.about_website)),
+                              colon,
+                              const TableCell(
                                 child: Hyperlink(
                                   "deemusiq.co.za",
                                   "https://deemusiq.co.za/",
@@ -113,10 +140,10 @@ class AboutDeeMusiqPage extends HookConsumerWidget {
                             cells: [
                               TableCell(child: Text(context.l10n.repository)),
                               colon,
-                              const TableCell(
+                              TableCell(
                                 child: Hyperlink(
-                                  "deemusiq.co.za",
-                                  "https://deemusiq.co.za/",
+                                  '${kDeeMusiqPluginRepository.owner}/${kDeeMusiqPluginRepository.name}',
+                                  kDeeMusiqPluginRepository.repoUrl,
                                 ),
                               ),
                             ],
@@ -137,9 +164,9 @@ class AboutDeeMusiqPage extends HookConsumerWidget {
                             cells: [
                               TableCell(child: Text(context.l10n.bug_issues)),
                               colon,
-                              const TableCell(
+                              TableCell(
                                 child: Hyperlink(
-                                  "Support",
+                                  context.l10n.support,
                                   "mailto:deemusiq@protonmail.com",
                                 ),
                               ),
@@ -151,10 +178,8 @@ class AboutDeeMusiqPage extends HookConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 20),
-                // Plain string like the other DeeMusiq-specific surfaces; the
-                // upstream l10n value still credits Spotube's origin.
                 Text(
-                  "Made with ❤️ in South Africa 🇿🇦",
+                  context.l10n.about_made_in_sa,
                   textAlign: TextAlign.center,
                   style: theme.typography.small,
                 ),

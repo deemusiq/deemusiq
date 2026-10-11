@@ -15,6 +15,7 @@ import 'package:deemusiq/components/home/for_you_section.dart';
 import 'package:deemusiq/provider/history/recently_played.dart';
 import 'package:deemusiq/components/titlebar/titlebar.dart';
 import 'package:deemusiq/extensions/constrains.dart';
+import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/provider/user_preferences/user_preferences_provider.dart';
 import 'package:deemusiq/utils/platform.dart';
 
@@ -110,7 +111,7 @@ class _StreakBadge extends HookConsumerWidget {
     if (streak < 2) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Text('🔥 $streak-day listening streak',
+      child: Text(context.l10n.home_listening_streak(streak),
           style: const TextStyle(fontSize: 12)),
     );
   }

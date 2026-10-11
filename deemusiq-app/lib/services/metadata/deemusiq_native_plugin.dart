@@ -27,6 +27,7 @@ import 'package:deemusiq/services/youtube_engine/yt_dlp_provisioner.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart' show Video, StreamManifest;
 import 'package:deemusiq/services/audio_player/audio_error_handler.dart';
 import 'package:deemusiq/services/audio_player/audio_quality.dart';
+import 'package:deemusiq/services/audio_player/data_saver.dart';
 import 'package:deemusiq/services/artist_info/artist_info_service.dart';
 import 'package:deemusiq/services/connectivity/engine_failover.dart';
 import 'package:deemusiq/services/content_filter.dart';
@@ -47,6 +48,17 @@ final PluginConfiguration kDeeMusiqNativePluginConfig = PluginConfiguration(
     PluginAbilities.metadata,
     PluginAbilities.audioSource,
   ],
+);
+
+/// Source repository of the built-in native provider. The external plugin
+/// store is gone, but the distribution origin still needs exactly one home —
+/// the About page renders this instead of a duplicated hardcoded link.
+final kDeeMusiqPluginRepository = MetadataPluginRepository(
+  name: 'deemusiq',
+  owner: 'deemusiq',
+  description: "DeeMusiq's own catalog — artists, albums and tracks.",
+  repoUrl: 'https://deemusiq.co.za/',
+  topics: const ['music', 'metadata', 'flutter'],
 );
 
 
@@ -271,6 +283,23 @@ Future<bool> fetchCatalogArtistVerified(String artistId) async {
   }
 }
 
+/// When the data saver is active, keep only the cheapest audio stream — the
+/// mirror of the ad player picking the HIGHEST bitrate (ads optimize startup,
+/// the saver optimizes bytes). Pass-through otherwise.
+Future<List<DeeMusiqAudioSourceStreamObject>> _dataSaverStreams(
+    List<DeeMusiqAudioSourceStreamObject> streams) async {
+  if (streams.length <= 1 || !await DataSaverService.isActive()) {
+    return streams;
+  }
+  final lowest = lowestBitrateOf(streams, (s) => s.bitrate);
+  if (lowest == null) return streams;
+  AppLogger.log.i(
+    'Data saver: picked lowest-bitrate stream '
+    '(${lowest.bitrate?.round() ?? 0} bps of ${streams.length})',
+  );
+  return [lowest];
+}
+
 List<DeeMusiqImageObject> _images(String? url) =>
     url == null || url.isEmpty ? const [] : [DeeMusiqImageObject(url: url)];
 
@@ -348,6 +377,9 @@ DeeMusiqFullTrackObject _track(Map t) {
     durationMs: (t["durationMs"] as num?)?.toInt() ?? 0,
     isrc: "",
     explicit: t["explicit"] == true,
+    loudnessDb: (t["loudnessDb"] as num?)?.toDouble(),
+    gainDb: (t["gainDb"] as num?)?.toDouble(),
+    liteUrl: t["liteUrl"] as String?,
   ) as DeeMusiqFullTrackObject;
 }
 
@@ -396,6 +428,9 @@ DeeMusiqFullTrackObject _catalogFeedTrack(Map s) {
     durationMs: (s["durationMs"] as num?)?.toInt() ?? 0,
     isrc: "",
     explicit: s["explicit"] == true,
+    loudnessDb: (s["loudnessDb"] as num?)?.toDouble(),
+    gainDb: (s["gainDb"] as num?)?.toDouble(),
+    liteUrl: s["liteUrl"] as String?,
   ) as DeeMusiqFullTrackObject;
 }
 
@@ -1786,6 +1821,24 @@ class _NativeAudioSource extends MetadataPluginAudioSourceEndpoint {
               : 'Catalog track $id is unavailable: no DeeMusiq backend configured (offline build)',
         );
       }
+      // Data saver: the catalog may mint a low-bitrate lite rendition
+      // (`liteUrl` on the track DTO, served by
+      // /metadata/audio/:trackId?quality=lite). When the saver is active it
+      // replaces the full source. The track JSON is re-fetched on every
+      // resolution, so this URL is as fresh as the signed full URL below.
+      final liteUrl = (track['liteUrl'] as String?)?.trim() ?? '';
+      if (liteUrl.isNotEmpty && await DataSaverService.isActive()) {
+        final resolved =
+            liteUrl.startsWith('http') ? liteUrl : '${api.baseUrl}$liteUrl';
+        AppLogger.log.i('Data saver: playing lite rendition of $id');
+        return [
+          DeeMusiqAudioSourceStreamObject(
+            url: resolved,
+            container: 'webm',
+            type: DeeMusiqMediaCompressionType.lossy,
+          ),
+        ];
+      }
       final streamUrl = track['streamUrl'] as String?;
       uri = streamUrl != null && streamUrl.isNotEmpty
           ? '$_urlPrefix$streamUrl'
@@ -1827,7 +1880,7 @@ class _NativeAudioSource extends MetadataPluginAudioSourceEndpoint {
         AppLogger.log.i(
           'Returning ${filteredStreams.length} streams for $videoId after quality filtering',
         );
-        return filteredStreams
+        return _dataSaverStreams(filteredStreams
             .map(
               (s) => DeeMusiqAudioSourceStreamObject(
                 url: s.url.toString(),
@@ -1836,7 +1889,7 @@ class _NativeAudioSource extends MetadataPluginAudioSourceEndpoint {
                 bitrate: s.bitrate.bitsPerSecond.toDouble(),
               ),
             )
-            .toList();
+            .toList());
       } catch (e, stack) {
         if (e is EngineFailoverException) {
           AppLogger.log.w(
@@ -1873,14 +1926,14 @@ class _NativeAudioSource extends MetadataPluginAudioSourceEndpoint {
           final retryStreams = YouTubeAudioQualityService.filterStreams(retryManifest.audioOnly);
           if (retryStreams.isNotEmpty) {
             AppLogger.log.i('Retry succeeded: ${retryStreams.length} streams for $videoId');
-            return retryStreams
+            return _dataSaverStreams(retryStreams
                 .map((s) => DeeMusiqAudioSourceStreamObject(
                   url: s.url.toString(),
                   container: s.container.name,
                   type: DeeMusiqMediaCompressionType.lossy,
                   bitrate: s.bitrate.bitsPerSecond.toDouble(),
                 ))
-                .toList();
+                .toList());
           }
         } catch (retryErr) {
           AppLogger.log.w('Retry also failed for $videoId: $retryErr');
@@ -1988,7 +2041,7 @@ class _NativeAudioSource extends MetadataPluginAudioSourceEndpoint {
     );
     if (fallbackStreams.isNotEmpty) {
       AudioErrorHandler.instance.notifyPlaybackFallback(
-        'DeeMusiq servers unreachable — playing from YouTube',
+        const AudioUserMessage(AudioErrorMessage.fallbackSource),
       );
     }
     return fallbackStreams;

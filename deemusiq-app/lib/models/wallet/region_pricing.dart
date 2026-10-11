@@ -34,14 +34,16 @@ class RegionTier {
   double localPrice(double baseZar) => baseZar * pppFactor * fxPerZar;
 
   /// Pretty-printed local price, e.g. "R29.00" or "$5.99".
-  String formatPrice(double baseZar) {
+  ///
+  /// [zeroDecimal] comes from the backend's authoritative list (it ships with
+  /// every priced pack) rather than a local copy of the currency codes. The
+  /// previous hardcoded NGN/KES/INR check silently diverged the moment a
+  /// zero-decimal market was added server-side, showing "₦1500.00" where the
+  /// API reports whole-naira amounts.
+  String formatPrice(double baseZar, {bool zeroDecimal = false}) {
     final value = localPrice(baseZar);
-    // Currencies with negligible minor units read better without decimals.
-    final noDecimals = currencyCode == "NGN" ||
-        currencyCode == "KES" ||
-        currencyCode == "INR";
     final amount =
-        noDecimals ? value.round().toString() : value.toStringAsFixed(2);
+        zeroDecimal ? value.round().toString() : value.toStringAsFixed(2);
     return "$currencySymbol$amount";
   }
 

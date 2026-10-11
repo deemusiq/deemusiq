@@ -6,6 +6,7 @@ import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/collections/motion.dart';
 import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/modules/getting_started/blur_card.dart';
+import 'package:deemusiq/pages/getting_started/sections/artwork.dart';
 import 'package:deemusiq/utils/platform.dart';
 
 class GettingStartedPageGreetingSection extends HookConsumerWidget {
@@ -63,9 +64,11 @@ class GettingStartedPageGreetingSection extends HookConsumerWidget {
                 textAlign: TextAlign.center,
               ).light().large().italic(),
             ),
-            const Gap(84),
+            const Gap(24),
+            stagger(3, const GettingStartedArtworkStrip()),
+            const Gap(24),
             stagger(
-              3,
+              4,
               Button.primary(
                 onPressed: onNext,
                 trailing: const Icon(DeeMusiqIcons.angleRight),

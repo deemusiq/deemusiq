@@ -99,21 +99,26 @@ class IntegrityService {
       ValueNotifier<IntegrityVerdict>(IntegrityVerdict.ok);
 
   /// Set by the active backend TLS pin probe (see [BackendCertPinProbe]).
-  /// Only a definitive FAILED probe (pin configured + host reachable + cert
-  /// mismatch) sets this; offline/unknown states never do, so a phone without
-  /// connectivity degrades to normal offline behavior instead of bricking.
-  bool _backendPinFailed =
-      BackendCertPinProbe.state.value == BackendPinProbeState.failed;
+  /// Only a definitive FAILED or MISCONFIGURED probe (pin present, host
+  /// reachable, cert mismatch — or no locatable host at all) sets this;
+  /// offline/unknown states never do, so a phone without connectivity degrades
+  /// to normal offline behavior instead of bricking.
+  bool _backendPinFailed = _isPinBlocking(
+    BackendCertPinProbe.state.value,
+  );
+
+  static bool _isPinBlocking(BackendPinProbeState s) =>
+      s == BackendPinProbeState.failed ||
+      s == BackendPinProbeState.misconfigured;
 
   void _onBackendPinProbe() {
-    final failed =
-        BackendCertPinProbe.state.value == BackendPinProbeState.failed;
+    final failed = _isPinBlocking(BackendCertPinProbe.state.value);
     if (failed == _backendPinFailed) return;
     _backendPinFailed = failed;
     if (failed) {
       AppLogger.log.e(
         'IntegrityService: backend TLS pin probe FAILED — locking wallet '
-        '(possible MITM / compromised CA)',
+        '(possible MITM / compromised CA, or pin configured without a host)',
       );
     } else {
       AppLogger.log.i('IntegrityService: backend TLS pin probe verified');

@@ -164,6 +164,7 @@ abstract class DeeMusiqIcons {
   static const lock = FeatherIcons.lock;
   static const shield = FeatherIcons.shield;
   static const region = Icons.public_rounded;
+  static const dataSaver = Icons.data_saver_on_rounded;
   static const spotify = Icons.graphic_eq_rounded;
   static const google = SimpleIcons.google;
   static const appleMusic = Icons.album_rounded;

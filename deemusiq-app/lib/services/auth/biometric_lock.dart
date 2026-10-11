@@ -130,7 +130,12 @@ class BiometricLockService {
         try {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setInt(_graceKey, DateTime.now().millisecondsSinceEpoch);
-        } catch (_) {}
+        } catch (e) {
+          // The unlock itself succeeded — only the grace-period timestamp is
+          // lost, so the lock re-appears sooner than configured on next
+          // resume; logged for diagnosis.
+          AppLogger.log.w('biometric grace timestamp persist failed: $e');
+        }
       }
       return ok;
     } on MissingPluginException {

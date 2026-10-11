@@ -11,6 +11,7 @@ import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:deemusiq/collections/routes.gr.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/components/adaptive/adaptive_select_tile.dart';
+import 'package:deemusiq/components/player/tempo_pitch_controls.dart';
 import 'package:deemusiq/models/database/database.dart';
 import 'package:deemusiq/models/metadata/metadata.dart';
 import 'package:deemusiq/modules/settings/playback/edit_connect_port_dialog.dart';
@@ -27,6 +28,7 @@ import 'package:deemusiq/services/logger/logger.dart';
 import 'package:deemusiq/services/metadata/deemusiq_native_plugin.dart';
 import 'package:deemusiq/services/youtube_engine/yt_dlp_engine.dart';
 import 'package:deemusiq/services/audio_player/audio_quality.dart';
+import 'package:deemusiq/services/audio_player/data_saver.dart';
 
 import 'package:deemusiq/utils/platform.dart';
 
@@ -43,6 +45,7 @@ class SettingsPlaybackSection extends HookConsumerWidget {
     final theme = Theme.of(context);
 
     final youtubeQuality = useState(YouTubeAudioQualityService.quality);
+    final dataSaverMode = ref.watch(dataSaverModeProvider);
 
     return SectionCardWithHeading(
       heading: context.l10n.playback,
@@ -87,7 +90,7 @@ class SettingsPlaybackSection extends HookConsumerWidget {
         ),
         AdaptiveSelectTile<YouTubeAudioQuality>(
           secondary: const Icon(DeeMusiqIcons.audioQuality),
-          title: const Text('YouTube Audio Quality'),
+          title: Text(context.l10n.playback_youtube_quality),
           value: youtubeQuality.value,
           options: YouTubeAudioQuality.values
               .map((q) => SelectItemButton(
@@ -202,11 +205,36 @@ class SettingsPlaybackSection extends HookConsumerWidget {
         ),
         ListTile(
           leading: const Icon(DeeMusiqIcons.normalize),
-          title: Text(context.l10n.normalize_audio),
+          title: Text(context.l10n.normalize_volume),
+          subtitle: Text(context.l10n.normalize_volume_description),
           trailing: Switch(
             value: preferences.normalizeAudio,
             onChanged: preferencesNotifier.setNormalizeAudio,
           ),
+        ),
+        AdaptiveSelectTile<DataSaverMode>(
+          secondary: const Icon(DeeMusiqIcons.dataSaver),
+          title: Text(context.l10n.data_saver),
+          subtitle: Text(context.l10n.data_saver_description),
+          value: dataSaverMode,
+          options: [
+            SelectItemButton(
+              value: DataSaverMode.off,
+              child: Text(context.l10n.data_saver_off),
+            ),
+            SelectItemButton(
+              value: DataSaverMode.on,
+              child: Text(context.l10n.data_saver_on),
+            ),
+            SelectItemButton(
+              value: DataSaverMode.autoOnMetered,
+              child: Text(context.l10n.data_saver_auto),
+            ),
+          ],
+          onChanged: (value) {
+            if (value == null) return;
+            ref.read(dataSaverModeProvider.notifier).setMode(value);
+          },
         ),
         ListTile(
             leading: const Icon(DeeMusiqIcons.repeat),
@@ -251,6 +279,11 @@ class SettingsPlaybackSection extends HookConsumerWidget {
         // per-pairing HTTP tokens minted on approval).
         if (preferences.enableConnect) const _PairedDevicesTile(),
         const _MetadataProviderTile(),
+        // Tempo & pitch (speed persists via playbackSpeedProvider).
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: TempoPitchControls(),
+        ),
       ],
     );
   }
@@ -344,17 +377,17 @@ class _PairedDevicesTile extends ConsumerWidget {
         const Divider(),
         ListTile(
           leading: const Icon(DeeMusiqIcons.connect),
-          title: const Text("Paired devices"),
+          title: Text(context.l10n.pairing_title),
           subtitle: Text(
             paired.isEmpty
-                ? "No devices paired. Approving a Connect request pairs it."
-                : "${paired.length} paired — revoking also drops its HTTP access token.",
+                ? context.l10n.pairing_empty
+                : context.l10n.pairing_count(paired.length),
           ),
           trailing: paired.isEmpty
               ? null
               : Tooltip(
-                  tooltip: const TooltipContainer(
-                    child: Text("Revoke all pairings"),
+                  tooltip: TooltipContainer(
+                    child: Text(context.l10n.pairing_revoke_all),
                   ).call,
                   child: IconButton.secondary(
                     icon: const Icon(DeeMusiqIcons.delete),
@@ -368,8 +401,8 @@ class _PairedDevicesTile extends ConsumerWidget {
             leading: const Icon(DeeMusiqIcons.device, size: 18),
             title: Text(origin).small(),
             trailing: Tooltip(
-              tooltip: const TooltipContainer(
-                child: Text("Revoke pairing"),
+              tooltip: TooltipContainer(
+                child: Text(context.l10n.pairing_revoke),
               ).call,
               child: IconButton.ghost(
                 icon: const Icon(DeeMusiqIcons.close, size: 16),

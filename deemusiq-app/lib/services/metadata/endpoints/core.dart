@@ -1,17 +1,13 @@
 import 'package:deemusiq/models/metadata/metadata.dart';
 
-class MetadataPluginCore {
+abstract class MetadataPluginCore {
   MetadataPluginCore();
 
   Future<PluginUpdateAvailable?> checkUpdate(
     PluginConfiguration pluginConfig,
-  ) async {
-    throw UnimplementedError('Native plugin must override');
-  }
+  );
 
-  Future<String> get support async {
-    throw UnimplementedError('Native plugin must override');
-  }
+  Future<String> get support;
 
   /// [details] is a map containing the scrobble information, such as:
   /// - [id] -> The unique identifier of the track.
@@ -25,7 +21,5 @@ class MetadataPluginCore {
   /// - [timestamp] -> The timestamp of the scrobble (optional).
   /// - [duration_ms] -> The duration of the track in milliseconds (optional).
   /// - [isrc] -> The ISRC code of the track (optional).
-  Future<void> scrobble(Map<String, dynamic> details) async {
-    throw UnimplementedError('Native plugin must override');
-  }
+  Future<void> scrobble(Map<String, dynamic> details);
 }

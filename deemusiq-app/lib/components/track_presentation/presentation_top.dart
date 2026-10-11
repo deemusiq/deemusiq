@@ -147,8 +147,8 @@ class TrackPresentationTopSection extends HookConsumerWidget {
           ),
         if (playlistCollection != null && hasConnectPeers)
           Tooltip(
-            tooltip: const TooltipContainer(
-              child: Text("Send to nearby device"),
+            tooltip: TooltipContainer(
+              child: Text(context.l10n.share_nearby_title),
             ).call,
             child: IconButton.outline(
               icon: const Icon(DeeMusiqIcons.speaker),

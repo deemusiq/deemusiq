@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:deemusiq/services/kv_store/kv_store.dart';
+import 'package:deemusiq/services/logger/logger.dart';
 
 /// Rolling count of how often each track was played during the current
 /// calendar month (`yyyy-mm`, local time). Pure value type — all rollover and
@@ -111,7 +112,10 @@ class MonthlyPlaysState {
         plays: plays,
         lastPlayedMs: parseCounts(decoded['lastPlayed']),
       );
-    } catch (_) {
+    } catch (e) {
+      // Corrupt persisted leaderboard is discarded — a fresh month starts
+      // instead of crashing the app on every launch.
+      AppLogger.log.w('Discarding corrupt monthly-plays state: $e');
       return null;
     }
   }
@@ -144,7 +148,10 @@ class MonthlyPlaysNotifier extends StateNotifier<MonthlyPlaysState> {
       final raw = KVStoreService.sharedPreferences.getString(storageKey);
       final restored = MonthlyPlaysState.fromJsonString(raw);
       if (restored != null) return restored.rolloverIfNeeded(clock());
-    } catch (_) {}
+    } catch (e, stack) {
+      // Storage read failed — fall through to a fresh state for this month.
+      AppLogger.reportError(e, stack, 'MonthlyPlaysNotifier._initialState');
+    }
     return MonthlyPlaysState.current(clock());
   }
 
@@ -171,7 +178,11 @@ class MonthlyPlaysNotifier extends StateNotifier<MonthlyPlaysState> {
     try {
       await KVStoreService.sharedPreferences
           .setString(storageKey, state.toJsonString());
-    } catch (_) {}
+    } catch (e, stack) {
+      // Persistence failed — counters stay correct in memory for this
+      // session but won't survive a restart.
+      AppLogger.reportError(e, stack, 'MonthlyPlaysNotifier._persist');
+    }
   }
 }
 

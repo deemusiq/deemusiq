@@ -14,6 +14,7 @@ import 'package:deemusiq/modules/artist/artist_album_list.dart';
 import 'package:deemusiq/pages/artist/section/footer.dart';
 import 'package:deemusiq/pages/artist/section/header.dart';
 import 'package:deemusiq/pages/artist/section/related_artists.dart';
+import 'package:deemusiq/pages/artist/section/top_supporters.dart';
 import 'package:deemusiq/pages/artist/section/top_tracks.dart';
 import 'package:deemusiq/provider/metadata_plugin/artist/albums.dart';
 import 'package:deemusiq/provider/metadata_plugin/artist/artist.dart';
@@ -22,6 +23,7 @@ import 'package:deemusiq/provider/metadata_plugin/artist/related.dart';
 import 'package:deemusiq/provider/metadata_plugin/artist/top_tracks.dart';
 import 'package:deemusiq/provider/metadata_plugin/artist/wikipedia.dart';
 import 'package:deemusiq/provider/metadata_plugin/library/artists.dart';
+import 'package:deemusiq/provider/wallet/supporter_provider.dart';
 
 @RoutePage()
 class ArtistPage extends HookConsumerWidget {
@@ -58,6 +60,7 @@ class ArtistPage extends HookConsumerWidget {
             ref.invalidate(metadataPluginArtistAlbumsProvider(artistId));
             ref.invalidate(metadataPluginIsSavedArtistProvider(artistId));
             ref.invalidate(metadataPluginArtistTopTracksProvider(artistId));
+            ref.invalidate(supporterBoardProvider(artistId));
             if (artistQuery.hasValue) {
               ref.invalidate(
                 artistWikipediaSummaryProvider(artistQuery.asData!.value),
@@ -113,6 +116,13 @@ class ArtistPage extends HookConsumerWidget {
                   ),
                   const SliverGap(20),
                   ArtistPageTopTracks(artistId: artistId),
+                  const SliverGap(20),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    sliver: SliverToBoxAdapter(
+                      child: ArtistPageSupporters(artistId: artistId),
+                    ),
+                  ),
                   const SliverGap(20),
                   SliverToBoxAdapter(child: ArtistAlbumList(artistId)),
                   SliverPadding(

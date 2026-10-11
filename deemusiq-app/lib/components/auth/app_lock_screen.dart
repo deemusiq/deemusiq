@@ -1,6 +1,7 @@
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
+import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/services/auth/biometric_lock.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
 
@@ -51,20 +52,22 @@ class AppLockScreen extends HookConsumerWidget {
             children: [
               const Icon(DeeMusiqIcons.verified, size: 48),
               const Gap(16),
-              const Text("DeeMusiq is locked").large().semiBold(),
+              Text(context.l10n.app_lock_title).large().semiBold(),
               const Gap(6),
-              const Text(
-                "Use your fingerprint, face or device PIN to continue.",
+              Text(
+                context.l10n.app_lock_body,
                 textAlign: TextAlign.center,
               ).muted().small(),
               const Gap(20),
               Button.primary(
                 onPressed: busy.value ? null : prompt,
-                child: Text(busy.value ? "Verifying…" : "Unlock"),
+                child: Text(busy.value
+                    ? context.l10n.verifying
+                    : context.l10n.app_lock_unlock),
               ),
               if (failed.value && checked.value) ...[
                 const Gap(8),
-                const Text("Unlock failed — try again.").muted().xSmall(),
+                Text(context.l10n.app_lock_failed).muted().xSmall(),
               ],
             ],
           ),

@@ -7,6 +7,7 @@ import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/collections/routes.dart';
 import 'package:deemusiq/components/dialogs/confirm_download_dialog.dart';
 import 'package:deemusiq/extensions/color_scheme.dart';
+import 'package:deemusiq/extensions/audio_user_message.dart';
 import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/models/metadata/metadata.dart';
 import 'package:deemusiq/provider/audio_player/audio_player.dart';
@@ -35,8 +36,9 @@ void useGlobalSubscriptions(WidgetRef ref) {
     // Surface audio errors as user-visible toasts so "nothing happens" on
     // playback failure is actually visible to the user.
     AudioErrorHandler.instance.onUserMessage =
-        (String message, AudioErrorSeverity severity) {
+        (AudioUserMessage message, AudioErrorSeverity severity) {
       if (!context.mounted) return;
+      final resolvedMessage = message.resolve(context.l10n);
       final color = severity == AudioErrorSeverity.error
           ? theme.colorScheme.destructive
           : severity == AudioErrorSeverity.warning
@@ -63,7 +65,7 @@ void useGlobalSubscriptions(WidgetRef ref) {
                 size: 14,
               ),
               title: Text(
-                message,
+                resolvedMessage,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(

@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart' show ListTile, ListTileControlAffinity;
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
@@ -50,7 +51,9 @@ class AdaptiveSelectTile<T> extends HookWidget {
 
     Widget? control = Select<T>(
       itemBuilder: (context, item) {
-        return options.firstWhere((element) => element.value == item).child;
+        final match =
+            options.where((element) => element.value == item).firstOrNull;
+        return (match ?? options.firstOrNull)?.child ?? const SizedBox.shrink();
       },
       value: value,
       onChanged: onChanged,
@@ -72,8 +75,10 @@ class AdaptiveSelectTile<T> extends HookWidget {
 
     if (mediaQuery.smAndDown) {
       if (showValueWhenUnfolded) {
+        final current =
+            options.where((element) => element.value == value).firstOrNull;
         control = OutlineBadge(
-          child: options.firstWhere((element) => element.value == value).child,
+          child: (current ?? options.firstOrNull)?.child ?? const SizedBox.shrink(),
         );
       } else {
         control = null;

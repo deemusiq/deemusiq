@@ -9,6 +9,7 @@ import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/components/comments/comment_tile.dart';
 import 'package:deemusiq/components/fallbacks/error_box.dart';
 import 'package:deemusiq/components/wallet/wallet_common.dart';
+import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/provider/wallet/comments_provider.dart';
 import 'package:deemusiq/services/wallet/wallet_api.dart';
 
@@ -34,7 +35,7 @@ class CommentsSection extends ConsumerWidget {
           children: [
             const Icon(FeatherIcons.messageCircle, size: 18),
             const Gap(8),
-            const Text("Comments").semiBold(),
+            Text(context.l10n.comments_title).semiBold(),
           ],
         ),
         const Gap(12),
@@ -65,10 +66,10 @@ class CommentsSection extends ConsumerWidget {
                 const Icon(FeatherIcons.messageCircle,
                     size: 28, color: deeMusiqOrange),
                 const Gap(10),
-                const Text("No comments yet").semiBold(),
+                Text(context.l10n.comments_empty_title).semiBold(),
                 const Gap(4),
-                const Text(
-                  "Be the first to share what you think.",
+                Text(
+                  context.l10n.comments_empty_body,
                   textAlign: TextAlign.center,
                 ).muted().small(),
               ],
@@ -94,7 +95,7 @@ class CommentsSection extends ConsumerWidget {
                     state.loadMoreError is WalletApiException
                         ? (state.loadMoreError as WalletApiException)
                             .friendlyMessage
-                        : "Couldn't load more comments.",
+                        : context.l10n.comments_load_more_failed,
                     textAlign: TextAlign.center,
                   ).muted().small(),
                 ),
@@ -102,7 +103,7 @@ class CommentsSection extends ConsumerWidget {
                   leading: const Icon(DeeMusiqIcons.refresh, size: 14),
                   onPressed: () =>
                       ref.read(commentsProvider(target).notifier).loadMore(),
-                  child: const Text("Retry"),
+                  child: Text(context.l10n.retry),
                 ),
               ],
             )
@@ -111,7 +112,7 @@ class CommentsSection extends ConsumerWidget {
               child: Button.outline(
                 onPressed: () =>
                     ref.read(commentsProvider(target).notifier).loadMore(),
-                child: const Text("Load more comments"),
+                child: Text(context.l10n.comments_load_more),
               ),
             ),
         ],
@@ -133,12 +134,12 @@ class _SignInToCommentCard extends StatelessWidget {
         children: [
           const Icon(DeeMusiqIcons.user, size: 18),
           const Gap(10),
-          const Expanded(
-            child: Text("Sign in to join the conversation."),
+          Expanded(
+            child: Text(context.l10n.comments_sign_in_body),
           ),
           Button.primary(
             onPressed: () => context.pushRoute(const Auth()),
-            child: const Text("Sign in"),
+            child: Text(context.l10n.sign_in),
           ),
         ],
       ),
@@ -185,7 +186,7 @@ class CommentComposer extends HookConsumerWidget {
         if (context.mounted) {
           showWalletToast(
             context,
-            "Couldn't post your comment — try again.",
+            context.l10n.comments_post_failed,
             icon: DeeMusiqIcons.error,
           );
         }
@@ -200,7 +201,9 @@ class CommentComposer extends HookConsumerWidget {
           controller: controller,
           maxLines: parentId == null ? 3 : 2,
           placeholder: Text(
-            parentId == null ? "Add a comment…" : "Write a reply…",
+            parentId == null
+                ? context.l10n.comments_add_hint
+                : context.l10n.comments_reply_hint,
           ),
         ),
         const Gap(8),
@@ -214,7 +217,9 @@ class CommentComposer extends HookConsumerWidget {
                 )
               : const Icon(DeeMusiqIcons.message, size: 14),
           onPressed: post,
-          child: Text(parentId == null ? "Post" : "Reply"),
+          child: Text(parentId == null
+              ? context.l10n.comments_post
+              : context.l10n.comments_reply),
         ),
       ],
     );

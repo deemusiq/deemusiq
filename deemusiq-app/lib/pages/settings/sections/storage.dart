@@ -5,6 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/components/dialogs/prompt_dialog.dart';
+import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/modules/settings/section_card_with_heading.dart';
 import 'package:deemusiq/provider/local_tracks/local_tracks_provider.dart';
 import 'package:deemusiq/provider/offline_queue/offline_queue_provider.dart';
@@ -30,20 +31,18 @@ class SettingsStorageSection extends HookConsumerWidget {
     );
   }
 
-  String _licenseText(OfflineLicenseStatus status) {
+  String _licenseText(BuildContext context, OfflineLicenseStatus status) {
     String day(DateTime? d) =>
         d == null ? '—' : d.toLocal().toString().split(' ').first;
     switch (status.state) {
       case OfflineLicenseState.valid:
-        return 'Offline license valid until ${day(status.validUntil)}';
+        return context.l10n.storage_license_valid(day(status.validUntil));
       case OfflineLicenseState.grace:
-        return 'Offline license expired — grace period, reconnect to renew '
-            '(last confirmed ${day(status.lastConfirmedAt)})';
+        return context.l10n.storage_license_grace(day(status.lastConfirmedAt));
       case OfflineLicenseState.locked:
-        return 'Offline playback locked since ${day(status.lockedSince)} — '
-            'connect to the internet to renew the license';
+        return context.l10n.storage_license_locked(day(status.lockedSince));
       case OfflineLicenseState.unconfirmed:
-        return 'Offline license not active (no backend confirmation yet)';
+        return context.l10n.storage_license_unconfirmed;
     }
   }
 
@@ -71,20 +70,21 @@ class SettingsStorageSection extends HookConsumerWidget {
     final theme = Theme.of(context);
 
     return SectionCardWithHeading(
-      heading: "Storage",
+      heading: context.l10n.storage_heading,
       children: [
         ListTile(
           leading: const Icon(DeeMusiqIcons.download),
-          title: const Text("Downloaded music"),
+          title: Text(context.l10n.storage_downloaded_music),
           subtitle: Text(
             report == null
-                ? "Scanning…"
-                : "${DownloadStorage.formatBytes(report.totalBytes)} "
-                    "across ${report.entries.length} file(s)",
+                ? context.l10n.storage_scanning
+                : context.l10n.storage_usage(
+                    DownloadStorage.formatBytes(report.totalBytes),
+                    report.entries.length),
           ),
           trailing: Tooltip(
-            tooltip: const TooltipContainer(
-              child: Text("Refresh"),
+            tooltip: TooltipContainer(
+              child: Text(context.l10n.refresh),
             ).call,
             child: IconButton.secondary(
               icon: const Icon(DeeMusiqIcons.refresh),
@@ -101,15 +101,16 @@ class SettingsStorageSection extends HookConsumerWidget {
                   ? DeeMusiqIcons.lock
                   : DeeMusiqIcons.shield,
             ),
-            title: const Text("Offline playback license"),
-            subtitle: Text(_licenseText(licenseFuture.data!)),
+            title: Text(context.l10n.storage_license_title),
+            subtitle: Text(_licenseText(context, licenseFuture.data!)),
           ),
         if ((pendingActions.asData?.value ?? 0) > 0)
           ListTile(
             leading: const Icon(DeeMusiqIcons.refresh),
-            title: const Text("Pending sync"),
+            title: Text(context.l10n.storage_pending_sync),
             subtitle: Text(
-              "${pendingActions.asData!.value} action(s) will sync when you're back online",
+              context.l10n
+                  .storage_pending_sync_body(pendingActions.asData!.value),
             ),
           ),
         if (report != null && report.entries.isNotEmpty) ...[
@@ -125,17 +126,18 @@ class SettingsStorageSection extends HookConsumerWidget {
               ),
               subtitle: Text(DownloadStorage.formatBytes(entry.sizeBytes)),
               trailing: Tooltip(
-                tooltip: const TooltipContainer(
-                  child: Text("Delete"),
+                tooltip: TooltipContainer(
+                  child: Text(context.l10n.delete),
                 ).call,
                 child: IconButton.ghost(
                   icon: const Icon(DeeMusiqIcons.trash),
                   onPressed: () async {
                     final confirmed = await showPromptDialog(
                       context: context,
-                      title: "Delete download",
-                      message:
-                          "Delete \"${entry.fileName}\" (${DownloadStorage.formatBytes(entry.sizeBytes)})? This frees the space but the song won't be playable offline anymore.",
+                      title: context.l10n.storage_delete_title,
+                      message: context.l10n.storage_delete_message(
+                          entry.fileName,
+                          DownloadStorage.formatBytes(entry.sizeBytes)),
                     );
                     if (!confirmed) return;
                     await DownloadStorage.delete(entry);
@@ -154,18 +156,17 @@ class SettingsStorageSection extends HookConsumerWidget {
                 onPressed: () async {
                   final confirmed = await showPromptDialog(
                     context: context,
-                    title: "Clear all downloads",
-                    message:
-                        "Delete all ${report.entries.length} downloaded file(s) "
-                        "(${DownloadStorage.formatBytes(report.totalBytes)})? "
-                        "They won't be playable offline anymore.",
+                    title: context.l10n.storage_clear_all,
+                    message: context.l10n.storage_clear_all_message(
+                        report.entries.length,
+                        DownloadStorage.formatBytes(report.totalBytes)),
                   );
                   if (!confirmed) return;
                   await DownloadStorage.deleteAll(report.entries);
                   if (!context.mounted) return;
                   await refresh();
                 },
-                child: const Text("Clear all downloads"),
+                child: Text(context.l10n.storage_clear_all),
               ),
             ),
           ),
@@ -174,7 +175,7 @@ class SettingsStorageSection extends HookConsumerWidget {
           Padding(
             padding: const EdgeInsets.all(16),
             child: Text(
-              "Could not scan downloads: ${reportFuture.error}",
+              context.l10n.storage_scan_failed("${reportFuture.error}"),
               style: TextStyle(color: theme.colorScheme.destructive),
             ),
           ),

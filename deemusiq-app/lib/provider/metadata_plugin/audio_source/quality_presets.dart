@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:deemusiq/models/metadata/metadata.dart';
 import 'package:deemusiq/provider/metadata_plugin/metadata_plugin_provider.dart';
 import 'package:deemusiq/services/audio_player/audio_player.dart';
+import 'package:deemusiq/services/audio_player/data_saver.dart';
 import 'package:deemusiq/services/metadata/errors/exceptions.dart';
 import 'package:deemusiq/services/metadata/metadata.dart';
 
@@ -45,6 +46,9 @@ class AudioSourceAvailableQualityPresetsNotifier
       final isOldLossless = previous?.presets
               .elementAtOrNull(previous.selectedStreamingContainerIndex)
           is DeeMusiqAudioSourceContainerPresetLossless;
+      // While the data saver is active the lite cache budget (1MB) wins —
+      // the saver's listener restores the right size when it turns off.
+      if (DataSaverService.isActiveCached) return;
       if (!isOldLossless && isNewLossless) {
         audioPlayer.setDemuxerBufferSize(6 * 1024 * 1024); // 6MB
       } else if (isOldLossless && !isNewLossless) {

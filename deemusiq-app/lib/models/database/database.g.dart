@@ -597,7 +597,7 @@ class $PreferencesTableTable extends PreferencesTable
       requiredDuringInsert: false,
       defaultConstraints: GeneratedColumn.constraintIsAlways(
           'CHECK ("normalize_audio" IN (0, 1))'),
-      defaultValue: const Constant(false));
+      defaultValue: const Constant(true));
   static const VerificationMeta _showSystemTrayIconMeta =
       const VerificationMeta('showSystemTrayIcon');
   @override

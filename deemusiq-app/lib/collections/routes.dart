@@ -107,10 +107,6 @@ class AppRouter extends RootStackRouter {
               page: AboutDeeMusiqRoute.page,
             ),
             AutoRoute(
-              path: "settings/scrobbling",
-              page: SettingsScrobblingRoute.page,
-            ),
-            AutoRoute(
               path: "album/:id",
               page: AlbumRoute.page,
             ),
@@ -182,6 +178,10 @@ class AppRouter extends RootStackRouter {
             AutoRoute(
               path: "wallet/creators",
               page: CreatorsSupportedRoute.page,
+            ),
+            AutoRoute(
+              path: "wallet/rewards",
+              page: RewardsRoute.page,
             ),
             AutoRoute(
               path: "wallet/trending",
@@ -263,11 +263,6 @@ class AppRouter extends RootStackRouter {
         AutoRoute(
           path: "/auth",
           page: Auth.page,
-          // parentNavigatorKey: rootNavigatorKey,
-        ),
-        AutoRoute(
-          path: "/lastfm-login",
-          page: LastFMLoginRoute.page,
           // parentNavigatorKey: rootNavigatorKey,
         ),
       ];

@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:collection/collection.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:deemusiq/collections/language_codes.dart';
@@ -7,6 +10,8 @@ import 'package:deemusiq/modules/getting_started/blur_card.dart';
 import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/l10n/l10n.dart';
 import 'package:deemusiq/provider/user_preferences/user_preferences_provider.dart';
+import 'package:deemusiq/provider/wallet/leaderboard_provider.dart';
+import 'package:deemusiq/services/logger/logger.dart';
 
 class GettingStartedPageLanguageRegionSection extends HookConsumerWidget {
   final void Function() onNext;
@@ -14,8 +19,11 @@ class GettingStartedPageLanguageRegionSection extends HookConsumerWidget {
       {super.key, required this.onNext});
 
   bool filterMarkets(dynamic item, String query) {
-    final market =
-        marketsMap.firstWhere((element) => element.$1 == item).$2.toLowerCase();
+    final match = marketsMap
+        .where((element) => element.$1 == item)
+        .firstOrNull;
+    if (match == null) return false;
+    final market = match.$2.toLowerCase();
 
     return market.contains(query.toLowerCase());
   }
@@ -70,6 +78,19 @@ class GettingStartedPageLanguageRegionSection extends HookConsumerWidget {
                         ref
                             .read(userPreferencesProvider.notifier)
                             .setRecommendationMarket(value);
+                        // Keep the server-side leaderboard region in sync
+                        // with the local market pick — the "My region" chart
+                        // reads it from the account's preferences.
+                        unawaited(() async {
+                          try {
+                            await ref
+                                .read(userRegionProvider.notifier)
+                                .setRegion(value.name);
+                          } catch (e, stack) {
+                            AppLogger.reportError(
+                                e, stack, 'getting-started region sync');
+                          }
+                        }());
                       },
                       placeholder: Text(preferences.market.name),
                       itemBuilder: (context, value) => Text(
