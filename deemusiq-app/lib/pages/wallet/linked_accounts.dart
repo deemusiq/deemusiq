@@ -51,13 +51,13 @@ class LinkedAccountsPage extends HookConsumerWidget {
                       ).small(),
                     ),
                     const Gap(16),
-                    // DeeMusiq is standalone — external music services are not
-                    // link targets. Google is the only identity provider
-                    // offered (backend `linking.ts` supports it). A non-Google
-                    // row only renders when that account is ALREADY linked, so
-                    // a legacy link can still be disconnected — never connected.
+                    // Only providers the backend actually accepts (spotify,
+                    // google) are offered as new link targets. Any other row
+                    // renders only when that account is ALREADY linked, so a
+                    // legacy link can still be disconnected — never connected.
                     for (final provider in LinkedProvider.values)
-                      if (provider == LinkedProvider.google ||
+                      if (provider == LinkedProvider.spotify ||
+                          provider == LinkedProvider.google ||
                           byProvider[provider] != null)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 10),
@@ -66,7 +66,6 @@ class LinkedAccountsPage extends HookConsumerWidget {
                             account: byProvider[provider],
                             backendConfigured: backendConfigured,
                           ),
-                        ),
                     const Gap(40),
                   ],
                 ),

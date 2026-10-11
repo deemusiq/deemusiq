@@ -12,9 +12,11 @@ enum CloseBehavior {
 }
 
 enum YoutubeClientEngine {
-  ytDlp("yt-dlp"),
-  youtubeExplode("YouTubeExplode"),
-  newPipe("NewPipe");
+  // Display labels are branded "Drop N"; drift persists the enum .name via
+  // EnumNameConverter, so these strings never touch the database.
+  ytDlp("Drop 1"),
+  youtubeExplode("Drop 2"),
+  newPipe("Drop 3");
 
   final String label;
 

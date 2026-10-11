@@ -3,6 +3,7 @@ import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:deemusiq/collections/env.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/collections/routes.gr.dart';
+import 'package:deemusiq/modules/getting_started/action_bar.dart';
 import 'package:deemusiq/modules/getting_started/blur_card.dart';
 import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/services/kv_store/kv_store.dart';
@@ -15,112 +16,110 @@ class GettingStartedScreenSupportSection extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    return Center(
+    return SafeArea(
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          BlurCard(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(DeeMusiqIcons.heartFilled, color: Colors.pink),
-                    const SizedBox(width: 8),
-                    Text(
-                      context.l10n.help_project_grow,
-                      style: const TextStyle(color: Colors.pink),
-                    ).semiBold(),
-                  ],
-                ),
-                const Gap(16),
-                Text(context.l10n.help_project_grow_description),
-                const Gap(16),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Button(
-                      leading: const Icon(DeeMusiqIcons.web),
-                      style: ButtonVariance.primary.copyWith(
-                          decoration: (context, states, value) {
-                        if (states.isNotEmpty) {
-                          return ButtonVariance.primary
-                              .decoration(context, states);
-                        }
-
-                        return BoxDecoration(
-                          color: Colors.black,
-                          borderRadius: BorderRadius.circular(8),
-                        );
-                      }),
-                      onPressed: () async {
-                        await launchUrlString(
-                          "https://deemusiq.co.za/",
-                          mode: LaunchMode.externalApplication,
-                        );
-                      },
-                      child: Text(
-                        context.l10n.visit_our_website,
-                        style: const TextStyle(color: Colors.white),
+          Expanded(
+            child: Center(
+              child: SingleChildScrollView(
+                child: BlurCard(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(DeeMusiqIcons.heartFilled,
+                              color: Colors.pink),
+                          const SizedBox(width: 8),
+                          Text(
+                            context.l10n.help_project_grow,
+                            style: const TextStyle(color: Colors.pink),
+                          ).semiBold(),
+                        ],
                       ),
-                    ),
-                    if (!Env.hideDonations) ...[
                       const Gap(16),
-                      Button(
-                        leading: const Icon(DeeMusiqIcons.openCollective),
-                        style: ButtonVariance.primary.copyWith(
-                            decoration: (context, states, value) {
-                          if (states.isNotEmpty) {
-                            return ButtonVariance.primary
-                                .decoration(context, states);
-                          }
+                      Text(context.l10n.help_project_grow_description),
+                      const Gap(16),
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Button(
+                            leading: const Icon(DeeMusiqIcons.web),
+                            style: ButtonVariance.primary.copyWith(
+                                decoration: (context, states, value) {
+                              if (states.isNotEmpty) {
+                                return ButtonVariance.primary
+                                    .decoration(context, states);
+                              }
 
-                          return BoxDecoration(
-                            color: const Color(0xff4cb7f6),
-                            borderRadius: BorderRadius.circular(8),
-                          );
-                        }),
-                        onPressed: () async {
-                          await launchUrlString(
-                            "https://opencollective.com/deemusiq",
-                            mode: LaunchMode.externalApplication,
-                          );
-                        },
-                        child: Text(
-                          context.l10n.donate_on_open_collective,
-                          style: const TextStyle(color: Colors.white),
-                        ),
+                              return BoxDecoration(
+                                color: Colors.black,
+                                borderRadius: BorderRadius.circular(8),
+                              );
+                            }),
+                            onPressed: () async {
+                              await launchUrlString(
+                                "https://deemusiq.co.za/",
+                                mode: LaunchMode.externalApplication,
+                              );
+                            },
+                            child: Text(
+                              context.l10n.visit_our_website,
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ),
+                          if (!Env.hideDonations) ...[
+                            const Gap(16),
+                            Button(
+                              leading:
+                                  const Icon(DeeMusiqIcons.openCollective),
+                              style: ButtonVariance.primary.copyWith(
+                                  decoration: (context, states, value) {
+                                if (states.isNotEmpty) {
+                                  return ButtonVariance.primary
+                                      .decoration(context, states);
+                                }
+
+                                return BoxDecoration(
+                                  color: const Color(0xff4cb7f6),
+                                  borderRadius: BorderRadius.circular(8),
+                                );
+                              }),
+                              onPressed: () async {
+                                await launchUrlString(
+                                  "https://opencollective.com/deemusiq",
+                                  mode: LaunchMode.externalApplication,
+                                );
+                              },
+                              child: Text(
+                                context.l10n.donate_on_open_collective,
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ]
+                        ],
                       ),
-                    ]
-                  ],
+                    ],
+                  ),
                 ),
-              ],
+              ),
             ),
           ),
-          const Gap(48),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 250),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Button.primary(
-                  leading: const Icon(DeeMusiqIcons.extensions),
-                  onPressed: () async {
-                    await KVStoreService.setDoneGettingStarted(true);
-                    if (!context.mounted) return;
-                    // First-run flow ends at sign-in; a user who somehow
-                    // revisits the wizard while authenticated goes home.
-                    final signedIn = WalletApiClient.instance.hasToken();
-                    context.router.replaceAll(
-                      [signedIn ? const HomeRoute() : const Auth()],
-                    );
-                  },
-                  child: Text(context.l10n.install_a_metadata_provider),
-                ),
-              ],
-            ),
+          GettingStartedActionBar(
+            primaryIcon: DeeMusiqIcons.extensions,
+            primaryLabel: context.l10n.install_a_metadata_provider,
+            onPrimary: () async {
+              await KVStoreService.setDoneGettingStarted(true);
+              if (!context.mounted) return;
+              // First-run flow ends at sign-in; a user who somehow
+              // revisits the wizard while authenticated goes home.
+              final signedIn = WalletApiClient.instance.hasToken();
+              context.router.replaceAll(
+                [signedIn ? const HomeRoute() : const Auth()],
+              );
+            },
           ),
         ],
       ),

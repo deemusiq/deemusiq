@@ -1,11 +1,14 @@
 import 'dart:async';
 
 import 'package:collection/collection.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:deemusiq/collections/language_codes.dart';
 import 'package:deemusiq/collections/markets.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
+import 'package:deemusiq/models/metadata/market.dart';
+import 'package:deemusiq/modules/getting_started/action_bar.dart';
 import 'package:deemusiq/modules/getting_started/blur_card.dart';
 import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/l10n/l10n.dart';
@@ -41,174 +44,194 @@ class GettingStartedPageLanguageRegionSection extends HookConsumerWidget {
   Widget build(BuildContext context, ref) {
     final preferences = ref.watch(userPreferencesProvider);
 
-    return SafeArea(
-      child: Center(
-        child: BlurCard(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  const Icon(
-                    DeeMusiqIcons.language,
-                    size: 16,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(context.l10n.language_region).semiBold(),
-                ],
-              ),
-              const Gap(30),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(context.l10n.choose_your_region).semiBold(),
-                  Text(
-                    context.l10n.choose_your_region_description,
-                  ).small().muted(),
-                  const Gap(16),
-                  Text(context.l10n.market_place_region).small(),
-                  const Gap(8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: Select(
-                      value: preferences.market,
-                      onChanged: (value) {
-                        if (value == null) return;
-                        ref
-                            .read(userPreferencesProvider.notifier)
-                            .setRecommendationMarket(value);
-                        // Keep the server-side leaderboard region in sync
-                        // with the local market pick — the "My region" chart
-                        // reads it from the account's preferences.
-                        unawaited(() async {
-                          try {
-                            await ref
-                                .read(userRegionProvider.notifier)
-                                .setRegion(value.name);
-                          } catch (e, stack) {
-                            AppLogger.reportError(
-                                e, stack, 'getting-started region sync');
-                          }
-                        }());
-                      },
-                      placeholder: Text(preferences.market.name),
-                      itemBuilder: (context, value) => Text(
-                        marketsMap
-                            .firstWhere((element) => element.$1 == value)
-                            .$2,
-                      ),
-                      popup: SelectPopup.builder(
-                        searchPlaceholder: Text(context.l10n.search),
-                        builder: (context, searchQuery) {
-                          final filteredMarkets = searchQuery == null ||
-                                  searchQuery.isEmpty
-                              ? marketsMap
-                              : marketsMap
-                                  .where(
-                                    (element) =>
-                                        filterMarkets(element.$1, searchQuery),
-                                  )
-                                  .toList();
-                          return SelectItemBuilder(
-                            childCount: filteredMarkets.length,
-                            builder: (context, index) {
-                              final market = filteredMarkets[index];
-                              return SelectItemButton(
-                                value: market.$1,
-                                child: Text(market.$2),
-                              );
-                            },
-                          );
-                        },
-                      ).call,
-                    ),
-                  ),
-                  const Gap(36),
-                  Text(
-                    context.l10n.choose_your_language,
-                  ).semiBold(),
-                  const Gap(16),
-                  Text(context.l10n.language).small(),
-                  const Gap(8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: Select<Locale>(
-                      value: preferences.locale,
-                      onChanged: (locale) {
-                        if (locale == null) return;
-                        ref
-                            .read(userPreferencesProvider.notifier)
-                            .setLocale(locale);
-                      },
-                      placeholder: Text(context.l10n.system_default),
-                      itemBuilder: (context, value) =>
-                          value.languageCode == "system"
-                              ? Text(context.l10n.system_default)
-                              : Text(
-                                  LanguageLocals.getDisplayLanguage(
-                                    value.languageCode,
-                                    value.countryCode,
-                                  ).toString(),
-                                ),
-                      popup: SelectPopup.builder(
-                        searchPlaceholder: Text(context.l10n.search),
-                        builder: (context, searchQuery) {
-                          final hasNotQueried =
-                              searchQuery == null || searchQuery.trim().isEmpty;
-                          final filteredLocale = hasNotQueried
-                              ? [
-                                  const Locale("system", "system"),
-                                  ...L10n.all,
-                                ]
-                              : L10n.all
-                                  .where(
-                                    (element) => filterLocale(
-                                      element,
-                                      searchQuery.trim(),
-                                    ),
-                                  )
-                                  .toList();
+    // Preselect the market from the device locale, but only while the stored
+    // value is still the untouched default so a manual pick is never
+    // overridden.
+    useEffect(() {
+      final countryCode =
+          WidgetsBinding.instance.platformDispatcher.locale.countryCode;
+      final deviceMarket = countryCode == null
+          ? null
+          : Market.values.asNameMap()[countryCode.toUpperCase()];
+      final stored = ref.read(userPreferencesProvider).market;
+      if (deviceMarket != null &&
+          deviceMarket != stored &&
+          stored == Market.US) {
+        ref
+            .read(userPreferencesProvider.notifier)
+            .setRecommendationMarket(deviceMarket);
+      }
+      return null;
+    }, []);
 
-                          return SelectItemBuilder(
-                            childCount: filteredLocale.length,
-                            builder: (context, index) {
-                              final locale = filteredLocale[index];
-                              if (locale == const Locale("system", "system")) {
-                                return SelectItemButton(
-                                  value: locale,
-                                  child: Text(context.l10n.system_default),
-                                );
-                              }
-                              return SelectItemButton(
-                                value: locale,
-                                child: Text(
-                                  LanguageLocals.getDisplayLanguage(
-                                    locale.languageCode,
-                                    locale.countryCode,
-                                  ).toString(),
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      ).call,
-                    ),
+    return SafeArea(
+      child: Column(
+        children: [
+          Expanded(
+            child: Center(
+              child: SingleChildScrollView(
+                child: BlurCard(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            DeeMusiqIcons.language,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(context.l10n.language_region).semiBold(),
+                        ],
+                      ),
+                      const Gap(30),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(context.l10n.choose_your_region).semiBold(),
+                          Text(
+                            context.l10n.choose_your_region_description,
+                          ).small().muted(),
+                          const Gap(16),
+                          Text(context.l10n.market_place_region).small(),
+                          const Gap(8),
+                          SizedBox(
+                            width: double.infinity,
+                            child: Select(
+                              value: preferences.market,
+                              onChanged: (value) {
+                                if (value == null) return;
+                                ref
+                                    .read(userPreferencesProvider.notifier)
+                                    .setRecommendationMarket(value);
+                                // Keep the server-side leaderboard region in sync
+                                // with the local market pick — the "My region" chart
+                                // reads it from the account's preferences.
+                                unawaited(() async {
+                                  try {
+                                    await ref
+                                        .read(userRegionProvider.notifier)
+                                        .setRegion(value.name);
+                                  } catch (e, stack) {
+                                    AppLogger.reportError(
+                                        e, stack, 'getting-started region sync');
+                                  }
+                                }());
+                              },
+                              placeholder: Text(preferences.market.name),
+                              itemBuilder: (context, value) => Text(
+                                marketsMap
+                                    .firstWhere((element) => element.$1 == value)
+                                    .$2,
+                              ),
+                              popup: SelectPopup.builder(
+                                searchPlaceholder: Text(context.l10n.search),
+                                builder: (context, searchQuery) {
+                                  final filteredMarkets = searchQuery == null ||
+                                          searchQuery.isEmpty
+                                      ? marketsMap
+                                      : marketsMap
+                                          .where(
+                                            (element) =>
+                                                filterMarkets(element.$1, searchQuery),
+                                          )
+                                          .toList();
+                                  return SelectItemBuilder(
+                                    childCount: filteredMarkets.length,
+                                    builder: (context, index) {
+                                      final market = filteredMarkets[index];
+                                      return SelectItemButton(
+                                        value: market.$1,
+                                        child: Text(market.$2),
+                                      );
+                                    },
+                                  );
+                                },
+                              ).call,
+                            ),
+                          ),
+                          const Gap(36),
+                          Text(
+                            context.l10n.choose_your_language,
+                          ).semiBold(),
+                          const Gap(16),
+                          Text(context.l10n.language).small(),
+                          const Gap(8),
+                          SizedBox(
+                            width: double.infinity,
+                            child: Select<Locale>(
+                              value: preferences.locale,
+                              onChanged: (locale) {
+                                if (locale == null) return;
+                                ref
+                                    .read(userPreferencesProvider.notifier)
+                                    .setLocale(locale);
+                              },
+                              placeholder: Text(context.l10n.system_default),
+                              itemBuilder: (context, value) =>
+                                  value.languageCode == "system"
+                                      ? Text(context.l10n.system_default)
+                                      : Text(
+                                          LanguageLocals.getDisplayLanguage(
+                                            value.languageCode,
+                                            value.countryCode,
+                                          ).toString(),
+                                        ),
+                              popup: SelectPopup.builder(
+                                searchPlaceholder: Text(context.l10n.search),
+                                builder: (context, searchQuery) {
+                                  final hasNotQueried =
+                                      searchQuery == null || searchQuery.trim().isEmpty;
+                                  final filteredLocale = hasNotQueried
+                                      ? [
+                                          const Locale("system", "system"),
+                                          ...L10n.all,
+                                        ]
+                                      : L10n.all
+                                          .where(
+                                            (element) => filterLocale(
+                                              element,
+                                              searchQuery.trim(),
+                                            ),
+                                          )
+                                          .toList();
+
+                                  return SelectItemBuilder(
+                                    childCount: filteredLocale.length,
+                                    builder: (context, index) {
+                                      final locale = filteredLocale[index];
+                                      if (locale == const Locale("system", "system")) {
+                                        return SelectItemButton(
+                                          value: locale,
+                                          child: Text(context.l10n.system_default),
+                                        );
+                                      }
+                                      return SelectItemButton(
+                                        value: locale,
+                                        child: Text(
+                                          LanguageLocals.getDisplayLanguage(
+                                            locale.languageCode,
+                                            locale.countryCode,
+                                          ).toString(),
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
+                              ).call,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              const Gap(48),
-              Align(
-                alignment: Alignment.centerRight,
-                child: Button.primary(
-                  trailing: const Icon(DeeMusiqIcons.angleRight),
-                  onPressed: onNext,
-                  child: Text(context.l10n.next),
                 ),
               ),
-            ],
+            ),
           ),
-        ),
+          GettingStartedActionBar(onPrimary: onNext),
+        ],
       ),
     );
   }

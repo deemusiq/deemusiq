@@ -877,6 +877,12 @@ class WalletApiClient {
   /// memory and stay anonymous otherwise.
   String? get sessionToken => _token;
 
+  /// Backend JWT for device-scoped endpoints that live outside this class
+  /// (e.g. track ratings). Same silent device-login semantics as the wallet
+  /// calls: mints a token via [_authToken] unless the logged-out tombstone is
+  /// set, in which case it throws [WalletApiException] (`logged_out`).
+  Future<String> backendAuthToken() => _authToken();
+
   /// Device login via Ed25519 challenge–response. The backend issues a signed
   /// challenge; we sign it with the device's secure-enclave key (never sent) and
   /// present the signature + public key. No secret ever travels the wire.
