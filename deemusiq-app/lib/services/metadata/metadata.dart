@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:pub_semver/pub_semver.dart';
 
 import 'package:deemusiq/models/metadata/metadata.dart';
@@ -45,6 +46,14 @@ class MetadataPlugin {
   late final MetadataPluginTrackEndpoint track;
   late final MetadataPluginUserEndpoint user;
   late final MetadataPluginCore core;
+
+  /// Test seam for building a plugin with only the endpoints a test needs.
+  ///
+  /// Endpoints left unset keep their `late` behaviour and throw on access, so a
+  /// test that reaches for an endpoint it did not wire fails loudly instead of
+  /// silently seeing a no-op implementation.
+  @visibleForTesting
+  MetadataPlugin.forTesting();
 
   /// DeeMusiq's built-in metadata provider: every endpoint is native Dart
   /// talking to the DeeMusiq backend `/metadata` API (no Spotify, no Hetu

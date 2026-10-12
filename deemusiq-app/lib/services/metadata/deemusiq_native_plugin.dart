@@ -106,6 +106,10 @@ bool _isNotFound(Object error) =>
 // albums. Their ids carry this prefix so the album endpoint knows to resolve
 // them through the YouTube engine instead of the catalog API.
 const _ytAlbumIdPrefix = "yt:";
+
+/// Stable section id for a browse-fallback query, used as both the section id
+/// and the tail of its `deemusiq:section:` external uri.
+String _fallbackSectionId(String query) => query.replaceAll(" ", "_").toLowerCase();
 final _youtubeVideoIdShape = RegExp(r'^[A-Za-z0-9_-]{11}$');
 
 /// Extracts the YouTube video id from an album id fabricated by the browse
@@ -1310,7 +1314,11 @@ class _NativeBrowse extends MetadataPluginBrowseEndpoint {
 
   @override
   Future<DeeMusiqPaginationResponseObject<DeeMusiqBrowseSectionObject<Object>>>
-      sections({int? offset, int? limit}) async {
+      sections({
+    int? offset,
+    int? limit,
+    void Function(List<DeeMusiqBrowseSectionObject<Object>> sections)? onSection,
+  }) async {
     // 1) Try the real backend first.
     if (api.isConfigured) {
       try {
@@ -1345,7 +1353,12 @@ class _NativeBrowse extends MetadataPluginBrowseEndpoint {
               items: mapped,
             ));
           }
-          if (sections.isNotEmpty) return _page(sections);
+          if (sections.isNotEmpty) {
+            // One payload resolves at a time here, so there is nothing to
+            // stream — emit the whole feed in a single batch.
+            onSection?.call(sections);
+            return _page(sections);
+          }
         }
       } catch (e, stack) {
         AppLogger.log.w('Backend home (browse) failed, falling back to YouTube: ${e.toString()}');
@@ -1362,33 +1375,41 @@ class _NativeBrowse extends MetadataPluginBrowseEndpoint {
       "Gqom 2026": "Gqom 2026",
     };
 
-    // Fetch all sections in parallel, each with its own deadline — sequential
-    // engine failover per query can otherwise keep the home page on
-    // "building your timeline" for minutes when one query hangs.
-    final results = await Future.wait(
-      fallbackQueries.entries.map(
-        (entry) => _youtubeAlbumSearch(entry.value, 10)
-            .timeout(const Duration(seconds: 45), onTimeout: () => const []),
-      ),
-    );
+    final entries = fallbackQueries.entries.toList();
+    final resolved = <String, List<DeeMusiqSimpleAlbumObject>>{};
+    var emittedCount = 0;
 
-    final sections = <DeeMusiqBrowseSectionObject<Object>>[];
-    var index = 0;
-    for (final entry in fallbackQueries.entries) {
-      final albums = results[index++];
-      if (albums.isNotEmpty) {
-        sections.add(DeeMusiqBrowseSectionObject<Object>(
-          id: entry.key.replaceAll(" ", "_").toLowerCase(),
-          title: entry.key,
-          externalUri:
-              "deemusiq:section:${entry.key.replaceAll(" ", "_").toLowerCase()}",
-          browseMore: false,
-          items: albums,
-        ));
+    // Built in declaration order regardless of completion order, so the feed
+    // does not reshuffle as the faster searches land.
+    List<DeeMusiqBrowseSectionObject<Object>> collect() => [
+          for (final entry in entries)
+            if (resolved[entry.key]?.isNotEmpty ?? false)
+              DeeMusiqBrowseSectionObject<Object>(
+                id: _fallbackSectionId(entry.key),
+                title: entry.key,
+                externalUri:
+                    "deemusiq:section:${_fallbackSectionId(entry.key)}",
+                browseMore: false,
+                items: resolved[entry.key]!,
+              ),
+        ];
+
+    // Each search carries its own deadline — sequential engine failover per
+    // query can otherwise keep the home page loading for minutes when one
+    // hangs. Emitting per completion rather than awaiting all four behind a
+    // single Future.wait means the page paints each section the moment it is
+    // ready instead of staying blank until the slowest one lands.
+    await Future.wait(entries.map((entry) async {
+      resolved[entry.key] = await _youtubeAlbumSearch(entry.value, 10)
+          .timeout(const Duration(seconds: 45), onTimeout: () => const []);
+      final ready = collect();
+      if (ready.length > emittedCount) {
+        emittedCount = ready.length;
+        onSection?.call(ready);
       }
-    }
+    }));
 
-    return _page(sections);
+    return _page(collect());
   }
 
   /// Items for one browse section. The backend's home feed already returns
