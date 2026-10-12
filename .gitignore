@@ -31,6 +31,19 @@ key.properties
 !.env.example
 *.env
 
+# Code-signing material (Windows Authenticode). A leaked .pfx/.p12 lets anyone
+# sign as this project, so treat these like passwords — the CI reads them from
+# the AUTHENTICODE_CERT_BASE64 secret instead of from disk.
+*.pfx
+*.p12
+*.pkcs12
+*.pvk
+*.cer
+*.crt
+*.der
+*.jks2
+signing/
+
 # Bramble protocol core lives on disk only until the license review lands
 # (AGENTS.md: "license review before any distribution") — never commit.
 deemusiq-app/packages/bramble_dart/
