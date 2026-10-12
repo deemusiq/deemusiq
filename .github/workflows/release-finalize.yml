@@ -1,0 +1,80 @@
+name: Finalize release
+
+# After the four platform builds for a tag complete, deploy the download
+# worker with fresh VERSIONS/RELEASES metadata and verify the live
+# download/update chain. Replaces the manual post-release wrangler deploy.
+#
+# Trigger notes:
+#   • workflow_run fires once per completed platform workflow; the job skips
+#     quietly until the LAST one reports success (self-coordinating).
+#   • workflow_run only triggers when this file exists on the DEFAULT branch
+#     (main). Until merged there, dispatch manually:
+#       gh workflow run release-finalize.yml --ref <branch> -f tag=vX.Y.Z
+
+on:
+  workflow_run:
+    workflows:
+      - "Build DeeMusiq (Android APK)"
+      - "Build DeeMusiq (Windows)"
+      - "Build DeeMusiq (macOS)"
+      - "Build DeeMusiq (Linux)"
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to finalize (blank = tag at the triggering commit)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: release-finalize-${{ github.event.inputs.tag || github.event.workflow_run.head_sha || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    name: Deploy worker + verify live chain
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve tag
+        id: tag
+        env:
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          TAG=""
+          if [ -n "$INPUT_TAG" ]; then
+            TAG="$INPUT_TAG"
+          elif [ -n "$HEAD_SHA" ]; then
+            TAG=$(git tag --points-at "$HEAD_SHA" | grep -E '^v[0-9]' | head -1 || true)
+          fi
+          if [ -z "$TAG" ]; then
+            echo "::notice::not a version-tag run — nothing to finalize"
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Check all four platform builds succeeded
+        if: steps.tag.outputs.tag != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash deemusiq-site/cloudflare/finalize-release.sh check "${{ steps.tag.outputs.tag }}"
+
+      - name: Deploy worker with release metadata
+        if: steps.tag.outputs.tag != ''
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash deemusiq-site/cloudflare/finalize-release.sh deploy "${{ steps.tag.outputs.tag }}"
+
+      - name: Verify the live download/update chain
+        if: steps.tag.outputs.tag != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash deemusiq-site/cloudflare/finalize-release.sh verify "${{ steps.tag.outputs.tag }}"
