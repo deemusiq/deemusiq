@@ -199,7 +199,14 @@ jobs:
 
           # Also create portable zip
           Compress-Archive -Path "$buildDir\*" -DestinationPath "dist/DeeMusiq-windows-x86_64-portable.zip"
-          
+
+          # Publish a sha256 sidecar per artifact — the site displays it next
+          # to the download button and the download worker serves it at
+          # /downloads/<platform>.sha256 for the app's integrity check.
+          Get-ChildItem dist/DeeMusiq-windows-*.exe, dist/DeeMusiq-windows-*.zip | ForEach-Object {
+            "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower())  $($_.Name)" | Out-File -Encoding ascii "$($_.FullName).sha256"
+          }
+
           Get-ChildItem dist/
 
       - uses: actions/upload-artifact@v4
@@ -207,7 +214,9 @@ jobs:
           name: DeeMusiq-windows
           path: |
             deemusiq-app/dist/DeeMusiq-windows-x86_64-setup.exe
+            deemusiq-app/dist/DeeMusiq-windows-x86_64-setup.exe.sha256
             deemusiq-app/dist/DeeMusiq-windows-x86_64-portable.zip
+            deemusiq-app/dist/DeeMusiq-windows-x86_64-portable.zip.sha256
           if-no-files-found: error
 
       - name: Attach to GitHub Release (tag builds only)
@@ -216,7 +225,9 @@ jobs:
         with:
           files: |
             deemusiq-app/dist/DeeMusiq-windows-x86_64-setup.exe
+            deemusiq-app/dist/DeeMusiq-windows-x86_64-setup.exe.sha256
             deemusiq-app/dist/DeeMusiq-windows-x86_64-portable.zip
+            deemusiq-app/dist/DeeMusiq-windows-x86_64-portable.zip.sha256
           name: DeeMusiq ${{ github.ref_name }}
           body: |
             DeeMusiq — *It's a drop day.*

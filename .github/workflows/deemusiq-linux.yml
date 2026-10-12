@@ -248,6 +248,11 @@ jobs:
           cd build/linux/x64/release
           tar -czf ../../../../dist/DeeMusiq-linux-x86_64.tar.gz bundle
           cd ../../../..
+          # Publish a sha256 sidecar per artifact — the site displays it and
+          # the download worker serves it at /downloads/<platform>.sha256.
+          ( cd dist && for f in DeeMusiq-linux-amd64.deb DeeMusiq-linux-x86_64.AppImage DeeMusiq-linux-x86_64.tar.gz; do
+              sha256sum "$f" > "$f.sha256"
+            done )
           ls -la dist/
 
       - uses: actions/upload-artifact@v4
@@ -255,8 +260,11 @@ jobs:
           name: DeeMusiq-linux
           path: |
             deemusiq-app/dist/DeeMusiq-linux-amd64.deb
+            deemusiq-app/dist/DeeMusiq-linux-amd64.deb.sha256
             deemusiq-app/dist/DeeMusiq-linux-x86_64.AppImage
+            deemusiq-app/dist/DeeMusiq-linux-x86_64.AppImage.sha256
             deemusiq-app/dist/DeeMusiq-linux-x86_64.tar.gz
+            deemusiq-app/dist/DeeMusiq-linux-x86_64.tar.gz.sha256
           if-no-files-found: error
 
       - name: Attach to GitHub Release (tag builds only)
@@ -265,8 +273,11 @@ jobs:
         with:
           files: |
             deemusiq-app/dist/DeeMusiq-linux-amd64.deb
+            deemusiq-app/dist/DeeMusiq-linux-amd64.deb.sha256
             deemusiq-app/dist/DeeMusiq-linux-x86_64.AppImage
+            deemusiq-app/dist/DeeMusiq-linux-x86_64.AppImage.sha256
             deemusiq-app/dist/DeeMusiq-linux-x86_64.tar.gz
+            deemusiq-app/dist/DeeMusiq-linux-x86_64.tar.gz.sha256
           name: DeeMusiq ${{ github.ref_name }}
           body: |
             DeeMusiq — *It's a drop day.*

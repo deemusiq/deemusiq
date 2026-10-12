@@ -581,10 +581,22 @@ abstract class ServiceUtils {
     if (currentVersion == null ||
         (latestVersion.isPreRelease && !currentVersion.isPreRelease) ||
         (!latestVersion.isPreRelease && currentVersion.isPreRelease) ||
-        latestVersion <= currentVersion ||
         !context.mounted) {
       return;
     }
+
+    // A higher build number under the SAME versionName is still a newer app:
+    // hotfix rebuilds keep the name (e.g. 1.1.0+41 → 1.1.0+47), and a
+    // version-only compare would never surface them to existing installs.
+    var isNewer = latestVersion > currentVersion;
+    if (!isNewer && latestVersion.compareTo(currentVersion) == 0) {
+      final latestBuild = release.buildNumber;
+      final currentBuild = int.tryParse(packageInfo.buildNumber);
+      isNewer = latestBuild != null &&
+          currentBuild != null &&
+          latestBuild > currentBuild;
+    }
+    if (!isNewer) return;
 
     await showDialog(
       context: context,

@@ -281,12 +281,25 @@ export default {
     // /downloads/version.json        → latest versions per platform (update check)
     if (url.pathname === "/downloads/version.json") {
       let versions = {};
+      let releases = {};
       try {
         versions = JSON.parse(env.VERSIONS || "{}");
       } catch {
         versions = {};
       }
-      const body = new TextEncoder().encode(JSON.stringify({ versions }));
+      // Optional richer metadata (build_number, download_url, sha256 per
+      // platform). The app's stable-channel checker uses build_number as a
+      // tiebreak when the versionName is unchanged between builds.
+      try {
+        releases = JSON.parse(env.RELEASES || "{}");
+      } catch {
+        releases = {};
+      }
+      const payload = { versions };
+      if (releases && typeof releases === "object" && Object.keys(releases).length > 0) {
+        payload.releases = releases;
+      }
+      const body = new TextEncoder().encode(JSON.stringify(payload));
       const headers = withSecurityHeaders({
         "Content-Type": "application/json",
         "Cache-Control": "public, max-age=300",

@@ -172,6 +172,12 @@ jobs:
           cd ../../../
 
           rm -rf "$DMG_DIR"
+
+          # Publish a sha256 sidecar per artifact — the site displays it and
+          # the download worker serves it at /downloads/<platform>.sha256.
+          ( cd dist && for f in DeeMusiq-macos-universal.dmg DeeMusiq-macos-universal.zip; do
+              shasum -a 256 "$f" > "$f.sha256"
+            done )
           ls -la dist/
 
       - uses: actions/upload-artifact@v4
@@ -179,7 +185,9 @@ jobs:
           name: DeeMusiq-macos
           path: |
             deemusiq-app/dist/DeeMusiq-macos-universal.dmg
+            deemusiq-app/dist/DeeMusiq-macos-universal.dmg.sha256
             deemusiq-app/dist/DeeMusiq-macos-universal.zip
+            deemusiq-app/dist/DeeMusiq-macos-universal.zip.sha256
           if-no-files-found: error
 
       - name: Attach to GitHub Release (tag builds only)
@@ -188,7 +196,9 @@ jobs:
         with:
           files: |
             deemusiq-app/dist/DeeMusiq-macos-universal.dmg
+            deemusiq-app/dist/DeeMusiq-macos-universal.dmg.sha256
             deemusiq-app/dist/DeeMusiq-macos-universal.zip
+            deemusiq-app/dist/DeeMusiq-macos-universal.zip.sha256
           name: DeeMusiq ${{ github.ref_name }}
           body: |
             DeeMusiq — *It's a drop day.*

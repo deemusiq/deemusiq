@@ -21,4 +21,11 @@ GITHUB_REPO = "deemusiq/deemusiq"
 DOWNLOADS = '{"android":"DeeMusiq.apk","windows":"DeeMusiq-windows-x86_64-setup.exe","windows-portable":"DeeMusiq-windows-x86_64-portable.zip","linux":"DeeMusiq-linux-x86_64.AppImage","linux-deb":"DeeMusiq-linux-amd64.deb","linux-targz":"DeeMusiq-linux-x86_64.tar.gz","macos":"DeeMusiq-macos-universal.dmg","macos-zip":"DeeMusiq-macos-universal.zip"}'
 # Latest version per platform for /downloads/version.json (update check).
 # VERSIONS must bump with each app release (keep in sync with deemusiq-app/pubspec.yaml).
-VERSIONS = '{"android":"1.1.0","windows":"1.1.0","linux":"1.1.0","macos":"1.1.0"}'
+VERSIONS = '{"android":"1.1.1","windows":"1.1.1","linux":"1.1.1","macos":"1.1.1"}'
+# Optional per-platform release metadata (served as `releases` next to
+# `versions`). The stable checker uses build_number as a tiebreak when the
+# versionName is unchanged between builds. sha256 must be a real 64-hex digest
+# or the key must be omitted — an empty/placeholder digest fails the app's
+# metadata validation and breaks update checks. Fill the digests from the
+# published *.sha256 sidecars right after the release assets land.
+# RELEASES = '{"android":{"version":"1.1.1","build_number":48,"download_url":"https://deemusiq.co.za/downloads/android","sha256":"<64-hex>"},"linux":{"version":"1.1.1","build_number":48,"download_url":"https://deemusiq.co.za/downloads/linux","sha256":"<64-hex>"},"windows":{"version":"1.1.1","build_number":48,"download_url":"https://deemusiq.co.za/downloads/windows","sha256":"<64-hex>"},"macos":{"version":"1.1.1","build_number":48,"download_url":"https://deemusiq.co.za/downloads/macos","sha256":"<64-hex>"}}'
