@@ -168,11 +168,12 @@ jobs:
           hdiutil create -volname "DeeMusiq" -srcfolder "$DMG_DIR" \
             -ov -format UDZO "$DMG_NAME"
           
-          # Also create a .zip for direct distribution
-          cd "$DMG_DIR"
-          zip -r "../../../dist/DeeMusiq-macos-universal.zip" "DeeMusiq.app" 2>/dev/null || \
-          zip -r "../../../dist/DeeMusiq-macos-universal.zip" "Runner.app"
-          cd ../../../
+          # Also create a .zip for direct distribution. Resolve the output
+          # against the step CWD — from inside dist/dmg_staging, the dist dir
+          # is one level up (the old ../../../dist path escaped the repo and
+          # the zip silently failed on the fallback bundle name).
+          APP_BUNDLE=$(basename "$APP_PATH")
+          ( cd "$DMG_DIR" && zip -r "../DeeMusiq-macos-universal.zip" "$APP_BUNDLE" )
 
           rm -rf "$DMG_DIR"
 
