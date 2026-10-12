@@ -19,13 +19,17 @@ enum ImagePlaceholder {
   online,
 }
 
-final placeholderUrlMap = {
-  ImagePlaceholder.albumArt: Assets.images.albumPlaceholder.path,
-  ImagePlaceholder.artist: Assets.images.userPlaceholder.path,
-  ImagePlaceholder.collection: Assets.images.placeholder.path,
-  ImagePlaceholder.online:
-      "https://avatars.dicebear.com/api/bottts/${PrimitiveUtils.uuid.v4()}.png",
-};
+/// Generated once so the random avatar stays stable for the app's lifetime
+/// (previously a side effect of the lazy [placeholderUrlMap] map).
+final _onlinePlaceholderUrl =
+    "https://avatars.dicebear.com/api/bottts/${PrimitiveUtils.uuid.v4()}.png";
+
+String placeholderUrlFor(ImagePlaceholder placeholder) => switch (placeholder) {
+      ImagePlaceholder.albumArt => Assets.images.albumPlaceholder.path,
+      ImagePlaceholder.artist => Assets.images.userPlaceholder.path,
+      ImagePlaceholder.collection => Assets.images.placeholder.path,
+      ImagePlaceholder.online => _onlinePlaceholderUrl,
+    };
 
 extension DeeMusiqImageExtensions on List<DeeMusiqImageObject>? {
   /// Returns the URL of the image at the specified index.
@@ -40,7 +44,7 @@ extension DeeMusiqImageExtensions on List<DeeMusiqImageObject>? {
         ? sortedImage[
                 index > sortedImage.length - 1 ? sortedImage.length - 1 : index]
             .url
-        : placeholderUrlMap[placeholder]!;
+        : placeholderUrlFor(placeholder);
   }
 
   Uri asUri({
@@ -63,13 +67,13 @@ extension DeeMusiqImageExtensions on List<DeeMusiqImageObject>? {
 
     return sortedImage != null && sortedImage.isNotEmpty
         ? sortedImage.first.url
-        : placeholderUrlMap[placeholder]!;
+        : placeholderUrlFor(placeholder);
   }
 
   String from200PxTo300PxOrSmallestImage([
     ImagePlaceholder placeholder = ImagePlaceholder.albumArt,
   ]) {
-    final placeholderUrl = placeholderUrlMap[placeholder]!;
+    final placeholderUrl = placeholderUrlFor(placeholder);
 
     // Sort images by width and height to find the smallest one
     final sortedImage = this?.sorted((a, b) {

@@ -57,15 +57,21 @@ Future<List<SkipSegmentTableData>> getAndCacheSkipSegments(
     }
 
     final data = res.data as List;
-    final segments = data.map((obj) {
-      final start = obj["segment"].first.toInt();
-      final end = obj["segment"].last.toInt();
-      return SkipSegmentTableCompanion.insert(
-        trackId: id,
-        start: start,
-        end: end,
+    final segments = <SkipSegmentTableCompanion>[];
+    for (final obj in data) {
+      final segment = (obj as Map)["segment"];
+      if (segment is! List || segment.length < 2) continue;
+      final startRaw = segment.first;
+      final endRaw = segment.last;
+      if (startRaw is! num || endRaw is! num) continue;
+      segments.add(
+        SkipSegmentTableCompanion.insert(
+          trackId: id,
+          start: startRaw.toInt(),
+          end: endRaw.toInt(),
+        ),
       );
-    }).toList();
+    }
 
     await database.batch((b) {
       b.insertAll(database.skipSegmentTable, segments);

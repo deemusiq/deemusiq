@@ -21,6 +21,11 @@ class DeeMusiqTrackObject with _$DeeMusiqTrackObject {
     required int durationMs,
     required String isrc,
     required bool explicit,
+    // Loudness normalization + data-saver fields from the catalog track DTO
+    // (null when the backend measured none / minted no lite rendition).
+    double? loudnessDb,
+    double? gainDb,
+    String? liteUrl,
   }) = DeeMusiqFullTrackObject;
 
   factory DeeMusiqTrackObject.localTrackFromFile(

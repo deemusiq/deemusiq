@@ -7,7 +7,6 @@ import 'package:deemusiq/components/dialogs/prompt_dialog.dart';
 import 'package:deemusiq/components/titlebar/titlebar.dart';
 import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/pages/settings/sections/about.dart';
-import 'package:deemusiq/pages/settings/sections/accounts.dart';
 import 'package:deemusiq/pages/settings/sections/appearance.dart';
 import 'package:deemusiq/pages/settings/sections/desktop.dart';
 import 'package:deemusiq/pages/settings/sections/developers.dart';
@@ -52,7 +51,6 @@ class SettingsPage extends HookConsumerWidget {
                   child: ListView(
                     controller: controller,
                     children: [
-                      const SettingsAccountSection(),
                       const SettingsSecuritySection(),
                       const SettingsPrivacySection(),
                       const SettingsLanguageRegionSection(),

@@ -81,8 +81,9 @@ class HistoryTopAlbumsNotifier extends FamilyPaginatedAsyncNotifier<
   @override
   build(arg) async {
     final subscription = createAlbumsQuery().watch().listen((event) {
-      if (state.asData == null) return;
-      state = AsyncData(state.asData!.value.copyWith(
+      final current = state.asData?.value;
+      if (current == null) return;
+      state = AsyncData(current.copyWith(
         items: getAlbumsWithCount(event),
         hasMore: false,
       ));

@@ -49,12 +49,44 @@ class DeeMusiqAudioPlayer extends AudioPlayerInterface
   Future<void> setVolume(double volume) async {
     assert(volume >= 0 && volume <= 1);
     try {
-      await _mkPlayer.setVolume(volume * 100);
+      userVolume = volume;
+      await _applyEffectiveVolume();
     } catch (e, stack) {
       AppLogger.reportError(e, stack, 'setVolume() failed');
       rethrow;
     }
   }
+
+  /// Applies user volume × per-track loudness gain to mpv. The product is
+  /// clamped to [0, 1] — normalization may attenuate but never pushes past
+  /// full user volume.
+  Future<void> _applyEffectiveVolume() {
+    final gainDb = trackGainDb;
+    final linear = gainDb == null ? 1.0 : loudnessGainLinear(gainDb);
+    final effective = (userVolume * linear).clamp(0.0, 1.0);
+    return _mkPlayer.setVolume(effective * 100);
+  }
+
+  /// Per-track loudness normalization for catalog tracks carrying `gainDb`.
+  /// Pass null on tracks without a measurement: mpv's dynaudnorm stays the
+  /// catch-all there (YouTube-sourced tracks have no catalog loudness).
+  Future<void> setTrackGainDb(double? gainDb) async {
+    try {
+      trackGainDb = gainDb;
+      if (gainDb != null) {
+        AppLogger.log.d('track gain: ${gainDb.toStringAsFixed(1)} dB');
+      }
+      await _applyEffectiveVolume();
+      await _mkPlayer.setAudioNormalization(
+        _audioNormalizationEnabled && gainDb == null,
+      );
+    } catch (e, stack) {
+      AppLogger.reportError(e, stack, 'setTrackGainDb() failed');
+      rethrow;
+    }
+  }
+
+  bool _audioNormalizationEnabled = false;
 
   Future<void> setSpeed(double speed) async {
     try {
@@ -158,6 +190,13 @@ class DeeMusiqAudioPlayer extends AudioPlayerInterface
 
   Future<void> skipToNext() async {
     try {
+      // Advancing the queue mid-ad corrupts the break bookkeeping — every
+      // transport surface (notification, connect route, tray, player UI)
+      // funnels through here, so the guard lives at the choke point.
+      if (AdRollService.instance.isAdPlaying) {
+        AppLogger.log.i('skipToNext ignored — ad break in progress');
+        return;
+      }
       AdRollService.instance.onTrackSkipped();
       await _mkPlayer.next();
     } catch (e, stack) {
@@ -168,6 +207,10 @@ class DeeMusiqAudioPlayer extends AudioPlayerInterface
 
   Future<void> skipToPrevious() async {
     try {
+      if (AdRollService.instance.isAdPlaying) {
+        AppLogger.log.i('skipToPrevious ignored — ad break in progress');
+        return;
+      }
       AdRollService.instance.onTrackSkipped();
       await _mkPlayer.previous();
     } catch (e, stack) {
@@ -250,7 +293,13 @@ class DeeMusiqAudioPlayer extends AudioPlayerInterface
 
   Future<void> setAudioNormalization(bool normalize) async {
     try {
-      await _mkPlayer.setAudioNormalization(normalize);
+      _audioNormalizationEnabled = normalize;
+      // dynaudnorm is the catch-all for tracks WITHOUT a measured gain — a
+      // catalog track playing with its DTO gainDb must not get double-
+      // normalized, so the filter comes off while a gain is applied.
+      await _mkPlayer.setAudioNormalization(
+        normalize && trackGainDb == null,
+      );
     } catch (e, stack) {
       AppLogger.reportError(e, stack, 'setAudioNormalization() failed');
       rethrow;
@@ -262,6 +311,16 @@ class DeeMusiqAudioPlayer extends AudioPlayerInterface
       await _mkPlayer.setDemuxerBufferSize(sizeInBytes);
     } catch (e, stack) {
       AppLogger.reportError(e, stack, 'setDemuxerBufferSize() failed');
+      rethrow;
+    }
+  }
+
+  /// Data-saver cache budgets (see [CustomPlayer.setCacheBudgets]).
+  Future<void> setCacheBudgets({required bool lite, bool lossless = false}) async {
+    try {
+      await _mkPlayer.setCacheBudgets(lite: lite, lossless: lossless);
+    } catch (e, stack) {
+      AppLogger.reportError(e, stack, 'setCacheBudgets() failed');
       rethrow;
     }
   }
@@ -293,12 +352,5 @@ class DeeMusiqAudioPlayer extends AudioPlayerInterface
       AppLogger.reportError(e, stack, 'setReplayGain() failed');
       rethrow;
     }
-  }
-
-  // ── Equalizer ───────────────────────────────────────────────────────────
-
-  /// Attaches the equalizer to this player's native mpv backend.
-  void attachEqualizer(AudioEqualizer eq) {
-    eq.attach(_mkPlayer.nativePlayer);
   }
 }

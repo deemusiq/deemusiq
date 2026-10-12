@@ -25,6 +25,10 @@ abstract class DeeMusiqIcons {
   static const addFilled = FeatherIcons.plusSquare;
   static const heart = FeatherIcons.heart;
   static const heartFilled = Icons.favorite_rounded;
+  static const thumbUp = Icons.thumb_up_off_alt_rounded;
+  static const thumbUpFilled = Icons.thumb_up_rounded;
+  static const thumbDown = Icons.thumb_down_off_alt_rounded;
+  static const thumbDownFilled = Icons.thumb_down_rounded;
   static const queue = Icons.queue_music_rounded;
   static const queueAdd = Icons.add_to_photos_outlined;
   static const queueRemove = Icons.remove_outlined;
@@ -164,6 +168,7 @@ abstract class DeeMusiqIcons {
   static const lock = FeatherIcons.lock;
   static const shield = FeatherIcons.shield;
   static const region = Icons.public_rounded;
+  static const dataSaver = Icons.data_saver_on_rounded;
   static const spotify = Icons.graphic_eq_rounded;
   static const google = SimpleIcons.google;
   static const appleMusic = Icons.album_rounded;

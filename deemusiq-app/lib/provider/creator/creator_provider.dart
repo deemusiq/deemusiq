@@ -37,36 +37,44 @@ class ArtistLeaderEntry {
 class ArtistLeaderboard {
   final int year;
   final bool isCurrentYear;
+
+  /// Echoed `region` filter ("ZA") or null for the global board.
+  final String? region;
   final List<ArtistLeaderEntry> entries;
 
   const ArtistLeaderboard({
     required this.year,
     required this.isCurrentYear,
     required this.entries,
+    this.region,
   });
 }
 
-/// The artist leaderboard for a given calendar year (null = current). The
-/// board "resets" each year because the backend windows by calendar year.
+/// The artist leaderboard for a given calendar year + region (both null =
+/// current year, global). The board "resets" each year because the backend
+/// windows by calendar year.
 final artistLeaderboardProvider = FutureProvider.autoDispose
-    .family<ArtistLeaderboard, int?>((ref, year) async {
+    .family<ArtistLeaderboard, ({int? year, String? region})>(
+        (ref, query) async {
   if (!WalletApiClient.instance.isConfigured) {
     return ArtistLeaderboard(
-      year: year ?? DateTime.now().toUtc().year,
-      isCurrentYear: year == null,
+      year: query.year ?? DateTime.now().toUtc().year,
+      isCurrentYear: query.year == null,
       entries: const [],
+      region: query.region,
     );
   }
-  final data =
-      await WalletApiClient.instance.fetchArtistLeaderboard(year: year);
+  final data = await WalletApiClient.instance
+      .fetchArtistLeaderboard(year: query.year, region: query.region);
   final entries = (data["entries"] as List? ?? const [])
       .map((e) =>
           ArtistLeaderEntry.fromJson(Map<String, dynamic>.from(e as Map)))
       .toList();
   return ArtistLeaderboard(
     year: (data["year"] as num?)?.toInt() ??
-        (year ?? DateTime.now().toUtc().year),
+        (query.year ?? DateTime.now().toUtc().year),
     isCurrentYear: data["isCurrentYear"] == true,
+    region: data["region"] as String? ?? query.region,
     entries: entries,
   );
 });

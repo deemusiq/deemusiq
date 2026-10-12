@@ -107,8 +107,8 @@ class DeeMusiqTheme {
         cardForeground: cream,
         popover: surface2,
         popoverForeground: cream,
-        border: line,
-        input: surface2,
+        border: Color(0xFF463527),
+        input: Color(0xFF322720),
         accent: orange,
         accentForeground: Color(0xFF1A0D06),
         destructive: Color(0xFFEF4444),
@@ -145,8 +145,8 @@ class DeeMusiqTheme {
         cardForeground: ink,
         popover: Colors.white,
         popoverForeground: ink,
-        border: Color(0x20FF783C),
-        input: Color(0xFFF0EAE4),
+        border: Color(0xFFD8CCBF),
+        input: Color(0xFFE7DCD0),
         accent: orange,
         accentForeground: Colors.white,
         destructive: Color(0xFFEF4444),
@@ -172,6 +172,34 @@ class DeeMusiqTheme {
   /// Returns the appropriate ColorScheme for the given [ThemeMode].
   static ColorScheme forMode(ThemeMode mode) =>
       mode == ThemeMode.light ? light() : dark();
+
+  /// Lifts the control layer of a dark scheme so buttons, switch tracks,
+  /// checkboxes, outline controls and select fields are clearly visible.
+  ///
+  /// The stock shadcn legacy dark schemes put `secondary`, `muted`, `accent`,
+  /// `border` and `input` at ~17% lightness against a ~5% background — every
+  /// settings control reads as disabled (user-reported). This raises any
+  /// control token below 24% lightness by 9 points, preserving the scheme's
+  /// hue, and leaves non-dark schemes and already-visible tokens untouched.
+  static ColorScheme liftDarkControls(ColorScheme base) {
+    if (base.brightness != Brightness.dark) return base;
+    Color lift(Color c) {
+      final hsl = HSLColor.fromColor(c.withValues(alpha: 1));
+      if (hsl.lightness >= 0.24) return c;
+      return hsl
+          .withLightness((hsl.lightness + 0.09).clamp(0.0, 1.0))
+          .toColor();
+    }
+
+    // copyWith takes ValueGetters (lazy) in this shadcn version.
+    return base.copyWith(
+      secondary: () => lift(base.secondary),
+      muted: () => lift(base.muted),
+      accent: () => lift(base.accent),
+      border: () => lift(base.border),
+      input: () => lift(base.input),
+    );
+  }
 
   /// Legacy-style factory matching `LegacyColorSchemes.orange` signature,
   /// so it can be dropped into `colorSchemeMap` without changing callers.

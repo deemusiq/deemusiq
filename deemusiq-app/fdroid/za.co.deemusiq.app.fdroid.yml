@@ -94,6 +94,18 @@ AntiFeatures:
 #       - stableFdroid          # flavor: stable track + fdroid store
 #     output: build/app/outputs/flutter-apk/app-stableFdroid-release.apk
 #     prebuild:
+#       # MANDATORY: the F-Droid build MUST compile with
+#       #   --dart-define=DEEMUSIQ_FDROID=true
+#       # F-Droid signs the APK with its own key, so the app's anti-tamper
+#       # signing-cert check and published-APK-hash check would brick the app
+#       # / lock every user's wallet. The flag disables ONLY those two checks
+#       # (see lib/services/integrity/integrity_service.dart, `isFdroidBuild`);
+#       # the backend TLS pin probe, payment HMAC and update-metadata
+#       # signature stay active. fdroidserver has no dart-defines field — pass
+#       # it on the Flutter invocation, e.g. replace the gradle-driven build
+#       # with a build: step running:
+#       #   flutter build apk --release --flavor stableFdroid \
+#       #     --dart-define=DEEMUSIQ_FDROID=true
 #       # git-sourced deps via dependency_overrides in pubspec.yaml
 #       # (media_kit, bonsoir, flutter_secure_storage_linux, ...) must
 #       # resolve offline-friendly for the F-Droid buildserver — check

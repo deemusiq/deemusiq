@@ -39,6 +39,15 @@ class UserPreferencesNotifier extends Notifier<PreferencesTableData> {
             ..where((tbl) => tbl.id.equals(0)))
           .getSingle();
 
+      // Player-level default (no user toggle): gapless audio + mpv playlist
+      // prefetch make track boundaries seamless — the loopback server
+      // resolves the next source ahead of the switch.
+      try {
+        await audioPlayer.setGaplessPlayback(true);
+      } catch (e, stack) {
+        AppLogger.reportError(e, stack, 'gapless playback init');
+      }
+
       final subscription = (db.select(db.preferencesTable)
             ..where((tbl) => tbl.id.equals(0)))
           .watchSingle()
@@ -98,8 +107,10 @@ class UserPreferencesNotifier extends Notifier<PreferencesTableData> {
 
   static Future<String> getMusicCacheDir() async {
     if (kIsAndroid) {
-      final dir =
-          await paths.getExternalCacheDirectories().then((dirs) => dirs!.first);
+      final dirs = await paths.getExternalCacheDirectories();
+      final dir = (dirs != null && dirs.isNotEmpty)
+          ? dirs.first
+          : await paths.getApplicationCacheDirectory();
       final cacheDir = Directory(join(dir.path, 'Cached Tracks'));
       await cacheDir.create(recursive: true);
       return cacheDir.path;
@@ -135,12 +146,6 @@ class UserPreferencesNotifier extends Notifier<PreferencesTableData> {
 
   void setAlbumColorSync(bool sync) {
     setData(PreferencesTableCompanion(albumColorSync: Value(sync)));
-
-    // if (!sync) {
-    //   ref.read(paletteProvider.notifier).state = null;
-    // } else {
-    //   ref.read(audioPlayerStreamListenersProvider).updatePalette();
-    // }
   }
 
   void setCheckUpdate(bool check) {
@@ -153,7 +158,6 @@ class UserPreferencesNotifier extends Notifier<PreferencesTableData> {
   }
 
   void setLocalLibraryLocation(List<String> localLibraryDirs) {
-    //if (localLibraryDir.isEmpty) return;
     setData(
       PreferencesTableCompanion(
         localLibraryLocation: Value(localLibraryDirs),

@@ -6,38 +6,12 @@ import 'package:shadcn_flutter/shadcn_flutter_extension.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/components/titlebar/titlebar.dart';
 import 'package:deemusiq/components/wallet/wallet_common.dart';
+import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/models/wallet/linked_account.dart';
 import 'package:deemusiq/provider/wallet/wallet_provider.dart';
 import 'package:deemusiq/services/wallet/wallet_api.dart';
 import 'package:deemusiq/services/logger/logger.dart';
 import 'package:url_launcher/url_launcher_string.dart';
-
-String _walletErrorMessage(String code) {
-  switch (code) {
-    case 'insufficient_balance':
-      return 'Not enough tokens. Top up your wallet to continue.';
-    case 'provider_not_configured':
-      return 'Account linking isn\'t available yet — coming soon.';
-    case 'invalid_provider':
-      return 'This provider is not supported.';
-    case 'network_error':
-    case 'Network error':
-      return 'Connection failed. Please check your internet and try again.';
-    case 'already_connected':
-      return 'This account is already linked to another device.';
-    case 'token_expired':
-    case 'unauthorized':
-      return 'Session expired. Please sign in again.';
-    case 'rate_limited':
-      return 'Too many requests. Please wait a moment and try again.';
-    case 'server_error':
-      return 'Something went wrong on our end. Please try again later.';
-    case 'payment_failed':
-      return 'Payment was not completed. Please try again.';
-    default:
-      return 'Something went wrong. Please try again.';
-  }
-}
 
 @RoutePage()
 class LinkedAccountsPage extends HookConsumerWidget {
@@ -54,8 +28,8 @@ class LinkedAccountsPage extends HookConsumerWidget {
     return SafeArea(
       bottom: false,
       child: Scaffold(
-        headers: const [
-          TitleBar(title: Text("Linked accounts")),
+        headers: [
+          TitleBar(title: Text(context.l10n.wallet_linked_accounts)),
         ],
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -72,26 +46,27 @@ class LinkedAccountsPage extends HookConsumerWidget {
                       padding: const EdgeInsets.all(12),
                       child: Text(
                         backendConfigured
-                            ? "Connect your accounts on other services to bring "
-                                "your playlists and favourites into DeeMusiq. "
-                                "Connecting opens that provider's secure login "
-                                "(OAuth) in your browser, then returns you here."
-                            : "Account linking needs a DeeMusiq connection — "
-                                "this build is offline, so connecting is "
-                                "disabled. You can still disconnect accounts "
-                                "stored on this device.",
-                      ).muted().small(),
+                            ? context.l10n.linked_connect_body
+                            : context.l10n.linked_offline_body,
+                      ).small(),
                     ),
                     const Gap(16),
+                    // Only providers the backend actually accepts (spotify,
+                    // google) are offered as new link targets. Any other row
+                    // renders only when that account is ALREADY linked, so a
+                    // legacy link can still be disconnected — never connected.
                     for (final provider in LinkedProvider.values)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: _ProviderTile(
-                          provider: provider,
-                          account: byProvider[provider],
-                          backendConfigured: backendConfigured,
+                      if (provider == LinkedProvider.spotify ||
+                          provider == LinkedProvider.google ||
+                          byProvider[provider] != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: _ProviderTile(
+                            provider: provider,
+                            account: byProvider[provider],
+                            backendConfigured: backendConfigured,
+                          ),
                         ),
-                      ),
                     const Gap(40),
                   ],
                 ),
@@ -129,8 +104,8 @@ class _ProviderTile extends HookConsumerWidget {
         showWalletToast(
           context,
           opened
-              ? "Finish connecting ${provider.label} in your browser"
-              : "Couldn't open your browser — try again",
+              ? context.l10n.linked_finish_browser(provider.label)
+              : context.l10n.linked_browser_failed,
           icon: provider.icon,
         );
       }
@@ -138,13 +113,17 @@ class _ProviderTile extends HookConsumerWidget {
       if (!context.mounted) return;
       showWalletToast(
         context,
-        _walletErrorMessage(e.message),
+        // The backend's `provider_not_configured` means the operator hasn't
+        // enabled this provider — linking itself IS implemented.
+        e.code == 'provider_not_configured'
+            ? context.l10n.linked_provider_not_enabled
+            : e.friendlyMessage,
         icon: DeeMusiqIcons.info,
       );
     } catch (e) {
       AppLogger.log.w('Linked accounts load failed: ${e.toString()}');
       if (!context.mounted) return;
-      showWalletToast(context, 'Failed to load linked accounts',
+      showWalletToast(context, context.l10n.linked_load_failed,
           icon: DeeMusiqIcons.info);
     }
   }
@@ -153,12 +132,12 @@ class _ProviderTile extends HookConsumerWidget {
     try {
       await ref.read(walletProvider.notifier).unlinkAccount(provider);
       if (context.mounted) {
-        showWalletToast(context, "${provider.label} disconnected",
+        showWalletToast(context, context.l10n.linked_disconnected(provider.label),
             icon: provider.icon);
       }
     } on WalletApiException catch (e) {
       if (context.mounted) {
-        showWalletToast(context, _walletErrorMessage(e.message), icon: DeeMusiqIcons.info);
+        showWalletToast(context, e.friendlyMessage, icon: DeeMusiqIcons.info);
       }
     }
   }
@@ -209,7 +188,7 @@ class _ProviderTile extends HookConsumerWidget {
                 ),
                 Text(
                   connected
-                      ? "Connected as ${account!.displayName}"
+                      ? context.l10n.linked_connected_as(account!.displayName)
                       : provider.description,
                 ).muted().xSmall(),
               ],
@@ -220,14 +199,18 @@ class _ProviderTile extends HookConsumerWidget {
             Button.outline(
               onPressed:
                   busy.value ? null : () => guard(() => _disconnect(context, ref)),
-              child: Text(busy.value ? "Disconnecting…" : "Disconnect"),
+              child: Text(busy.value
+                  ? context.l10n.linked_disconnecting
+                  : context.l10n.disconnect),
             )
           else
             Button.primary(
               onPressed: backendConfigured && !busy.value
                   ? () => guard(() => _connect(context, ref))
                   : null,
-              child: Text(busy.value ? "Connecting…" : "Connect"),
+              child: Text(busy.value
+                  ? context.l10n.linked_connecting
+                  : context.l10n.connect),
             ),
         ],
       ),

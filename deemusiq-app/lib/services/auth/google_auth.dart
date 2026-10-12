@@ -42,7 +42,11 @@ class GoogleAuthService {
 
   GoogleSignIn get _client {
     _googleSignIn ??= GoogleSignIn(
-      clientId: _webClientId,
+      // clientId drives web/iOS/macOS; Android ignores it and uses
+      // serverClientId to mint an ID token whose audience is the web client
+      // ID — which is what the backend verifies against GOOGLE_CLIENT_ID.
+      clientId: _webClientId.isEmpty ? null : _webClientId,
+      serverClientId: _webClientId.isEmpty ? null : _webClientId,
       // Request only the minimal scope — just an ID token, no access to user data.
       scopes: ['openid'],
     );

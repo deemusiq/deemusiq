@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
-import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
 import 'package:crypto/crypto.dart';
@@ -24,7 +23,9 @@ import 'package:deemusiq/provider/server/active_track_sources.dart';
 import 'package:deemusiq/provider/server/sourced_track_provider.dart';
 import 'package:deemusiq/provider/user_preferences/user_preferences_provider.dart';
 import 'package:deemusiq/services/audio_player/audio_player.dart';
+import 'package:deemusiq/services/audio_player/data_saver.dart';
 import 'package:deemusiq/services/logger/logger.dart';
+import 'package:deemusiq/utils/file_cleanup.dart';
 import 'package:deemusiq/services/metadata/errors/exceptions.dart'
     show CatalogOfflineException;
 import 'package:deemusiq/services/offline_drm/offline_drm.dart';
@@ -120,6 +121,12 @@ class ServerPlaybackRoutes {
   /// (mpv fires HEAD + GET + range probes in parallel).
   final Map<String, Future<void>> _remoteFetchInFlight = {};
 
+  /// Temp files of in-flight cache writes (`.part-*`). LRU eviction sweeps
+  /// temp files unconditionally, so an eviction triggered by track B's
+  /// completed write would otherwise delete track A's still-open download
+  /// out from under its sink.
+  final Set<String> _inFlightCacheTempPaths = {};
+
   static const _urlCacheTtlSeconds = 30;
 
   /// How often an interrupted remote body is resumed with a Range request
@@ -133,6 +140,20 @@ class ServerPlaybackRoutes {
               receiveTimeout: const Duration(seconds: 60),
               sendTimeout: const Duration(seconds: 15),
             ));
+
+  /// Cache identity for a sourced track. The data-saver lite rendition is
+  /// different bytes for the same match id, so it gets its own identity —
+  /// otherwise a cached full-quality file would be served when the user asked
+  /// to save data (and a lite file would linger after the saver turns off).
+  /// Uses the last-known saver state: the audio-source resolution (which
+  /// probes connectivity freshly) always runs before the serving paths below.
+  String _sourceIdentity(SourcedTrack track) {
+    final liteUrl = track.query.liteUrl;
+    final lite = liteUrl != null &&
+        liteUrl.isNotEmpty &&
+        DataSaverService.isActiveCached;
+    return lite ? '${track.info.id}:lite' : track.info.id;
+  }
 
   Future<String> _getTrackCacheFilePath(SourcedTrack track) async {
     return join(
@@ -288,8 +309,9 @@ class ServerPlaybackRoutes {
     if (inFlightFetch != null) {
       try {
         await inFlightFetch.timeout(const Duration(seconds: 30));
-      } catch (_) {
+      } catch (e) {
         // Timed out or failed — fall through and fetch from remote ourselves.
+        debugPrint('[PlaybackServer.inflight] $e');
       }
       try {
         final awaitedLocal = await _findVerifiedLocalCopy(track);
@@ -348,9 +370,13 @@ class ServerPlaybackRoutes {
             );
             headHeaders = _readRemoteHeaders(retry, url);
             if (headHeaders.hls) {
-        return _localManifestRedirect(request, track.query.id);
-      }
-          } catch (_) {}
+              return _localManifestRedirect(request, track.query.id);
+            }
+          } catch (e) {
+            // The retry HEAD failed — fall through to the plain GET path,
+            // which re-attempts the request with its own error handling.
+            _logWarn('playback remote source retry HEAD failed: $e');
+          }
         }
       } catch (_) {
         // Refreshing the streaming URL failed at the network level — the
@@ -678,6 +704,7 @@ class ServerPlaybackRoutes {
         '.${_cacheExtension(track)}.part-${_uniqueToken()}',
       ),
     );
+    _inFlightCacheTempPaths.add(temporaryFile.path);
     try {
       final sink = temporaryFile.openWrite(mode: FileMode.writeOnly);
       var received = 0;
@@ -718,13 +745,13 @@ class ServerPlaybackRoutes {
         temporaryFile,
         actualHash,
         _cacheExtension(track),
-        track.info.id,
+        _sourceIdentity(track),
       );
       await _writeCacheMetadata(
         promoted,
         _CacheMetadata(
           trackId: track.query.id,
-          sourceId: track.info.id,
+          sourceId: _sourceIdentity(track),
           sha256: actualHash,
           length: await promoted.length(),
           etag: etag,
@@ -736,7 +763,8 @@ class ServerPlaybackRoutes {
       );
       await _evictCacheIfNeeded();
     } finally {
-      await _deleteQuietly(temporaryFile);
+      _inFlightCacheTempPaths.remove(temporaryFile.path);
+      await deleteFileQuietly(temporaryFile, 'playback cache');
     }
   }
 
@@ -752,9 +780,10 @@ class ServerPlaybackRoutes {
 
     final candidates = <String, File>{};
     final extension = _cacheExtension(track);
+    final sourceIdentity = _sourceIdentity(track);
     if (expectedHash != null) {
       for (final name in [
-        _contentAddressedName(expectedHash, extension, track.info.id),
+        _contentAddressedName(expectedHash, extension, sourceIdentity),
         '$expectedHash.$extension',
       ]) {
         final contentFile = File(join(directory.path, name));
@@ -781,7 +810,7 @@ class ServerPlaybackRoutes {
           metadataTrackId: metadata?.trackId,
           metadataSourceId: metadata?.sourceId,
           trackId: track.query.id,
-          sourceId: track.info.id,
+          sourceId: sourceIdentity,
         )) {
           candidates[path] = entity;
         }
@@ -818,8 +847,9 @@ class ServerPlaybackRoutes {
     if (!await file.exists()) return null;
     final stat = await file.stat();
     if (stat.type != FileSystemEntityType.file || stat.size <= 0) return null;
+    final sourceIdentity = _sourceIdentity(track);
     final cacheKey =
-        '${file.path}|${stat.size}|${stat.modified.microsecondsSinceEpoch}|$expectedHash|$expectedEtag|$expectedLength|${track.query.id}|${track.info.id}';
+        '${file.path}|${stat.size}|${stat.modified.microsecondsSinceEpoch}|$expectedHash|$expectedEtag|$expectedLength|${track.query.id}|$sourceIdentity';
     final active = _verificationCache[cacheKey];
     if (active != null) return active;
     // The key includes the file mtime, which _serveLocalCopy bumps on every
@@ -846,12 +876,13 @@ class ServerPlaybackRoutes {
     required int? expectedLength,
   }) async {
     final metadata = await _readCacheMetadata(file);
+    final sourceIdentity = _sourceIdentity(track);
     if (metadata != null &&
         !cacheMetadataMatchesTrackSource(
           metadataTrackId: metadata.trackId,
           metadataSourceId: metadata.sourceId,
           trackId: track.query.id,
-          sourceId: track.info.id,
+          sourceId: sourceIdentity,
         )) {
       return null;
     }
@@ -881,7 +912,7 @@ class ServerPlaybackRoutes {
         _contentAddressedName(
           actualHash,
           _cacheExtension(track),
-          track.info.id,
+          sourceIdentity,
         ),
       ),
     );
@@ -909,7 +940,7 @@ class ServerPlaybackRoutes {
     final effectiveMetadata = metadata ??
         _CacheMetadata(
           trackId: track.query.id,
-          sourceId: track.info.id,
+          sourceId: sourceIdentity,
           sha256: actualHash,
           length: length,
           etag: expectedEtag,
@@ -1096,7 +1127,11 @@ class ServerPlaybackRoutes {
     // eviction rotates out what actually stopped being played.
     try {
       await local.file.setLastModified(DateTime.now());
-    } catch (_) {}
+    } catch (e) {
+      // LRU bookkeeping only — a failed touch degrades eviction ordering,
+      // never playback, so warn and continue serving.
+      _logWarn('playback cache mtime touch failed for ${local.file.path}: $e');
+    }
     final length = local.length;
     final requestedEnd = range?.end;
     if (range != null &&
@@ -1192,9 +1227,10 @@ class ServerPlaybackRoutes {
 
   /// Signed URLs are minted per source, so the cache key includes the source
   /// identity — a swapped/alternative source must never reuse the URL of the
-  /// previous one.
+  /// previous one. The identity is rendition-aware (lite vs full), so the
+  /// data saver never replays the other rendition's signed URL.
   String _urlCacheKey(SourcedTrack track) =>
-      '${track.query.id}:${track.info.id}';
+      '${track.query.id}:${_sourceIdentity(track)}';
 
   /// The one device User-Agent used for every upstream request of this
   /// server instance (see [_pickSessionUserAgent]).
@@ -1236,10 +1272,21 @@ class ServerPlaybackRoutes {
       } catch (_) {
         pinnedTrackIds = const {};
       }
+      final activeTrackId = playlist.activeTrack?.id;
       await evictMusicCacheDir(
         cacheDir: cacheDir,
         pinnedTrackIds: pinnedTrackIds,
         maxSizeBytes: maxCacheSizeBytes,
+        // Never evict a file that is still being downloaded, promoted by an
+        // in-flight atomic replace, or serving the currently-playing track.
+        protectedTrackIds: {
+          ..._remoteFetchInFlight.keys,
+          if (activeTrackId != null) activeTrackId,
+        },
+        protectedPaths: {
+          ..._inFlightCacheTempPaths,
+          ..._atomicReplaceInFlightTargets,
+        },
       );
     } catch (error, stackTrace) {
       _reportCacheError(error, stackTrace, '_evictCacheIfNeeded');
@@ -1806,7 +1853,12 @@ Future<_CacheMetadata?> _readCacheMetadata(File file) async {
       final decoded = jsonDecode(await metadataFile.readAsString());
       final metadata = _CacheMetadata.fromJson(decoded);
       if (metadata != null) return metadata;
-    } catch (_) {}
+    } catch (e) {
+      // Corrupt or partially-written metadata — try the next candidate file.
+      _logWarn(
+        'playback cache metadata unreadable at ${metadataFile.path}: $e',
+      );
+    }
   }
   return null;
 }
@@ -1826,10 +1878,10 @@ Future<void> _writeCacheMetadata(
     );
     await _atomicReplace(temporaryFile, metadataFile);
     for (final oldMetadata in _metadataFiles(file).skip(1)) {
-      await _deleteQuietly(oldMetadata);
+      await deleteFileQuietly(oldMetadata, 'playback cache');
     }
   } finally {
-    await _deleteQuietly(temporaryFile);
+    await deleteFileQuietly(temporaryFile, 'playback cache');
   }
 }
 
@@ -1852,7 +1904,7 @@ Future<File> _promoteCacheFile(
   if (await target.exists()) {
     final existingHash = await _sha256File(target);
     if (existingHash == hash) {
-      await _deleteQuietly(source);
+      await deleteFileQuietly(source, 'playback cache');
       return target;
     }
   }
@@ -1870,12 +1922,18 @@ Future<File> _promoteCacheFile(
 /// month's Top 50) are never evicted — they still count toward the total,
 /// so if the pinned set alone exceeds the cap everything unpinned goes and
 /// the sweep stops. Files without readable metadata are treated as unpinned.
-/// Metadata sidecars are kept (pinning and verification both read them);
-/// a sidecar is deleted together with its audio file.
+/// [protectedTrackIds] extends the same protection to tracks whose bytes are
+/// in use right now: an in-flight remote fetch or the currently-playing
+/// track. [protectedPaths] protects concrete paths — in-flight `.part-*`
+/// downloads (otherwise the temp sweep deletes an open download) and atomic
+/// replace targets. Metadata sidecars are kept (pinning and verification
+/// both read them); a sidecar is deleted together with its audio file.
 Future<void> evictMusicCacheDir({
   required Directory cacheDir,
   required Set<String> pinnedTrackIds,
   required int maxSizeBytes,
+  Set<String> protectedTrackIds = const {},
+  Set<String> protectedPaths = const {},
 }) async {
   if (!await cacheDir.exists()) return;
 
@@ -1884,7 +1942,8 @@ Future<void> evictMusicCacheDir({
     if (entity is! File) continue;
     if (_isMetadataPath(entity.path)) continue;
     if (_isTemporaryCachePath(entity.path)) {
-      await _deleteQuietly(entity);
+      if (protectedPaths.contains(entity.path)) continue;
+      await deleteFileQuietly(entity, 'playback cache');
       continue;
     }
     files.add(entity);
@@ -1906,11 +1965,23 @@ Future<void> evictMusicCacheDir({
 
   final evictable = <_CacheFile>[];
   for (final cacheFile in sizedFiles) {
+    if (protectedPaths.contains(cacheFile.path)) continue;
     String? trackId;
     try {
       trackId = (await _readCacheMetadata(File(cacheFile.path)))?.trackId;
-    } catch (_) {}
-    if (trackId != null && pinnedTrackIds.contains(trackId)) continue;
+    } catch (e) {
+      // Unreadable metadata means the file cannot be proven pinned — treat it
+      // as evictable rather than letting the cache grow unbounded.
+      _logWarn(
+        'playback cache eviction metadata read failed for '
+        '${cacheFile.path}: $e',
+      );
+    }
+    if (trackId != null &&
+        (pinnedTrackIds.contains(trackId) ||
+            protectedTrackIds.contains(trackId))) {
+      continue;
+    }
     evictable.add(cacheFile);
   }
 
@@ -1922,7 +1993,7 @@ Future<void> evictMusicCacheDir({
       final removedSize = cacheFile.size;
       await file.delete();
       for (final metadata in _metadataFiles(file)) {
-        await _deleteQuietly(metadata);
+        await deleteFileQuietly(metadata, 'playback cache');
       }
       totalSize -= removedSize;
     } catch (error, stackTrace) {
@@ -2220,8 +2291,13 @@ Future<String> _sha256File(File file) async {
   return digest.toString();
 }
 
+/// Targets of in-flight [_atomicReplace] promotions. Eviction must not
+/// delete a target out from under a rename (or delete a file mid-promotion).
+final Set<String> _atomicReplaceInFlightTargets = {};
+
 Future<void> _atomicReplace(File source, File target) async {
   if (source.path == target.path) return;
+  _atomicReplaceInFlightTargets.add(target.path);
   try {
     await source.rename(target.path);
     return;
@@ -2234,37 +2310,33 @@ Future<void> _atomicReplace(File source, File target) async {
     } catch (error, stackTrace) {
       try {
         await backup.rename(target.path);
-      } catch (_) {}
+      } catch (rollbackError) {
+        // The original error is rethrown below either way — a failed
+        // rollback additionally leaves the old file at the backup path.
+        _logWarn('playback cache rollback to backup failed: $rollbackError');
+      }
       Error.throwWithStackTrace(error, stackTrace);
     }
-    try {
-      await backup.delete();
-    } catch (_) {}
+    await deleteFileQuietly(backup, 'playback cache');
+  } finally {
+    _atomicReplaceInFlightTargets.remove(target.path);
   }
 }
 
-Future<void> _deleteQuietly(FileSystemEntity entity) async {
-  try {
-    if (await entity.exists()) await entity.delete(recursive: true);
-  } catch (_) {}
+void _logInfo(String message) {
+  AppLogger.log.i(message);
 }
 
-void _logInfo(String message) {
-  try {
-    AppLogger.log.i(message);
-  } catch (_) {}
+void _logWarn(String message) {
+  AppLogger.log.w(message);
 }
 
 void _reportCacheError(Object error, StackTrace stackTrace, String context) {
-  try {
-    AppLogger.reportError(error, stackTrace, context);
-  } catch (_) {}
+  AppLogger.reportError(error, stackTrace, context);
 }
 
 void _reportPrimaryError(Object error, StackTrace stackTrace) {
-  try {
-    AppLogger.reportError(error, stackTrace, 'playback remote source');
-  } catch (_) {}
+  AppLogger.reportError(error, stackTrace, 'playback remote source');
 }
 
 String _safeError(Object error) {

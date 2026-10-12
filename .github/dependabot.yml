@@ -1,0 +1,18 @@
+# Dependabot — dependency update PRs + security alerts.
+# Dart/pub is NOT a supported ecosystem; Flutter deps are covered by the
+# weekly Trivy scan in security-scan.yml instead (it reads pubspec.lock).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels: [dependencies, ci]
+
+  - package-ecosystem: npm
+    directory: /deemusiq-app/website
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels: [dependencies, website]

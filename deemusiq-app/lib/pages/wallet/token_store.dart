@@ -6,6 +6,7 @@ import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/components/titlebar/titlebar.dart';
 import 'package:deemusiq/components/wallet/purchase_dialog.dart';
 import 'package:deemusiq/components/wallet/wallet_common.dart';
+import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/models/wallet/region_pricing.dart';
 import 'package:deemusiq/models/wallet/token_pack.dart';
 import 'package:deemusiq/provider/wallet/region_provider.dart';
@@ -25,16 +26,14 @@ class TokenStorePage extends HookConsumerWidget {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text("Choose your region").large(),
+          title: Text(context.l10n.choose_your_region).large(),
           content: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 360),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
-                  "Token packs are priced fairly per region (purchasing-power adjusted).",
-                ).muted().small(),
+                Text(context.l10n.store_region_body).muted().small(),
                 const Gap(12),
                 ...RegionTier.all.map(
                   (tier) => Padding(
@@ -61,7 +60,7 @@ class TokenStorePage extends HookConsumerWidget {
           actions: [
             Button.outline(
               onPressed: () => Navigator.pop(context),
-              child: const Text("Close"),
+              child: Text(context.l10n.close),
             ),
           ],
         );
@@ -80,8 +79,8 @@ class TokenStorePage extends HookConsumerWidget {
     return SafeArea(
       bottom: false,
       child: Scaffold(
-        headers: const [
-          TitleBar(title: Text("Token store")),
+        headers: [
+          TitleBar(title: Text(context.l10n.wallet_token_store)),
         ],
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -101,7 +100,8 @@ class TokenStorePage extends HookConsumerWidget {
                           const Gap(10),
                           Expanded(
                             child: Text(
-                              "Balance: ${formatTokens(balance)} tokens",
+                              context.l10n
+                                  .token_balance(formatTokens(balance)),
                             ).semiBold(),
                           ),
                           Button.ghost(
@@ -109,7 +109,7 @@ class TokenStorePage extends HookConsumerWidget {
                             onPressed: PaymentGatewayConfig.paymentsZaOnly
                                 ? () => showWalletToast(
                                       context,
-                                      "DeeMusiq top-ups are available in South Africa (ZAR) for now.",
+                                      context.l10n.store_za_only,
                                       icon: DeeMusiqIcons.region,
                                     )
                                 : () => _pickRegion(context, ref),
@@ -120,7 +120,7 @@ class TokenStorePage extends HookConsumerWidget {
                     ),
                     const Gap(8),
                     Text(
-                      "Prices for ${region.label} · adjusted for your region.",
+                      context.l10n.store_prices_for(region.label),
                     ).muted().small(),
                     const Gap(16),
                     if (serverPacks != null)
@@ -131,6 +131,7 @@ class TokenStorePage extends HookConsumerWidget {
                             pack: priced.pack,
                             region: region,
                             priceLabel: priced.priceLabel,
+                            zeroDecimal: priced.zeroDecimal,
                           ),
                         )
                     else
@@ -151,15 +152,14 @@ class TokenStorePage extends HookConsumerWidget {
                             children: [
                               const Icon(DeeMusiqIcons.creditCard, size: 16),
                               const Gap(8),
-                              const Text("Cards & crypto").semiBold(),
+                              Text(context.l10n.store_payment_methods_title)
+                                  .semiBold(),
                             ],
                           ),
                           const Gap(6),
-                          const Text(
-                            "Pay with PayShap instant EFT, PayFast/Stripe cards, or Monero, Ethereum, Bitcoin and USDT. "
-                            "Top-ups are processed securely online by the DeeMusiq backend and are "
-                            "available in South Africa for now — tokens appear once your payment confirms.",
-                          ).muted().small(),
+                          Text(context.l10n.store_payment_methods_body)
+                              .muted()
+                              .small(),
                         ],
                       ),
                     ),
@@ -182,7 +182,16 @@ class _PackCard extends StatelessWidget {
   /// Server-formatted price (e.g. "R59.00"). Null = price locally.
   final String? priceLabel;
 
-  const _PackCard({required this.pack, required this.region, this.priceLabel});
+  /// Server-declared zero-decimal currency flag, threaded through so the
+  /// fallback formatting agrees with the server rather than a local list.
+  final bool zeroDecimal;
+
+  const _PackCard({
+    required this.pack,
+    required this.region,
+    this.priceLabel,
+    this.zeroDecimal = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -209,7 +218,8 @@ class _PackCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text("${formatTokens(pack.totalTokens)} tokens")
+                    Text(context.l10n
+                            .store_pack_tokens(formatTokens(pack.totalTokens)))
                         .semiBold(),
                     if (pack.popular) ...[
                       const Gap(8),
@@ -220,9 +230,9 @@ class _PackCard extends StatelessWidget {
                           color: deeMusiqOrange,
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Text(
-                          "Popular",
-                          style: TextStyle(
+                        child: Text(
+                          context.l10n.store_popular,
+                          style: const TextStyle(
                               color: Color(0xFFFFFFFF), fontSize: 11),
                         ),
                       ),
@@ -231,7 +241,8 @@ class _PackCard extends StatelessWidget {
                 ),
                 Text(
                   pack.bonusTokens > 0
-                      ? "${pack.label} · ${pack.tokens} + ${pack.bonusTokens} bonus"
+                      ? context.l10n.store_pack_bonus(
+                          pack.label, pack.tokens, pack.bonusTokens)
                       : pack.label,
                 ).muted().xSmall(),
               ],
@@ -240,7 +251,11 @@ class _PackCard extends StatelessWidget {
           const Gap(12),
           Button.primary(
             onPressed: () => showPurchaseTokensDialog(context, pack: pack),
-            child: Text(priceLabel ?? region.formatPrice(pack.basePriceZar)),
+            child: Text(
+              priceLabel ??
+                  region.formatPrice(pack.basePriceZar,
+                      zeroDecimal: zeroDecimal),
+            ),
           ),
         ],
       ),

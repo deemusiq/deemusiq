@@ -12,9 +12,11 @@ import 'package:deemusiq/modules/home/sections/sections.dart';
 import 'package:deemusiq/modules/home/sections/new_releases.dart';
 import 'package:deemusiq/modules/home/sections/recent.dart';
 import 'package:deemusiq/components/home/for_you_section.dart';
+import 'package:deemusiq/components/home/trending_section.dart';
 import 'package:deemusiq/provider/history/recently_played.dart';
 import 'package:deemusiq/components/titlebar/titlebar.dart';
 import 'package:deemusiq/extensions/constrains.dart';
+import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/provider/user_preferences/user_preferences_provider.dart';
 import 'package:deemusiq/utils/platform.dart';
 
@@ -70,7 +72,7 @@ class HomePage extends HookConsumerWidget {
                 const SliverGap(10),
               const SliverGap(10),
               SliverList.builder(
-                itemCount: 5,
+                itemCount: 6,
                 itemBuilder: (context, index) {
                   return switch (index) {
                     // 0 => const HomeGenresSection(),
@@ -81,10 +83,11 @@ class HomePage extends HookConsumerWidget {
                             horizontal: 16, vertical: 8),
                         child: ForYouSection(),
                       ),
+                    3 => const TrendingSection(),
                     // Intentional seam: renders nothing until the featured
                     // playlists metadata-plugin API lands.
                     // ignore: deprecated_member_use_from_same_package
-                    3 => const HomeFeaturedSection(),
+                    4 => const HomeFeaturedSection(),
                     // 5 => const HomePageFriendsSection(),
                     _ => const HomeNewReleasesSection()
                   };
@@ -110,7 +113,7 @@ class _StreakBadge extends HookConsumerWidget {
     if (streak < 2) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Text('🔥 $streak-day listening streak',
+      child: Text(context.l10n.home_listening_streak(streak),
           style: const TextStyle(fontSize: 12)),
     );
   }

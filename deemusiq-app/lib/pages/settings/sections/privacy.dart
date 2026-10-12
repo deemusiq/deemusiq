@@ -1,7 +1,9 @@
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
+import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/modules/settings/section_card_with_heading.dart';
+import 'package:deemusiq/services/logger/logger.dart';
 import 'package:deemusiq/services/wallet/wallet_api.dart';
 import 'package:deemusiq/components/wallet/wallet_common.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
@@ -30,7 +32,10 @@ class SettingsPrivacySection extends HookConsumerWidget {
       try {
         final result = await WalletApiClient.instance.fetchConsent();
         if (context.mounted) consent.value = result;
-      } catch (_) {
+      } catch (e, stack) {
+        // Consent UI degrades to the offline/off state, but the failure is
+        // still reported — never swallowed.
+        AppLogger.reportError(e, stack, 'privacy fetchConsent');
         if (context.mounted) consent.value = null;
       } finally {
         if (context.mounted) loading.value = false;
@@ -52,7 +57,11 @@ class SettingsPrivacySection extends HookConsumerWidget {
         );
         await load();
         if (context.mounted) {
-          showWalletToast(context, "Consent $purpose ${grant ? "granted" : "withdrawn"}",
+          showWalletToast(
+              context,
+              grant
+                  ? context.l10n.privacy_consent_granted(purpose)
+                  : context.l10n.privacy_consent_withdrawn(purpose),
               icon: DeeMusiqIcons.verified);
         }
       } catch (e) {
@@ -73,12 +82,10 @@ class SettingsPrivacySection extends HookConsumerWidget {
     }
 
     return SectionCardWithHeading(
-      heading: "Privacy & data",
+      heading: context.l10n.privacy_heading,
       children: [
         if (!WalletApiClient.instance.isConfigured)
-          const Text(
-            "Connect a backend to manage consent, export, and deletion.",
-          ).muted().xSmall()
+          Text(context.l10n.privacy_offline_body).muted().xSmall()
         else if (loading.value)
           const Center(child: CircularProgressIndicator())
         else ...[
@@ -89,8 +96,8 @@ class SettingsPrivacySection extends HookConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(p).semiBold().small(),
-                      Text(_consentBlurb(p)).muted().xSmall(),
+                      Text(_consentPurposeLabel(context, p)).semiBold().small(),
+                      Text(_consentBlurb(context, p)).muted().xSmall(),
                     ],
                   ),
                 ),
@@ -107,7 +114,7 @@ class SettingsPrivacySection extends HookConsumerWidget {
           const Gap(8),
           const Divider(),
           const Gap(4),
-          const Text("Email verification & hardening").semiBold().small(),
+          Text(context.l10n.privacy_email_section).semiBold().small(),
           const Gap(4),
           Row(
             children: [
@@ -120,7 +127,8 @@ class SettingsPrivacySection extends HookConsumerWidget {
                           try {
                             await WalletApiClient.instance.requestVerify();
                             if (context.mounted) {
-                              showWalletToast(context, "Verification link sent",
+                              showWalletToast(
+                                  context, context.l10n.privacy_verify_link_sent,
                                   icon: DeeMusiqIcons.verified);
                             }
                           } catch (e) {
@@ -132,7 +140,7 @@ class SettingsPrivacySection extends HookConsumerWidget {
                             if (context.mounted) busy.value = false;
                           }
                         },
-                  child: const Text("Resend verify link"),
+                  child: Text(context.l10n.privacy_resend_verify),
                 ),
               ),
               const Gap(8),
@@ -147,7 +155,7 @@ class SettingsPrivacySection extends HookConsumerWidget {
                                 .requestEmailCode();
                             if (context.mounted) {
                               showWalletToast(
-                                  context, "One-time code sent to email",
+                                  context, context.l10n.privacy_code_sent,
                                   icon: DeeMusiqIcons.verified);
                             }
                           } catch (e) {
@@ -159,7 +167,7 @@ class SettingsPrivacySection extends HookConsumerWidget {
                             if (context.mounted) busy.value = false;
                           }
                         },
-                  child: const Text("Request login code"),
+                  child: Text(context.l10n.privacy_request_code),
                 ),
               ),
             ],
@@ -170,7 +178,7 @@ class SettingsPrivacySection extends HookConsumerWidget {
               Expanded(
                 child: TextField(
                   controller: codeInput,
-                  placeholder: const Text("6-digit email code"),
+                  placeholder: Text(context.l10n.privacy_code_hint),
                 ),
               ),
               const Gap(8),
@@ -184,7 +192,8 @@ class SettingsPrivacySection extends HookConsumerWidget {
                               codeInput.text.trim());
                           codeInput.text = "";
                           if (context.mounted) {
-                            showWalletToast(context, "Code confirmed",
+                            showWalletToast(
+                                context, context.l10n.privacy_code_confirmed,
                                 icon: DeeMusiqIcons.verified);
                           }
                         } catch (e) {
@@ -196,14 +205,14 @@ class SettingsPrivacySection extends HookConsumerWidget {
                           if (context.mounted) busy.value = false;
                         }
                       },
-                child: const Text("Confirm code"),
+                child: Text(context.l10n.privacy_confirm_code),
               ),
             ],
           ),
           const Gap(4),
           TextField(
             controller: verifyToken,
-            placeholder: const Text("Email-verify token (from link)"),
+            placeholder: Text(context.l10n.privacy_verify_token_hint),
           ),
           const Gap(4),
           Button.secondary(
@@ -216,7 +225,8 @@ class SettingsPrivacySection extends HookConsumerWidget {
                           .verifyEmail(verifyToken.text.trim());
                       verifyToken.text = "";
                       if (context.mounted) {
-                        showWalletToast(context, "Email verified",
+                        showWalletToast(
+                            context, context.l10n.privacy_email_verified,
                             icon: DeeMusiqIcons.verified);
                       }
                     } catch (e) {
@@ -228,16 +238,16 @@ class SettingsPrivacySection extends HookConsumerWidget {
                       if (context.mounted) busy.value = false;
                     }
                   },
-            child: const Text("Verify email with token"),
+            child: Text(context.l10n.privacy_verify_with_token),
           ),
           const Gap(8),
           const Divider(),
           const Gap(4),
-          const Text("Password reset (emailed token)").semiBold().small(),
+          Text(context.l10n.privacy_reset_section).semiBold().small(),
           const Gap(4),
           TextField(
             controller: resetToken,
-            placeholder: const Text("Reset token from email"),
+            placeholder: Text(context.l10n.privacy_reset_token_hint),
           ),
           const Gap(4),
           Row(
@@ -245,7 +255,7 @@ class SettingsPrivacySection extends HookConsumerWidget {
               Expanded(
                 child: TextField(
                   controller: resetPassword,
-                  placeholder: const Text("New password (12+ chars)"),
+                  placeholder: Text(context.l10n.privacy_new_password_hint),
                   obscureText: true,
                 ),
               ),
@@ -257,7 +267,7 @@ class SettingsPrivacySection extends HookConsumerWidget {
                         if (resetToken.text.trim().isEmpty ||
                             resetPassword.text.length < 12) {
                           showWalletToast(
-                              context, "Token + 12-char password required",
+                              context, context.l10n.privacy_reset_requirements,
                               icon: DeeMusiqIcons.info);
                           return;
                         }
@@ -270,7 +280,8 @@ class SettingsPrivacySection extends HookConsumerWidget {
                           resetToken.text = "";
                           resetPassword.text = "";
                           if (context.mounted) {
-                            showWalletToast(context, "Password reset",
+                            showWalletToast(
+                                context, context.l10n.privacy_password_reset,
                                 icon: DeeMusiqIcons.verified);
                           }
                         } catch (e) {
@@ -282,7 +293,7 @@ class SettingsPrivacySection extends HookConsumerWidget {
                           if (context.mounted) busy.value = false;
                         }
                       },
-                child: const Text("Reset"),
+                child: Text(context.l10n.privacy_reset_action),
               ),
             ],
           ),
@@ -301,8 +312,10 @@ class SettingsPrivacySection extends HookConsumerWidget {
                             final data = await WalletApiClient.instance
                                 .exportMyData();
                             if (context.mounted) {
-                              showWalletToast(context,
-                                  "Export ready: ${(data.keys.length)} sections",
+                              showWalletToast(
+                                  context,
+                                  context.l10n.privacy_export_ready(
+                                      data.keys.length),
                                   icon: DeeMusiqIcons.verified);
                             }
                           } catch (e) {
@@ -314,7 +327,7 @@ class SettingsPrivacySection extends HookConsumerWidget {
                             if (context.mounted) busy.value = false;
                           }
                         },
-                  child: const Text("Export my data"),
+                  child: Text(context.l10n.privacy_export_data),
                 ),
               ),
               const Gap(8),
@@ -326,18 +339,19 @@ class SettingsPrivacySection extends HookConsumerWidget {
                           final ok = await showDialog<bool>(
                             context: context,
                             builder: (c) => AlertDialog(
-                              title: const Text("Delete account?"),
-                              content: const Text(
-                                  "Anonymizes everything (GDPR Art. 17). JWT dies immediately. Cannot undo."),
+                              title: Text(
+                                  context.l10n.account_delete_confirm_title),
+                              content:
+                                  Text(context.l10n.privacy_delete_body),
                               actions: [
                                 Button.secondary(
                                     onPressed: () =>
                                         Navigator.of(c).pop(false),
-                                    child: const Text("Cancel")),
+                                    child: Text(context.l10n.cancel)),
                                 Button.destructive(
                                     onPressed: () =>
                                         Navigator.of(c).pop(true),
-                                    child: const Text("Delete")),
+                                    child: Text(context.l10n.delete)),
                               ],
                             ),
                           );
@@ -346,7 +360,8 @@ class SettingsPrivacySection extends HookConsumerWidget {
                           try {
                             await WalletApiClient.instance.deleteAccount();
                             if (context.mounted) {
-                              showWalletToast(context, "Account deleted",
+                              showWalletToast(
+                                  context, context.l10n.account_deleted,
                                   icon: DeeMusiqIcons.verified);
                             }
                           } catch (e) {
@@ -358,7 +373,7 @@ class SettingsPrivacySection extends HookConsumerWidget {
                             if (context.mounted) busy.value = false;
                           }
                         },
-                  child: const Text("Delete account"),
+                  child: Text(context.l10n.account_delete),
                 ),
               ),
             ],
@@ -369,8 +384,14 @@ class SettingsPrivacySection extends HookConsumerWidget {
   }
 }
 
-String _consentBlurb(String purpose) {
-  if (purpose == "marketing") return "Opt-in recommendations and offers.";
-  if (purpose == "terms") return "Required to run the account. Withdrawing restricts processing.";
-  return "Required privacy policy. Withdrawing restricts processing.";
+String _consentPurposeLabel(BuildContext context, String purpose) {
+  if (purpose == "marketing") return context.l10n.privacy_purpose_marketing;
+  if (purpose == "terms") return context.l10n.privacy_purpose_terms;
+  return context.l10n.privacy_purpose_privacy;
+}
+
+String _consentBlurb(BuildContext context, String purpose) {
+  if (purpose == "marketing") return context.l10n.privacy_blurb_marketing;
+  if (purpose == "terms") return context.l10n.privacy_blurb_terms;
+  return context.l10n.privacy_blurb_privacy;
 }

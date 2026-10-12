@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
+import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/services/ad_roll/ad_roll_service.dart';
 
 /// Full-player interstitial shown while an ad break is running. Purely
@@ -13,8 +14,6 @@ class AdOverlay extends HookConsumerWidget {
   final VoidCallback? onSkip;
 
   const AdOverlay({super.key, this.onSkip});
-
-  static const _skipAfterSeconds = 5;
 
   @override
   Widget build(BuildContext context, ref) {
@@ -27,14 +26,15 @@ class AdOverlay extends HookConsumerWidget {
 
     final duration = currentAd.durationSeconds;
     final skippable = currentAd.skippable;
+    final skipAfterSeconds = currentAd.skipAfterSeconds;
     final initialElapsed = AdRollService.instance.adElapsedSeconds;
     final elapsed = useState(initialElapsed);
-    final canSkip = useState(initialElapsed >= _skipAfterSeconds);
+    final canSkip = useState(initialElapsed >= skipAfterSeconds);
 
     useEffect(() {
       final timer = Timer.periodic(const Duration(seconds: 1), (timer) {
         elapsed.value = AdRollService.instance.adElapsedSeconds;
-        if (elapsed.value >= _skipAfterSeconds) {
+        if (elapsed.value >= skipAfterSeconds) {
           canSkip.value = true;
         }
         if (elapsed.value >= duration) {
@@ -68,7 +68,7 @@ class AdOverlay extends HookConsumerWidget {
                     size: 16, color: theme.colorScheme.primary),
                 const Gap(6),
                 Text(
-                  'Ad',
+                  context.l10n.ad_badge,
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 13,
@@ -106,7 +106,7 @@ class AdOverlay extends HookConsumerWidget {
           ),
           const Gap(8),
           Text(
-            '${remaining}s',
+            context.l10n.ad_remaining(remaining),
             style: TextStyle(
                 fontSize: 12, color: theme.colorScheme.mutedForeground),
           ),
@@ -117,13 +117,14 @@ class AdOverlay extends HookConsumerWidget {
                 AdRollService.instance.onSkipAd();
                 onSkip?.call();
               },
-              child: const Text('Skip Ad'),
+              child: Text(context.l10n.ad_skip),
             ).withPadding(horizontal: 48),
           if (skippable && !canSkip.value)
             Button.outline(
               onPressed: null,
               child: Text(
-                'Skip in ${(_skipAfterSeconds - elapsed.value).clamp(0, _skipAfterSeconds)}s',
+                context.l10n.ad_skip_in(
+                    (skipAfterSeconds - elapsed.value).clamp(0, skipAfterSeconds)),
               ),
             ).withPadding(horizontal: 48),
           const Gap(32),

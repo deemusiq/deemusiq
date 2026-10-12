@@ -1,11 +1,14 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/components/image/universal_image.dart';
 import 'package:deemusiq/components/titlebar/titlebar.dart';
 import 'package:deemusiq/components/wallet/boost_artist_dialog.dart';
+import 'package:deemusiq/components/wallet/region_filter_chips.dart';
 import 'package:deemusiq/components/wallet/wallet_common.dart';
+import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/provider/creator/creator_provider.dart';
 import 'package:deemusiq/services/wallet/wallet_api.dart';
 import 'package:deemusiq/widgets/follow_button.dart';
@@ -23,13 +26,16 @@ class ArtistLeaderboardPage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final online = WalletApiClient.instance.isConfigured;
-    final board = ref.watch(artistLeaderboardProvider(null));
+    // Null = the global board; a chip selects an ISO alpha-2 region.
+    final region = useState<String?>(null);
+    final query = (year: null, region: region.value);
+    final board = ref.watch(artistLeaderboardProvider(query));
     final hof = ref.watch(hallOfFameProvider);
 
     return SafeArea(
       bottom: false,
       child: Scaffold(
-        headers: const [TitleBar(title: Text("Artists of the Year"))],
+        headers: [TitleBar(title: Text(context.l10n.artists_of_the_year))],
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           children: [
@@ -40,12 +46,16 @@ class ArtistLeaderboardPage extends HookConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (!online)
-                      const _InfoCard(
-                        title: "Connect to see the board",
-                        body:
-                            "The artist leaderboard is live once DeeMusiq's backend is configured.",
+                      _InfoCard(
+                        title: context.l10n.artists_connect_title,
+                        body: context.l10n.artists_connect_body,
                       )
                     else ...[
+                      RegionFilterChips(
+                        selected: region.value,
+                        onChanged: (value) => region.value = value,
+                      ),
+                      const Gap(12),
                       board.when(
                         loading: () => const Padding(
                           padding: EdgeInsets.symmetric(vertical: 32),
@@ -56,22 +66,24 @@ class ArtistLeaderboardPage extends HookConsumerWidget {
                               ? error.friendlyMessage
                               : error.toString(),
                           onRetry: () =>
-                              ref.invalidate(artistLeaderboardProvider(null)),
+                              ref.invalidate(artistLeaderboardProvider(query)),
                         ),
                         data: (data) => _board(context, ref, data),
                       ),
                       const Gap(24),
-                      const Text("Hall of Fame").large().semiBold(),
+                      Text(context.l10n.artists_hall_of_fame)
+                          .large()
+                          .semiBold(),
                       const Gap(4),
-                      const Text("Best Artist of each past year.")
-                          .muted()
-                          .small(),
+                      Text(context.l10n.artists_hof_subtitle).muted().small(),
                       const Gap(10),
                       hof.when(
                         loading: () => const SizedBox.shrink(),
                         error: (_, __) => const SizedBox.shrink(),
                         data: (winners) => winners.isEmpty
-                            ? const Text("No past winners yet.").muted().small()
+                            ? Text(context.l10n.artists_hof_empty)
+                                .muted()
+                                .small()
                             : Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
@@ -99,8 +111,8 @@ class ArtistLeaderboardPage extends HookConsumerWidget {
   Widget _board(BuildContext context, WidgetRef ref, ArtistLeaderboard data) {
     if (data.entries.isEmpty) {
       return _InfoCard(
-        title: "No boosts yet in ${data.year}",
-        body: "Boost an artist you love to start the ${data.year} race.",
+        title: context.l10n.artists_no_boosts(data.year),
+        body: context.l10n.artists_no_boosts_body(data.year),
       );
     }
     final leader = data.entries.first;
@@ -122,11 +134,14 @@ class ArtistLeaderboardPage extends HookConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text("Leading ${data.year}").muted().xSmall(),
+                    Text(context.l10n.artists_leading(data.year))
+                        .muted()
+                        .xSmall(),
                     const Gap(2),
                     Text(leader.name, maxLines: 1).large().semiBold(),
                     Text(
-                      "${formatTokens(leader.totalTokens)} tokens · ${leader.supporters} supporter${leader.supporters == 1 ? "" : "s"}",
+                      context.l10n.artists_supporters(
+                          formatTokens(leader.totalTokens), leader.supporters),
                     ).muted().small(),
                   ],
                 ),
@@ -211,7 +226,8 @@ class _ArtistTile extends ConsumerWidget {
                   ],
                 ),
                 Text(
-                  "${formatTokens(entry.totalTokens)} tokens · ${entry.supporters} supporter${entry.supporters == 1 ? "" : "s"}",
+                  context.l10n.artists_supporters(
+                      formatTokens(entry.totalTokens), entry.supporters),
                   maxLines: 1,
                 ).muted().xSmall(),
               ],
@@ -234,10 +250,11 @@ class _ArtistTile extends ConsumerWidget {
               );
               // The dialog boosts + re-syncs the wallet; the board itself is a
               // separate provider and would otherwise show the pre-boost totals
-              // until the page is revisited.
-              ref.invalidate(artistLeaderboardProvider(null));
+              // until the page is revisited. Family-wide invalidate covers
+              // whichever region filter is active.
+              ref.invalidate(artistLeaderboardProvider);
             },
-            child: const Text("Boost"),
+            child: Text(context.l10n.boost_action),
           ),
         ],
       ),
@@ -266,7 +283,9 @@ class _HallOfFameTile extends StatelessWidget {
           const Icon(DeeMusiqIcons.trophy, color: Color(0xFFFFC107)),
           const Gap(12),
           Expanded(child: Text(winner.name, maxLines: 1).semiBold()),
-          Text("${formatTokens(winner.totalTokens)} tokens").muted().xSmall(),
+          Text(context.l10n.store_pack_tokens(formatTokens(winner.totalTokens)))
+              .muted()
+              .xSmall(),
         ],
       ),
     );
@@ -308,11 +327,11 @@ class _ErrorCard extends StatelessWidget {
         children: [
           const Icon(DeeMusiqIcons.info, size: 28, color: deeMusiqOrange),
           const Gap(10),
-          const Text("Couldn't load the board").semiBold(),
+          Text(context.l10n.leaderboard_load_failed).semiBold(),
           const Gap(4),
           Text(message, textAlign: TextAlign.center).muted().small(),
           const Gap(12),
-          Button.outline(onPressed: onRetry, child: const Text("Retry")),
+          Button.outline(onPressed: onRetry, child: Text(context.l10n.retry)),
         ],
       ),
     );

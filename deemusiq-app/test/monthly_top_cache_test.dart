@@ -246,6 +246,50 @@ void main() {
       );
       expect(await cacheDir.exists(), isFalse);
     });
+
+    test('protected paths survive the temp sweep and the LRU eviction',
+        () async {
+      // An in-flight download's .part file: normally swept unconditionally.
+      final inflightPart = File(p.join(cacheDir.path, '.m4a.part-live-1'));
+      await inflightPart.writeAsBytes(List.filled(10, 0));
+      final doomedPart = File(p.join(cacheDir.path, '.m4a.part-stale-1'));
+      await doomedPart.writeAsBytes(List.filled(10, 0));
+
+      final base = DateTime(2026, 10, 1, 12);
+      final activeTrack = await writeCacheEntry(
+        cacheDir,
+        bytes: List.filled(400, 12),
+        trackId: 'track-active',
+        modified: base,
+      );
+      final idle = await writeCacheEntry(
+        cacheDir,
+        bytes: List.filled(400, 13),
+        trackId: 'track-idle',
+        modified: base.add(const Duration(hours: 1)),
+      );
+      // A file mid-promotion (atomic replace target) is protected by path.
+      final replacing = await writeCacheEntry(
+        cacheDir,
+        bytes: List.filled(400, 14),
+        trackId: 'track-replacing',
+        modified: base.add(const Duration(hours: 2)),
+      );
+
+      await evictMusicCacheDir(
+        cacheDir: cacheDir,
+        pinnedTrackIds: const {},
+        maxSizeBytes: 100,
+        protectedTrackIds: {'track-active'},
+        protectedPaths: {inflightPart.path, replacing.path},
+      );
+
+      expect(await inflightPart.exists(), isTrue);
+      expect(await doomedPart.exists(), isFalse);
+      expect(await activeTrack.exists(), isTrue);
+      expect(await replacing.exists(), isTrue);
+      expect(await idle.exists(), isFalse);
+    });
   });
 
   group('pinned cache playback failover', () {

@@ -103,8 +103,8 @@ class ArtistPageHeader extends HookConsumerWidget {
             ),
           if (WalletApiClient.instance.isConfigured)
             Tooltip(
-              tooltip: const TooltipContainer(
-                child: Text("Boost this artist with tokens"),
+              tooltip: TooltipContainer(
+                child: Text(context.l10n.boost_artist_tooltip),
               ).call,
               child: IconButton.ghost(
                 icon: const Icon(DeeMusiqIcons.boost, color: deeMusiqOrange),
@@ -170,8 +170,8 @@ class ArtistPageHeader extends HookConsumerWidget {
             },
           ),
           Tooltip(
-            tooltip: const TooltipContainer(
-              child: Text("Report artist"),
+            tooltip: TooltipContainer(
+              child: Text(context.l10n.report_artist),
             ).call,
             child: IconButton.ghost(
               icon: const Icon(
@@ -226,13 +226,13 @@ class ArtistPageHeader extends HookConsumerWidget {
                               ),
                               if (isVerified) ...[
                                 const Gap(5),
-                                const PrimaryBadge(
-                                  leading: Icon(
+                                PrimaryBadge(
+                                  leading: const Icon(
                                     DeeMusiqIcons.verified,
                                     size: 12,
                                     color: deeMusiqOrange,
                                   ),
-                                  child: Text("Verified"),
+                                  child: Text(context.l10n.verified),
                                 ),
                               ],
                               if (isBlackListed) ...[

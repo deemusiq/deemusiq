@@ -32,11 +32,16 @@
 - **DeeMusiq is a Spotube rebrand** (BSD-4-Clause). `README.md` is upstream's. DeeMusiq-specific docs are in `README.DEEMUSIQ.md`.
 - **Internal "spotube" names deliberately kept**: l10n keys, Kotlin source package (`oss.krtirtho.spotube`), plugin IDs, bonsoir service type, flatpak ID. Changing these breaks builds/ecosystem. **But the Android `applicationId` is `za.co.deemusiq.app`** (`android/app/build.gradle:64`; the fdroid flavor adds suffix `.fdroid`, playstore/stable combo strips suffixes) — use the applicationId, not the Kotlin package, for store listings and `assetlinks.json`.
 - **Hetu scripting removed** — DeeMusiq uses only native Dart backend plugin.
-- **Anti-tamper**: (1) cert SHA256 pin (offline brick; fails closed when `DEEMUSIQ_CERT_SHA256` is pinned), (2) published APK hash check (online, locks wallet; requires valid `X-Body-Signature` Ed25519 header from the download worker when `DEEMUSIQ_INTEGRITY_ED25519_PUBLIC_KEY` is set), (3) active backend TLS-pin probe (`BackendCertPinProbe` in `lib/collections/http-override.dart` — `badCertificateCallback` alone never fires for valid-but-wrong certs; the probe locks the wallet on mismatch via `IntegrityService`).
+- **Anti-tamper**: (1) cert SHA256 pin (offline brick; fails closed when `DEEMUSIQ_CERT_SHA256` is pinned), (2) published APK hash check (online, locks wallet; requires valid `X-Body-Signature` Ed25519 header from the download worker when `DEEMUSIQ_INTEGRITY_ED25519_PUBLIC_KEY` is set), (3) active backend TLS-pin probe (`BackendCertPinProbe` in `lib/collections/http-override.dart` — `badCertificateCallback` alone never fires for valid-but-wrong certs; the probe locks the wallet on mismatch via `IntegrityService`). The pin check is scoped to the backend host only — never widen the callback to other hosts.
+- **TLS pin rotation is automated**: `deemusiq-app/server-tls-pins.txt` is the source of truth for `DEEMUSIQ_SERVER_CERT_SHA256` (the repo secret is only a fallback now). TLS terminates at the Cloudflare edge, which rotates the cert ~every 90 days without overlap; `.github/workflows/cert-pin-watch.yml` polls every 6h, vets the new cert (issuer allowlist + hostname + validity window — a foreign CA is refused), commits the new pin, dispatches all app rebuilds, and opens an issue. The human step that remains: verify the hash in CT logs and publish the artifacts per DISTRIBUTION.md. Never bypass this with `rejectUnauthorized`-style loosening.
 - **Versioning**: `x.y.z+N` in `pubspec.yaml` must match git tag `vx.y.z`. Build number always increments.
-- **Backend is a separate project** at `backend/` (nested git, ignored by root `.gitignore`). Node/Express/Prisma/SQLite. All API routes in `src/index.ts`.
+- **Test state**: `flutter analyze --no-fatal-infos` = 0 issues; `flutter test` = 420 of 422 cases pass — the 2 failures are network-dependent YouTube-fallback cases in `test/deemusiq_native_plugin_test.dart` that only pass with live network (50 `*_test.dart` files).
+- **New since fork (2026 program)**: supporter badges UI, regional charts + region setting, loudness-normalized playback (gain + normalize toggle), data-saver mode (lite rendition + Lite badge), pending-settlement display, rewards status surface, playback reliability overhaul (ad-break restructure, buffering watchdog, gapless + byte prefetch, ad prewarm), ~150 newly localized strings.
+- **Backend is a separate project** at `backend/` (nested git, ignored by root `.gitignore`). Node/Express/Prisma/PostgreSQL. All API routers are mounted in `src/index.ts`.
 - **Admin console is served by the backend** at `/console` (Next standalone bundled into the API image; `basePath: "/console"` in deemusiq-admin). In production it should sit behind Cloudflare Access (`CF_ACCESS_*` env, JWT verified in `src/middleware/cfAccess.ts`); cookie login remains as break-glass.
 - **CI lives in root `.github/workflows/`**: `deemusiq-android.yml`, `deemusiq-linux.yml`, `deemusiq-macos.yml`, `deemusiq-windows.yml` (Flutter-app builds, `working-directory: deemusiq-app`) and `deploy-site.yml` (site deploy). `deemusiq-app/.github/` holds a copy of the Android workflow for the "upload only `deemusiq-app/` as its own repo" case; GitHub only auto-discovers root workflows, so the app copy never runs in this checkout.
+- **Release finalization is automated**: `release-finalize.yml` fires when the four platform builds for a tag complete (self-coordinating — it skips quietly until the last one succeeds), then runs `deemusiq-site/cloudflare/finalize-release.sh` to deploy the download worker with `VERSIONS`/`RELEASES` computed from the tag's pubspec + published sidecars, and verifies the live chain (`version.json` convergence + every `/downloads/<platform>[.sha256]`). Needs the `CLOUDFLARE_API_TOKEN` repo secret. `workflow_run` only triggers when the file exists on the default branch — until merged to `main`, dispatch manually: `gh workflow run release-finalize.yml --ref <branch> -f tag=vX.Y.Z`.
+- **Security scanning**: `security-scan.yml` (Trivy CVE scan of pubspec.lock/pnpm-lock + Gitleaks secret scan — Gitleaks blocks, Trivy reports to the Security tab), `codeql.yml` (JS/TS static analysis), and `.github/dependabot.yml` (GitHub Actions + website npm; pub is unsupported by Dependabot — Trivy covers it). Alerts land in the Security tab and email repo admins.
 
 ## Developer commands
 
@@ -81,7 +86,7 @@ npm run build        # tsc
 npm start            # node dist/index.js
 npm run db:generate  # prisma generate
 npm run db:migrate   # prisma migrate dev
-npm test             # node --test
+npm test             # vitest run
 ```
 
 ### Static site (`deemusiq-site/`)
@@ -101,8 +106,9 @@ pnpm build
 - Flutter `>=3.29.0` (CI uses 3.38.5 stable)
 - Dart `>=3.0.0 <4.0.0`
 - Java 17 (Zulu) + Rust toolchain + `dart cli/cli.dart install-dependencies` for Android builds
-- `--dart-define` at build time: `DEEMUSIQ_BACKEND_URL`, `DEEMUSIQ_CHANNEL_KEY`, `DEEMUSIQ_CERT_SHA256`, `DEEMUSIQ_SERVER_CERT_SHA256` (TLS pin probe), `DEEMUSIQ_PAYMENT_HMAC_SECRET`, `DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY` (update metadata signature), `DEEMUSIQ_INTEGRITY_ED25519_PUBLIC_KEY` (published-hash signature). The first four come from repo secrets; the two Ed25519 public keys from repo vars.
+- `--dart-define` at build time: `DEEMUSIQ_BACKEND_URL`, `DEEMUSIQ_CHANNEL_KEY`, `DEEMUSIQ_CERT_SHA256`, `DEEMUSIQ_SERVER_CERT_SHA256` (TLS pin probe), `DEEMUSIQ_PAYMENT_HMAC_SECRET`, `DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY` (update metadata signature), `DEEMUSIQ_INTEGRITY_ED25519_PUBLIC_KEY` (published-hash signature). The first four come from repo secrets; the two Ed25519 public keys from repo vars. `GOOGLE_WEB_CLIENT_ID` (repo var; public by design) arms real Google OAuth sign-in — empty = the button silently falls back to device auth. Android additionally needs an Android OAuth client in GCP matching the flavor's applicationId + release signing SHA-1 (`9D:33:8A:FA:BC:CF:C3:3F:BD:34:CE:A4:2A:16:EA:BF:4B:04:35:61`), and the backend needs `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` set to the same web client. `DEEMUSIQ_FDROID=true` is the F-Droid kill switch: it disables ONLY the signing-cert check and the published-APK-hash check (F-Droid signs with its own key, so both would brick/lock legitimate users); TLS pin probe, payment HMAC and update signature are untouched. Never set it in our own CI builds.
 - Git-sourced deps via `dependency_overrides` in `pubspec.yaml` (media_kit, bonsoir, flutter_secure_storage_linux, etc.)
+- **Windows signing (SignPath Foundation, see `CODE_SIGNING_POLICY.md`)**: attempted in `deemusiq-windows.yml` when the `SIGNPATH_API_TOKEN` secret plus `SIGNPATH_ORGANIZATION_ID` / `SIGNPATH_PROJECT_SLUG` / `SIGNPATH_SIGNING_POLICY_SLUG` / `SIGNPATH_BINARIES_CONFIG_SLUG` / `SIGNPATH_INSTALLER_CONFIG_SLUG` repo vars are set. Each SignPath release parks on manual approval in the SignPath UI — twice per release (payload, then installer; NSIS can't be deep-signed). If SignPath is unconfigured OR any request fails/isn't approved, the release falls back to signtool (`AUTHENTICODE_CERT_BASE64`/`AUTHENTICODE_CERT_PASSWORD`, else self-signed) for BOTH payload and installer — the `continue-on-error` SignPath steps key the fallback off step `outcome`, and the installer step re-signs the payload + reruns makensis in the rare split case, so a release always carries one identity. The publisher shown to users under SignPath is "SignPath Foundation", not The Dembe Group.
 
 ## CI quality gate
 
@@ -110,9 +116,20 @@ Every branch/PR runs `check` job: `pub get` → create `.env` → `build_runner 
 
 The `android` job builds APK only on `v*` tags or manual dispatch, after `check` passes.
 
+Every build job ends with `tool/verify_release.sh <platform>` — a hard gate that
+fails the run before any artifact uploads when a baked define is wrong: TLS pin
+(from `server-tls-pins.txt`) absent from the binary, channel key / payment HMAC
+define silently empty, APK signing cert ≠ `DEEMUSIQ_CERT_SHA256`, or the sha256
+sidecar disagreeing with the APK. A green build means the artifact is
+distributable; never publish an artifact from a run whose verify step failed.
+
 ## Gotchas
 
 - `flutter analyze --no-fatal-infos` needed — there are known info-level lints (e.g. `avoid_print` in `lib/services/cli/cli.dart`).
 - Upstream Spotube status (checked 2026-09-30): Flutter line frozen at v5.1.2 (master, BSD-4-Clause — fork base, nothing left to port); `dev` branch is an AGPL-3.0 Kotlin/Compose rewrite — **never copy code from `dev`** (AGPL would contaminate this BSD fork; clean-room concept ports only). Org moved KRTirtho/spotube → team-spotube/spotube (redirects work; SHA-pinned deps unaffected).
 - The Android workflow exists twice on purpose: the root `.github/workflows/deemusiq-android.yml` (monorepo, `working-directory: deemusiq-app` — the one GitHub runs here) and `deemusiq-app/.github/workflows/deemusiq-android.yml` (for when **only `deemusiq-app/` is uploaded as its own repo**). Keep them in sync; they are not a conflict.
 - `NOTICE.md` lists DeeMusiq-specific additions vs upstream (offline DRM, multi-engine extraction, Play Store/F-Droid flavors, iOS, native catalog, wallet).
+
+## Sanctioned upstream exceptions
+
+The `// ignore:` lint suppressions below are inherited from upstream Spotube and are **exempt** from the no-ignores rule — do not "fix" them as drive-by cleanup, and do not copy the pattern into new code. Current sites (deemusiq-app/lib/): `services/audio_services/mobile_audio_service.dart`, `services/audio_player/custom_player.dart`, `services/youtube_engine/yt_dlp_engine.dart`, `models/database/database.dart`, `provider/history/summary.dart`, `hooks/utils/use_force_update.dart`, `extensions/constrains.dart`, `extensions/color_scheme.dart`, `provider/local_tracks/local_tracks_provider.dart`, `provider/metadata_plugin/utils/common.dart`, `provider/metadata_plugin/utils/paginated.dart`, `pages/home/home.dart` (plus generated `*.freezed.dart` / plugin registrant files, which are tool output). New DeeMusiq code must not add `// ignore:` comments — fix the type or the code instead.

@@ -22,10 +22,12 @@ import 'package:collection/collection.dart';
 import 'package:html/parser.dart' as parser;
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:deemusiq/collections/env.dart';
+import 'package:path/path.dart' as p;
 
 import 'package:version/version.dart';
 
@@ -348,7 +350,8 @@ abstract class ServiceUtils {
       optimizeQuery: optimizeQuery,
       authHeader: authHeader,
     );
-    if (results == null) return null;
+    if (results == null || results.isEmpty) return null;
+    if (artists.isEmpty) return null;
     title = getTitle(
       title,
       artists: artists,
@@ -372,13 +375,18 @@ abstract class ServiceUtils {
         if (criteria) points++;
       }
       return {"result": result, "points": points};
-    }).sorted(
+    }    ).sorted(
       // Highest points first — the best match is picked below.
       (a, b) => ((b["points"] as int).compareTo(a["points"] as int)),
     );
+    if (ratedLyrics.isEmpty) return null;
     final worthyOne = ratedLyrics.first["result"];
 
-    String? lyrics = await extractLyrics(Uri.parse(worthyOne["url"]));
+    final urlRaw = worthyOne["url"];
+    if (urlRaw is! String || urlRaw.isEmpty) return null;
+    final uri = Uri.tryParse(urlRaw);
+    if (uri == null) return null;
+    String? lyrics = await extractLyrics(uri);
     return lyrics;
   }
 
@@ -485,6 +493,18 @@ abstract class ServiceUtils {
     WidgetRef ref,
   ) async {
     if (!Env.enableUpdateChecker) return;
+    // The NSIS installer's privacy page offers an update-check opt-out
+    // (SignPath Foundation requires an install-time disable option); it writes
+    // this sentinel next to the executable. Honor it before any network I/O.
+    if (kIsWindows) {
+      final sentinel = File(
+        p.join(
+          p.dirname(Platform.resolvedExecutable),
+          'install-no-update-check',
+        ),
+      );
+      if (sentinel.existsSync()) return;
+    }
     final database = ref.read(databaseProvider);
     final checkUpdate = await (database.selectOnly(database.preferencesTable)
           ..addColumns([database.preferencesTable.checkUpdate])
@@ -575,10 +595,22 @@ abstract class ServiceUtils {
     if (currentVersion == null ||
         (latestVersion.isPreRelease && !currentVersion.isPreRelease) ||
         (!latestVersion.isPreRelease && currentVersion.isPreRelease) ||
-        latestVersion <= currentVersion ||
         !context.mounted) {
       return;
     }
+
+    // A higher build number under the SAME versionName is still a newer app:
+    // hotfix rebuilds keep the name (e.g. 1.1.0+41 → 1.1.0+47), and a
+    // version-only compare would never surface them to existing installs.
+    var isNewer = latestVersion > currentVersion;
+    if (!isNewer && latestVersion.compareTo(currentVersion) == 0) {
+      final latestBuild = release.buildNumber;
+      final currentBuild = int.tryParse(packageInfo.buildNumber);
+      isNewer = latestBuild != null &&
+          currentBuild != null &&
+          latestBuild > currentBuild;
+    }
+    if (!isNewer) return;
 
     await showDialog(
       context: context,

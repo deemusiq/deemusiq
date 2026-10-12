@@ -1,8 +1,79 @@
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
+import 'package:encrypt/encrypt.dart' as enc;
 import 'package:deemusiq/models/database/database.dart';
+import 'package:deemusiq/services/kv_store/encrypted_kv_store.dart';
 import 'package:deemusiq/services/logger/logger.dart';
+
+/// Payload blobs are stored AES-256-GCM encrypted under the same key material
+/// as the rest of the encrypted store.
+///
+/// Playlist payloads carry user-authored NAMES, which are personal data under
+/// POPIA. The Drift database is plaintext (no SQLCipher), so those names sat
+/// on disk in the clear — and because `/me/export` returns SERVER state, a
+/// playlist that only ever existed in the offline queue was invisible in the
+/// user's own data export. Encrypting the payload closes both gaps.
+///
+/// `q1:` marks an encrypted blob. Values without the prefix are plaintext rows
+/// written by older builds and stay readable forever, so upgrading cannot
+/// strand a pending action.
+const _payloadPrefix = 'q1:';
+
+enc.Encrypter? _queueEncrypter;
+
+/// The queue cipher. Falls back to NO encryption when the store key is
+/// unavailable: losing a queued action is worse than storing it in the clear,
+/// and it is logged rather than silent.
+enc.Encrypter? get _queueCipher {
+  try {
+    _queueEncrypter ??= enc.Encrypter(
+      enc.AES(
+        enc.Key(EncryptedKvStoreService.aesKeyBytes),
+        mode: enc.AESMode.gcm,
+      ),
+    );
+    return _queueEncrypter;
+  } catch (e) {
+    AppLogger.log.w(
+        'OfflineActionQueue: encryption key unavailable; queue payloads will '
+        'be stored in plaintext: ${e.toString()}');
+    return null;
+  }
+}
+
+String _sealPayload(Map<String, dynamic> payload) {
+  final json = jsonEncode(payload);
+  final cipher = _queueCipher;
+  if (cipher == null) return json;
+  try {
+    final iv = enc.IV.fromSecureRandom(12);
+    final combined = [...iv.bytes, ...cipher.encrypt(json, iv: iv).bytes];
+    return '$_payloadPrefix${base64Encode(combined)}';
+  } catch (e) {
+    AppLogger.log.w('OfflineActionQueue: payload encryption failed: ${e.toString()}');
+    return json;
+  }
+}
+
+/// Inverse of [_sealPayload]; plaintext legacy values pass through unchanged.
+Map<String, dynamic> openActionPayload(String raw) => _openPayload(raw);
+
+Map<String, dynamic> _openPayload(String raw) {
+  if (!raw.startsWith(_payloadPrefix)) {
+    return Map<String, dynamic>.from(jsonDecode(raw) as Map);
+  }
+  final combined = base64Decode(raw.substring(_payloadPrefix.length));
+  final iv = enc.IV(combined.sublist(0, 12));
+  final decrypted = _queueCipher?.decrypt(
+    enc.Encrypted(combined.sublist(12)),
+    iv: iv,
+  );
+  if (decrypted == null) {
+    throw StateError('queue_payload_key_unavailable');
+  }
+  return Map<String, dynamic>.from(jsonDecode(decrypted) as Map);
+}
 
 /// The backend-bound user actions that can be queued while offline and
 /// replayed FIFO once connectivity returns. Payloads are JSON objects whose
@@ -96,7 +167,7 @@ class OfflineActionQueue {
             PendingActionsTableCompanion.insert(
               actionType: type.wireName,
               entityKey: entityKey,
-              payloadJson: jsonEncode(payload),
+              payloadJson: _sealPayload(payload),
             ),
           );
 

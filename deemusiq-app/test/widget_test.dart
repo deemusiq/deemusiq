@@ -4,6 +4,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:deemusiq/components/wallet/wallet_common.dart';
+import 'package:deemusiq/l10n/generated/app_localizations_en.dart';
 
 void main() {
   testWidgets("renders a formatted token balance in a plain widget tree",
@@ -27,10 +28,13 @@ void main() {
   });
 
   test("relativeTime buckets recent moments sensibly", () {
+    final l10n = AppLocalizationsEn();
     final now = DateTime.now();
-    expect(relativeTime(now), "just now");
-    expect(relativeTime(now.subtract(const Duration(minutes: 5))), "5m ago");
-    expect(relativeTime(now.subtract(const Duration(hours: 3))), "3h ago");
-    expect(relativeTime(now.subtract(const Duration(days: 3))), "3d ago");
+    expect(relativeTime(l10n, now), "just now");
+    expect(
+        relativeTime(l10n, now.subtract(const Duration(minutes: 5))), "5m ago");
+    expect(
+        relativeTime(l10n, now.subtract(const Duration(hours: 3))), "3h ago");
+    expect(relativeTime(l10n, now.subtract(const Duration(days: 3))), "3d ago");
   });
 }

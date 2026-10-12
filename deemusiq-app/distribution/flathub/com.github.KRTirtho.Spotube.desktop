@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=DeeMusiq
+Exec=deemusiq
+Icon=deemusiq-icon
+Comment=A music streaming app combining the power of music metadata providers & YouTube
+Terminal=false
+Categories=Audio;Music;Player;AudioVideo;

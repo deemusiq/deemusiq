@@ -12,18 +12,16 @@ DeeMusiq from the GitHub Releases source:
 
 Users import it in Obtainium via **Import/Export → Obtainium import**.
 
-## Adding the obtainium:// deep link to the downloads page
+## Adding the obtainium:// deep link to the downloads page — deliberately NOT done
 
-Obtainium registers an `obtainium://` URL scheme. Add a link on the downloads
-page (site `js/main.js` → `DOWNLOADS`, near the APK link) like:
+Obtainium registers an `obtainium://` URL scheme, but a deep link like
+`obtainium://add/https://github.com/deemusiq/deemusiq` embeds the GitHub
+host in the site HTML — which RELEASE.md forbids ("end users must never see
+the host: not in HTML/JS"). The site carried exactly such a link until
+2026-10-07; it was removed. Android auto-updates on the site are offered via
+the F-Droid repo instead (`#fdroid` block on the downloads page), which is
+fully same-origin.
 
-```html
-<a href="obtainium://add/https://github.com/deemusiq/deemusiq">
-  Get it on Obtainium
-</a>
-```
-
-Tapping it on a phone with Obtainium installed opens the "Add App" screen
-pre-filled with the GitHub source — the user just confirms. Keep the plain
-APK link and the F-Droid repo (see `FDROID_REPO.md`) as alternatives; the
-deep link does nothing on devices without Obtainium, so label it clearly.
+Obtainium remains supported for users who find the repo themselves: this
+import file lives here in the source repo, where the GitHub URL is naturally
+visible. Users import it in Obtainium via **Import/Export → Obtainium import**.

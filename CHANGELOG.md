@@ -62,7 +62,7 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 - **Secure channel** — AES-256-GCM envelope middleware mirroring the app's `SecureChannel` (`SECURE_CHANNEL_KEY`), with request unsealing + response sealing and `X-DM-Enc` negotiation.
 - **Catalog** — `q`/`limit`/`cursor` query support.
 - **Schema** — User gains email/passwordHash/emailVerified/totpSecret/totpEnabled/tokenVersion/publicKey/certSha256/apkSha256; new `TrackLike`, `AuthActionToken`, `PaymentIntent` models.
-- **Tests** — new `node:test` suite (20 tests) covering device-key binding + replay, email + TOTP flows, session revocation, account deletion, wallet push/overdraft, sync payload compat, recommendations, ad rotation/budget accounting, checkout gating, and webhook idempotency. `npm test` builds, provisions a fresh SQLite test DB and runs green.
+- **Tests** — new `node:test` suite (20 tests) covering device-key binding + replay, email + TOTP flows, session revocation, account deletion, wallet push/overdraft, sync payload compat, recommendations, ad rotation/impression accounting, checkout gating, and webhook idempotency. `npm test` builds, provisions a fresh SQLite test DB and runs green.
 
 #### App — ad-roll finished end-to-end
 - **Auth + accounting** — `/ads/next` is now called with the device JWT (was unauthenticated → always 401); skips and completions are reported to `/ads/skip` / `/ads/complete`; `durationSec` from the backend is honoured (was hardcoded 15 s).

@@ -70,6 +70,13 @@ class OfflineLicenseManager {
   static const minRekeyInterval = Duration(days: 30);
 
   static const _lastConfirmKey = 'deemusiq_offline_license_last_confirm';
+
+  /// Highest timestamp ever observed, so a user cannot wind the device clock
+  /// backwards to renew an expired offline license indefinitely.
+  static const _highWaterKey = 'deemusiq_offline_license_high_water';
+
+  Future<void> _writeTimestamp(String key, DateTime value) =>
+      _write(key, value.toUtc().toIso8601String());
   static const _lastRekeyKey = 'deemusiq_offline_license_last_rekey';
 
   /// Injectable storage/clock seams so the state machine is unit-testable
@@ -127,7 +134,25 @@ class OfflineLicenseManager {
     if (lastConfirmed == null) {
       return const OfflineLicenseStatus(state: OfflineLicenseState.unconfirmed);
     }
-    final now = _now.toUtc();
+    var now = _now.toUtc();
+
+    // Clock-rollback guard. The expiry anchor is a device-local timestamp the
+    // user controls, so winding the clock backwards reset the 14-day window
+    // indefinitely and offline content never expired. Effective time is
+    // therefore `max(now, highest time ever observed)`, persisted alongside
+    // the confirmation. Winding the clock forward still expires the license —
+    // only the "rewind to renew forever" trick is closed.
+    final highWater = await _readTimestamp(_highWaterKey);
+    if (highWater != null && now.isBefore(highWater)) {
+      AppLogger.log.w(
+        'OfflineLicense: clock is behind the recorded high-water mark; '
+        'using ${highWater.toIso8601String()} instead of ${now.toIso8601String()}',
+      );
+      now = highWater;
+    } else if (highWater == null || now.isAfter(highWater)) {
+      await _writeTimestamp(_highWaterKey, now);
+    }
+
     final validUntil = lastConfirmed.add(licenseValidity);
     final graceUntil = validUntil.add(gracePeriod);
     if (now.isBefore(validUntil)) {

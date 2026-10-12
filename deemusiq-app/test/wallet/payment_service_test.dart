@@ -23,8 +23,6 @@ void main() {
           reason: "method ${method.name} must route to the backend");
       expect(res.creditedTokens, 0,
           reason: "offline purchases must never credit tokens");
-      expect(res.allowSimulate, isFalse,
-          reason: "no fake-credit affordance for real rails");
       expect(res.actionUrl, isNull);
       expect(res.deposit, isNull);
       expect(res.reference, startsWith("DM-"));
@@ -41,7 +39,6 @@ void main() {
     // online only, so even the demo method routes to the backend message.
     expect(res.status, PaymentStatus.requiresBackend);
     expect(res.creditedTokens, 0);
-    expect(res.allowSimulate, isFalse);
   });
 
   group("normalizePayerPhone matches the backend's normalizeE164", () {
@@ -105,5 +102,81 @@ void main() {
       DeeMusiqPaymentService.isMethodUnavailable(PaymentMethodKind.monero),
       isTrue,
     );
+  });
+
+  group("checkout business refusals (409/503 bodies) grey out the rail", () {
+    setUp(DeeMusiqPaymentService.unavailableMethods.clear);
+    tearDown(DeeMusiqPaymentService.unavailableMethods.clear);
+
+    test('"unavailable" marks the method unavailable without an action URL',
+        () {
+      final res = DeeMusiqPaymentService.checkoutResponseToResult(
+        const {
+          "status": "unavailable",
+          "intentId": "pi_1",
+          "code": "region_unavailable",
+          "message": "PayShap isn't available in your region yet.",
+        },
+        method: PaymentMethodKind.payshap,
+        reference: "pi_1",
+        recoveryUrl: "/payments/pi_1",
+      );
+
+      expect(res.status, PaymentStatus.unavailable);
+      expect(res.actionUrl, isNull);
+      expect(res.recoveryUrl, "/payments/pi_1");
+      expect(res.message, contains("isn't available in your region"));
+      expect(
+        DeeMusiqPaymentService.isMethodUnavailable(PaymentMethodKind.payshap),
+        isTrue,
+      );
+    });
+
+    test('"requires_config" also marks the method unavailable', () {
+      final res = DeeMusiqPaymentService.checkoutResponseToResult(
+        const {
+          "status": "requires_config",
+          "intentId": "pi_2",
+          "code": "crypto_wallet_not_configured",
+        },
+        method: PaymentMethodKind.monero,
+        reference: "pi_2",
+      );
+
+      expect(res.status, PaymentStatus.unavailable);
+      expect(res.message, contains("isn't available right now"));
+      expect(
+        DeeMusiqPaymentService.isMethodUnavailable(PaymentMethodKind.monero),
+        isTrue,
+      );
+    });
+
+    test("a later success re-enables the rail", () {
+      DeeMusiqPaymentService.checkoutResponseToResult(
+        const {"status": "unavailable", "intentId": "pi_3"},
+        method: PaymentMethodKind.payfastCard,
+        reference: "pi_3",
+      );
+      expect(
+        DeeMusiqPaymentService.isMethodUnavailable(PaymentMethodKind.payfastCard),
+        isTrue,
+      );
+
+      final res = DeeMusiqPaymentService.checkoutResponseToResult(
+        const {
+          "status": "redirect",
+          "intentId": "pi_4",
+          "payUrl": "https://pay.example/checkout",
+        },
+        method: PaymentMethodKind.payfastCard,
+        reference: "pi_4",
+      );
+      expect(res.status, PaymentStatus.requiresBackend);
+      expect(res.actionUrl, "https://pay.example/checkout");
+      expect(
+        DeeMusiqPaymentService.isMethodUnavailable(PaymentMethodKind.payfastCard),
+        isFalse,
+      );
+    });
   });
 }

@@ -61,8 +61,8 @@ class LogsPage extends HookConsumerWidget {
                 ),
               ),
               Tooltip(
-                tooltip: const TooltipContainer(
-                  child: Text("Clear logs"),
+                tooltip: TooltipContainer(
+                  child: Text(context.l10n.logs_clear),
                 ).call,
                 child: IconButton.ghost(
                   icon: const Icon(
@@ -72,9 +72,8 @@ class LogsPage extends HookConsumerWidget {
                   onPressed: () async {
                     final confirmed = await showPromptDialog(
                       context: context,
-                      title: "Clear logs",
-                      message:
-                          "Delete all stored logs? This cannot be undone.",
+                      title: context.l10n.logs_clear,
+                      message: context.l10n.logs_clear_message,
                     );
                     if (!confirmed) return;
                     ref.invalidate(logsProvider);

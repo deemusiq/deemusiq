@@ -24,13 +24,24 @@ void main() {
       expect(RegionTier.global.formatPrice(29), "\$3.45");
     });
 
-    test("drops decimals for NGN/KES/INR", () {
+    test("drops decimals when the server declares a zero-decimal currency", () {
+      // The flag comes from the backend (GET /pricing ships
+      // `zeroDecimalCurrencies` + a per-pack `zeroDecimal`) instead of a local
+      // copy of the currency codes — this offline fallback is only correct when
+      // the caller passes the server's answer.
       // 29 * 0.7 * 86 = 1745.8 -> 1746
-      expect(RegionTier.nigeria.formatPrice(29), "₦1746");
+      expect(RegionTier.nigeria.formatPrice(29, zeroDecimal: true), "₦1746");
       // 29 * 0.55 * 4.6 = 73.37 -> 73
-      expect(RegionTier.india.formatPrice(29), "₹73");
+      expect(RegionTier.india.formatPrice(29, zeroDecimal: true), "₹73");
       // 29 * 0.7 * 7 = 142.1 -> 142 (symbol carries its own space)
-      expect(RegionTier.kenya.formatPrice(29), "KSh 142");
+      expect(RegionTier.kenya.formatPrice(29, zeroDecimal: true), "KSh 142");
+    });
+
+    test("defaults to two decimals when the flag is absent", () {
+      // A backend too old to send `zeroDecimal` must not crash the UI or
+      // silently drop cents — 2dp is the safe default.
+      expect(RegionTier.nigeria.formatPrice(29), "₦1745.80");
+      expect(RegionTier.kenya.formatPrice(29), "KSh 142.10");
     });
   });
 

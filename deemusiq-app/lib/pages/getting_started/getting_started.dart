@@ -39,10 +39,18 @@ class GettingStartedPage extends HookConsumerWidget {
     // SA FPB Act: show age restriction on first visit
     useEffect(() {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
-        final accepted = await AgeRestrictionDialog.showIfNeeded(context);
+        final router = context.router;
+        var accepted = await AgeRestrictionDialog.showIfNeeded(context);
+        // On the first-run landing page there is nothing to pop back to —
+        // keep the gate modal until it is confirmed or the app is closed,
+        // so a declined user never falls through into the app unverified.
+        while (!accepted && !router.canPop()) {
+          if (!context.mounted) return;
+          accepted = await AgeRestrictionDialog.showIfNeeded(context);
+        }
         if (!accepted && context.mounted) {
           // User declined — navigate away or show a blocked screen
-          context.router.popForced();
+          router.popForced();
         }
       });
       return null;

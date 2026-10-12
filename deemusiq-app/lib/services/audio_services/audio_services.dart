@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:deemusiq/collections/env.dart';
 import 'package:deemusiq/models/metadata/metadata.dart';
 import 'package:deemusiq/provider/audio_player/audio_player.dart';
+import 'package:deemusiq/services/ad_roll/ad_roll_service.dart';
 import 'package:deemusiq/services/audio_player/audio_player.dart';
 import 'package:deemusiq/services/audio_services/mobile_audio_service.dart';
 import 'package:deemusiq/services/audio_services/windows_audio_service.dart';
@@ -15,7 +16,6 @@ const _kAndroidNotificationChannelDesc = 'DeeMusiq media controls';
 class AudioServices with WidgetsBindingObserver {
   final MobileAudioService? mobile;
   final WindowsAudioService? smtc;
-  bool _wasPlaying = false;
 
   AudioServices(this.mobile, this.smtc) {
     WidgetsBinding.instance.addObserver(this);
@@ -77,24 +77,30 @@ class AudioServices with WidgetsBindingObserver {
     switch (state) {
       case AppLifecycleState.paused:
       case AppLifecycleState.inactive:
+        // Music keeps playing: audio_service (androidStopForegroundOnPause:
+        // false + notification controls) is built for continuous background
+        // / screen-off listening, so pausing here would contradict it. Only
+        // an ad break is paused — its audio and timer freeze until the app
+        // returns to the foreground.
         if (kIsMobile) {
-          _wasPlaying = audioPlayer.isPlaying;
-          audioPlayer.pause();
-          deactivateSession();
+          AdRollService.instance.setAppForegrounded(false);
         }
         break;
       case AppLifecycleState.detached:
+        // App killed: pause playback and release the audio session (this is
+        // where session deactivation is genuinely needed — the process is
+        // going away, not just the UI).
         if (kIsMobile) {
-          _wasPlaying = audioPlayer.isPlaying;
+          AdRollService.instance.setAppForegrounded(false);
           audioPlayer.pause();
           deactivateSession();
         }
         break;
       case AppLifecycleState.resumed:
         activateSession();
-        if (_wasPlaying && kIsMobile) {
-          audioPlayer.resume();
-          _wasPlaying = false;
+        if (kIsMobile) {
+          // Resumes a paused ad break (audio + remaining-time timer).
+          AdRollService.instance.setAppForegrounded(true);
         }
         break;
       default:

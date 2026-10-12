@@ -10,6 +10,7 @@ import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/components/image/universal_image.dart';
 import 'package:deemusiq/components/titlebar/titlebar.dart';
 import 'package:deemusiq/components/wallet/wallet_common.dart';
+import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/models/wallet/supported_creator.dart';
 import 'package:deemusiq/provider/wallet/wallet_provider.dart';
 import 'package:deemusiq/services/logger/logger.dart';
@@ -36,8 +37,8 @@ class CreatorsSupportedPage extends HookConsumerWidget {
     return SafeArea(
       bottom: false,
       child: Scaffold(
-        headers: const [
-          TitleBar(title: Text("Creators you support")),
+        headers: [
+          TitleBar(title: Text(context.l10n.wallet_creators_supported)),
         ],
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -52,9 +53,11 @@ class CreatorsSupportedPage extends HookConsumerWidget {
                       padding: const EdgeInsets.all(16),
                       child: Row(
                         children: [
-                          _stat("$totalToCreators", "tokens given"),
+                          _stat("$totalToCreators",
+                              context.l10n.supported_tokens_given),
                           const Gap(24),
-                          _stat("${creators.length}", "creators backed"),
+                          _stat("${creators.length}",
+                              context.l10n.supported_creators_backed),
                         ],
                       ),
                     ),
@@ -67,10 +70,10 @@ class CreatorsSupportedPage extends HookConsumerWidget {
                             const Icon(DeeMusiqIcons.heart,
                                 size: 32, color: deeMusiqOrange),
                             const Gap(10),
-                            const Text("No creators supported yet").semiBold(),
+                            Text(context.l10n.supported_empty_title).semiBold(),
                             const Gap(4),
-                            const Text(
-                              "Push a song or support an artist directly — your tokens show up here.",
+                            Text(
+                              context.l10n.supported_empty_body,
                               textAlign: TextAlign.center,
                             ),
                           ],
@@ -141,9 +144,8 @@ class _CreatorTile extends ConsumerWidget {
       showWalletToast(
         context,
         ok
-            ? "Sent $tokens tokens to ${creator.name}"
-            : reason ??
-                "Couldn't send the tokens — refresh your wallet and try again.",
+            ? context.l10n.supported_sent(tokens, creator.name)
+            : reason ?? context.l10n.supported_send_failed,
         icon: DeeMusiqIcons.heart,
       );
     }
@@ -183,7 +185,10 @@ class _CreatorTile extends ConsumerWidget {
                   children: [
                     Text(creator.name).semiBold(),
                     Text(
-                      "${creator.contributions} contribution${creator.contributions == 1 ? "" : "s"} · ${relativeTime(creator.lastSupportedAt)}",
+                      context.l10n.supported_contributions(
+                          creator.contributions,
+                          relativeTime(
+                              context.l10n, creator.lastSupportedAt)),
                     ).muted().xSmall(),
                   ],
                 ),
@@ -201,7 +206,7 @@ class _CreatorTile extends ConsumerWidget {
                       fontSize: 14,
                     ),
                   ),
-                  const Text("tokens").muted().xSmall(),
+                  Text(context.l10n.tokens_label).muted().xSmall(),
                 ],
               ),
             ],
@@ -230,7 +235,7 @@ class _CreatorTile extends ConsumerWidget {
             child: Button.ghost(
               leading: const Icon(DeeMusiqIcons.heart, size: 14),
               onPressed: () => _support(context, ref),
-              child: const Text("Support more"),
+              child: Text(context.l10n.supported_support_more),
             ),
           ),
         ],
@@ -249,21 +254,21 @@ class _SupportDialog extends HookConsumerWidget {
     final amount = useState(_supportPresets[1]);
     final canAfford = balance >= amount.value;
     return AlertDialog(
-      title: Text("Support ${creator.name}").large(),
+      title: Text(context.l10n.supported_dialog_title(creator.name)).large(),
       content: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 360),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Choose how many tokens to send.").muted().small(),
+            Text(context.l10n.supported_dialog_body).muted().small(),
             const Gap(12),
             Row(
               children: [
                 const Icon(DeeMusiqIcons.token,
                     color: deeMusiqOrange, size: 16),
                 const Gap(6),
-                Text("Balance: ${formatTokens(balance)} tokens").small(),
+                Text(context.l10n.token_balance(formatTokens(balance))).small(),
               ],
             ),
             const Gap(12),
@@ -284,7 +289,7 @@ class _SupportDialog extends HookConsumerWidget {
             if (!canAfford) ...[
               const Gap(12),
               Text(
-                "You need ${amount.value - balance} more tokens for this.",
+                context.l10n.supported_need_more(amount.value - balance),
                 style: TextStyle(
                   color: context.theme.colorScheme.destructive,
                 ),
@@ -296,7 +301,7 @@ class _SupportDialog extends HookConsumerWidget {
       actions: [
         Button.outline(
           onPressed: () => Navigator.pop(context),
-          child: const Text("Cancel"),
+          child: Text(context.l10n.cancel),
         ),
         if (!canAfford)
           Button.secondary(
@@ -304,12 +309,12 @@ class _SupportDialog extends HookConsumerWidget {
               Navigator.pop(context);
               context.navigateTo(const TokenStoreRoute());
             },
-            child: const Text("Get tokens"),
+            child: Text(context.l10n.get_tokens),
           ),
         Button.primary(
           onPressed:
               canAfford ? () => Navigator.pop(context, amount.value) : null,
-          child: Text("Send ${amount.value}"),
+          child: Text(context.l10n.supported_send_amount(amount.value)),
         ),
       ],
     );

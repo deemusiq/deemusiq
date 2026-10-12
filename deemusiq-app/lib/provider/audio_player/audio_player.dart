@@ -415,7 +415,13 @@ class AudioPlayerNotifier extends Notifier<AudioPlayerState> {
     var serverStarted = false;
     for (var attempt = 0; attempt < 10; attempt++) {
       try {
-        ref.invalidate(serverProvider);
+        // Bind-once: never invalidate a healthy serverProvider from here.
+        // A re-bind can change the port, and every Media URI already in the
+        // playlist embeds the old one — queue loads must reuse the running
+        // server. Only a failed provider is retried (by invalidating).
+        if (ref.read(serverProvider).hasError) {
+          ref.invalidate(serverProvider);
+        }
         final result = await ref.read(serverProvider.future)
             .timeout(const Duration(seconds: 5));
         if (result.port > 0) {

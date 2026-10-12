@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/components/titlebar/titlebar.dart';
+import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/provider/creator/creator_provider.dart';
 import 'package:deemusiq/services/logger/logger.dart';
 import 'package:deemusiq/services/wallet/wallet_api.dart';
@@ -23,6 +24,7 @@ class VerificationPage extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final artist = ref.watch(myArtistProvider);
     final legalName = useTextEditingController();
     final country = useTextEditingController();
@@ -56,14 +58,14 @@ class VerificationPage extends HookConsumerWidget {
         }
       } catch (e, st) {
         AppLogger.reportError(e, st, 'verification pick image');
-        error.value = "Could not access camera/gallery";
+        error.value = l10n.verification_pick_failed;
       }
     }
 
     Future<void> uploadProof() async {
       final file = pickedImage.value;
       if (file == null) {
-        error.value = "Pick a photo first.";
+        error.value = l10n.verification_pick_first;
         return;
       }
       busy.value = true;
@@ -72,7 +74,7 @@ class VerificationPage extends HookConsumerWidget {
         await WalletApiClient.instance.uploadVerificationProof(file.path);
         if (!context.mounted) return;
         proofUploaded.value = true;
-        info.value = "Photo uploaded. Fill in the form and submit.";
+        info.value = l10n.verification_photo_uploaded;
         ref.invalidate(myArtistProvider);
       } on WalletApiException catch (e) {
         if (context.mounted) error.value = e.friendlyMessage;
@@ -83,11 +85,11 @@ class VerificationPage extends HookConsumerWidget {
 
     Future<void> submit() async {
       if (!proofUploaded.value) {
-        error.value = "Upload your proof photo first.";
+        error.value = l10n.verification_upload_first;
         return;
       }
       if (legalName.text.trim().isEmpty || country.text.trim().isEmpty) {
-        error.value = "Legal name and country are required.";
+        error.value = l10n.verification_fields_required;
         return;
       }
       busy.value = true;
@@ -100,7 +102,7 @@ class VerificationPage extends HookConsumerWidget {
           socials: socials,
         );
         if (!context.mounted) return;
-        info.value = "Submitted. The DeeMusiq team will review shortly.";
+        info.value = l10n.verification_submitted;
         ref.invalidate(myArtistProvider);
       } on WalletApiException catch (e) {
         if (context.mounted) error.value = e.friendlyMessage;
@@ -112,7 +114,7 @@ class VerificationPage extends HookConsumerWidget {
     return SafeArea(
       bottom: false,
       child: Scaffold(
-        headers: const [TitleBar(title: Text("Get Verified"))],
+        headers: [TitleBar(title: Text(l10n.creator_get_verified))],
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           children: [
@@ -132,7 +134,7 @@ class VerificationPage extends HookConsumerWidget {
                                   color: Colors.green),
                               const Gap(8),
                               Expanded(
-                                child: const Text("You're verified!").h4(),
+                                child: Text(l10n.verification_done).h4(),
                               ),
                             ],
                           ),
@@ -145,16 +147,11 @@ class VerificationPage extends HookConsumerWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text("How verification works").h4(),
+                              Text(l10n.verification_how_title).h4(),
                               const Gap(8),
-                              const Text(
-                                "1. Take a photo of yourself holding a sign that says \"deemusiq\" (and your artist name).\n"
-                                "2. Upload the photo below.\n"
-                                "3. Submit the form. An operator reviews within a few days.\n"
-                                "4. On approval, the verified badge appears next to your name.",
-                              ),
+                              Text(l10n.verification_how_body),
                               const Gap(16),
-                              Text("Status: $status",
+                              Text(l10n.verification_status(status),
                                   style: const TextStyle(fontSize: 12)),
                             ],
                           ),
@@ -162,7 +159,7 @@ class VerificationPage extends HookConsumerWidget {
                       ),
                     const Gap(16),
                     if (!alreadyVerified) ...[
-                      const Text("Proof photo").h4(),
+                      Text(l10n.verification_proof_title).h4(),
                       const Gap(8),
                       if (pickedImage.value != null)
                         Card(
@@ -170,7 +167,6 @@ class VerificationPage extends HookConsumerWidget {
                             padding: const EdgeInsets.all(8),
                             child: Image.file(
                               // Image.file needs a File; XFile.path is enough.
-                              // ignore: avoid_dynamic_calls
                               _fileFromXFile(pickedImage.value!),
                               fit: BoxFit.contain,
                               height: 240,
@@ -178,15 +174,15 @@ class VerificationPage extends HookConsumerWidget {
                           ),
                         )
                       else
-                        const Card(
+                        Card(
                           child: Padding(
-                            padding: EdgeInsets.all(16),
+                            padding: const EdgeInsets.all(16),
                             child: Row(
                               children: [
-                                Icon(Icons.image),
-                                Gap(8),
+                                const Icon(Icons.image),
+                                const Gap(8),
                                 Expanded(
-                                  child: Text("No photo selected yet."),
+                                  child: Text(l10n.verification_no_photo),
                                 ),
                               ],
                             ),
@@ -200,38 +196,39 @@ class VerificationPage extends HookConsumerWidget {
                           Button.secondary(
                             onPressed: busy.value ? null : () => pickImage(ImageSource.camera),
                             leading: const Icon(Icons.camera_alt),
-                            child: const Text("Take photo"),
+                            child: Text(l10n.verification_take_photo),
                           ),
                           Button.secondary(
                             onPressed: busy.value ? null : () => pickImage(ImageSource.gallery),
                             leading: const Icon(DeeMusiqIcons.upload),
-                            child: const Text("From gallery"),
+                            child: Text(l10n.verification_from_gallery),
                           ),
                           Button.primary(
                             onPressed: busy.value || pickedImage.value == null
                                 ? null
                                 : uploadProof,
-                            child: const Text("Upload proof"),
+                            child: Text(l10n.verification_upload_proof),
                           ),
                         ],
                       ),
                       const Gap(24),
-                      const Text("Your details").h4(),
+                      Text(l10n.verification_details_title).h4(),
                       const Gap(8),
                       TextField(
                         controller: legalName,
-                        placeholder: const Text("Legal name (as it appears on your ID)"),
+                        placeholder:
+                            Text(l10n.verification_legal_name_hint),
                       ),
                       const Gap(8),
                       TextField(
                         controller: country,
-                        placeholder: const Text("Country (e.g. South Africa)"),
+                        placeholder: Text(l10n.verification_country_hint),
                       ),
                       const Gap(8),
                       TextField(
                         controller: socialsJson,
-                        placeholder: const Text(
-                            "Social links (optional): instagram: https://..., youtube: https://..."),
+                        placeholder:
+                            Text(l10n.verification_socials_hint),
                         maxLines: 3,
                       ),
                       const Gap(16),
@@ -246,7 +243,9 @@ class VerificationPage extends HookConsumerWidget {
                         onPressed: busy.value || !proofUploaded.value
                             ? null
                             : submit,
-                        child: Text(busy.value ? "Submitting…" : "Submit for review"),
+                        child: Text(busy.value
+                            ? l10n.creator_submitting
+                            : l10n.creator_submit_for_review),
                       ),
                     ],
                     const Gap(40),

@@ -7,6 +7,7 @@ import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/components/comments/comments_section.dart';
 import 'package:deemusiq/components/fallbacks/error_box.dart';
 import 'package:deemusiq/components/wallet/wallet_common.dart';
+import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/provider/wallet/comments_provider.dart';
 import 'package:deemusiq/services/wallet/wallet_api.dart';
 
@@ -40,14 +41,15 @@ class CommentTile extends HookConsumerWidget {
               Expanded(
                 child: Text(
                   comment.authorLabel != null
-                      ? "Listener ${comment.authorLabel}"
-                      : "Listener",
+                      ? context.l10n
+                          .comments_listener_named(comment.authorLabel!)
+                      : context.l10n.comments_listener,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ).semiBold().small(),
               ),
               if (comment.createdAt != null)
-                Text(relativeTime(comment.createdAt!.toLocal()))
+                Text(relativeTime(context.l10n, comment.createdAt!.toLocal()))
                     .muted()
                     .xSmall(),
             ],
@@ -62,7 +64,7 @@ class CommentTile extends HookConsumerWidget {
                   leading: const Icon(FeatherIcons.cornerUpLeft, size: 14),
                   onPressed: () =>
                       replyComposerOpen.value = !replyComposerOpen.value,
-                  child: const Text("Reply"),
+                  child: Text(context.l10n.comments_reply),
                 ),
               if (comment.replyCount > 0)
                 Button.ghost(
@@ -74,10 +76,7 @@ class CommentTile extends HookConsumerWidget {
                   ),
                   onPressed: () =>
                       repliesExpanded.value = !repliesExpanded.value,
-                  child: Text(
-                    "${comment.replyCount} "
-                    "repl${comment.replyCount == 1 ? "y" : "ies"}",
-                  ),
+                  child: Text(context.l10n.comments_replies(comment.replyCount)),
                 ),
             ],
           ),
@@ -134,9 +133,9 @@ class _RepliesList extends ConsumerWidget {
           onRetry: () => ref.invalidate(commentRepliesProvider(parentId)),
         ),
         data: (items) => items.isEmpty
-            ? const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: Text("No replies yet."),
+            ? Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text(context.l10n.comments_no_replies),
               ).muted().small()
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -156,15 +155,17 @@ class _RepliesList extends ConsumerWidget {
                               Expanded(
                                 child: Text(
                                   reply.authorLabel != null
-                                      ? "Listener ${reply.authorLabel}"
-                                      : "Listener",
+                                      ? context.l10n.comments_listener_named(
+                                          reply.authorLabel!)
+                                      : context.l10n.comments_listener,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ).semiBold().xSmall(),
                               ),
                               if (reply.createdAt != null)
                                 Text(
-                                  relativeTime(reply.createdAt!.toLocal()),
+                                  relativeTime(
+                                      context.l10n, reply.createdAt!.toLocal()),
                                 ).muted().xSmall(),
                             ],
                           ),

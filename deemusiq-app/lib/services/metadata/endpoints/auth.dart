@@ -1,29 +1,18 @@
-import 'package:desktop_webview_window/desktop_webview_window.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:deemusiq/utils/platform.dart';
+import 'package:deemusiq/models/metadata/metadata.dart';
 
-class MetadataAuthEndpoint {
+abstract class MetadataAuthEndpoint {
   MetadataAuthEndpoint();
 
-  Stream get authStateStream {
-    throw UnimplementedError('Native plugin must override');
-  }
+  /// User-configurable fields this provider exposes, rendered by the
+  /// metadata-provider settings form. Empty when the provider has nothing
+  /// to configure — the built-in DeeMusiq provider currently has none.
+  List<MetadataFormFieldObject> get configurationFields => const [];
 
-  Future<void> authenticate() async {
-    throw UnimplementedError('Native plugin must override');
-  }
+  Stream get authStateStream;
 
-  bool isAuthenticated() {
-    throw UnimplementedError('Native plugin must override');
-  }
+  Future<void> authenticate();
 
-  Future<void> logout() async {
-    if (kIsMobile) {
-      WebStorageManager.instance().deleteAllData();
-      CookieManager.instance().deleteAllCookies();
-    }
-    if (kIsDesktop) {
-      await WebviewWindow.clearAll();
-    }
-  }
+  bool isAuthenticated();
+
+  Future<void> logout();
 }

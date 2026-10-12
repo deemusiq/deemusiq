@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:deemusiq/services/logger/logger.dart';
 
 /// Local recently-played history (user improvement: quick resume + streak).
 /// Stored on-device only — no backend round trip. The audio player calls
@@ -54,7 +55,11 @@ class RecentlyPlayedNotifier extends StateNotifier<List<RecentPlay>> {
           .take(_max)
           .toList();
       state = list;
-    } catch (_) {}
+    } catch (e, stack) {
+      // Corrupt or unreadable stored history is discarded — the user keeps
+      // an empty in-memory history rather than a crash on every launch.
+      AppLogger.reportError(e, stack, 'RecentlyPlayedNotifier._load');
+    }
   }
 
   Future<void> push(RecentPlay play) async {
@@ -69,7 +74,11 @@ class RecentlyPlayedNotifier extends StateNotifier<List<RecentPlay>> {
         _key,
         jsonEncode(next.map((e) => e.toJson()).toList()),
       );
-    } catch (_) {}
+    } catch (e, stack) {
+      // Persistence failed — the play still counts in memory for this
+      // session, it just won't survive an app restart.
+      AppLogger.reportError(e, stack, 'RecentlyPlayedNotifier.push');
+    }
   }
 
   Future<void> clear() async {
@@ -77,7 +86,11 @@ class RecentlyPlayedNotifier extends StateNotifier<List<RecentPlay>> {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_key);
-    } catch (_) {}
+    } catch (e, stack) {
+      // Storage removal failed — in-memory state is already cleared, so the
+      // stale entry may resurface on next launch; logged for diagnosis.
+      AppLogger.reportError(e, stack, 'RecentlyPlayedNotifier.clear');
+    }
   }
 
   /// Days in a row with at least one play (local streak).

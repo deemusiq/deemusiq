@@ -27,13 +27,14 @@ class AppRouter extends RootStackRouter {
               guards: [
                 AutoRouteGuardCallback(
                   (resolver, router) async {
-                    // Only first-run users land on /auth. A configured backend
-                    // without a token must NOT bounce the user back there:
-                    // when the server is unreachable, limited (device)
-                    // sign-in proceeds in offline mode and the token is
-                    // acquired on the next successful sync.
+                    // First-run users land on the getting-started wizard,
+                    // which ends at /auth. A configured backend without a
+                    // token must NOT bounce the user back there: when the
+                    // server is unreachable, limited (device) sign-in
+                    // proceeds in offline mode and the token is acquired on
+                    // the next successful sync.
                     if (!KVStoreService.doneGettingStarted) {
-                      resolver.redirect(const Auth());
+                      resolver.redirect(const GettingStartedRoute());
                     } else {
                       resolver.next(true);
                     }
@@ -104,10 +105,6 @@ class AppRouter extends RootStackRouter {
             AutoRoute(
               path: "settings/about",
               page: AboutDeeMusiqRoute.page,
-            ),
-            AutoRoute(
-              path: "settings/scrobbling",
-              page: SettingsScrobblingRoute.page,
             ),
             AutoRoute(
               path: "album/:id",
@@ -183,6 +180,10 @@ class AppRouter extends RootStackRouter {
               page: CreatorsSupportedRoute.page,
             ),
             AutoRoute(
+              path: "wallet/rewards",
+              page: RewardsRoute.page,
+            ),
+            AutoRoute(
               path: "wallet/trending",
               page: PushLeaderboardRoute.page,
             ),
@@ -213,10 +214,6 @@ class AppRouter extends RootStackRouter {
             AutoRoute(
               path: "stats/streams",
               page: StatsStreamsRoute.page,
-            ),
-            AutoRoute(
-              path: "stats/fees",
-              page: StatsStreamFeesRoute.page,
             ),
             AutoRoute(
               path: "stats/artists",
@@ -266,11 +263,6 @@ class AppRouter extends RootStackRouter {
         AutoRoute(
           path: "/auth",
           page: Auth.page,
-          // parentNavigatorKey: rootNavigatorKey,
-        ),
-        AutoRoute(
-          path: "/lastfm-login",
-          page: LastFMLoginRoute.page,
           // parentNavigatorKey: rootNavigatorKey,
         ),
       ];

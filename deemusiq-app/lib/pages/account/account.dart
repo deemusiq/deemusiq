@@ -14,6 +14,7 @@ import 'package:shadcn_flutter/shadcn_flutter_extension.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/components/titlebar/titlebar.dart';
 import 'package:deemusiq/components/wallet/wallet_common.dart';
+import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/provider/database/database.dart';
 import 'package:deemusiq/provider/local_favorites/local_favorites_provider.dart';
 import 'package:deemusiq/provider/wallet/wallet_provider.dart';
@@ -37,7 +38,7 @@ class AccountPage extends HookConsumerWidget {
     return SafeArea(
       bottom: false,
       child: Scaffold(
-        headers: const [TitleBar(title: Text("Account & security"))],
+        headers: [TitleBar(title: Text(context.l10n.account_security))],
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           children: [
@@ -85,7 +86,7 @@ Future<void> _guard(
   } catch (e) {
     AppLogger.log.w('Account op failed: ${e.toString()}');
     if (context.mounted) {
-      showWalletToast(context, "Something went wrong.",
+      showWalletToast(context, context.l10n.something_went_wrong,
           icon: DeeMusiqIcons.error);
     }
   } finally {
@@ -103,8 +104,40 @@ class _EmailPasswordCard extends HookConsumerWidget {
     final password = useTextEditingController();
     final acceptedTerms = useState(false);
     final loading = useState(false);
+    // Second factor: set when /auth/login answers with a challenge instead of
+    // a session token (the account has 2FA enabled).
+    final mfaToken = useState<String?>(null);
+    final mfaCode = useTextEditingController();
+
+    Future<void> verifyMfa() async {
+      final challenge = mfaToken.value;
+      if (challenge == null) return;
+      loading.value = true;
+      try {
+        await WalletApiClient.instance.mfaVerify(
+          mfaToken: challenge,
+          code: mfaCode.text.trim(),
+        );
+        mfaCode.clear();
+        mfaToken.value = null;
+        await ref.read(walletProvider.notifier).syncFromBackend();
+        if (context.mounted) {
+          showWalletToast(context, context.l10n.account_signed_in);
+        }
+      } on WalletApiException catch (e) {
+        if (context.mounted) {
+          showWalletToast(context, e.message, icon: DeeMusiqIcons.error);
+        }
+      } finally {
+        if (context.mounted) loading.value = false;
+      }
+    }
 
     Future<void> submit() => _guard(context, loading, () async {
+          if (mfaToken.value != null) {
+            await verifyMfa();
+            return;
+          }
           if (isRegister.value) {
             await WalletApiClient.instance.registerEmail(
               email: email.text.trim(),
@@ -112,16 +145,26 @@ class _EmailPasswordCard extends HookConsumerWidget {
               acceptTerms: acceptedTerms.value,
             );
           } else {
-            await WalletApiClient.instance.loginEmail(
-              email: email.text.trim(),
-              password: password.text,
-            );
+            try {
+              await WalletApiClient.instance.loginEmail(
+                email: email.text.trim(),
+                password: password.text,
+              );
+            } on WalletApiException catch (e) {
+              // Reveal the code field instead of toasting a dead end — the
+              // user retries once with the authenticator's code attached.
+              if (e.code == "mfa_required" && e.mfaToken != null) {
+                mfaToken.value = e.mfaToken;
+                return;
+              }
+              rethrow;
+            }
           }
           await ref.read(walletProvider.notifier).syncFromBackend();
         },
             isRegister.value
-                ? "Account created — check your email to verify."
-                : "Signed in.");
+                ? context.l10n.account_created_verify
+                : context.l10n.account_signed_in);
 
     return Card(
       padding: const EdgeInsets.all(16),
@@ -135,8 +178,8 @@ class _EmailPasswordCard extends HookConsumerWidget {
               const Gap(8),
               Expanded(
                 child: Text(isRegister.value
-                        ? "Create an email account"
-                        : "Sign in")
+                        ? context.l10n.account_create_email_title
+                        : context.l10n.sign_in)
                     .semiBold(),
               ),
               Button.ghost(
@@ -144,25 +187,24 @@ class _EmailPasswordCard extends HookConsumerWidget {
                   isRegister.value = !isRegister.value;
                   acceptedTerms.value = false;
                 },
-                child: Text(isRegister.value ? "Have one? Sign in" : "Create"),
+                child: Text(isRegister.value
+                    ? context.l10n.account_have_one_sign_in
+                    : context.l10n.create),
               ),
             ],
           ),
           const Gap(4),
-          const Text(
-            "An email + password lets you use this wallet on another device "
-            "and recover it. Your password is never stored — only a hash.",
-          ).muted().small(),
+          Text(context.l10n.account_email_body).muted().small(),
           const Gap(12),
           TextField(
             controller: email,
-            placeholder: const Text("Email"),
+            placeholder: Text(context.l10n.email),
             keyboardType: TextInputType.emailAddress,
           ),
           const Gap(8),
           TextField(
             controller: password,
-            placeholder: const Text("Password (12+ characters)"),
+            placeholder: Text(context.l10n.account_password_hint),
             obscureText: true,
           ),
           if (isRegister.value) ...[
@@ -180,12 +222,20 @@ class _EmailPasswordCard extends HookConsumerWidget {
                 Expanded(
                   child: TextButton(
                     onPressed: () => acceptedTerms.value = !acceptedTerms.value,
-                    child: const Text(
-                      "I accept the DeeMusiq Terms of Service and Privacy Policy.",
-                    ),
+                    child: Text(context.l10n.account_accept_terms),
                   ),
                 ),
               ],
+            ),
+          ],
+          if (mfaToken.value != null) ...[
+            const Gap(8),
+            Text(context.l10n.auth_mfa_required).muted().small(),
+            const Gap(8),
+            TextField(
+              controller: mfaCode,
+              placeholder: Text(context.l10n.account_totp_code_hint),
+              keyboardType: TextInputType.number,
             ),
           ],
           const Gap(12),
@@ -195,8 +245,12 @@ class _EmailPasswordCard extends HookConsumerWidget {
                     ? null
                     : submit,
             child: Text(loading.value
-                ? "Please wait…"
-                : (isRegister.value ? "Create account" : "Sign in")),
+                ? context.l10n.please_wait
+                : (mfaToken.value != null
+                    ? context.l10n.auth_mfa_verify_action
+                    : (isRegister.value
+                        ? context.l10n.account_create
+                        : context.l10n.sign_in))),
           ),
         ],
       ),
@@ -240,13 +294,13 @@ class _TotpCard extends HookConsumerWidget {
             }
             rethrow;
           }
-        }, "Scan or enter the secret in your authenticator app.");
+        }, context.l10n.account_totp_scan_hint);
 
     Future<void> enable() => _guard(context, loading, () async {
           await WalletApiClient.instance.totpEnable(code.text.trim());
           setup.value = null;
           code.clear();
-        }, "Two-factor authentication enabled.");
+        }, context.l10n.account_totp_enabled);
 
     final s = setup.value;
     return Card(
@@ -261,37 +315,30 @@ class _TotpCard extends HookConsumerWidget {
               const Gap(8),
               // .semiBold() is an extension call — not const-evaluable.
               Expanded(
-                child: const Text("Two-factor authentication (2FA)").semiBold(),
+                child: Text(context.l10n.account_totp_title).semiBold(),
               ),
             ],
           ),
           const Gap(4),
-          const Text(
-            "Use any authenticator app (Google Authenticator, Authy, Aegis…). "
-            "2FA also lets you recover your wallet on a new device.",
-          ).muted().small(),
+          Text(context.l10n.account_totp_body).muted().small(),
           const Gap(12),
           if (s == null) ...[
             if (needPassword.value)
-              const Text(
-                "Confirm your account password to continue.",
-              ).muted().small(),
+              Text(context.l10n.account_stepup_password_body).muted().small(),
             if (needPassword.value) const Gap(6),
             if (needPassword.value)
               TextField(
                 controller: stepUpPassword,
-                placeholder: const Text("Account password"),
+                placeholder: Text(context.l10n.account_stepup_password_hint),
                 obscureText: true,
               ),
             if (needCode.value)
-              const Text(
-                "Enter a code from your current authenticator app to replace it.",
-              ).muted().small(),
+              Text(context.l10n.account_stepup_code_body).muted().small(),
             if (needCode.value) const Gap(6),
             if (needCode.value)
               TextField(
                 controller: stepUpCode,
-                placeholder: const Text("Current 6-digit code"),
+                placeholder: Text(context.l10n.account_stepup_code_hint),
                 keyboardType: TextInputType.number,
               ),
             if (needPassword.value || needCode.value) const Gap(6),
@@ -299,14 +346,12 @@ class _TotpCard extends HookConsumerWidget {
               onPressed: loading.value ? null : startSetup,
               child: Text(
                 needPassword.value || needCode.value
-                    ? "Continue"
-                    : "Set up 2FA",
+                    ? context.l10n.continue_action
+                    : context.l10n.account_totp_setup,
               ),
             ),
           ] else ...[
-            const Text("Add this secret to your authenticator app:")
-                .muted()
-                .small(),
+            Text(context.l10n.account_totp_secret_body).muted().small(),
             const Gap(6),
             Card(
               filled: true,
@@ -319,7 +364,7 @@ class _TotpCard extends HookConsumerWidget {
                     icon: const Icon(DeeMusiqIcons.clipboard),
                     onPressed: () {
                       Clipboard.setData(ClipboardData(text: "${s["secret"]}"));
-                      showWalletToast(context, "Secret copied.");
+                      showWalletToast(context, context.l10n.account_secret_copied);
                     },
                   ),
                 ],
@@ -328,13 +373,13 @@ class _TotpCard extends HookConsumerWidget {
             const Gap(10),
             TextField(
               controller: code,
-              placeholder: const Text("6-digit code"),
+              placeholder: Text(context.l10n.account_totp_code_hint),
               keyboardType: TextInputType.number,
             ),
             const Gap(10),
             Button.primary(
               onPressed: loading.value ? null : enable,
-              child: const Text("Verify & enable"),
+              child: Text(context.l10n.account_totp_verify_enable),
             ),
           ],
         ],
@@ -349,16 +394,19 @@ class _RecoveryCard extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final email = useTextEditingController();
+    final password = useTextEditingController();
     final code = useTextEditingController();
     final loading = useState(false);
 
     Future<void> recover() => _guard(context, loading, () async {
           await WalletApiClient.instance.totpRecover(
             email: email.text.trim(),
+            password: password.text,
             code: code.text.trim(),
           );
+          password.clear();
           await ref.read(walletProvider.notifier).syncFromBackend();
-        }, "Recovered — welcome back.");
+        }, context.l10n.account_recovered);
 
     return Card(
       padding: const EdgeInsets.all(16),
@@ -371,31 +419,38 @@ class _RecoveryCard extends HookConsumerWidget {
               const Icon(DeeMusiqIcons.refresh, color: deeMusiqOrange),
               const Gap(8),
               Expanded(
-                child: const Text("Recover with your authenticator").semiBold(),
+                child: Text(context.l10n.account_recovery_title).semiBold(),
               ),
             ],
           ),
           const Gap(4),
-          const Text(
-            "On a new device? Enter your account email and a current 2FA code "
-            "to restore your wallet.",
-          ).muted().small(),
+          Text(context.l10n.account_recovery_body).muted().small(),
           const Gap(12),
           TextField(
             controller: email,
-            placeholder: const Text("Account email"),
+            placeholder: Text(context.l10n.account_email_hint),
             keyboardType: TextInputType.emailAddress,
+          ),
+          const Gap(8),
+          // Password is a REQUIRED second factor for recovery: the server
+          // rejects a TOTP code on its own, since a code alone is a single
+          // factor (phishable / readable off an authenticator screen).
+          TextField(
+            controller: password,
+            placeholder: Text(context.l10n.account_stepup_password_hint),
+            obscureText: true,
+            autofillHints: const [AutofillHints.password],
           ),
           const Gap(8),
           TextField(
             controller: code,
-            placeholder: const Text("6-digit code"),
+            placeholder: Text(context.l10n.account_totp_code_hint),
             keyboardType: TextInputType.number,
           ),
           const Gap(12),
           Button.outline(
             onPressed: loading.value ? null : recover,
-            child: const Text("Recover wallet"),
+            child: Text(context.l10n.account_recover_action),
           ),
         ],
       ),
@@ -411,6 +466,9 @@ class _GoogleSignInCard extends HookConsumerWidget {
     final loading = useState(false);
     final signedIn = useState(false);
     final isConfigured = GoogleAuthService.instance.isConfigured;
+    // google_sign_in has no Linux/Windows implementation — offer the
+    // mobile-only notice there instead of a button that would throw.
+    final isSupported = GoogleAuthService.instance.isPlatformSupported;
 
     // Check if already signed in with Google.
     useEffect(() {
@@ -421,6 +479,11 @@ class _GoogleSignInCard extends HookConsumerWidget {
     }, []);
 
     Future<void> handleGoogleSignIn() => _guard(context, loading, () async {
+          if (!GoogleAuthService.instance.isPlatformSupported) {
+            showWalletToast(context, context.l10n.google_sign_in_mobile_only,
+                icon: DeeMusiqIcons.info);
+            return;
+          }
           final result = await GoogleAuthService.instance.signIn();
           signedIn.value = true;
           final wallet = ref.read(walletProvider.notifier);
@@ -438,7 +501,7 @@ class _GoogleSignInCard extends HookConsumerWidget {
           await syncFavoritesFromBackend(
             ref.read(localFavoritesProvider.notifier),
           );
-        }, "Signed in with Google.");
+        }, context.l10n.account_google_signed_in);
 
     Future<void> handleSignOut() => _guard(context, loading, () async {
           await GoogleAuthService.instance.signOut();
@@ -448,7 +511,7 @@ class _GoogleSignInCard extends HookConsumerWidget {
           await ref.read(walletProvider.notifier).reset();
           await ref.read(databaseProvider).deleteAllData();
           await KVStoreService.clearAccountState();
-        }, "Signed out of Google. Synced data on this device was cleared.");
+        }, context.l10n.account_google_signed_out);
 
     return Card(
       padding: const EdgeInsets.all(16),
@@ -461,7 +524,7 @@ class _GoogleSignInCard extends HookConsumerWidget {
               const Icon(DeeMusiqIcons.google, color: deeMusiqOrange),
               const Gap(8),
               Expanded(
-                child: const Text("Google Sign-In").semiBold(),
+                child: Text(context.l10n.account_google_title).semiBold(),
               ),
               if (signedIn.value) ...[
                 const Icon(DeeMusiqIcons.verified,
@@ -471,35 +534,30 @@ class _GoogleSignInCard extends HookConsumerWidget {
           ),
           const Gap(4),
           Text(
-            isConfigured
-                ? (signedIn.value
-                    ? "Connected. Your liked songs and playlists sync "
-                        "anonymously — only hashed IDs are stored, and "
-                        "playlist names travel inside the encrypted channel. "
-                        "No personal data leaves your device."
-                    : "Sign in with Google to sync your library across "
-                        "devices. We only store anonymized data (hashed song "
-                        "IDs; playlist names travel inside the encrypted "
-                        "channel). No email, name, or location is ever stored.")
-                : "Google Sign-In needs backend connectivity. "
-                    "Connect to the DeeMusiq server to enable.",
+            !isSupported
+                ? context.l10n.google_sign_in_mobile_only
+                : isConfigured
+                    ? (signedIn.value
+                        ? context.l10n.account_google_connected_body
+                        : context.l10n.account_google_connect_body)
+                    : context.l10n.account_google_unconfigured_body,
           ).muted().small(),
           const Gap(12),
           if (signedIn.value)
             Button.outline(
               onPressed: loading.value ? null : handleSignOut,
-              child: const Text("Sign out"),
+              child: Text(context.l10n.sign_out),
             )
-          else
+          else if (isSupported)
             Button.primary(
               onPressed:
                   (loading.value || !isConfigured) ? null : handleGoogleSignIn,
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(DeeMusiqIcons.google, size: 18),
-                  Gap(8),
-                  Text("Sign in with Google"),
+                  const Icon(DeeMusiqIcons.google, size: 18),
+                  const Gap(8),
+                  Text(context.l10n.sign_in_with_google),
                 ],
               ),
             ),
@@ -521,13 +579,13 @@ class _SecurityActionsCard extends HookConsumerWidget {
         context,
         loading,
         () => WalletApiClient.instance.requestVerify(),
-        "If your email needs verifying, a link is on its way.");
+        context.l10n.account_verify_link_sent);
 
     Future<void> reset() => _guard(
         context,
         loading,
         () => WalletApiClient.instance.forgotPassword(resetEmail.text.trim()),
-        "If that email has an account, a reset link is on its way.");
+        context.l10n.account_reset_link_sent);
 
     Future<void> logoutEverywhere() => _guard(
         context,
@@ -543,7 +601,7 @@ class _SecurityActionsCard extends HookConsumerWidget {
           await ref.read(databaseProvider).deleteAllData();
           await KVStoreService.clearAccountState();
         },
-        "Signed out on all devices. Synced data on this device was cleared.");
+        context.l10n.account_logged_out_all);
 
     /// POPIA s. 11 / GDPR Art. 20: pull the server-side dump and hand it to
     /// the user as a JSON file. Mirrors `_guard`, but a cancelled save dialog
@@ -569,7 +627,7 @@ class _SecurityActionsCard extends HookConsumerWidget {
           savedPath = file.path;
         }
         if (context.mounted) {
-          showWalletToast(context, "Data exported to $savedPath");
+          showWalletToast(context, context.l10n.account_data_exported(savedPath));
         }
       } on WalletApiException catch (e) {
         if (context.mounted) {
@@ -578,7 +636,8 @@ class _SecurityActionsCard extends HookConsumerWidget {
       } catch (e) {
         AppLogger.log.w('Data export failed: ${e.toString()}');
         if (context.mounted) {
-          showWalletToast(context, "Export failed.", icon: DeeMusiqIcons.error);
+          showWalletToast(context, context.l10n.account_export_failed,
+              icon: DeeMusiqIcons.error);
         }
       } finally {
         if (context.mounted) loading.value = false;
@@ -589,19 +648,18 @@ class _SecurityActionsCard extends HookConsumerWidget {
       final ok = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text("Delete account?").large(),
-          content: const Text(
-            "This permanently deletes your DeeMusiq account, wallet balance, "
-            "history and linked accounts. This cannot be undone.",
-          ).muted().small(),
+          title: Text(context.l10n.account_delete_confirm_title).large(),
+          content: Text(context.l10n.account_delete_confirm_body)
+              .muted()
+              .small(),
           actions: [
             Button.outline(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text("Cancel"),
+              child: Text(context.l10n.cancel),
             ),
             Button.destructive(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text("Delete forever"),
+              child: Text(context.l10n.account_delete_forever),
             ),
           ],
         ),
@@ -615,7 +673,7 @@ class _SecurityActionsCard extends HookConsumerWidget {
         // deletion — wipe Drift rows, SharedPreferences and the keystore.
         await ref.read(databaseProvider).deleteAllData();
         await KVStoreService.clearAll();
-      }, "Account deleted.");
+      }, context.l10n.account_deleted);
     }
 
     return Card(
@@ -628,39 +686,39 @@ class _SecurityActionsCard extends HookConsumerWidget {
             children: [
               const Icon(DeeMusiqIcons.lock, color: deeMusiqOrange),
               const Gap(8),
-              Expanded(child: const Text("Security").semiBold()),
+              Expanded(child: Text(context.l10n.account_security_card_title).semiBold()),
             ],
           ),
           const Gap(12),
           Button.outline(
             onPressed: loading.value ? null : resend,
-            child: const Text("Resend verification email"),
+            child: Text(context.l10n.account_resend_verification),
           ),
           const Gap(8),
           TextField(
             controller: resetEmail,
-            placeholder: const Text("Email for password reset"),
+            placeholder: Text(context.l10n.account_reset_email_hint),
             keyboardType: TextInputType.emailAddress,
           ),
           const Gap(8),
           Button.outline(
             onPressed: loading.value ? null : reset,
-            child: const Text("Email me a password reset link"),
+            child: Text(context.l10n.account_send_reset_link),
           ),
           const Gap(8),
           Button.outline(
             onPressed: loading.value ? null : logoutEverywhere,
-            child: const Text("Log out on all devices"),
+            child: Text(context.l10n.account_logout_all),
           ),
           const Gap(8),
           Button.outline(
             onPressed: loading.value ? null : exportData,
-            child: const Text("Export my data (JSON)"),
+            child: Text(context.l10n.account_export_data),
           ),
           const Gap(8),
           Button.destructive(
             onPressed: loading.value ? null : deleteAccount,
-            child: const Text("Delete account"),
+            child: Text(context.l10n.account_delete),
           ),
         ],
       ),

@@ -9,8 +9,8 @@ enum PaymentRail { fiat, crypto, demo }
 ///
 /// The fiat/crypto methods are wired through [PaymentService] but require the
 /// DeeMusiq backend (PayShap/PayFast/Stripe merchant + a crypto deposit
-/// watcher) to actually settle. The [demoCredit] method credits instantly and
-/// exists so the wallet is fully demoable offline.
+/// watcher) to actually settle. [demoCredit] is a legacy testing hook that is
+/// hard-disabled — [PaymentService] always fails it.
 enum PaymentMethodKind {
   payfastCard,
   stripeCard,

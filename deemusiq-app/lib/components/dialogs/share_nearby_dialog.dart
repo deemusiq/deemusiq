@@ -37,16 +37,16 @@ class ShareNearbyDialog extends HookConsumerWidget {
     if (toastContext == null || !toastContext.mounted) return;
     switch (result) {
       case ConnectShareResult.sent:
-        showWalletToast(toastContext, 'Shared with ${peer.name}',
+        showWalletToast(toastContext, toastContext.l10n.share_nearby_sent(peer.name),
             icon: DeeMusiqIcons.speaker);
         break;
       case ConnectShareResult.denied:
-        showWalletToast(toastContext, '${peer.name} declined the share',
+        showWalletToast(toastContext, toastContext.l10n.share_nearby_declined(peer.name),
             icon: DeeMusiqIcons.error);
         break;
       case ConnectShareResult.unreachable:
       case ConnectShareResult.failed:
-        showWalletToast(toastContext, "Couldn't reach ${peer.name}",
+        showWalletToast(toastContext, toastContext.l10n.share_nearby_unreachable(peer.name),
             icon: DeeMusiqIcons.error);
         break;
     }
@@ -58,14 +58,11 @@ class ShareNearbyDialog extends HookConsumerWidget {
         ref.watch(connectClientsProvider).asData?.value.services ?? const [];
 
     return AlertDialog(
-      title: const Text('Send to nearby device'),
+      title: Text(context.l10n.share_nearby_title),
       content: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 360, maxHeight: 320),
         child: peers.isEmpty
-            ? const Text(
-                'No nearby devices found. Open DeeMusiq on the other device '
-                'and make sure Connect is enabled on both.',
-              )
+            ? Text(context.l10n.share_nearby_empty)
             : ListView.separated(
                 shrinkWrap: true,
                 itemCount: peers.length,

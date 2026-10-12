@@ -4977,7 +4977,10 @@ mixin _$DeeMusiqTrackObject {
             DeeMusiqSimpleAlbumObject album,
             int durationMs,
             String isrc,
-            bool explicit)
+            bool explicit,
+            double? loudnessDb,
+            double? gainDb,
+            String? liteUrl)
         full,
   }) =>
       throw _privateConstructorUsedError;
@@ -5000,7 +5003,10 @@ mixin _$DeeMusiqTrackObject {
             DeeMusiqSimpleAlbumObject album,
             int durationMs,
             String isrc,
-            bool explicit)?
+            bool explicit,
+            double? loudnessDb,
+            double? gainDb,
+            String? liteUrl)?
         full,
   }) =>
       throw _privateConstructorUsedError;
@@ -5023,7 +5029,10 @@ mixin _$DeeMusiqTrackObject {
             DeeMusiqSimpleAlbumObject album,
             int durationMs,
             String isrc,
-            bool explicit)?
+            bool explicit,
+            double? loudnessDb,
+            double? gainDb,
+            String? liteUrl)?
         full,
     required TResult orElse(),
   }) =>
@@ -5312,7 +5321,10 @@ class _$DeeMusiqLocalTrackObjectImpl implements DeeMusiqLocalTrackObject {
             DeeMusiqSimpleAlbumObject album,
             int durationMs,
             String isrc,
-            bool explicit)
+            bool explicit,
+            double? loudnessDb,
+            double? gainDb,
+            String? liteUrl)
         full,
   }) {
     return local(id, name, externalUri, artists, album, durationMs, path);
@@ -5338,7 +5350,10 @@ class _$DeeMusiqLocalTrackObjectImpl implements DeeMusiqLocalTrackObject {
             DeeMusiqSimpleAlbumObject album,
             int durationMs,
             String isrc,
-            bool explicit)?
+            bool explicit,
+            double? loudnessDb,
+            double? gainDb,
+            String? liteUrl)?
         full,
   }) {
     return local?.call(id, name, externalUri, artists, album, durationMs, path);
@@ -5364,7 +5379,10 @@ class _$DeeMusiqLocalTrackObjectImpl implements DeeMusiqLocalTrackObject {
             DeeMusiqSimpleAlbumObject album,
             int durationMs,
             String isrc,
-            bool explicit)?
+            bool explicit,
+            double? loudnessDb,
+            double? gainDb,
+            String? liteUrl)?
         full,
     required TResult orElse(),
   }) {
@@ -5465,7 +5483,10 @@ abstract class _$$DeeMusiqFullTrackObjectImplCopyWith<$Res>
       DeeMusiqSimpleAlbumObject album,
       int durationMs,
       String isrc,
-      bool explicit});
+      bool explicit,
+      double? loudnessDb,
+      double? gainDb,
+      String? liteUrl});
 
   @override
   $DeeMusiqSimpleAlbumObjectCopyWith<$Res> get album;
@@ -5494,6 +5515,9 @@ class __$$DeeMusiqFullTrackObjectImplCopyWithImpl<$Res>
     Object? durationMs = null,
     Object? isrc = null,
     Object? explicit = null,
+    Object? loudnessDb = freezed,
+    Object? gainDb = freezed,
+    Object? liteUrl = freezed,
   }) {
     return _then(_$DeeMusiqFullTrackObjectImpl(
       id: null == id
@@ -5528,6 +5552,18 @@ class __$$DeeMusiqFullTrackObjectImplCopyWithImpl<$Res>
           ? _value.explicit
           : explicit // ignore: cast_nullable_to_non_nullable
               as bool,
+      loudnessDb: freezed == loudnessDb
+          ? _value.loudnessDb
+          : loudnessDb // ignore: cast_nullable_to_non_nullable
+              as double?,
+      gainDb: freezed == gainDb
+          ? _value.gainDb
+          : gainDb // ignore: cast_nullable_to_non_nullable
+              as double?,
+      liteUrl: freezed == liteUrl
+          ? _value.liteUrl
+          : liteUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -5544,6 +5580,9 @@ class _$DeeMusiqFullTrackObjectImpl implements DeeMusiqFullTrackObject {
       required this.durationMs,
       required this.isrc,
       required this.explicit,
+      this.loudnessDb,
+      this.gainDb,
+      this.liteUrl,
       final String? $type})
       : _artists = artists,
         $type = $type ?? 'full';
@@ -5574,13 +5613,21 @@ class _$DeeMusiqFullTrackObjectImpl implements DeeMusiqFullTrackObject {
   final String isrc;
   @override
   final bool explicit;
+// Loudness normalization + data-saver fields from the catalog track DTO
+// (null when the backend measured none / minted no lite rendition).
+  @override
+  final double? loudnessDb;
+  @override
+  final double? gainDb;
+  @override
+  final String? liteUrl;
 
   @JsonKey(name: 'runtimeType')
   final String $type;
 
   @override
   String toString() {
-    return 'DeeMusiqTrackObject.full(id: $id, name: $name, externalUri: $externalUri, artists: $artists, album: $album, durationMs: $durationMs, isrc: $isrc, explicit: $explicit)';
+    return 'DeeMusiqTrackObject.full(id: $id, name: $name, externalUri: $externalUri, artists: $artists, album: $album, durationMs: $durationMs, isrc: $isrc, explicit: $explicit, loudnessDb: $loudnessDb, gainDb: $gainDb, liteUrl: $liteUrl)';
   }
 
   @override
@@ -5598,7 +5645,11 @@ class _$DeeMusiqFullTrackObjectImpl implements DeeMusiqFullTrackObject {
                 other.durationMs == durationMs) &&
             (identical(other.isrc, isrc) || other.isrc == isrc) &&
             (identical(other.explicit, explicit) ||
-                other.explicit == explicit));
+                other.explicit == explicit) &&
+            (identical(other.loudnessDb, loudnessDb) ||
+                other.loudnessDb == loudnessDb) &&
+            (identical(other.gainDb, gainDb) || other.gainDb == gainDb) &&
+            (identical(other.liteUrl, liteUrl) || other.liteUrl == liteUrl));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -5612,7 +5663,10 @@ class _$DeeMusiqFullTrackObjectImpl implements DeeMusiqFullTrackObject {
       album,
       durationMs,
       isrc,
-      explicit);
+      explicit,
+      loudnessDb,
+      gainDb,
+      liteUrl);
 
   /// Create a copy of DeeMusiqTrackObject
   /// with the given fields replaced by the non-null parameter values.
@@ -5643,11 +5697,14 @@ class _$DeeMusiqFullTrackObjectImpl implements DeeMusiqFullTrackObject {
             DeeMusiqSimpleAlbumObject album,
             int durationMs,
             String isrc,
-            bool explicit)
+            bool explicit,
+            double? loudnessDb,
+            double? gainDb,
+            String? liteUrl)
         full,
   }) {
-    return full(
-        id, name, externalUri, artists, album, durationMs, isrc, explicit);
+    return full(id, name, externalUri, artists, album, durationMs, isrc,
+        explicit, loudnessDb, gainDb, liteUrl);
   }
 
   @override
@@ -5670,11 +5727,14 @@ class _$DeeMusiqFullTrackObjectImpl implements DeeMusiqFullTrackObject {
             DeeMusiqSimpleAlbumObject album,
             int durationMs,
             String isrc,
-            bool explicit)?
+            bool explicit,
+            double? loudnessDb,
+            double? gainDb,
+            String? liteUrl)?
         full,
   }) {
-    return full?.call(
-        id, name, externalUri, artists, album, durationMs, isrc, explicit);
+    return full?.call(id, name, externalUri, artists, album, durationMs, isrc,
+        explicit, loudnessDb, gainDb, liteUrl);
   }
 
   @override
@@ -5697,13 +5757,16 @@ class _$DeeMusiqFullTrackObjectImpl implements DeeMusiqFullTrackObject {
             DeeMusiqSimpleAlbumObject album,
             int durationMs,
             String isrc,
-            bool explicit)?
+            bool explicit,
+            double? loudnessDb,
+            double? gainDb,
+            String? liteUrl)?
         full,
     required TResult orElse(),
   }) {
     if (full != null) {
-      return full(
-          id, name, externalUri, artists, album, durationMs, isrc, explicit);
+      return full(id, name, externalUri, artists, album, durationMs, isrc,
+          explicit, loudnessDb, gainDb, liteUrl);
     }
     return orElse();
   }
@@ -5756,7 +5819,10 @@ abstract class DeeMusiqFullTrackObject implements DeeMusiqTrackObject {
       required final DeeMusiqSimpleAlbumObject album,
       required final int durationMs,
       required final String isrc,
-      required final bool explicit}) = _$DeeMusiqFullTrackObjectImpl;
+      required final bool explicit,
+      final double? loudnessDb,
+      final double? gainDb,
+      final String? liteUrl}) = _$DeeMusiqFullTrackObjectImpl;
 
   factory DeeMusiqFullTrackObject.fromJson(Map<String, dynamic> json) =
       _$DeeMusiqFullTrackObjectImpl.fromJson;
@@ -5774,7 +5840,12 @@ abstract class DeeMusiqFullTrackObject implements DeeMusiqTrackObject {
   @override
   int get durationMs;
   String get isrc;
-  bool get explicit;
+  bool
+      get explicit; // Loudness normalization + data-saver fields from the catalog track DTO
+// (null when the backend measured none / minted no lite rendition).
+  double? get loudnessDb;
+  double? get gainDb;
+  String? get liteUrl;
 
   /// Create a copy of DeeMusiqTrackObject
   /// with the given fields replaced by the non-null parameter values.

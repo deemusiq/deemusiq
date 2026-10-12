@@ -1,0 +1,74 @@
+name: Security scan
+
+# FOSS vulnerability + secret scanning:
+#   • Trivy (Aqua)   — scans pubspec.lock, pnpm-lock.yaml and everything else
+#                      for known CVEs; results uploaded as SARIF to the
+#                      Security tab (GitHub emails admins on new alerts).
+#   • Gitleaks       — no secrets in history or new commits; fails the run.
+#
+# Report-only on schedule/push (alerts, not broken builds); Gitleaks always
+# blocks — a leaked secret is never acceptable noise.
+
+on:
+  push:
+    branches: [main, "payments/**", "release/**"]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "41 5 * * 1" # weekly, Monday 05:41 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  trivy:
+    name: Trivy vulnerability scan
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Trivy (filesystem, SARIF)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          format: sarif
+          output: trivy-results.sarif
+          exit-code: "0" # alerts via Security tab, not red builds
+      - name: Upload SARIF to Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+      - name: Trivy summary (table)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          format: table
+          exit-code: "0"
+
+  gitleaks:
+    name: Gitleaks secret scan
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install gitleaks
+        # Resolve the latest release tag, download the binary, and verify it
+        # against the release's published checksums before executing.
+        run: |
+          TAG=$(curl -fsSL https://api.github.com/repos/gitleaks/gitleaks/releases/latest | grep -oP '"tag_name":\s*"\K[^"]+')
+          VER=${TAG#v}
+          curl -fsSL -o /tmp/gitleaks.tar.gz "https://github.com/gitleaks/gitleaks/releases/download/$TAG/gitleaks_${VER}_linux_x64.tar.gz"
+          curl -fsSL -o /tmp/checksums.txt "https://github.com/gitleaks/gitleaks/releases/download/$TAG/gitleaks_${VER}_checksums.txt"
+          ( cd /tmp && grep "linux_x64.tar.gz" checksums.txt | sha256sum -c - )
+          tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
+          /tmp/gitleaks version
+      - name: Scan history for secrets
+        run: /tmp/gitleaks git --redact --verbose .

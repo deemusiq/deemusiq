@@ -6,6 +6,8 @@ import 'dart:math';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:path/path.dart';
+import 'package:deemusiq/services/logger/logger.dart';
+import 'package:deemusiq/utils/file_cleanup.dart';
 
 String? sha256FromHeaders(Headers headers) {
   const names = [
@@ -53,7 +55,10 @@ String? normalizeSha256(String? value) {
           .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
           .join();
     }
-  } catch (_) {}
+  } catch (e) {
+    // Not base64 either — the header value is not a usable sha256.
+    AppLogger.log.d('Unparseable sha256 header value: $e');
+  }
   return null;
 }
 
@@ -145,11 +150,13 @@ extension ChunkDownloaderDioExtension on Dio {
         connections: requestedConnections,
       );
     } catch (error, stackTrace) {
-      if (deleteOnError) await _deleteQuietly(temporaryDirectory);
+      if (deleteOnError) {
+        await deleteFileQuietly(temporaryDirectory, 'Chunk download');
+      }
       Error.throwWithStackTrace(error, stackTrace);
     } finally {
       deadline.cancel();
-      await _deleteQuietly(temporaryDirectory);
+      await deleteFileQuietly(temporaryDirectory, 'Chunk download');
     }
   }
 
@@ -172,7 +179,12 @@ extension ChunkDownloaderDioExtension on Dio {
           headers: const {'Range': 'bytes=0-0'},
         ),
       );
-    } catch (_) {}
+    } catch (e) {
+      // HEAD probe unsupported/failed — the downloader falls back to a
+      // plain GET below; logged at debug since this is an expected path
+      // for servers without Range support.
+      AppLogger.log.d('Range HEAD probe failed for $urlPath: $e');
+    }
 
     if (headResponse != null) {
       final status = headResponse.statusCode;
@@ -226,7 +238,10 @@ extension ChunkDownloaderDioExtension on Dio {
           headers: const {'Range': 'bytes=0-0'},
         ),
       );
-    } catch (_) {
+    } catch (e) {
+      // Probe failure degrades to non-range download; log at debug so
+      // CDN/proxy issues stay diagnosable.
+      AppLogger.log.d('download probe failed: $e');
       return const _DownloadProbe(
         totalLength: null,
         supportsRange: false,
@@ -789,18 +804,19 @@ Future<void> _atomicReplace(File source, File target) async {
     } catch (replacementError, replacementStack) {
       try {
         await backup.rename(target.path);
-      } catch (_) {}
+      } catch (rollbackError) {
+        // The original error is rethrown below either way — a failed
+        // rollback additionally leaves the old file at the backup path.
+        AppLogger.log.e('Chunk download rollback to backup failed: $rollbackError');
+      }
       Error.throwWithStackTrace(replacementError, replacementStack);
     }
     try {
       await backup.delete();
-    } catch (_) {}
+    } catch (e) {
+      // Leftover backup file — harmless, cleaned up on a later download.
+      AppLogger.log.w('Chunk download backup cleanup failed: $e');
+    }
     return;
   }
-}
-
-Future<void> _deleteQuietly(FileSystemEntity entity) async {
-  try {
-    if (await entity.exists()) await entity.delete(recursive: true);
-  } catch (_) {}
 }

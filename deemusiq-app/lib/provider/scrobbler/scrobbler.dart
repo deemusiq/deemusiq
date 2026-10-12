@@ -45,6 +45,7 @@ class ScrobblerNotifier extends AsyncNotifier<Scrobblenaut?> {
     final scrobblerSubscription =
         _scrobbleController.stream.listen((track) async {
       try {
+        if (track.artists.isEmpty) return;
         await state.asData?.value?.track.scrobble(
           artist: track.artists.first.name,
           track: track.name,
@@ -90,13 +91,22 @@ class ScrobblerNotifier extends AsyncNotifier<Scrobblenaut?> {
       password: password,
     );
 
-    if (!lastFm.isAuth) throw Exception("Invalid credentials");
+    if (!lastFm.isAuth) {
+      AppLogger.reportError('Last.fm auth rejected credentials', null);
+      throw Exception("Invalid credentials");
+    }
+
+    final hash = lastFm.passwordHash;
+    if (hash == null || hash.isEmpty) {
+      AppLogger.reportError('Last.fm auth missing password hash', null);
+      throw Exception("Invalid credentials");
+    }
 
     await database.into(database.scrobblerTable).insert(
           ScrobblerTableCompanion.insert(
             id: const Value(0),
             username: username,
-            passwordHash: DecryptedText(lastFm.passwordHash!),
+            passwordHash: DecryptedText(hash),
           ),
           // Re-login with a stale row (id 0) still present must replace it,
           // not crash on the primary-key constraint.

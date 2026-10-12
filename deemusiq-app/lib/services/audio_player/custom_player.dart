@@ -15,7 +15,7 @@ class CustomPlayer extends Player {
   final StreamController<AudioPlaybackState> _playerStateStream;
 
   /// Stream of user-facing error messages. Subscribe in the UI to show toasts.
-  final StreamController<String> _userMessageStream =
+  final StreamController<AudioUserMessage> _userMessageStream =
       StreamController.broadcast();
 
   late final List<StreamSubscription> _subscriptions;
@@ -33,7 +33,12 @@ class CustomPlayer extends Player {
   CustomPlayer({super.configuration})
       : _playerStateStream = StreamController.broadcast() {
     try {
-      nativePlayer.setProperty('network-timeout', '300');
+      // 60s ceiling on a stalled CDN read (was 300): a hang beyond a minute
+      // must surface to the AudioErrorHandler, not freeze the queue. Safe
+      // because remote tracks stream through the loopback server, which
+      // resumes interrupted bodies itself (max 3 resumes — see
+      // resumableCheckedStream in provider/server/routes/playback.dart).
+      nativePlayer.setProperty('network-timeout', '60');
       nativePlayer.setProperty('vid', 'no');
       nativePlayer.setProperty('cache', 'yes');
       nativePlayer.setProperty('cache-secs', '30');
@@ -126,7 +131,7 @@ class CustomPlayer extends Player {
   bool get shuffled => state.shuffle;
 
   Stream<AudioPlaybackState> get playerStateStream => _playerStateStream.stream;
-  Stream<String> get userMessageStream => _userMessageStream.stream;
+  Stream<AudioUserMessage> get userMessageStream => _userMessageStream.stream;
   Stream<bool> get shuffleStream => stream.shuffle;
   Stream<int>? _cachedIndexStream;
 
@@ -224,7 +229,15 @@ class CustomPlayer extends Player {
       await add(media);
       final mediaAddedIndex = await addedMediaCompleter.future.timeout(
         const Duration(seconds: 10),
-        onTimeout: () => -1,
+        onTimeout: () {
+          // The playlist echo never arrived — the move is skipped silently
+          // today, so at least leave a diagnosable trail.
+          AppLogger.log.w(
+            'insert($index): playlist echo for ${media.uri} timed out '
+            'after 10s — move skipped',
+          );
+          return -1;
+        },
       );
       if (mediaAddedIndex >= 0) {
         await move(mediaAddedIndex, index);
@@ -262,6 +275,26 @@ class CustomPlayer extends Player {
     } catch (e, stack) {
       AppLogger.log.w('setDemuxerBufferSize failed: $e');
       AppLogger.reportError(e, stack, 'setDemuxerBufferSize');
+    }
+  }
+
+  /// Data-saver cache budgets: in lite mode the demuxer buffer and the
+  /// readahead window shrink (a ~64 kbps stream needs far less buffered ahead
+  /// than a lossless one); [lossless] restores the 6MB lossless budget when
+  /// the saver turns off, matching the quality-presets listener.
+  Future<void> setCacheBudgets({required bool lite, bool lossless = false}) async {
+    try {
+      await nativePlayer.setProperty('cache-secs', lite ? '10' : '30');
+      await setDemuxerBufferSize(
+        lite
+            ? 1 * 1024 * 1024 // 1MB
+            : lossless
+                ? 6 * 1024 * 1024 // 6MB
+                : 4 * 1024 * 1024, // 4MB
+      );
+    } catch (e, stack) {
+      AppLogger.log.w('setCacheBudgets failed: $e');
+      AppLogger.reportError(e, stack, 'setCacheBudgets');
     }
   }
 

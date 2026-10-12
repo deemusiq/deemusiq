@@ -220,15 +220,15 @@
   "generating_playlist": "Generating your custom playlist...",
   "selected_count_tracks": "Selected {count} tracks",
   "download_warning": "If you download all Tracks at bulk you're clearly pirating Music & causing damage to the creative society of Music. I hope you are aware of this. Always, try respecting & supporting Artist's hard work",
-  "download_ip_ban_warning": "BTW, your IP can get blocked on YouTube due excessive download requests than usual. IP block means you can't use YouTube (even if you're logged in) for at least 2-3 months from that IP device. And DeeMusiq doesn't hold any responsibility if this ever happens",
+  "download_ip_ban_warning": "BTW, your IP can get blocked by the streaming source due to more download requests than usual. An IP block means you can't use the source (even if you're logged in) for at least 2-3 months from that device. And DeeMusiq doesn't hold any responsibility if this ever happens",
   "by_clicking_accept_terms": "By clicking 'accept' you agree to following terms:",
   "download_agreement_1": "I know I'm pirating Music. I'm bad",
   "download_agreement_2": "I'll support the Artist wherever I can and I'm only doing this because I don't have money to buy their art",
-  "download_agreement_3": "I'm completely aware that my IP can get blocked on YouTube & I don't hold DeeMusiq or his owners/contributors responsible for any accidents caused by my current action",
+  "download_agreement_3": "I'm completely aware that my IP can get blocked by the streaming source & I don't hold DeeMusiq or its owners/contributors responsible for any accidents caused by my current action",
   "decline": "Decline",
   "accept": "Accept",
   "details": "Details",
-  "youtube": "YouTube",
+  "youtube": "Drop",
   "channel": "Channel",
   "likes": "Likes",
   "dislikes": "Dislikes",
@@ -252,7 +252,7 @@
   "encryption_failed_warning": "DeeMusiq uses encryption to securely store your data. But failed to do so. So it'll fallback to insecure storage\nIf you're using linux, please make sure you've any secret-service (gnome-keyring, kde-wallet, keepassxc etc) installed",
   "querying_info": "Querying info...",
   "piped_api_down": "Piped API is down",
-  "piped_down_error_instructions": "The Piped instance {pipedInstance} is currently down\n\nEither change the instance or change the 'API type' to official YouTube API\n\nMake sure to restart the app after change",
+  "piped_down_error_instructions": "The Piped instance {pipedInstance} is currently down\n\nEither change the instance or change the 'API type' to the official API\n\nMake sure to restart the app after change",
   "you_are_offline": "You are currently offline",
   "connection_restored": "Your internet connection was restored",
   "use_system_title_bar": "Use system title bar",
@@ -293,25 +293,13 @@
   "local_tracks": "Local Tracks",
   "local_tab": "Local",
   "song_link": "Song Link",
-  "skip_this_nonsense": "Skip this nonsense",
-  "freedom_of_music": "“Freedom of Music”",
-  "freedom_of_music_palm": "“Freedom of Music in the palm of your hand”",
-  "get_started": "Let's get started",
   "youtube_source_description": "Recommended and works best.",
-  "piped_source_description": "Feeling free? Same as YouTube but a lot free.",
+  "piped_source_description": "Feeling free? Same catalog, but a lot freer.",
   "jiosaavn_source_description": "Best for South Asian region.",
   "invidious_source_description": "Similar to Piped but with higher availability.",
   "highest_quality": "Highest Quality: {quality}",
   "select_audio_source": "Select Audio Source",
-  "endless_playback_description": "Automatically append new songs\nto the end of the queue",
-  "choose_your_region": "Choose your region",
-  "choose_your_region_description": "This will help DeeMusiq show you the right content\nfor your location.",
-  "choose_your_language": "Choose your language",
-  "help_project_grow": "Help this project grow",
-  "help_project_grow_description": "DeeMusiq is an open-source project. You can help this project grow by contributing to the project, reporting bugs, or suggesting new features.",
   "contribute_on_github": "Contribute on GitHub",
-  "visit_our_website": "Visit our website",
-  "donate_on_open_collective": "Donate on Open Collective",
   "browse_anonymously": "Browse Anonymously",
   "enable_connect": "Enable Connect",
   "enable_connect_description": "Control DeeMusiq from other devices",
@@ -360,26 +348,22 @@
   "edit": "Edit",
   "user_profile": "User Profile",
   "count_plays": "{count} plays",
-  "streaming_fees_hypothetical": "Streaming fees (hypothetical)",
   "minutes_listened": "Minutes listened",
   "streamed_songs": "Streamed songs",
   "count_streams": "{count} streams",
   "owned_by_you": "Owned by you",
   "copied_shareurl_to_clipboard": "Copied {shareUrl} to clipboard",
-  "hipotetical_calculation": "*This is calculated based on average online music streaming platform's per stream\npayout of $0.003 to $0.005. This is a hypothetical\ncalculation to give user insight about how much they\nwould have paid to the artists if they were to listen\ntheir song in different music streaming platform.",
   "count_mins": "{minutes} mins",
   "summary_minutes": "minutes",
   "summary_listened_to_music": "Listened to music",
   "summary_songs": "songs",
   "summary_streamed_overall": "Streamed overall",
-  "summary_owed_to_artists": "Owed to artists\nthis month",
   "summary_artists": "artist's",
   "summary_music_reached_you": "Music reached you",
   "summary_full_albums": "full albums",
   "summary_got_your_love": "Got your love",
   "summary_playlists": "playlists",
   "summary_were_on_repeat": "Were on repeat",
-  "total_money": "Total {money}",
   "webview_not_found": "Webview not found",
   "webview_not_found_description": "No webview runtime is installed in your device.\nIf it's installed make sure it's in the Environment PATH\n\nAfter installing, restart the app",
   "unsupported_platform": "Unsupported platform",
@@ -406,24 +390,24 @@
   "not_following_artists": "You're not following any artists",
   "no_favorite_albums_yet": "Looks like you haven't added any albums to your favorites yet",
   "no_logs_found": "No logs found",
-  "youtube_engine": "DeeMusiq Engine",
-  "youtube_engine_not_installed_title": "{engine} is not installed",
-  "youtube_engine_not_installed_message": "{engine} is not installed in your system.",
+  "youtube_engine": "Playback engine",
+  "youtube_engine_not_installed_title": "{engine} engine is not installed",
+  "youtube_engine_not_installed_message": "{engine} engine is not installed on this device.",
   "youtube_engine_set_path": "Make sure it's available in the PATH variable or\nset the absolute path to the {engine} executable below",
   "youtube_engine_unix_issue_message": "In macOS/Linux/unix like OS's, setting path on .zshrc/.bashrc/.bash_profile etc. won't work.\nYou need to set the path in the shell configuration file",
-  "yt_dlp_install_title": "Setting up yt-dlp",
-  "yt_dlp_install_phase_checking": "Checking for an existing yt-dlp install…",
-  "yt_dlp_install_phase_downloading": "Downloading yt-dlp {version}…",
-  "yt_dlp_install_phase_verifying": "Verifying the downloaded yt-dlp…",
-  "yt_dlp_install_phase_installing": "Installing yt-dlp {version}…",
-  "yt_dlp_install_phase_done": "yt-dlp {version} is ready",
-  "yt_dlp_install_phase_failed": "yt-dlp setup failed",
+  "yt_dlp_install_title": "Setting up Drop 1",
+  "yt_dlp_install_phase_checking": "Checking for an existing Drop 1 install…",
+  "yt_dlp_install_phase_downloading": "Downloading Drop 1 {version}…",
+  "yt_dlp_install_phase_verifying": "Verifying the downloaded Drop 1…",
+  "yt_dlp_install_phase_installing": "Installing Drop 1 {version}…",
+  "yt_dlp_install_phase_done": "Drop 1 {version} is ready",
+  "yt_dlp_install_phase_failed": "Drop 1 setup failed",
   "yt_dlp_install_progress": "{received} of {total}",
   "yt_dlp_install_action": "Install automatically",
-  "yt_dlp_install_latest_action": "Install the latest yt-dlp automatically",
+  "yt_dlp_install_latest_action": "Install the latest Drop 1 automatically",
   "yt_dlp_install_retry": "Retry",
-  "yt_dlp_install_failed_message": "yt-dlp could not be installed automatically:\n{error}",
-  "yt_dlp_install_managed_message": "DeeMusiq downloads the official yt-dlp release into its own folder and keeps it up to date, so nothing has to be installed system-wide.",
+  "yt_dlp_install_failed_message": "Drop 1 could not be installed automatically:\n{error}",
+  "yt_dlp_install_managed_message": "DeeMusiq downloads the official Drop 1 release into its own folder and keeps it up to date, so nothing has to be installed system-wide.",
   "download": "Download",
   "file_not_found": "File not found",
   "custom": "Custom",
@@ -436,6 +420,21 @@
   "copy_to_clipboard": "Copy to clipboard",
   "view_logs": "View logs",
   "retry": "Retry",
+  "rate_this_track": "Rate this track",
+  "rating_like": "Like",
+  "rating_dislike": "Dislike",
+  "rating_save_failed": "Couldn't save your rating — try again.",
+  "rating_summary": "{total, plural, =0{No ratings yet} one{{pct}% like this · 1 rating} other{{pct}% like this · {total} ratings}}",
+  "@rating_summary": {
+    "placeholders": {
+      "pct": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "no_default_metadata_provider_selected": "You've no default metadata provider set",
   "manage_metadata_providers": "Manage metadata providers",
   "open_link_in_browser": "Open Link in Browser?",
@@ -463,14 +462,12 @@
   "author": "Author",
   "this_plugin_can_do_following": "This plugin can do following",
   "install": "Install",
-  "install_a_metadata_provider": "Install a Metadata Provider",
   "no_tracks_playing": "No Track being played currently",
   "synced_lyrics_not_available": "Synced lyrics are not available for this song. Please use the",
   "plain_lyrics": "Plain Lyrics",
   "tab_instead": "tab instead.",
   "disclaimer": "Disclaimer",
   "third_party_plugin_dmca_notice": "The DeeMusiq team does not hold any responsibility (including legal) for any \"Third-party\" plugins.\nPlease use them at your own risk. For any bugs/issues, please report them to the plugin repository.\n\nIf any \"Third-party\" plugin is breaking ToS/DMCA of any service/legal entity, please ask the \"Third-party\" plugin author or the hosting platform .e.g GitHub/Codeberg to take action. Above listed (\"Third-party\" labelled) are all public/community maintained plugins. We're not curating them, so we cannot take any action on them.\n\n",
-  "input_does_not_match_format": "Input doesn't match the required format",
   "plugins": "Plugins",
   "paste_plugin_download_url": "Paste download url or GitHub/Codeberg repo url or direct link to .smplug file",
   "download_and_install_plugin_from_url": "Download and install plugin from url",
@@ -492,8 +489,1281 @@
   "must_confirm_age": "You must confirm you are 18 or older.",
   "must_agree_privacy_policy": "You must agree to the Privacy Policy.",
   "sign_in_with_google": "Sign in with Google",
+  "google_sign_in_mobile_only": "Google sign-in is available in the DeeMusiq mobile app. Sign in on your phone or tablet to use this feature.",
   "continue_with_device_limited": "Continue with device (limited)",
-  "offline_staying_on_device": "Couldn't reach the backend. Continuing on this device with YouTube.",
+  "offline_staying_on_device": "Couldn't reach the backend. Continuing on this device with direct playback.",
   "wallet_sync_failed_retry": "Wallet sync failed. Please try again later.",
-  "its_a_drop_day": "It's a drop day"
+  "its_a_drop_day": "It's a drop day",
+  "artist_name_required": "Enter your artist name.",
+  "takedown_request_title": "Request takedown",
+  "takedown_request_body": "Published songs are taken down by the DeeMusiq team. Tell us why this song should be removed — it stays live until the request is reviewed.",
+  "takedown_reason_hint": "Reason (e.g. rights change, wrong upload)",
+  "takedown_reason_required": "Enter a reason for the takedown.",
+  "takedown_request_sent": "Takedown requested — the song stays live until it is reviewed.",
+  "skip_this_nonsense": "Skip this nonsense",
+  "freedom_of_music": "“Freedom of Music”",
+  "freedom_of_music_palm": "“Freedom of Music in the palm of your hand”",
+  "get_started": "Let's get started",
+  "endless_playback_description": "Automatically append new songs\nto the end of the queue",
+  "choose_your_region": "Choose your region",
+  "choose_your_region_description": "This will help DeeMusiq show you the right content\nfor your location.",
+  "choose_your_language": "Choose your language",
+  "help_project_grow": "Help this project grow",
+  "help_project_grow_description": "DeeMusiq is an open-source project. You can help this project grow by contributing to the project, reporting bugs, or suggesting new features.",
+  "visit_our_website": "Visit our website",
+  "donate_on_open_collective": "Donate on Open Collective",
+  "install_a_metadata_provider": "Install a Metadata Provider",
+  "input_does_not_match_format": "Input doesn't match the required format",
+  "wallet": "Wallet",
+  "notifications": "Notifications",
+  "verified": "Verified",
+  "refresh": "Refresh",
+  "remove": "Remove",
+  "report": "Report",
+  "sign_in": "Sign in",
+  "sign_out": "Sign out",
+  "like": "Like",
+  "liked": "Liked",
+  "unknown_title": "Unknown title",
+  "please_wait": "Please wait…",
+  "verifying": "Verifying…",
+  "get_tokens": "Get tokens",
+  "continue_action": "Continue",
+  "tokens_label": "tokens",
+  "token_balance": "Balance: {balance} tokens",
+  "@token_balance": {
+    "placeholders": {
+      "balance": {
+        "type": "String"
+      }
+    }
+  },
+  "native_catalog": "DeeMusiq",
+  "native_catalog_tagline": "Exclusive DeeMusiq drops",
+  "artists_of_the_year": "Artists of the Year",
+  "creator_studio": "Creator Studio",
+  "ad_badge": "Ad",
+  "ad_remaining": "{seconds}s",
+  "@ad_remaining": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "ad_skip": "Skip Ad",
+  "ad_skip_in": "Skip in {seconds}s",
+  "@ad_skip_in": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "creator_connect_title": "Connect to become a creator",
+  "creator_connect_body": "Creator Studio needs DeeMusiq's backend to be configured.",
+  "creator_google_sign_in_failed": "Google sign-in failed",
+  "creator_become_title": "Become a DeeMusiq creator",
+  "creator_become_body": "Sign in with Google to claim your artist profile, submit songs, and track how they're doing. Your Google account also carries your likes and library across devices.",
+  "creator_studio_load_failed": "Couldn't load your studio",
+  "creator_release_console": "Release Console",
+  "creator_get_verified": "Get Verified",
+  "creator_your_songs": "Your songs",
+  "creator_profile_created": "Creator profile created",
+  "creator_claim_title": "Claim your artist name",
+  "creator_claim_body": "This is how listeners will find you. Names are unique.",
+  "creator_artist_name_hint": "Artist name",
+  "creator_bio_hint": "Short bio (optional)",
+  "creator_create_profile": "Create profile",
+  "creator_stat_songs": "Songs",
+  "creator_stat_tokens_year": "Tokens (yr)",
+  "creator_stat_rank_year": "Rank (yr)",
+  "creator_file_picker_failed": "Could not open file picker",
+  "creator_title_required": "Title is required.",
+  "creator_pick_audio_required": "Pick an audio file.",
+  "creator_pick_cover_required": "Pick a cover image.",
+  "creator_pick_audio_missing": "Pick the missing audio file.",
+  "creator_pick_cover_missing": "Pick the missing cover image.",
+  "creator_upload_start_failed": "Upload didn't start — please try again.",
+  "creator_uploaded_submit_hint": "Uploaded! Tap Submit for review.",
+  "creator_upload_failed": "Upload failed.",
+  "creator_upload_before_review": "Upload audio and cover before review.",
+  "creator_submitted_for_review": "Submitted for review",
+  "creator_submit_review_failed": "Could not submit for review.",
+  "creator_submit_song_title": "Submit a song",
+  "creator_submit_song_body": "Pick an audio master (MP3 · M4A · AAC · WAV · FLAC · OGG · Opus · WebM · AIFF) and a cover image. The operator reviews the submission; once approved, you choose when to publish — then add payment, set your cut and track analytics below.",
+  "creator_song_title_hint": "Song title",
+  "creator_description_hint": "Description (optional)",
+  "creator_pick_audio": "Pick audio file",
+  "creator_audio_picked": "Audio: {name}",
+  "@creator_audio_picked": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "creator_pick_cover": "Pick cover image",
+  "creator_cover_picked": "Cover: {name}",
+  "@creator_cover_picked": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "creator_uploading": "Uploading…",
+  "creator_upload": "Upload",
+  "creator_retry_upload": "Retry upload",
+  "creator_submitting": "Submitting…",
+  "creator_submit_for_review": "Submit for review",
+  "creator_no_songs": "No songs yet — submit your first above.",
+  "creator_status_draft": "Draft",
+  "creator_status_pending": "In review",
+  "creator_status_approved": "Approved",
+  "creator_status_scheduled": "Scheduled",
+  "creator_status_published": "Published",
+  "creator_status_hidden": "Hidden / Cancelled",
+  "creator_publishes_at": "Publishes {date}",
+  "@creator_publishes_at": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "creator_audio_size": "{size} MB audio",
+  "@creator_audio_size": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "creator_review_note": "Note: {note}",
+  "@creator_review_note": {
+    "placeholders": {
+      "note": {
+        "type": "String"
+      }
+    }
+  },
+  "creator_song_stats": "{pushes} · {tokens} tokens",
+  "@creator_song_stats": {
+    "placeholders": {
+      "pushes": {
+        "type": "int"
+      },
+      "tokens": {
+        "type": "String"
+      }
+    }
+  },
+  "creator_open_release_console": "Open Release Console",
+  "creator_song_removed": "Song removed",
+  "payout_phone_invalid": "Enter a valid phone number (e.g. +27 82 123 4567).",
+  "payout_destination_saved": "Payment destination saved",
+  "payout_cut_range_hint": "Cut must be 0–50 (30 = default)",
+  "payout_cut_request_sent": "Cut request sent for approval",
+  "payout_enter_tokens": "Enter tokens to cash out",
+  "payout_request_result": "Payout {id} {status}",
+  "@payout_request_result": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "payout_request_result_manual": "Payout {id} {status} (manual review)",
+  "@payout_request_result_manual": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "payout_monetization": "Monetization",
+  "payout_analytics_title": "Payments & analytics",
+  "payout_totals": "Gross {gross} · fee {fees} · net {net} · {tips} tips · {listens} listens",
+  "@payout_totals": {
+    "placeholders": {
+      "gross": {
+        "type": "String"
+      },
+      "fees": {
+        "type": "String"
+      },
+      "net": {
+        "type": "String"
+      },
+      "tips": {
+        "type": "String"
+      },
+      "listens": {
+        "type": "String"
+      }
+    }
+  },
+  "payout_destination_title": "Payout destination",
+  "payout_saved_method": "Saved: {method}",
+  "@payout_saved_method": {
+    "placeholders": {
+      "method": {
+        "type": "String"
+      }
+    }
+  },
+  "payout_method_payshap": "PayShap",
+  "payout_method_bank": "Bank transfer",
+  "payout_method_manual": "Manual",
+  "payout_hint_payshap": "PayShap phone number",
+  "payout_hint_bank": "Account number / branch code",
+  "payout_hint_manual": "Payout details",
+  "payout_platform_cut": "Platform cut",
+  "payout_cut_pending": "Request pending: {requested}% (current {current}%)",
+  "@payout_cut_pending": {
+    "placeholders": {
+      "requested": {
+        "type": "String"
+      },
+      "current": {
+        "type": "int"
+      }
+    }
+  },
+  "payout_cut_current": "Current cut {cut}% (artist keeps {keep}%). Request 30% or a custom 0–50%.",
+  "@payout_cut_current": {
+    "placeholders": {
+      "cut": {
+        "type": "int"
+      },
+      "keep": {
+        "type": "int"
+      }
+    }
+  },
+  "payout_request_cut": "Request cut",
+  "payout_cash_out_title": "Cash out (tokens → ZAR)",
+  "payout_balance_unavailable": "Balance unavailable — connect backend to cash out.",
+  "payout_balance_summary": "Payable {payable} tokens (≈ R{amount}) · min {min} · received {received} · pending {pending} · paid out {paid}",
+  "@payout_balance_summary": {
+    "placeholders": {
+      "payable": {
+        "type": "int"
+      },
+      "amount": {
+        "type": "String"
+      },
+      "min": {
+        "type": "int"
+      },
+      "received": {
+        "type": "String"
+      },
+      "pending": {
+        "type": "String"
+      },
+      "paid": {
+        "type": "String"
+      }
+    }
+  },
+  "payout_tokens_hint": "Tokens",
+  "payout_cash_out": "Cash out",
+  "payout_settlement_hint": "Settlement details (optional — uses saved method)",
+  "payout_history_empty": "No payout requests yet.",
+  "payout_history_entry": "{tokens} tokens → {amount}c · {status}",
+  "@payout_history_entry": {
+    "placeholders": {
+      "tokens": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "payout_history_entry_ref": "{tokens} tokens → {amount}c · {status} · {reference}",
+  "@payout_history_entry_ref": {
+    "placeholders": {
+      "tokens": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      },
+      "reference": {
+        "type": "String"
+      }
+    }
+  },
+  "account_security": "Account & security",
+  "account_created_verify": "Account created — check your email to verify.",
+  "account_signed_in": "Signed in.",
+  "account_create_email_title": "Create an email account",
+  "account_have_one_sign_in": "Have one? Sign in",
+  "account_email_body": "An email + password lets you use this wallet on another device and recover it. Your password is never stored — only a hash.",
+  "account_password_hint": "Password (12+ characters)",
+  "account_accept_terms": "I accept the DeeMusiq Terms of Service and Privacy Policy.",
+  "account_create": "Create account",
+  "account_totp_scan_hint": "Scan or enter the secret in your authenticator app.",
+  "account_totp_enabled": "Two-factor authentication enabled.",
+  "account_totp_title": "Two-factor authentication (2FA)",
+  "account_totp_body": "Use any authenticator app (Google Authenticator, Authy, Aegis…). 2FA also lets you recover your wallet on a new device.",
+  "account_stepup_password_body": "Confirm your account password to continue.",
+  "account_stepup_password_hint": "Account password",
+  "account_stepup_code_body": "Enter a code from your current authenticator app to replace it.",
+  "account_stepup_code_hint": "Current 6-digit code",
+  "account_totp_setup": "Set up 2FA",
+  "account_totp_secret_body": "Add this secret to your authenticator app:",
+  "account_secret_copied": "Secret copied.",
+  "account_totp_code_hint": "6-digit code",
+  "account_totp_verify_enable": "Verify & enable",
+  "account_recovered": "Recovered — welcome back.",
+  "account_recovery_title": "Recover with your authenticator",
+  "account_recovery_body": "On a new device? Enter your account email and a current 2FA code to restore your wallet.",
+  "account_email_hint": "Account email",
+  "account_recover_action": "Recover wallet",
+  "account_google_title": "Google Sign-In",
+  "account_google_signed_in": "Signed in with Google.",
+  "account_google_signed_out": "Signed out of Google. Synced data on this device was cleared.",
+  "account_google_connected_body": "Connected. Your liked songs and playlists sync anonymously — only hashed IDs are stored, and playlist names travel inside the encrypted channel. No personal data leaves your device.",
+  "account_google_connect_body": "Sign in with Google to sync your library across devices. We only store anonymized data (hashed song IDs; playlist names travel inside the encrypted channel). No email, name, or location is ever stored.",
+  "account_google_unconfigured_body": "Google Sign-In needs backend connectivity. Connect to the DeeMusiq server to enable.",
+  "account_verify_link_sent": "If your email needs verifying, a link is on its way.",
+  "account_reset_link_sent": "If that email has an account, a reset link is on its way.",
+  "account_logged_out_all": "Signed out on all devices. Synced data on this device was cleared.",
+  "account_data_exported": "Data exported to {path}",
+  "@account_data_exported": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "account_export_failed": "Export failed.",
+  "account_delete_confirm_title": "Delete account?",
+  "account_delete_confirm_body": "This permanently deletes your DeeMusiq account, wallet balance, history and linked accounts. This cannot be undone.",
+  "account_delete_forever": "Delete forever",
+  "account_deleted": "Account deleted.",
+  "account_security_card_title": "Security",
+  "account_resend_verification": "Resend verification email",
+  "account_reset_email_hint": "Email for password reset",
+  "account_send_reset_link": "Email me a password reset link",
+  "account_logout_all": "Log out on all devices",
+  "account_export_data": "Export my data (JSON)",
+  "account_delete": "Delete account",
+  "privacy_heading": "Privacy & data",
+  "privacy_offline_body": "Connect a backend to manage consent, export, and deletion.",
+  "privacy_consent_granted": "Consent {purpose} granted",
+  "@privacy_consent_granted": {
+    "placeholders": {
+      "purpose": {
+        "type": "String"
+      }
+    }
+  },
+  "privacy_consent_withdrawn": "Consent {purpose} withdrawn",
+  "@privacy_consent_withdrawn": {
+    "placeholders": {
+      "purpose": {
+        "type": "String"
+      }
+    }
+  },
+  "privacy_purpose_terms": "terms",
+  "privacy_purpose_privacy": "privacy",
+  "privacy_purpose_marketing": "marketing",
+  "privacy_blurb_terms": "Required to run the account. Withdrawing restricts processing.",
+  "privacy_blurb_privacy": "Required privacy policy. Withdrawing restricts processing.",
+  "privacy_blurb_marketing": "Opt-in recommendations and offers.",
+  "privacy_email_section": "Email verification & hardening",
+  "privacy_verify_link_sent": "Verification link sent",
+  "privacy_resend_verify": "Resend verify link",
+  "privacy_code_sent": "One-time code sent to email",
+  "privacy_request_code": "Request login code",
+  "privacy_code_hint": "6-digit email code",
+  "privacy_code_confirmed": "Code confirmed",
+  "privacy_confirm_code": "Confirm code",
+  "privacy_verify_token_hint": "Email-verify token (from link)",
+  "privacy_email_verified": "Email verified",
+  "privacy_verify_with_token": "Verify email with token",
+  "privacy_reset_section": "Password reset (emailed token)",
+  "privacy_reset_token_hint": "Reset token from email",
+  "privacy_new_password_hint": "New password (12+ chars)",
+  "privacy_reset_requirements": "Token + 12-char password required",
+  "privacy_password_reset": "Password reset",
+  "privacy_reset_action": "Reset",
+  "privacy_export_ready": "Export ready: {count} sections",
+  "@privacy_export_ready": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "privacy_export_data": "Export my data",
+  "privacy_delete_body": "Anonymizes everything (GDPR Art. 17). JWT dies immediately. Cannot undo.",
+  "release_load_failed": "Couldn't load your releases",
+  "release_empty_title": "Nothing to release yet",
+  "release_empty_body": "Once an operator approves your submitted songs, they'll appear here for you to publish or schedule.",
+  "release_cancel_title": "Cancel release?",
+  "release_cancel_body": "The song will be hidden from the catalog. You can resubmit later.",
+  "release_keep": "Keep",
+  "release_cancel_action": "Cancel release",
+  "release_scheduled_for": "Scheduled for {date}",
+  "@release_scheduled_for": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "release_approved_ready": "Approved — ready to publish",
+  "release_publish_now": "Publish Now",
+  "release_reschedule": "Reschedule",
+  "release_schedule": "Schedule",
+  "release_schedule_title": "Schedule release",
+  "release_schedule_body": "Pick when this song goes live.",
+  "release_pick_date": "Pick a date",
+  "release_date": "Release date",
+  "release_time": "Release time",
+  "verification_pick_failed": "Could not access camera/gallery",
+  "verification_pick_first": "Pick a photo first.",
+  "verification_photo_uploaded": "Photo uploaded. Fill in the form and submit.",
+  "verification_upload_first": "Upload your proof photo first.",
+  "verification_fields_required": "Legal name and country are required.",
+  "verification_submitted": "Submitted. The DeeMusiq team will review shortly.",
+  "verification_done": "You're verified!",
+  "verification_how_title": "How verification works",
+  "verification_how_body": "1. Take a photo of yourself holding a sign that says \"deemusiq\" (and your artist name).\n2. Upload the photo below.\n3. Submit the form. An operator reviews within a few days.\n4. On approval, the verified badge appears next to your name.",
+  "verification_status": "Status: {status}",
+  "@verification_status": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "verification_proof_title": "Proof photo",
+  "verification_no_photo": "No photo selected yet.",
+  "verification_take_photo": "Take photo",
+  "verification_from_gallery": "From gallery",
+  "verification_upload_proof": "Upload proof",
+  "verification_details_title": "Your details",
+  "verification_legal_name_hint": "Legal name (as it appears on your ID)",
+  "verification_country_hint": "Country (e.g. South Africa)",
+  "verification_socials_hint": "Social links (optional): instagram: https://..., youtube: https://...",
+  "wallet_refresh_failed": "Couldn't refresh your wallet",
+  "wallet_retrying": "Retrying…",
+  "wallet_tokens_title": "DeeMusiq tokens",
+  "wallet_prices_region": "Prices shown for {region}.",
+  "@wallet_prices_region": {
+    "placeholders": {
+      "region": {
+        "type": "String"
+      }
+    }
+  },
+  "wallet_buy_tokens": "Buy tokens",
+  "wallet_trending": "Trending",
+  "wallet_recent_activity": "Recent activity",
+  "wallet_activity_totals": "{purchased} in · {spent} out",
+  "@wallet_activity_totals": {
+    "placeholders": {
+      "purchased": {
+        "type": "int"
+      },
+      "spent": {
+        "type": "int"
+      }
+    }
+  },
+  "wallet_show_less": "Show less",
+  "wallet_see_all": "See all",
+  "wallet_token_store": "Token store",
+  "wallet_token_store_sub": "Buy regional packs",
+  "wallet_linked_accounts": "Linked accounts",
+  "wallet_linked_connect": "Connect a service",
+  "wallet_linked_connected": "{count} connected",
+  "@wallet_linked_connected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "wallet_security_sub": "Sign in, 2FA, recovery",
+  "wallet_creators_supported": "Creators you support",
+  "wallet_creators_sub": "See your impact",
+  "wallet_trending_pushes": "Trending pushes",
+  "wallet_pushes_sub": "Most-pushed songs",
+  "wallet_no_activity": "No activity yet",
+  "wallet_no_activity_body": "Buy tokens, then push your favourite songs to support artists.",
+  "wallet_buy_first": "Buy your first tokens",
+  "wallet_integrity_warning": "This app may have been modified — payments are disabled. Reinstall the official DeeMusiq to use your wallet.",
+  "rewards_title": "Listening rewards",
+  "rewards_earned_today": "Earned today: {earned} / {cap} tokens",
+  "@rewards_earned_today": {
+    "placeholders": {
+      "earned": {
+        "type": "int"
+      },
+      "cap": {
+        "type": "int"
+      }
+    }
+  },
+  "rewards_lifetime": "{count} tokens earned all-time",
+  "@rewards_lifetime": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "rewards_per_play": "{count} tokens per verified play",
+  "@rewards_per_play": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "rewards_explainer": "Tokens are credited automatically for verified listening — there's nothing to claim.",
+  "rewards_taper_notice": "New accounts earn at a reduced rate.",
+  "rewards_load_failed": "Couldn't load rewards",
+  "rewards_details": "Details",
+  "leaderboard_empty_title": "Nothing trending yet",
+  "leaderboard_empty_body": "Push a song from its menu or the player to start the board.",
+  "leaderboard_explainer": "The most-pushed songs rise to the top. Push your favourites to move them up the board.",
+  "leaderboard_load_failed": "Couldn't load the board",
+  "leaderboard_offline_title": "Your pushes (offline)",
+  "leaderboard_push_count": "{count, plural, one{{artist} · {count} push} other{{artist} · {count} pushes}}",
+  "@leaderboard_push_count": {
+    "placeholders": {
+      "artist": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "push_action": "Push",
+  "store_region_body": "Token packs are priced fairly per region (purchasing-power adjusted).",
+  "store_za_only": "DeeMusiq top-ups are available in South Africa (ZAR) for now.",
+  "store_prices_for": "Prices for {region} · adjusted for your region.",
+  "@store_prices_for": {
+    "placeholders": {
+      "region": {
+        "type": "String"
+      }
+    }
+  },
+  "store_payment_methods_title": "Cards & crypto",
+  "store_payment_methods_body": "Pay with PayShap instant EFT, PayFast/Stripe cards, or Monero, Ethereum, Bitcoin and USDT. Top-ups are processed securely online by the DeeMusiq backend and are available in South Africa for now — tokens appear once your payment confirms.",
+  "store_pack_tokens": "{count} tokens",
+  "@store_pack_tokens": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "store_popular": "Popular",
+  "store_pack_bonus": "{label} · {tokens} + {bonus} bonus",
+  "@store_pack_bonus": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "tokens": {
+        "type": "int"
+      },
+      "bonus": {
+        "type": "int"
+      }
+    }
+  },
+  "artists_connect_title": "Connect to see the board",
+  "artists_connect_body": "The artist leaderboard is live once DeeMusiq's backend is configured.",
+  "artists_hall_of_fame": "Hall of Fame",
+  "artists_hof_subtitle": "Best Artist of each past year.",
+  "artists_hof_empty": "No past winners yet.",
+  "artists_no_boosts": "No boosts yet in {year}",
+  "@artists_no_boosts": {
+    "placeholders": {
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "artists_no_boosts_body": "Boost an artist you love to start the {year} race.",
+  "@artists_no_boosts_body": {
+    "placeholders": {
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "artists_leading": "Leading {year}",
+  "@artists_leading": {
+    "placeholders": {
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "artists_supporters": "{tokens} tokens · {count, plural, one{{count} supporter} other{{count} supporters}}",
+  "@artists_supporters": {
+    "placeholders": {
+      "tokens": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "boost_action": "Boost",
+  "supported_tokens_given": "tokens given",
+  "supported_creators_backed": "creators backed",
+  "supported_empty_title": "No creators supported yet",
+  "supported_empty_body": "Push a song or support an artist directly — your tokens show up here.",
+  "supported_sent": "Sent {tokens} tokens to {name}",
+  "@supported_sent": {
+    "placeholders": {
+      "tokens": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "supported_send_failed": "Couldn't send the tokens — refresh your wallet and try again.",
+  "supported_contributions": "{count, plural, one{{count} contribution} other{{count} contributions}} · {time}",
+  "@supported_contributions": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "supported_support_more": "Support more",
+  "supported_dialog_title": "Support {name}",
+  "@supported_dialog_title": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "supported_dialog_body": "Choose how many tokens to send.",
+  "supported_need_more": "You need {count} more tokens for this.",
+  "@supported_need_more": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "supported_send_amount": "Send {amount}",
+  "@supported_send_amount": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "linked_connect_body": "Connect your accounts on other services to bring your playlists and favourites into DeeMusiq. Connecting opens that provider's secure login (OAuth) in your browser, then returns you here.",
+  "linked_offline_body": "Account linking needs a DeeMusiq connection — this build is offline, so connecting is disabled. You can still disconnect accounts stored on this device.",
+  "linked_finish_browser": "Finish connecting {provider} in your browser",
+  "@linked_finish_browser": {
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "linked_browser_failed": "Couldn't open your browser — try again",
+  "linked_load_failed": "Failed to load linked accounts",
+  "linked_disconnected": "{provider} disconnected",
+  "@linked_disconnected": {
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "linked_provider_not_enabled": "This provider isn't enabled by the DeeMusiq operator yet — try another one or check back later.",
+  "linked_connected_as": "Connected as {name}",
+  "@linked_connected_as": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "linked_disconnecting": "Disconnecting…",
+  "linked_connecting": "Connecting…",
+  "comments_title": "Comments",
+  "comments_empty_title": "No comments yet",
+  "comments_empty_body": "Be the first to share what you think.",
+  "comments_load_more_failed": "Couldn't load more comments.",
+  "comments_load_more": "Load more comments",
+  "comments_sign_in_body": "Sign in to join the conversation.",
+  "comments_post_failed": "Couldn't post your comment — try again.",
+  "comments_add_hint": "Add a comment…",
+  "comments_reply_hint": "Write a reply…",
+  "comments_post": "Post",
+  "comments_reply": "Reply",
+  "comments_listener": "Listener",
+  "comments_listener_named": "Listener {label}",
+  "@comments_listener_named": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "comments_replies": "{count, plural, one{{count} reply} other{{count} replies}}",
+  "@comments_replies": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "comments_no_replies": "No replies yet.",
+  "purchase_confirmed": "Payment confirmed — tokens added to your wallet 🎉",
+  "purchase_added": "Added {count} tokens 🎉",
+  "@purchase_added": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "purchase_phone_invalid": "That phone number doesn't look right — use a number like +27 82 123 4567.",
+  "purchase_title": "Buy {count} tokens",
+  "@purchase_title": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "purchase_processing": "Processing…",
+  "purchase_try_another": "Try another method",
+  "purchase_open_checkout": "Open checkout",
+  "purchase_bonus_included": "incl. {count} bonus",
+  "@purchase_bonus_included": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "purchase_choose_method": "Choose how to pay",
+  "purchase_phone_label": "PayShap phone number (optional)",
+  "purchase_phone_hint": "+27 82 123 4567",
+  "purchase_phone_body": "We'll send the payment request to this number. Leave blank to reuse your saved number.",
+  "purchase_unavailable": "Unavailable right now",
+  "purchase_awaiting_deposit": "Awaiting deposit",
+  "purchase_checkout_failed": "Couldn't start checkout",
+  "purchase_almost_there": "Almost there",
+  "purchase_amount": "Amount: {amount}",
+  "@purchase_amount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "purchase_address_copied": "Address copied",
+  "purchase_no_wallet": "No receiving wallet configured yet — set one in the backend / DEEMUSIQ_WALLET.md to accept this asset.",
+  "purchase_reference_pending": "Reference {reference} · tokens appear automatically once the payment confirms.",
+  "@purchase_reference_pending": {
+    "placeholders": {
+      "reference": {
+        "type": "String"
+      }
+    }
+  },
+  "purchase_reference": "Reference {reference}",
+  "@purchase_reference": {
+    "placeholders": {
+      "reference": {
+        "type": "String"
+      }
+    }
+  },
+  "boost_success": "Boosted {name} with {tokens} tokens",
+  "@boost_success": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "tokens": {
+        "type": "int"
+      }
+    }
+  },
+  "boost_failed": "Couldn't boost right now",
+  "boost_dialog_title": "Boost {name}",
+  "@boost_dialog_title": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "boost_dialog_body": "Spend tokens to move this artist up the yearly leaderboard.",
+  "boost_amount": "Boost {amount}",
+  "@boost_amount": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "boost_artist_tooltip": "Boost this artist with tokens",
+  "push_success": "Pushed \"{title}\" with {amount} tokens 🚀",
+  "@push_success": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "push_not_enough": "Not enough tokens for that push",
+  "push_failed": "Something went wrong — refresh your wallet before trying again.",
+  "push_dialog_title": "Push this song",
+  "push_how_many": "How many tokens?",
+  "push_explainer": "Pushing boosts this song on the DeeMusiq trending board and supports {artist}.",
+  "@push_explainer": {
+    "placeholders": {
+      "artist": {
+        "type": "String"
+      }
+    }
+  },
+  "push_the_artist": "the artist",
+  "push_need_more": "You need {count} more tokens for this push.",
+  "@push_need_more": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "push_pushing": "Pushing…",
+  "push_amount": "Push {amount}",
+  "@push_amount": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "app_lock_title": "DeeMusiq is locked",
+  "app_lock_body": "Use your fingerprint, face or device PIN to continue.",
+  "app_lock_unlock": "Unlock",
+  "app_lock_failed": "Unlock failed — try again.",
+  "for_you_unlike_failed": "Couldn't remove the like — try again",
+  "for_you_like_failed": "Couldn't save the like — try again",
+  "for_you_title": "For You",
+  "for_you_gmail_linked": "Gmail linked",
+  "for_you_gmail_prompt": "Sign in with Gmail for smarter picks",
+  "for_you_empty": "Like songs to train For You — picks appear here.",
+  "notifications_offline_title": "You're offline",
+  "notifications_offline_body": "Notifications live on DeeMusiq — connect to the internet and they'll show up here.",
+  "notifications_empty_title": "No notifications yet",
+  "notifications_empty_body": "Payouts, publishes, follows and replies will land here.",
+  "notifications_refresh_failed": "Couldn't refresh notifications.",
+  "notifications_mark_all_read": "Mark all read",
+  "security_heading": "Security & personalization",
+  "security_biometrics_unavailable": "Biometrics unavailable",
+  "security_no_biometrics_enrolled": "No fingerprint or face unlock is enrolled on this device. Set one up in your system settings first.",
+  "security_unlock_prompt_reason": "Enable fingerprint unlock for DeeMusiq",
+  "security_fingerprint_unlock": "Fingerprint unlock",
+  "security_lock_enabled": "DeeMusiq locks on start and after 2 min away.",
+  "security_biometrics_available": "Available on this device ({biometrics}). Enable to require fingerprint / face / PIN on start.",
+  "@security_biometrics_available": {
+    "placeholders": {
+      "biometrics": {
+        "type": "String"
+      }
+    }
+  },
+  "security_no_biometrics": "No biometrics enrolled on this device ({biometrics}).",
+  "@security_no_biometrics": {
+    "placeholders": {
+      "biometrics": {
+        "type": "String"
+      }
+    }
+  },
+  "security_biometrics_none": "none detected",
+  "security_gmail_title": "Gmail personalization",
+  "security_gmail_linked": "linked · {count} likes",
+  "@security_gmail_linked": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "security_gmail_not_linked": "not linked",
+  "security_gmail_body": "Sign in with Google (Creator Studio or Account) to carry likes and listening history across devices — For You recommendations follow your Gmail identity.",
+  "security_google_active": "Google session active on this device.",
+  "security_google_inactive": "Google session not active.",
+  "storage_heading": "Storage",
+  "storage_downloaded_music": "Downloaded music",
+  "storage_scanning": "Scanning…",
+  "storage_usage": "{bytes} across {count, plural, one{{count} file} other{{count} files}}",
+  "@storage_usage": {
+    "placeholders": {
+      "bytes": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "storage_license_title": "Offline playback license",
+  "storage_license_valid": "Offline license valid until {date}",
+  "@storage_license_valid": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "storage_license_grace": "Offline license expired — grace period, reconnect to renew (last confirmed {date})",
+  "@storage_license_grace": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "storage_license_locked": "Offline playback locked since {date} — connect to the internet to renew the license",
+  "@storage_license_locked": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "storage_license_unconfirmed": "Offline license not active (no backend confirmation yet)",
+  "storage_pending_sync": "Pending sync",
+  "storage_pending_sync_body": "{count, plural, one{{count} action} other{{count} actions}} will sync when you're back online",
+  "@storage_pending_sync_body": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "storage_delete_title": "Delete download",
+  "storage_delete_message": "Delete \"{name}\" ({size})? This frees the space but the song won't be playable offline anymore.",
+  "@storage_delete_message": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "storage_clear_all": "Clear all downloads",
+  "storage_clear_all_message": "Delete all {count, plural, one{{count} downloaded file} other{{count} downloaded files}} ({size})? They won't be playable offline anymore.",
+  "@storage_clear_all_message": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "storage_scan_failed": "Could not scan downloads: {error}",
+  "@storage_scan_failed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "pairing_title": "Paired devices",
+  "pairing_empty": "No devices paired. Approving a Connect request pairs it.",
+  "pairing_count": "{count} paired — revoking also drops its HTTP access token.",
+  "@pairing_count": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pairing_revoke_all": "Revoke all pairings",
+  "pairing_revoke": "Revoke pairing",
+  "playback_youtube_quality": "Stream Quality",
+  "about_built_on": "Built on",
+  "about_website": "Website",
+  "about_made_in_sa": "Made with ❤️ in South Africa 🇿🇦",
+  "share_nearby_title": "Send to nearby device",
+  "share_nearby_empty": "No nearby devices found. Open DeeMusiq on the other device and make sure Connect is enabled on both.",
+  "share_nearby_sent": "Shared with {name}",
+  "@share_nearby_sent": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "share_nearby_declined": "{name} declined the share",
+  "@share_nearby_declined": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "share_nearby_unreachable": "Couldn't reach {name}",
+  "@share_nearby_unreachable": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "age_restriction_title": "Age Restriction",
+  "age_restriction_explicit": "This application may contain explicit music content.",
+  "age_restriction_fpb": "In compliance with the South African Films and Publications Act (FPB), you must be 18 years or older to access explicit content.",
+  "age_restriction_confirm": "By proceeding, you confirm that you are at least 18 years old.",
+  "age_restriction_under": "I am under 18",
+  "report_artist": "Report artist",
+  "tempo_speed": "Speed: {value}x",
+  "@tempo_speed": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "tempo_pitch": "Pitch: {value}x",
+  "@tempo_pitch": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "seek_to_timestamp": "Jump to time",
+  "seek_timestamp_hint": "mm:ss (e.g. 1:23)",
+  "seek_timestamp_invalid": "Use mm:ss, e.g. 1:23",
+  "logs_clear": "Clear logs",
+  "logs_clear_message": "Delete all stored logs? This cannot be undone.",
+  "home_listening_streak": "🔥 {days}-day listening streak",
+  "@home_listening_streak": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "metadata_providers_title": "Metadata Providers",
+  "metadata_providers_removed_body": "External plugins have been removed. DeeMusiq uses its native backend for metadata.",
+  "audio_error_servers_unreachable": "Couldn't reach DeeMusiq servers — check your connection and try again",
+  "audio_error_unavailable_retry": "Playback unavailable — retry or download this track",
+  "audio_error_connection_timeout": "Connection timed out — retrying...",
+  "audio_error_connection_refused": "Connection refused — trying another source...",
+  "audio_error_no_internet": "No internet connection — please check your network",
+  "audio_error_network": "Network error — retrying...",
+  "audio_error_trying_next_source": "Unable to play this track — trying next source...",
+  "audio_error_track_unavailable": "This track is unavailable — skipping to next",
+  "audio_error_track_not_found": "Track not found — skipping to next",
+  "audio_error_track_removed": "This track has been removed — skipping to next",
+  "audio_error_rate_limited": "Rate limited — waiting before retrying...",
+  "audio_error_track_protected": "This track is protected and cannot be played",
+  "audio_error_track_corrupt": "Track file appears to be corrupt — skipping to next",
+  "audio_error_engine_start": "Audio engine failed to start — please restart the app",
+  "audio_error_output_device": "Audio output error — check your speakers or headphones",
+  "audio_error_unsupported_format": "Unsupported audio format — skipping to next",
+  "audio_error_playback_retrying": "Playback error — retrying...",
+  "audio_error_generic": "Something went wrong — please try again",
+  "audio_error_multiple_failed": "Multiple tracks failed to play — check your connection and try again",
+  "audio_error_switching_track": "Switching to next track...",
+  "audio_error_playback_restored": "Playback restored",
+  "audio_error_engine_restart": "Audio engine error — please restart the app if this persists",
+  "audio_error_download_requested": "Download requested — retry when it is ready",
+  "audio_error_retrying_in": "Retrying in {seconds}s... ({attempt}/{max})",
+  "@audio_error_retrying_in": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      },
+      "attempt": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "audio_error_fallback_source": "DeeMusiq servers unreachable — playing from YouTube",
+  "profile_linked_connect_hint": "Connect your Google account",
+  "username_required": "Username is required",
+  "password_required": "Password is required",
+  "report_dialog_title": "Report content",
+  "report_submitted": "Report submitted. Thank you.",
+  "report_network_error": "Network error",
+  "report_what_wrong": "What's wrong with {label}?",
+  "@report_what_wrong": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "report_reason_label": "Reason",
+  "report_reason_spam": "Spam or misleading",
+  "report_reason_copyright": "Copyright / DMCA",
+  "report_reason_harassment": "Harassment or hate",
+  "report_reason_csam": "Child safety (CSAM)",
+  "report_reason_illegal": "Other illegal content",
+  "report_reason_other": "Other",
+  "report_details_label": "Details (optional)",
+  "report_details_hint": "Tell us what happened",
+  "report_evidence_label": "Evidence URL (required for copyright claims)",
+  "report_submitting": "Submitting…",
+  "time_just_now": "just now",
+  "time_minutes_ago": "{count}m ago",
+  "@time_minutes_ago": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "time_hours_ago": "{count}h ago",
+  "@time_hours_ago": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "time_days_ago": "{count}d ago",
+  "@time_days_ago": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "time_weeks_ago": "{count}w ago",
+  "@time_weeks_ago": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "time_months_ago": "{count}mo ago",
+  "@time_months_ago": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "time_years_ago": "{count}y ago",
+  "@time_years_ago": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "auth_mfa_required": "Enter your authentication code",
+  "auth_mfa_body": "Open your authenticator app and enter the 6-digit code to finish signing in.",
+  "auth_mfa_verify_action": "Verify",
+  "supporters_section_title": "Top Supporters",
+  "supporters_empty": "No supporters yet — be the first to back this artist.",
+  "supporters_load_failed": "Couldn't load supporters",
+  "supporter_tier_gold": "Gold",
+  "supporter_tier_silver": "Silver",
+  "supporter_tier_bronze": "Bronze",
+  "supporter_top_badge": "Top supporter",
+  "supporter_status_line": "You're supporter #{rank} · {tier} tier",
+  "@supporter_status_line": {
+    "placeholders": {
+      "rank": {
+        "type": "int"
+      },
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
+  "supporter_status_rank_only": "You're supporter #{rank}",
+  "@supporter_status_rank_only": {
+    "placeholders": {
+      "rank": {
+        "type": "int"
+      }
+    }
+  },
+  "region_filter_global": "Global",
+  "region_filter_my_region": "My region ({region})",
+  "@region_filter_my_region": {
+    "placeholders": {
+      "region": {
+        "type": "String"
+      }
+    }
+  },
+  "normalize_volume": "Normalize volume",
+  "normalize_volume_description": "Even out loudness between tracks — measured gain on catalog songs, dynamic normalization elsewhere.",
+  "data_saver": "Data saver",
+  "data_saver_description": "Play lower-bitrate audio, shrink buffers and skip prefetching to use less data.",
+  "data_saver_off": "Off",
+  "data_saver_on": "On",
+  "data_saver_auto": "Auto on metered",
+  "now_playing_lite": "Lite",
+  "now_playing_lite_tooltip": "Playing the lite rendition to save data",
+  "payout_pending_settlement": "Pending settlement: {tokens} tokens",
+  "@payout_pending_settlement": {
+    "placeholders": {
+      "tokens": {
+        "type": "int"
+      }
+    }
+  },
+  "payout_settlement_explainer": "Tips become payable after a 7-day settlement window."
 }

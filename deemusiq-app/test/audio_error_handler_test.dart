@@ -105,7 +105,7 @@ void main() {
       () async {
     var consentRequested = false;
     var skipped = false;
-    final messages = <String>[];
+    final messages = <AudioUserMessage>[];
 
     AudioErrorHandler.instance.onSkipRequested = () {
       skipped = true;
@@ -134,12 +134,15 @@ void main() {
     expect(handled, isTrue);
     expect(consentRequested, isTrue);
     expect(skipped, isFalse);
-    expect(messages, ['Download requested — retry when it is ready']);
+    expect(
+      messages.map((m) => m.key),
+      [AudioErrorMessage.downloadRequested],
+    );
   });
 
   test('cancelling consent returns a retryable unavailable state', () async {
     var skipped = false;
-    final messages = <String>[];
+    final messages = <AudioUserMessage>[];
 
     AudioErrorHandler.instance.onSkipRequested = () {
       skipped = true;
@@ -164,7 +167,10 @@ void main() {
 
     expect(handled, isTrue);
     expect(skipped, isFalse);
-    expect(messages, ['Playback unavailable — retry or download this track']);
+    expect(
+      messages.map((m) => m.key),
+      [AudioErrorMessage.unavailableRetryOrDownload],
+    );
   });
 
   test('maps the offline flag from the playback contract', () {
@@ -186,7 +192,7 @@ void main() {
       () async {
     var consentRequested = false;
     var skipped = false;
-    final messages = <String>[];
+    final messages = <AudioUserMessage>[];
 
     AudioErrorHandler.instance.onSkipRequested = () {
       skipped = true;
@@ -215,14 +221,15 @@ void main() {
     expect(handled, isTrue);
     expect(consentRequested, isFalse);
     expect(skipped, isFalse);
-    expect(messages, [
-      "Couldn't reach DeeMusiq servers — check your connection and try again"
-    ]);
+    expect(
+      messages.map((m) => m.key),
+      [AudioErrorMessage.serversUnreachable],
+    );
   });
 
   test('stops skip-storming after consecutive source failures', () async {
     var skipCount = 0;
-    final messages = <String>[];
+    final messages = <AudioUserMessage>[];
 
     AudioErrorHandler.instance.onSkipRequested = () {
       skipCount++;
@@ -243,16 +250,14 @@ void main() {
 
     expect(skipCount, 3);
     expect(
-      messages,
-      contains(
-        'Multiple tracks failed to play — check your connection and try again',
-      ),
+      messages.map((m) => m.key),
+      contains(AudioErrorMessage.multipleTracksFailed),
     );
   });
 
   test('network retries stop after the budget is exhausted', () async {
     var retryCount = 0;
-    final messages = <String>[];
+    final messages = <AudioUserMessage>[];
 
     AudioErrorHandler.instance.onUserMessage = (message, _) {
       messages.add(message);
@@ -273,10 +278,8 @@ void main() {
     // retry attempts — the player stays stopped instead of looping forever.
     expect(retryCount, 3);
     expect(
-      messages,
-      contains(
-        "Couldn't reach DeeMusiq servers — check your connection and try again",
-      ),
+      messages.map((m) => m.key),
+      contains(AudioErrorMessage.serversUnreachable),
     );
   });
 

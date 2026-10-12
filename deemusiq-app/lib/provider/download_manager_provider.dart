@@ -373,7 +373,11 @@ class DownloadManagerNotifier extends Notifier<List<DownloadTask>> {
       if (stagingFile != null) {
         try {
           if (await stagingFile.exists()) await stagingFile.delete();
-        } catch (_) {}
+        } catch (e) {
+          // Cleanup of the temp staging file is best-effort — the download
+          // itself already reported its outcome; a leftover file is logged.
+          AppLogger.log.w('Failed to delete download staging file: $e');
+        }
       }
     }
   }

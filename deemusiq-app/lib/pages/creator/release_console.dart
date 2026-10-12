@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
+import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/provider/creator/creator_provider.dart';
 import 'package:deemusiq/components/titlebar/titlebar.dart';
 import 'package:deemusiq/services/wallet/wallet_api.dart';
@@ -27,8 +28,8 @@ class ReleaseConsolePage extends HookConsumerWidget {
     return SafeArea(
       bottom: false,
       child: Scaffold(
-        headers: const [
-          TitleBar(title: Text("Release Console")),
+        headers: [
+          TitleBar(title: Text(context.l10n.creator_release_console)),
         ],
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -49,10 +50,10 @@ class ReleaseConsolePage extends HookConsumerWidget {
                           padding: const EdgeInsets.all(16),
                           child: Column(
                             children: [
-                              const Text(
-                                "Couldn't load your releases",
+                              Text(
+                                context.l10n.release_load_failed,
                                 style:
-                                    TextStyle(fontWeight: FontWeight.w600),
+                                    const TextStyle(fontWeight: FontWeight.w600),
                               ),
                               const Gap(4),
                               Text(
@@ -66,7 +67,7 @@ class ReleaseConsolePage extends HookConsumerWidget {
                               Button.secondary(
                                 onPressed: () =>
                                     ref.invalidate(mySongsProvider),
-                                child: const Text("Retry"),
+                                child: Text(context.l10n.retry),
                               ),
                             ],
                           ),
@@ -79,11 +80,10 @@ class ReleaseConsolePage extends HookConsumerWidget {
                                 s.status == "scheduled")
                             .toList();
                         if (approved.isEmpty) {
-                          return const _MessageCard(
+                          return _MessageCard(
                             icon: DeeMusiqIcons.upload,
-                            title: "Nothing to release yet",
-                            body:
-                                "Once an operator approves your submitted songs, they'll appear here for you to publish or schedule.",
+                            title: context.l10n.release_empty_title,
+                            body: context.l10n.release_empty_body,
                           );
                         }
                         return Column(
@@ -161,18 +161,16 @@ class _ReleaseCard extends HookConsumerWidget {
       final ok = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text("Cancel release?"),
-          content: const Text(
-            "The song will be hidden from the catalog. You can resubmit later.",
-          ),
+          title: Text(context.l10n.release_cancel_title),
+          content: Text(context.l10n.release_cancel_body),
           actions: [
             Button.ghost(
               onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text("Keep"),
+              child: Text(context.l10n.release_keep),
             ),
             Button.destructive(
               onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text("Cancel release"),
+              child: Text(context.l10n.release_cancel_action),
             ),
           ],
         ),
@@ -226,8 +224,9 @@ class _ReleaseCard extends HookConsumerWidget {
                       const Gap(4),
                       Text(
                         status == "scheduled" && scheduled != null
-                            ? "Scheduled for ${_fmtDateTime(scheduled)}"
-                            : "Approved — ready to publish",
+                            ? context.l10n
+                                .release_scheduled_for(_fmtDateTime(scheduled))
+                            : context.l10n.release_approved_ready,
                         style: const TextStyle(fontSize: 12),
                       ),
                     ],
@@ -250,17 +249,19 @@ class _ReleaseCard extends HookConsumerWidget {
                 Button.primary(
                   onPressed: busy.value ? null : publishNow,
                   leading: const Icon(DeeMusiqIcons.play),
-                  child: const Text("Publish Now"),
+                  child: Text(context.l10n.release_publish_now),
                 ),
                 Button.secondary(
                   onPressed: busy.value ? null : schedule,
                   leading: const Icon(DeeMusiqIcons.timer),
-                  child: Text(status == "scheduled" ? "Reschedule" : "Schedule"),
+                  child: Text(status == "scheduled"
+                      ? context.l10n.release_reschedule
+                      : context.l10n.release_schedule),
                 ),
                 Button.ghost(
                   onPressed: busy.value ? null : cancel,
                   leading: const Icon(DeeMusiqIcons.trash),
-                  child: const Text("Cancel Release"),
+                  child: Text(context.l10n.release_cancel_action),
                 ),
               ],
             ),
@@ -292,19 +293,19 @@ class _ScheduleDialog extends HookWidget {
     final valid = publishAt != null && publishAt.isAfter(DateTime.now());
 
     return AlertDialog(
-      title: const Text("Schedule release").large(),
+      title: Text(context.l10n.release_schedule_title).large(),
       content: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 360),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Pick when this song goes live.").muted().small(),
+            Text(context.l10n.release_schedule_body).muted().small(),
             const Gap(12),
             DatePicker(
               value: date.value,
-              placeholder: const Text("Pick a date"),
-              dialogTitle: const Text("Release date"),
+              placeholder: Text(context.l10n.release_pick_date),
+              dialogTitle: Text(context.l10n.release_date),
               stateBuilder: (candidate) {
                 final day = DateTime(
                   candidate.year,
@@ -322,7 +323,7 @@ class _ScheduleDialog extends HookWidget {
             const Gap(8),
             TimePicker(
               value: time.value,
-              dialogTitle: const Text("Release time"),
+              dialogTitle: Text(context.l10n.release_time),
               onChanged: (value) => time.value = value,
             ),
           ],
@@ -331,11 +332,11 @@ class _ScheduleDialog extends HookWidget {
       actions: [
         Button.outline(
           onPressed: () => Navigator.pop(context),
-          child: const Text("Cancel"),
+          child: Text(context.l10n.cancel),
         ),
         Button.primary(
           onPressed: valid ? () => Navigator.pop(context, publishAt) : null,
-          child: const Text("Schedule"),
+          child: Text(context.l10n.release_schedule),
         ),
       ],
     );

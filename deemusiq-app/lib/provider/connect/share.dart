@@ -113,7 +113,11 @@ class ConnectShareSender {
     } finally {
       try {
         await channel?.sink.close();
-      } catch (_) {}
+      } catch (e) {
+        // Cleanup after an already-decided outcome — a half-closed socket
+        // must not mask the share result; logged for diagnosis.
+        AppLogger.log.w('ConnectShareSender: channel close failed: $e');
+      }
     }
   }
 

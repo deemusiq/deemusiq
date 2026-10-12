@@ -34,7 +34,10 @@ class FollowArtistButton extends HookConsumerWidget {
             targetId: artistId,
           );
           if (context.mounted) isFollowing.value = following;
-        } catch (_) {
+        } catch (e) {
+          // Fallback to list-scan on older backends; log the check-route
+          // failure so a real outage isn't mistaken for "not following".
+          AppLogger.log.d('follow check fallback: $e');
           final list = await WalletApiClient.instance.myFollowing();
           if (context.mounted) {
             isFollowing.value = list

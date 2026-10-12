@@ -9,8 +9,10 @@ import 'package:deemusiq/components/image/universal_image.dart';
 import 'package:deemusiq/components/links/artist_link.dart';
 import 'package:deemusiq/components/links/link_text.dart';
 import 'package:deemusiq/extensions/constrains.dart';
+import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/models/metadata/metadata.dart';
 import 'package:deemusiq/provider/audio_player/audio_player.dart';
+import 'package:deemusiq/services/audio_player/data_saver.dart';
 
 class PlayerTrackDetails extends HookConsumerWidget {
   final Color? color;
@@ -22,6 +24,25 @@ class PlayerTrackDetails extends HookConsumerWidget {
     final theme = Theme.of(context);
     final mediaQuery = MediaQuery.of(context);
     final playback = ref.watch(audioPlayerProvider);
+    // "Lite" indicator: the active track is playing its data-saver rendition
+    // (catalog liteUrl chosen instead of the full source).
+    final active = playback.activeTrack;
+    final liteUrl = active is DeeMusiqFullTrackObject ? active.liteUrl : null;
+    final liteActive = liteUrl != null &&
+        liteUrl.isNotEmpty &&
+        ref.watch(dataSaverActiveProvider).valueOrNull == true;
+
+    final liteBadge = !liteActive
+        ? const SizedBox.shrink()
+        : Padding(
+            padding: const EdgeInsets.only(left: 6),
+            child: Tooltip(
+              tooltip: TooltipContainer(
+                child: Text(context.l10n.now_playing_lite_tooltip),
+              ).call,
+              child: OutlineBadge(child: Text(context.l10n.now_playing_lite)),
+            ),
+          );
 
     return Row(
       children: [
@@ -47,12 +68,20 @@ class PlayerTrackDetails extends HookConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 4),
-                Text(
-                  playback.activeTrack?.name ?? "",
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.typography.normal.copyWith(
-                    color: color,
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        playback.activeTrack?.name ?? "",
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.typography.normal.copyWith(
+                          color: color,
+                        ),
+                      ),
+                    ),
+                    liteBadge,
+                  ],
                 ),
                 Text(
                   playback.activeTrack?.artists.asString() ?? "",
@@ -67,12 +96,21 @@ class PlayerTrackDetails extends HookConsumerWidget {
             flex: 1,
             child: Column(
               children: [
-                LinkText(
-                  playback.activeTrack?.name ?? "",
-                  TrackRoute(trackId: playback.activeTrack?.id ?? ""),
-                  push: true,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontWeight: FontWeight.bold, color: color),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: LinkText(
+                        playback.activeTrack?.name ?? "",
+                        TrackRoute(trackId: playback.activeTrack?.id ?? ""),
+                        push: true,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, color: color),
+                      ),
+                    ),
+                    liteBadge,
+                  ],
                 ),
                 ArtistLink(
                   artists: playback.activeTrack?.artists ?? [],

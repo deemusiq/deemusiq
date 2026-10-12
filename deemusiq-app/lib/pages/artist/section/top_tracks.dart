@@ -58,6 +58,7 @@ class ArtistPageTopTracks extends HookConsumerWidget {
       List<DeeMusiqFullTrackObject> tracks, {
       DeeMusiqTrackObject? currentTrack,
     }) async {
+      if (tracks.isEmpty) return;
       isLoading.value = true;
 
       currentTrack ??= tracks.first;

@@ -72,7 +72,7 @@ mixin DeeMusiqAudioPlayersStreams on AudioPlayerInterface {
 
   Stream<String> get errorStream => _mkPlayer.stream.error;
 
-  Stream<String> get userMessageStream => _mkPlayer.userMessageStream;
+  Stream<AudioUserMessage> get userMessageStream => _mkPlayer.userMessageStream;
 
   Stream<mk.Playlist> get playlistStream => _mkPlayer.stream.playlist;
 }

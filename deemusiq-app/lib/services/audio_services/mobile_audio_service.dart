@@ -7,6 +7,7 @@ import 'package:deemusiq/provider/audio_player/audio_player.dart';
 import 'package:deemusiq/provider/audio_player/state.dart';
 import 'package:deemusiq/provider/database/database.dart';
 import 'package:deemusiq/services/audio_player/audio_player.dart';
+import 'package:deemusiq/services/ad_roll/ad_roll_service.dart';
 import 'package:media_kit/media_kit.dart' hide Track;
 import 'package:deemusiq/services/audio_player/playback_state.dart';
 import 'package:deemusiq/services/logger/logger.dart';
@@ -40,6 +41,10 @@ class MobileAudioService extends BaseAudioHandler {
               {
                 wasPausedByBeginEvent = audioPlayer.isPlaying;
                 await audioPlayer.pause();
+                // A phone call during an ad break would otherwise leave the
+                // AdPlayer blaring (it is a separate player) — pause the
+                // break too, freezing its timer.
+                AdRollService.instance.pauseBreak();
                 break;
               }
           }
@@ -48,12 +53,16 @@ class MobileAudioService extends BaseAudioHandler {
             case AudioInterruptionType.duck:
               await audioPlayer.setVolume(_preInterruptionVolume);
               break;
-            case AudioInterruptionType.pause when wasPausedByBeginEvent:
-            case AudioInterruptionType.unknown when wasPausedByBeginEvent:
-              await audioPlayer.resume();
-              wasPausedByBeginEvent = false;
-              break;
-            default:
+            case AudioInterruptionType.pause:
+            case AudioInterruptionType.unknown:
+              if (wasPausedByBeginEvent) {
+                await audioPlayer.resume();
+                wasPausedByBeginEvent = false;
+              }
+              // Independent of the music flag: during an ad break the main
+              // player was already paused, so without this the frozen break
+              // (ad audio + timer) would never resume after the call ends.
+              AdRollService.instance.resumeBreak();
               break;
           }
         }
@@ -61,6 +70,9 @@ class MobileAudioService extends BaseAudioHandler {
 
       s.becomingNoisyEventStream.listen((_) {
         audioPlayer.pause();
+        // Headphone unplug mid-ad: pause the break as well (the user resumes
+        // it explicitly via the play control, which routes to resumeBreak).
+        AdRollService.instance.pauseBreak();
       });
     });
     audioPlayer.playerStateStream.listen((state) async {
@@ -84,7 +96,15 @@ class MobileAudioService extends BaseAudioHandler {
   }
 
   @override
-  Future<void> play() => audioPlayer.resume();
+  Future<void> play() async {
+    // Mid-ad, the play control resumes the BREAK (ad audio + timer), not the
+    // paused music queue.
+    if (AdRollService.instance.isAdPlaying) {
+      AdRollService.instance.resumeBreak();
+      return;
+    }
+    await audioPlayer.resume();
+  }
 
   @override
   Future<void> pause() => audioPlayer.pause();

@@ -1,0 +1,135 @@
+name: Watch backend TLS pin
+
+# Why this exists: api.deemusiq.co.za is served through the Cloudflare tunnel,
+# so TLS terminates at the Cloudflare EDGE and the edge certificate rotates on
+# Cloudflare's schedule (~every 90 days, no notice, both certs never overlap).
+# The app pins the leaf cert SHA-256 (DEEMUSIQ_SERVER_CERT_SHA256), so every
+# rotation bricks backend connectivity — and the wallet — until a rebuilt app
+# ships. This watcher catches a rotation within hours, commits the new pin to
+# deemusiq-app/server-tls-pins.txt, dispatches fresh app builds, and opens an
+# issue so a human verifies and publishes the artifacts.
+#
+# Anti-abuse: the pin is only updated if the new certificate is issued by a
+# known Cloudflare certificate provider AND names deemusiq.co.za AND is inside
+# its validity window. A runner-path MITM presenting an enterprise- or
+# attacker-CA cert fails that check, so this workflow can never bake a foreign
+# CA's pin into a release.
+
+on:
+  schedule:
+    - cron: "23 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write # commit the rotated pin
+  actions: write  # dispatch the app builds
+  issues: write   # notify the operator
+
+jobs:
+  watch:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Observe live leaf certificate
+        id: live
+        run: |
+          set -e
+          PEM=""
+          for attempt in 1 2; do
+            PEM=$(openssl s_client -connect api.deemusiq.co.za:443 -servername api.deemusiq.co.za </dev/null 2>/dev/null | openssl x509 2>/dev/null) && break
+            echo "attempt $attempt failed to fetch peer cert; retrying in 30s"
+            sleep 30
+          done
+          [ -n "$PEM" ] || { echo "::error::could not fetch peer certificate twice"; exit 1; }
+
+          HASH=$(echo "$PEM" | openssl x509 -noout -fingerprint -sha256 | cut -d= -f2 | tr -d ':' | tr 'A-F' 'a-f')
+          ISSUER=$(echo "$PEM" | openssl x509 -noout -issuer)
+          SUBJECT=$(echo "$PEM" | openssl x509 -noout -subject)
+          NOTBEFORE=$(echo "$PEM" | openssl x509 -noout -startdate | cut -d= -f2)
+          NOTAFTER=$(echo "$PEM" | openssl x509 -noout -enddate | cut -d= -f2)
+          {
+            echo "hash=$HASH"
+            echo "issuer=$ISSUER"
+            echo "subject=$SUBJECT"
+            echo "notbefore=$NOTBEFORE"
+            echo "notafter=$NOTAFTER"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Vet the certificate before trusting it
+        run: |
+          set -e
+          case "${{ steps.live.outputs.issuer }}" in
+            *"Let's Encrypt"*|*"Google Trust Services"*|*Cloudflare*|*ZeroSSL*|*"SSL.com"*|*DigiCert*|*Sectigo*) ;;
+            *) echo "::error::unexpected issuer '${{ steps.live.outputs.issuer }}' — refusing to pin it"; exit 1;;
+          esac
+          case "${{ steps.live.outputs.subject }}" in
+            *deemusiq.co.za*) ;;
+            *) echo "::error::subject '${{ steps.live.outputs.subject }}' does not name deemusiq.co.za"; exit 1;;
+          esac
+          now=$(date +%s)
+          nb=$(date -d "${{ steps.live.outputs.notbefore }}" +%s)
+          na=$(date -d "${{ steps.live.outputs.notafter }}" +%s)
+          [ "$nb" -le "$now" ] && [ "$now" -lt "$na" ] || { echo "::error::cert outside validity window"; exit 1; }
+
+      - name: Compare with committed pin
+        id: cmp
+        run: |
+          PIN=$(grep -oiE '[0-9a-f]{64}' deemusiq-app/server-tls-pins.txt 2>/dev/null | tr 'A-F' 'a-f' | sort -u | paste -sd, -)
+          echo "committed=$PIN" >> "$GITHUB_OUTPUT"
+          if [[ ",$PIN," == *",${{ steps.live.outputs.hash }},"* ]]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit rotated pin
+        if: steps.cmp.outputs.changed == 'true'
+        run: |
+          {
+            echo "# TLS pin for api.deemusiq.co.za — auto-rotated by cert-pin-watch.yml"
+            echo "# on $(date -u '+%Y-%m-%d %H:%M UTC'). Issuer: ${{ steps.live.outputs.issuer }}"
+            echo "# Valid: ${{ steps.live.outputs.notbefore }} → ${{ steps.live.outputs.notafter }}"
+            echo "${{ steps.live.outputs.hash }}"
+          } > deemusiq-app/server-tls-pins.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add deemusiq-app/server-tls-pins.txt
+          git commit -m "chore: rotate backend TLS pin (edge cert changed to ${{ steps.live.outputs.hash }})"
+          git push
+
+      - name: Dispatch app rebuilds
+        if: steps.cmp.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run deemusiq-android.yml --ref main
+          gh workflow run deemusiq-linux.yml --ref main
+          gh workflow run deemusiq-windows.yml --ref main
+          gh workflow run deemusiq-macos.yml --ref main
+
+      - name: Open operator issue
+        if: steps.cmp.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create \
+            --title "TLS pin rotated — verify and publish rebuilt apps" \
+            --label "ops" \
+            --body "$(cat <<'EOF'
+          The backend edge certificate rotated and \`server-tls-pins.txt\` was updated automatically.
+
+          - New pin: `${{ steps.live.outputs.hash }}`
+          - Issuer: ${{ steps.live.outputs.issuer }}
+          - Validity: ${{ steps.live.outputs.notbefore }} → ${{ steps.live.outputs.notafter }}
+          - Old pin: `${{ steps.cmp.outputs.committed }}`
+
+          **Verify before publishing:** confirm the new cert in CT logs
+          (https://crt.sh/?q=api.deemusiq.co.za) matches the hash above.
+
+          App rebuilds have been dispatched (Actions tab). When they finish:
+          1. Download the artifacts, spot-check one install.
+          2. Publish per DISTRIBUTION.md (site downloads + version.json) — until then,
+             existing installs stay pinned to the old cert and their backend calls fail.
+          EOF
+          )"

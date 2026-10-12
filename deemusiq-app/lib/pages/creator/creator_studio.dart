@@ -7,10 +7,12 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:shadcn_flutter/shadcn_flutter_extension.dart';
+import 'package:uuid/uuid.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/collections/routes.gr.dart';
 import 'package:deemusiq/components/titlebar/titlebar.dart';
 import 'package:deemusiq/components/wallet/wallet_common.dart';
+import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/models/wallet/linked_account.dart';
 import 'package:deemusiq/provider/creator/creator_provider.dart';
 import 'package:deemusiq/provider/local_favorites/local_favorites_provider.dart';
@@ -42,7 +44,7 @@ class CreatorStudioPage extends HookConsumerWidget {
     return SafeArea(
       bottom: false,
       child: Scaffold(
-        headers: const [TitleBar(title: Text("Creator Studio"))],
+        headers: [TitleBar(title: Text(context.l10n.creator_studio))],
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           children: [
@@ -53,11 +55,10 @@ class CreatorStudioPage extends HookConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (!online)
-                      const _MessageCard(
+                      _MessageCard(
                         icon: DeeMusiqIcons.upload,
-                        title: "Connect to become a creator",
-                        body:
-                            "Creator Studio needs DeeMusiq's backend to be configured.",
+                        title: context.l10n.creator_connect_title,
+                        body: context.l10n.creator_connect_body,
                       )
                     else if (!hasGoogle)
                       const _GoogleGate()
@@ -82,9 +83,17 @@ class _GoogleGate extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final loading = useState(false);
+    final googleSupported = GoogleAuthService.instance.isPlatformSupported;
 
     Future<void> signIn() async {
       if (loading.value) return;
+      // google_sign_in has no Linux/Windows implementation — the button is
+      // replaced by a mobile-only notice there, but guard the call anyway.
+      if (!GoogleAuthService.instance.isPlatformSupported) {
+        showWalletToast(context, context.l10n.google_sign_in_mobile_only,
+            icon: DeeMusiqIcons.info);
+        return;
+      }
       loading.value = true;
       try {
         final result = await GoogleAuthService.instance.signIn();
@@ -104,7 +113,7 @@ class _GoogleGate extends HookConsumerWidget {
       } catch (e, stack) {
         AppLogger.reportError(e, stack, 'creator google sign-in');
         if (context.mounted) {
-          showWalletToast(context, "Google sign-in failed",
+          showWalletToast(context, context.l10n.creator_google_sign_in_failed,
               icon: DeeMusiqIcons.info);
         }
       } finally {
@@ -118,26 +127,32 @@ class _GoogleGate extends HookConsumerWidget {
         children: [
           const Icon(DeeMusiqIcons.artist, size: 32, color: deeMusiqOrange),
           const Gap(10),
-          const Text("Become a DeeMusiq creator").large().semiBold(),
+          Text(context.l10n.creator_become_title).large().semiBold(),
           const Gap(6),
-          const Text(
-            "Sign in with Google to claim your artist profile, submit songs, and "
-            "track how they're doing. Your Google account also carries your likes "
-            "and library across devices.",
+          Text(
+            context.l10n.creator_become_body,
             textAlign: TextAlign.center,
           ).muted().small(),
           const Gap(16),
-          Button.primary(
-            onPressed: loading.value ? null : signIn,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(DeeMusiqIcons.google, size: 18),
-                const Gap(8),
-                Text(loading.value ? "Please wait…" : "Sign in with Google"),
-              ],
-            ),
-          ),
+          if (googleSupported)
+            Button.primary(
+              onPressed: loading.value ? null : signIn,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(DeeMusiqIcons.google, size: 18),
+                  const Gap(8),
+                  Text(loading.value
+                      ? context.l10n.please_wait
+                      : context.l10n.sign_in_with_google),
+                ],
+              ),
+            )
+          else
+            Text(
+              context.l10n.google_sign_in_mobile_only,
+              textAlign: TextAlign.center,
+            ).muted().small(),
         ],
       ),
     );
@@ -158,7 +173,7 @@ class _Dashboard extends HookConsumerWidget {
       ),
       error: (error, _) => _MessageCard(
         icon: DeeMusiqIcons.info,
-        title: "Couldn't load your studio",
+        title: context.l10n.creator_studio_load_failed,
         body: error is WalletApiException
             ? error.friendlyMessage
             : error.toString(),
@@ -179,7 +194,7 @@ class _Dashboard extends HookConsumerWidget {
                     onPressed: () =>
                         context.navigateTo(const ReleaseConsoleRoute()),
                     leading: const Icon(DeeMusiqIcons.timer, size: 16),
-                    child: const Text("Release Console"),
+                    child: Text(context.l10n.creator_release_console),
                   ),
                 ),
                 const Gap(8),
@@ -189,7 +204,9 @@ class _Dashboard extends HookConsumerWidget {
                         context.navigateTo(const VerificationRoute()),
                     leading: const Icon(DeeMusiqIcons.verified, size: 16),
                     child: Text(
-                      artist["verified"] == true ? "Verified" : "Get Verified",
+                      artist["verified"] == true
+                          ? context.l10n.verified
+                          : context.l10n.creator_get_verified,
                     ),
                   ),
                 ),
@@ -202,7 +219,7 @@ class _Dashboard extends HookConsumerWidget {
               _MonetizationPanel(artistId: (artist["id"] ?? "").toString()),
               const Gap(16),
             ],
-            const Text("Your songs").large().semiBold(),
+            Text(context.l10n.creator_your_songs).large().semiBold(),
             const Gap(8),
             const _SongList(),
           ],
@@ -223,13 +240,18 @@ class _ClaimProfile extends HookConsumerWidget {
 
     Future<void> claim() async {
       if (loading.value) return;
+      if (name.text.trim().isEmpty) {
+        showWalletToast(context, context.l10n.artist_name_required,
+            icon: DeeMusiqIcons.info);
+        return;
+      }
       loading.value = true;
       try {
         await WalletApiClient.instance
             .createArtist(name: name.text.trim(), bio: bio.text.trim());
         ref.invalidate(myArtistProvider);
         if (context.mounted) {
-          showWalletToast(context, "Creator profile created",
+          showWalletToast(context, context.l10n.creator_profile_created,
               icon: DeeMusiqIcons.verified);
         }
       } on WalletApiException catch (e) {
@@ -249,23 +271,25 @@ class _ClaimProfile extends HookConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text("Claim your artist name").large().semiBold(),
+          Text(context.l10n.creator_claim_title).large().semiBold(),
           const Gap(4),
-          const Text("This is how listeners will find you. Names are unique.")
-              .muted()
-              .small(),
+          Text(context.l10n.creator_claim_body).muted().small(),
           const Gap(12),
-          TextField(controller: name, placeholder: const Text("Artist name")),
+          TextField(
+              controller: name,
+              placeholder: Text(context.l10n.creator_artist_name_hint)),
           const Gap(8),
           TextField(
             controller: bio,
-            placeholder: const Text("Short bio (optional)"),
+            placeholder: Text(context.l10n.creator_bio_hint),
             maxLines: 3,
           ),
           const Gap(12),
           Button.primary(
             onPressed: loading.value ? null : claim,
-            child: Text(loading.value ? "Please wait…" : "Create profile"),
+            child: Text(loading.value
+                ? context.l10n.please_wait
+                : context.l10n.creator_create_profile),
           ),
         ],
       ),
@@ -306,16 +330,16 @@ class _ProfileHeader extends StatelessWidget {
           Row(
             children: [
               _Stat(
-                label: "Songs",
+                label: context.l10n.creator_stat_songs,
                 value: "${stats["songCount"] ?? 0}",
               ),
               _Stat(
-                label: "Tokens (yr)",
+                label: context.l10n.creator_stat_tokens_year,
                 value: formatTokens(
                     (stats["totalTokensThisYear"] as num?)?.toInt() ?? 0),
               ),
               _Stat(
-                label: "Rank (yr)",
+                label: context.l10n.creator_stat_rank_year,
                 value: rank == null ? "—" : "#$rank",
               ),
             ],
@@ -347,6 +371,38 @@ class _Stat extends StatelessWidget {
   }
 }
 
+/// Extensions the audio picker offers. Sourced from GET
+/// /creator/uploads/formats (`formats[].exts`) so the picker tracks the
+/// backend allowlist; the hardcoded list only applies when the fetch fails.
+Future<List<String>> _allowedAudioExtensions() async {
+  const fallback = [
+    "mp3", "m4a", "aac", "wav", "flac", "ogg", "opus", "webm",
+    "aiff", "aif", "mp4",
+  ];
+  try {
+    final res = await WalletApiClient.instance.fetchUploadFormats();
+    final formats = res["formats"];
+    if (formats is! List) return fallback;
+    final extensions = <String>{};
+    for (final format in formats) {
+      if (format is! Map) continue;
+      final exts = format["exts"];
+      if (exts is! List) continue;
+      for (final ext in exts) {
+        if (ext is String && ext.isNotEmpty) {
+          extensions.add(ext.startsWith(".") ? ext.substring(1) : ext);
+        }
+      }
+    }
+    return extensions.isEmpty ? fallback : extensions.toList();
+  } catch (e, stack) {
+    debugPrint('[CreatorStudio.allowedAudioExtensions] formats fetch failed, '
+        'using fallback: $e');
+    AppLogger.reportError(e, stack, 'upload formats fetch');
+    return fallback;
+  }
+}
+
 /// New upload flow: pick an audio file + cover image, upload to the backend,
 /// then explicitly submit for operator review. Status transitions:
 ///   (none) -> draft -> pending -> approved -> (artist publishes) -> published.
@@ -355,6 +411,7 @@ class _SubmitSong extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final title = useTextEditingController();
     final description = useTextEditingController();
     final loading = useState(false);
@@ -368,21 +425,21 @@ class _SubmitSong extends HookConsumerWidget {
 
     Future<void> pickAudio() async {
       try {
-        // Multi-format masters: keep in sync with GET /creator/uploads/formats.
+        final extensions = await _allowedAudioExtensions();
         final r = await FilePicker.platform.pickFiles(
           type: FileType.custom,
-          allowedExtensions: const [
-            "mp3", "m4a", "aac", "wav", "flac", "ogg", "opus", "webm",
-            "aiff", "aif", "mp4",
-          ],
+          allowedExtensions: extensions,
         );
-        if (r != null && r.files.isNotEmpty) {
-          audioPath.value = r.files.first.path;
-          audioUploaded.value = false;
+        final picked = r?.files.isNotEmpty == true ? r!.files.first.path : null;
+        if (picked == null || picked.isEmpty) {
+          error.value = l10n.creator_file_picker_failed;
+          return;
         }
+        audioPath.value = picked;
+        audioUploaded.value = false;
       } catch (e, st) {
         AppLogger.reportError(e, st, 'pick audio');
-        error.value = "Could not open file picker";
+        error.value = l10n.creator_file_picker_failed;
       }
     }
 
@@ -391,40 +448,43 @@ class _SubmitSong extends HookConsumerWidget {
         final r = await FilePicker.platform.pickFiles(
           type: FileType.image,
         );
-        if (r != null && r.files.isNotEmpty) {
-          coverPath.value = r.files.first.path;
-          coverUploaded.value = false;
+        final picked = r?.files.isNotEmpty == true ? r!.files.first.path : null;
+        if (picked == null || picked.isEmpty) {
+          error.value = l10n.creator_file_picker_failed;
+          return;
         }
+        coverPath.value = picked;
+        coverUploaded.value = false;
       } catch (e, st) {
         AppLogger.reportError(e, st, 'pick cover');
-        error.value = "Could not open file picker";
+        error.value = l10n.creator_file_picker_failed;
       }
     }
 
     Future<void> createAndUpload() async {
       if (loading.value) return;
       if (draftId.value == null && title.text.trim().isEmpty) {
-        error.value = "Title is required.";
+        error.value = l10n.creator_title_required;
         return;
       }
       if (draftId.value == null && audioPath.value == null) {
-        error.value = "Pick an audio file.";
+        error.value = l10n.creator_pick_audio_required;
         return;
       }
       if (draftId.value == null && coverPath.value == null) {
-        error.value = "Pick a cover image.";
+        error.value = l10n.creator_pick_cover_required;
         return;
       }
       if (draftId.value != null &&
           !audioUploaded.value &&
           audioPath.value == null) {
-        error.value = "Pick the missing audio file.";
+        error.value = l10n.creator_pick_audio_missing;
         return;
       }
       if (draftId.value != null &&
           !coverUploaded.value &&
           coverPath.value == null) {
-        error.value = "Pick the missing cover image.";
+        error.value = l10n.creator_pick_cover_missing;
         return;
       }
       loading.value = true;
@@ -439,8 +499,7 @@ class _SubmitSong extends HookConsumerWidget {
           );
           final id = created["id"];
           if (id is! String || id.isEmpty || created["status"] != "draft") {
-            throw const WalletApiException(
-                "Upload didn't start — please try again.");
+            throw WalletApiException(l10n.creator_upload_start_failed);
           }
           draftId.value = id;
         }
@@ -464,7 +523,7 @@ class _SubmitSong extends HookConsumerWidget {
         if (context.mounted) {
           showWalletToast(
             context,
-            "Uploaded! Tap Submit for review.",
+            l10n.creator_uploaded_submit_hint,
             icon: DeeMusiqIcons.upload,
           );
         }
@@ -472,7 +531,7 @@ class _SubmitSong extends HookConsumerWidget {
         error.value = e.friendlyMessage;
       } catch (e, st) {
         AppLogger.reportError(e, st, 'upload song');
-        error.value = "Upload failed.";
+        error.value = l10n.creator_upload_failed;
       } finally {
         if (context.mounted) loading.value = false;
       }
@@ -481,7 +540,7 @@ class _SubmitSong extends HookConsumerWidget {
     Future<void> submitForReview() async {
       final id = draftId.value;
       if (id == null || !audioUploaded.value || !coverUploaded.value) {
-        error.value = "Upload audio and cover before review.";
+        error.value = l10n.creator_upload_before_review;
         return;
       }
       if (loading.value) return;
@@ -500,7 +559,7 @@ class _SubmitSong extends HookConsumerWidget {
         if (context.mounted) {
           showWalletToast(
             context,
-            "Submitted for review",
+            l10n.creator_submitted_for_review,
             icon: DeeMusiqIcons.upload,
           );
         }
@@ -508,7 +567,7 @@ class _SubmitSong extends HookConsumerWidget {
         error.value = e.friendlyMessage;
       } catch (e, st) {
         AppLogger.reportError(e, st, 'submit song');
-        error.value = "Could not submit for review.";
+        error.value = l10n.creator_submit_review_failed;
       } finally {
         if (context.mounted) loading.value = false;
       }
@@ -525,21 +584,19 @@ class _SubmitSong extends HookConsumerWidget {
             children: [
               const Icon(DeeMusiqIcons.upload, color: deeMusiqOrange, size: 18),
               const Gap(8),
-              const Text("Submit a song").semiBold(),
+              Text(l10n.creator_submit_song_title).semiBold(),
             ],
           ),
           const Gap(4),
-          const Text(
-            "Pick an audio master (MP3 · M4A · AAC · WAV · FLAC · OGG · Opus · WebM · AIFF) "
-            "and a cover image. The operator reviews the submission; once approved, "
-            "you choose when to publish — then add payment, set your cut and track analytics below.",
-          ).muted().small(),
+          Text(l10n.creator_submit_song_body).muted().small(),
           const Gap(12),
-          TextField(controller: title, placeholder: const Text("Song title")),
+          TextField(
+              controller: title,
+              placeholder: Text(l10n.creator_song_title_hint)),
           const Gap(8),
           TextField(
             controller: description,
-            placeholder: const Text("Description (optional)"),
+            placeholder: Text(l10n.creator_description_hint),
             maxLines: 2,
           ),
           const Gap(12),
@@ -551,8 +608,9 @@ class _SubmitSong extends HookConsumerWidget {
                   onPressed: loading.value ? null : pickAudio,
                   child: Text(
                     audioPath.value == null
-                        ? "Pick audio file"
-                        : "Audio: ${fileName(audioPath.value)}",
+                        ? l10n.creator_pick_audio
+                        : l10n.creator_audio_picked(
+                            fileName(audioPath.value) ?? ""),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -568,8 +626,9 @@ class _SubmitSong extends HookConsumerWidget {
                   onPressed: loading.value ? null : pickCover,
                   child: Text(
                     coverPath.value == null
-                        ? "Pick cover image"
-                        : "Cover: ${fileName(coverPath.value)}",
+                        ? l10n.creator_pick_cover
+                        : l10n.creator_cover_picked(
+                            fileName(coverPath.value) ?? ""),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -610,8 +669,10 @@ class _SubmitSong extends HookConsumerWidget {
                     onPressed: loading.value ? null : createAndUpload,
                     child: Text(
                       loading.value
-                          ? "Uploading…"
-                          : (draftId.value == null ? "Upload" : "Retry upload"),
+                          ? l10n.creator_uploading
+                          : (draftId.value == null
+                              ? l10n.creator_upload
+                              : l10n.creator_retry_upload),
                     ),
                   ),
                 )
@@ -620,7 +681,9 @@ class _SubmitSong extends HookConsumerWidget {
                   child: Button.primary(
                     onPressed: loading.value ? null : submitForReview,
                     child: Text(
-                      loading.value ? "Submitting…" : "Submit for review",
+                      loading.value
+                          ? l10n.creator_submitting
+                          : l10n.creator_submit_for_review,
                     ),
                   ),
                 ),
@@ -649,9 +712,7 @@ class _SongList extends HookConsumerWidget {
             : error.toString(),
       ).muted().small(),
       data: (songs) => songs.isEmpty
-          ? const Text("No songs yet — submit your first above.")
-              .muted()
-              .small()
+          ? Text(context.l10n.creator_no_songs).muted().small()
           : Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -672,6 +733,7 @@ class _SongTile extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final busy = useState(false);
 
     Future<void> run(Future<void> Function() action, String ok) async {
@@ -698,12 +760,12 @@ class _SongTile extends HookConsumerWidget {
 
     final status = song.status;
     final statusLabel = switch (status) {
-      'draft' => 'Draft',
-      'pending' => 'In review',
-      'approved' => 'Approved',
-      'scheduled' => 'Scheduled',
-      'published' => 'Published',
-      'hidden' => 'Hidden / Cancelled',
+      'draft' => l10n.creator_status_draft,
+      'pending' => l10n.creator_status_pending,
+      'approved' => l10n.creator_status_approved,
+      'scheduled' => l10n.creator_status_scheduled,
+      'published' => l10n.creator_status_published,
+      'hidden' => l10n.creator_status_hidden,
       _ => status,
     };
     final colorScheme = context.theme.colorScheme;
@@ -740,24 +802,27 @@ class _SongTile extends HookConsumerWidget {
           const Gap(6),
           if (song.scheduledPublishAt != null)
             Text(
-              "Publishes ${_fmtDateTime(song.scheduledPublishAt!.toIso8601String())}",
+              l10n.creator_publishes_at(
+                  _fmtDateTime(song.scheduledPublishAt!.toIso8601String())),
             ).muted().xSmall()
           else if (song.audioSizeBytes != null)
             Text(
-              "${(song.audioSizeBytes! / 1024 / 1024).toStringAsFixed(1)} MB audio",
+              l10n.creator_audio_size(
+                  (song.audioSizeBytes! / 1024 / 1024).toStringAsFixed(1)),
             ).muted().xSmall(),
           if (song.reviewNote != null && song.reviewNote!.isNotEmpty) ...[
             const Gap(4),
-            Text("Note: ${song.reviewNote}").muted().xSmall(),
+            Text(l10n.creator_review_note(song.reviewNote!)).muted().xSmall(),
           ],
           if (status == 'draft' && !song.canSubmitForReview)
-            const Text("Upload audio and cover before review.").muted().xSmall(),
+            Text(l10n.creator_upload_before_review).muted().xSmall(),
           const Gap(6),
           Row(
             children: [
               const Icon(DeeMusiqIcons.boost, size: 13, color: deeMusiqOrange),
               const Gap(4),
-              Text("${song.pushes} · ${formatTokens(song.tokens)} tokens")
+              Text(l10n.creator_song_stats(
+                      song.pushes, formatTokens(song.tokens)))
                   .muted()
                   .xSmall(),
               const Gap(12),
@@ -772,7 +837,7 @@ class _SongTile extends HookConsumerWidget {
               alignment: Alignment.centerRight,
               child: Button.ghost(
                 onPressed: () => context.navigateTo(const ReleaseConsoleRoute()),
-                child: const Text("Open Release Console"),
+                child: Text(l10n.creator_open_release_console),
               ),
             ),
           ],
@@ -789,32 +854,120 @@ class _SongTile extends HookConsumerWidget {
                               await WalletApiClient.instance
                                   .submitSongForReview(song.id);
                             },
-                            "Submitted for review",
+                            l10n.creator_submitted_for_review,
                           ),
-                  child: const Text("Submit for review"),
+                  child: Text(l10n.creator_submit_for_review),
                 ),
               if (status == 'published')
                 Button.ghost(
+                  leading: const Icon(DeeMusiqIcons.flag, size: 14),
+                  onPressed: busy.value
+                      ? null
+                      : () => showDialog(
+                            context: context,
+                            builder: (_) => _TakedownDialog(song: song),
+                          ),
+                  child: Text(l10n.takedown_request_title),
+                )
+              else
+                Button.ghost(
+                  leading: const Icon(DeeMusiqIcons.trash, size: 14),
                   onPressed: busy.value
                       ? null
                       : () => run(
-                            () => WalletApiClient.instance.updateSong(
-                              songId: song.id,
-                              status: 'hidden',
-                            ),
-                            "Song hidden",
+                            () => WalletApiClient.instance.deleteSong(song.id),
+                            l10n.creator_song_removed,
                           ),
-                  child: const Text("Hide"),
+                  child: Text(l10n.remove),
                 ),
-              Button.ghost(
-                leading: const Icon(DeeMusiqIcons.trash, size: 14),
-                onPressed: busy.value
-                    ? null
-                    : () => run(
-                          () => WalletApiClient.instance.deleteSong(song.id),
-                          "Song removed",
-                        ),
-                child: const Text("Remove"),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Takedown-request dialog for PUBLISHED songs — the only sanctioned removal
+/// path (hide/delete are rejected server-side for published songs). The track
+/// stays live until an operator actions the request.
+class _TakedownDialog extends HookConsumerWidget {
+  final CreatorSong song;
+  const _TakedownDialog({required this.song});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final reason = useTextEditingController();
+    final busy = useState(false);
+    final error = useState<String?>(null);
+
+    Future<void> submit() async {
+      final text = reason.text.trim();
+      if (text.isEmpty) {
+        error.value = context.l10n.takedown_reason_required;
+        return;
+      }
+      if (busy.value) return;
+      busy.value = true;
+      try {
+        await WalletApiClient.instance
+            .requestTakedown(songId: song.id, reason: text);
+        ref.invalidate(mySongsProvider);
+        ref.invalidate(myArtistProvider);
+        if (context.mounted) {
+          Navigator.of(context).pop();
+          showWalletToast(context, context.l10n.takedown_request_sent,
+              icon: DeeMusiqIcons.verified);
+        }
+      } on WalletApiException catch (e) {
+        error.value = e.friendlyMessage;
+      } catch (e, stack) {
+        AppLogger.reportError(e, stack, 'takedown request');
+        if (context.mounted) {
+          error.value = context.l10n.something_went_wrong;
+        }
+      } finally {
+        if (context.mounted) busy.value = false;
+      }
+    }
+
+    return Alert(
+      title: Text(context.l10n.takedown_request_title).h4(),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(context.l10n.takedown_request_body).muted().small(),
+          const Gap(10),
+          TextField(
+            controller: reason,
+            placeholder: Text(context.l10n.takedown_reason_hint),
+            maxLines: 3,
+          ),
+          if (error.value != null) ...[
+            const Gap(8),
+            Text(
+              error.value!,
+              style: const TextStyle(color: Colors.red, fontSize: 12),
+            ),
+          ],
+          const Gap(12),
+          Row(
+            children: [
+              Expanded(
+                child: Button.secondary(
+                  onPressed: busy.value
+                      ? null
+                      : () => Navigator.of(context).pop(),
+                  child: Text(context.l10n.cancel),
+                ),
+              ),
+              const Gap(10),
+              Expanded(
+                child: Button.primary(
+                  onPressed: busy.value ? null : submit,
+                  child: Text(context.l10n.submit),
+                ),
               ),
             ],
           ),
@@ -840,24 +993,25 @@ class _MonetizationPanel extends HookConsumerWidget {
 
   /// Must stay in sync with the backend's payout-method validation
   /// (`payoutMethodSchema` in backend/src/routes/creatorMonetization.ts:
-  /// `z.enum(["payshap", "bank", "manual", "card"])` on PUT
+  /// `z.enum(["payshap", "bank", "manual"])` on PUT
   /// /creator/payouts/method) — anything else is rejected server-side.
-  static const _payoutMethodKinds = {
-    "payshap": "PayShap",
-    "bank": "Bank transfer",
-    "manual": "Manual",
-    "card": "Card",
-  };
-
-  static const _payoutMethodPlaceholders = {
-    "payshap": "PayShap phone number",
-    "bank": "Account number / branch code",
-    "manual": "Payout details",
-    "card": "Card reference",
-  };
+  /// A legacy saved "card" method simply isn't pre-selected in load(); the
+  /// raw value still renders in the "Saved:" line below.
+  static const _payoutMethodKeys = ["payshap", "bank", "manual"];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final methodKinds = {
+      "payshap": l10n.payout_method_payshap,
+      "bank": l10n.payout_method_bank,
+      "manual": l10n.payout_method_manual,
+    };
+    final methodHints = {
+      "payshap": l10n.payout_hint_payshap,
+      "bank": l10n.payout_hint_bank,
+      "manual": l10n.payout_hint_manual,
+    };
     final analytics = useState<Map<String, dynamic>?>(null);
     final split = useState<Map<String, dynamic>?>(null);
     final method = useState<Map<String, dynamic>?>(null);
@@ -872,6 +1026,22 @@ class _MonetizationPanel extends HookConsumerWidget {
     final payoutDetails = useTextEditingController();
     final payoutMethod = useState("payshap");
     final saving = useState(false);
+    // One Idempotency-Key per cash-out form intent (backend dedups replays):
+    // generated on first submit, kept across retries, cleared on success and
+    // whenever the form values change (a changed request is a NEW intent).
+    final payoutIdemKey = useState<String?>(null);
+    useEffect(() {
+      void resetKey() {
+        payoutIdemKey.value = null;
+      }
+
+      payoutTokens.addListener(resetKey);
+      payoutDetails.addListener(resetKey);
+      return () {
+        payoutTokens.removeListener(resetKey);
+        payoutDetails.removeListener(resetKey);
+      };
+    }, [payoutTokens, payoutDetails]);
 
     Future<void> load() async {
       loading.value = true;
@@ -881,8 +1051,17 @@ class _MonetizationPanel extends HookConsumerWidget {
           WalletApiClient.instance.fetchCreatorAnalytics(artistId: artistId),
           WalletApiClient.instance.fetchRevenueSplit(artistId: artistId),
           WalletApiClient.instance.fetchPayoutMethod(artistId: artistId),
-          WalletApiClient.instance.fetchPayoutBalance().catchError((_) => <String, dynamic>{}),
-          WalletApiClient.instance.fetchPayoutHistory().catchError((_) => <String, dynamic>{"payouts": []}),
+          // Optional panels: a failure here must not take down the whole
+          // monetization card, so they degrade to "unavailable" — but the
+          // failure is still logged, never swallowed.
+          WalletApiClient.instance.fetchPayoutBalance().catchError((Object e) {
+            AppLogger.log.w('payout balance fetch failed: $e');
+            return <String, dynamic>{};
+          }),
+          WalletApiClient.instance.fetchPayoutHistory().catchError((Object e) {
+            AppLogger.log.w('payout history fetch failed: $e');
+            return <String, dynamic>{"payouts": []};
+          }),
         ]);
         analytics.value = results[0] as Map<String, dynamic>;
         split.value = results[1] as Map<String, dynamic>;
@@ -892,7 +1071,7 @@ class _MonetizationPanel extends HookConsumerWidget {
         payoutHistory.value = hist is List ? hist : const [];
         final savedKind = method.value?["method"];
         if (savedKind is String &&
-            _payoutMethodKinds.containsKey(savedKind)) {
+            _payoutMethodKeys.contains(savedKind)) {
           methodKind.value = savedKind;
           payoutMethod.value = savedKind;
         }
@@ -922,7 +1101,7 @@ class _MonetizationPanel extends HookConsumerWidget {
           if (context.mounted) {
             showWalletToast(
               context,
-              "Enter a valid phone number (e.g. +27 82 123 4567).",
+              l10n.payout_phone_invalid,
               icon: DeeMusiqIcons.info,
             );
           }
@@ -941,7 +1120,7 @@ class _MonetizationPanel extends HookConsumerWidget {
           (k, v) => MapEntry(k.toString(), v),
         );
         if (context.mounted) {
-          showWalletToast(context, "Payment destination saved",
+          showWalletToast(context, l10n.payout_destination_saved,
               icon: DeeMusiqIcons.verified);
         }
       } on WalletApiException catch (e) {
@@ -958,7 +1137,7 @@ class _MonetizationPanel extends HookConsumerWidget {
       final pct = int.tryParse(cutInput.text.trim());
       if (pct == null || pct < 0 || pct > 50) {
         if (context.mounted) {
-          showWalletToast(context, "Cut must be 0–50 (30 = default)",
+          showWalletToast(context, l10n.payout_cut_range_hint,
               icon: DeeMusiqIcons.info);
         }
         return;
@@ -972,7 +1151,7 @@ class _MonetizationPanel extends HookConsumerWidget {
         );
         await load();
         if (context.mounted) {
-          showWalletToast(context, "Cut request sent for approval",
+          showWalletToast(context, l10n.payout_cut_request_sent,
               icon: DeeMusiqIcons.verified);
         }
       } on WalletApiException catch (e) {
@@ -989,7 +1168,7 @@ class _MonetizationPanel extends HookConsumerWidget {
       final tokens = int.tryParse(payoutTokens.text.trim());
       if (tokens == null || tokens <= 0) {
         if (context.mounted) {
-          showWalletToast(context, "Enter tokens to cash out",
+          showWalletToast(context, l10n.payout_enter_tokens,
               icon: DeeMusiqIcons.info);
         }
         return;
@@ -997,6 +1176,7 @@ class _MonetizationPanel extends HookConsumerWidget {
       if (saving.value) return;
       saving.value = true;
       try {
+        payoutIdemKey.value ??= const Uuid().v4();
         final res = await WalletApiClient.instance.requestPayout(
           artistId: artistId,
           tokens: tokens,
@@ -1004,16 +1184,21 @@ class _MonetizationPanel extends HookConsumerWidget {
           details: payoutDetails.text.trim().isEmpty
               ? null
               : payoutDetails.text.trim(),
+          idempotencyKey: payoutIdemKey.value,
         );
         payoutTokens.text = "";
         payoutDetails.text = "";
+        payoutIdemKey.value = null;
         await load();
         if (context.mounted) {
           final payout = (res["payout"] as Map?) ?? const {};
+          final payoutId = "${payout["id"] ?? ""}";
+          final payoutStatus = "${payout["status"] ?? "requested"}";
           showWalletToast(
             context,
-            "Payout ${payout["id"] ?? ""} ${payout["status"] ?? "requested"}"
-            "${res["requiresManual"] == true ? " (manual review)" : ""}",
+            res["requiresManual"] == true
+                ? l10n.payout_request_result_manual(payoutId, payoutStatus)
+                : l10n.payout_request_result(payoutId, payoutStatus),
             icon: DeeMusiqIcons.verified,
           );
         }
@@ -1038,11 +1223,11 @@ class _MonetizationPanel extends HookConsumerWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            const Text("Monetization").semiBold(),
+            Text(l10n.payout_monetization).semiBold(),
             const Gap(4),
             Text(error.value!).muted().small(),
             const Gap(8),
-            Button.secondary(onPressed: load, child: const Text("Retry")),
+            Button.secondary(onPressed: load, child: Text(l10n.retry)),
           ],
         ),
       );
@@ -1059,18 +1244,23 @@ class _MonetizationPanel extends HookConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text("Payments & analytics").semiBold(),
+          Text(l10n.payout_analytics_title).semiBold(),
           const Gap(4),
           Text(
-            "Gross ${totals["gross"] ?? 0} · fee ${totals["platformFees"] ?? 0} · "
-            "net ${totals["net"] ?? 0} · ${totals["tips"] ?? 0} tips · "
-            "${totals["listens"] ?? 0} listens",
+            l10n.payout_totals(
+              "${totals["gross"] ?? 0}",
+              "${totals["platformFees"] ?? 0}",
+              "${totals["net"] ?? 0}",
+              "${totals["tips"] ?? 0}",
+              "${totals["listens"] ?? 0}",
+            ),
           ).muted().small(),
           const Gap(12),
-          const Text("Payout destination").small().semiBold(),
+          Text(l10n.payout_destination_title).small().semiBold(),
           const Gap(4),
           if (method.value != null)
-            Text("Saved: ${method.value!["masked"] ?? method.value!["method"]}")
+            Text(l10n.payout_saved_method(
+                    "${method.value!["masked"] ?? method.value!["method"]}"))
                 .muted()
                 .small(),
           const Gap(4),
@@ -1082,17 +1272,17 @@ class _MonetizationPanel extends HookConsumerWidget {
                   if (value != null) methodKind.value = value;
                 },
                 itemBuilder: (context, value) =>
-                    Text(_payoutMethodKinds[value]!),
+                    Text(methodKinds[value] ?? value),
                 popupConstraints: const BoxConstraints(maxWidth: 200),
                 popupWidthConstraint: PopoverConstraint.flexible,
                 popup: (context) => SelectPopup(
                   items: SelectItemBuilder(
-                    childCount: _payoutMethodKinds.length,
+                    childCount: methodKinds.length,
                     builder: (context, index) {
-                      final kind = _payoutMethodKinds.keys.elementAt(index);
+                      final kind = methodKinds.keys.elementAt(index);
                       return SelectItemButton(
                         value: kind,
-                        child: Text(_payoutMethodKinds[kind]!),
+                        child: Text(methodKinds[kind]!),
                       );
                     },
                   ),
@@ -1103,25 +1293,25 @@ class _MonetizationPanel extends HookConsumerWidget {
                 child: TextField(
                   controller: methodInput,
                   placeholder: Text(
-                    _payoutMethodPlaceholders[methodKind.value] ??
-                        "Payout details",
+                    methodHints[methodKind.value] ?? l10n.payout_hint_manual,
                   ),
                 ),
               ),
               const Gap(8),
               Button.secondary(
                 onPressed: saving.value ? null : saveMethod,
-                child: Text(saving.value ? "…" : "Save"),
+                child: Text(saving.value ? "…" : l10n.save),
               ),
             ],
           ),
           const Gap(12),
-          const Text("Platform cut").small().semiBold(),
+          Text(l10n.payout_platform_cut).small().semiBold(),
           const Gap(4),
           Text(
             pending != null
-                ? "Request pending: ${pending["requestedPct"]}% (current $currentCut%)"
-                : "Current cut $currentCut% (artist keeps ${100 - currentCut}%). Request 30% or a custom 0–50%.",
+                ? l10n.payout_cut_pending(
+                    "${pending["requestedPct"]}", currentCut)
+                : l10n.payout_cut_current(currentCut, 100 - currentCut),
           ).muted().small(),
           const Gap(4),
           Row(
@@ -1135,12 +1325,12 @@ class _MonetizationPanel extends HookConsumerWidget {
               const Gap(8),
               Button.secondary(
                 onPressed: saving.value ? null : requestCut,
-                child: const Text("Request cut"),
+                child: Text(l10n.payout_request_cut),
               ),
             ],
           ),
           const Gap(12),
-          const Text("Cash out (tokens → ZAR)").small().semiBold(),
+          Text(l10n.payout_cash_out_title).small().semiBold(),
           const Gap(4),
           Builder(builder: (context) {
             final bal = payoutBalance.value;
@@ -1151,12 +1341,13 @@ class _MonetizationPanel extends HookConsumerWidget {
                     .where((b) => b["artistId"] == artistId)
                     .firstOrNull;
             if (bal == null) {
-              return const Text(
-                      "Balance unavailable — connect backend to cash out.")
-                  .muted()
-                  .small();
+              return Text(l10n.payout_balance_unavailable).muted().small();
             }
             final payable = (mine?["payable"] as num?)?.toInt() ?? 0;
+            // Tips still inside the backend's settlement window — shown
+            // separately from the payable balance (payouts.ts creatorBalance).
+            final pendingSettlement =
+                (mine?["pendingSettlement"] as num?)?.toInt() ?? 0;
             final minTokens =
                 (bal["minTokens"] as num?)?.toInt() ?? 0;
             final rate =
@@ -1165,17 +1356,29 @@ class _MonetizationPanel extends HookConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  "Payable $payable tokens (≈ R${(payable * rate / 100).toStringAsFixed(2)}) · "
-                  "min $minTokens · received ${mine?["received"] ?? 0} · "
-                  "pending ${mine?["pending"] ?? 0} · paid out ${mine?["paidOut"] ?? 0}",
+                  l10n.payout_balance_summary(
+                    payable,
+                    (payable * rate / 100).toStringAsFixed(2),
+                    minTokens,
+                    "${mine?["received"] ?? 0}",
+                    "${mine?["pending"] ?? 0}",
+                    "${mine?["paidOut"] ?? 0}",
+                  ),
                 ).muted().small(),
+                if (pendingSettlement > 0) ...[
+                  const Gap(4),
+                  Text(
+                    l10n.payout_pending_settlement(pendingSettlement),
+                  ).semiBold().small(),
+                  Text(l10n.payout_settlement_explainer).muted().xSmall(),
+                ],
                 const Gap(4),
                 Row(
                   children: [
                     Expanded(
                       child: TextField(
                         controller: payoutTokens,
-                        placeholder: const Text("Tokens"),
+                        placeholder: Text(l10n.payout_tokens_hint),
                       ),
                     ),
                     const Gap(8),
@@ -1183,18 +1386,17 @@ class _MonetizationPanel extends HookConsumerWidget {
                       value: payoutMethod.value,
                       onChanged: (v) {
                         if (v != null) payoutMethod.value = v;
+                        payoutIdemKey.value = null;
                       },
                       itemBuilder: (context, value) =>
-                          Text(_payoutMethodKinds[value]!),
+                          Text(methodKinds[value] ?? value),
                       popup: (context) => SelectPopup(
                         items: SelectItemBuilder(
-                          childCount: _payoutMethodKinds.length,
+                          childCount: methodKinds.length,
                           builder: (context, index) {
-                            final k =
-                                _payoutMethodKinds.keys.elementAt(index);
+                            final k = methodKinds.keys.elementAt(index);
                             return SelectItemButton(
-                                value: k,
-                                child: Text(_payoutMethodKinds[k]!));
+                                value: k, child: Text(methodKinds[k]!));
                           },
                         ),
                       ),
@@ -1202,19 +1404,18 @@ class _MonetizationPanel extends HookConsumerWidget {
                     const Gap(8),
                     Button.secondary(
                       onPressed: saving.value ? null : requestCashout,
-                      child: Text(saving.value ? "…" : "Cash out"),
+                      child: Text(saving.value ? "…" : l10n.payout_cash_out),
                     ),
                   ],
                 ),
                 const Gap(4),
                 TextField(
                   controller: payoutDetails,
-                  placeholder: const Text(
-                      "Settlement details (optional — uses saved method)"),
+                  placeholder: Text(l10n.payout_settlement_hint),
                 ),
                 const Gap(8),
                 if (payoutHistory.value.isEmpty)
-                  const Text("No payout requests yet.").muted().small()
+                  Text(l10n.payout_history_empty).muted().small()
                 else
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1222,8 +1423,18 @@ class _MonetizationPanel extends HookConsumerWidget {
                       for (final p
                           in payoutHistory.value.take(10))
                         Text(
-                          "${(p as Map)["tokens"]} tokens → ${(p["amount"] ?? p["zarMinor"])}c · ${p["status"]}"
-                          "${p["reference"] != null ? " · ${p["reference"]}" : ""}",
+                          (p as Map)["reference"] != null
+                              ? l10n.payout_history_entry_ref(
+                                  "${p["tokens"]}",
+                                  "${p["amount"] ?? p["zarMinor"]}",
+                                  "${p["status"]}",
+                                  "${p["reference"]}",
+                                )
+                              : l10n.payout_history_entry(
+                                  "${p["tokens"]}",
+                                  "${p["amount"] ?? p["zarMinor"]}",
+                                  "${p["status"]}",
+                                ),
                         ).muted().small(),
                     ],
                   ),

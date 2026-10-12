@@ -62,7 +62,10 @@ class LyricsPage extends HookConsumerWidget {
 
             return Align(
               alignment: Alignment.bottomRight,
-              child: Text(context.l10n.powered_by_provider(providerName)),
+              child: Text(
+                context.l10n.powered_by_provider(providerName),
+                style: TextStyle(color: readableOnPaletteColor(palette)),
+              ),
             );
           },
         ),

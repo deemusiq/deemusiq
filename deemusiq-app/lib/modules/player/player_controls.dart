@@ -7,6 +7,7 @@ import 'package:shadcn_flutter/shadcn_flutter.dart';
 
 import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/collections/intents.dart';
+import 'package:deemusiq/components/player/jump_to_timestamp_dialog.dart';
 import 'package:deemusiq/extensions/constrains.dart';
 import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/extensions/duration.dart';
@@ -274,7 +275,7 @@ class PlayerControls extends HookConsumerWidget {
                 ],
               ),
               const SizedBox(height: 5),
-              // Playback speed control row
+              // Playback speed control row + jump-to-timestamp
               if (!compact)
                 Consumer(
                   builder: (context, ref, _) {
@@ -298,6 +299,22 @@ class PlayerControls extends HookConsumerWidget {
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
+                          ),
+                        ),
+                        Tooltip(
+                          tooltip: TooltipContainer(
+                            child: Text(context.l10n.seek_to_timestamp),
+                          ).call,
+                          child: IconButton.ghost(
+                            size: buttonSize,
+                            icon: const Icon(DeeMusiqIcons.clock),
+                            onPressed: () async {
+                              final target =
+                                  await promptJumpToTimestamp(context);
+                              if (target != null) {
+                                await audioPlayer.seek(target);
+                              }
+                            },
                           ),
                         ),
                       ],

@@ -7,6 +7,7 @@ import 'package:deemusiq/services/dio/dio.dart';
 import 'package:deemusiq/services/kv_store/kv_store.dart';
 import 'package:deemusiq/services/logger/logger.dart';
 import 'package:deemusiq/services/youtube_engine/direct_ytdlp_engine.dart';
+import 'package:deemusiq/utils/file_cleanup.dart';
 import 'package:deemusiq/utils/platform.dart';
 import 'package:dio/dio.dart';
 import 'package:path/path.dart' as p;
@@ -338,7 +339,7 @@ class YtDlpProvisioner {
         status(YtDlpInstallPhase.verifying, version: tag);
         final sha256 = await _sha256File(part);
         if (pinned && sha256 != policy.approvedSha256) {
-          await _deleteQuietly(part);
+          await deleteFileQuietly(part, 'YtDlpProvisioner');
           return YtDlpBinaryResolution(
             actualSha256: sha256,
             error: 'yt-dlp SHA-256 is not the approved digest for '
@@ -349,14 +350,14 @@ class YtDlpProvisioner {
         await _makeExecutable(part);
         final version = await _probeVersion(part.path);
         if (!_versionPattern.hasMatch(version)) {
-          await _deleteQuietly(part);
+          await deleteFileQuietly(part, 'YtDlpProvisioner');
           return YtDlpBinaryResolution(
             actualSha256: sha256,
             error: 'yt-dlp reported an unrecognised version: $version',
           );
         }
         if (pinned && version != policy.approvedVersion.trim()) {
-          await _deleteQuietly(part);
+          await deleteFileQuietly(part, 'YtDlpProvisioner');
           return YtDlpBinaryResolution(
             actualSha256: sha256,
             actualVersion: version,
@@ -390,7 +391,7 @@ class YtDlpProvisioner {
           managed: true,
         );
       } catch (error, stack) {
-        await _deleteQuietly(part);
+        await deleteFileQuietly(part, 'YtDlpProvisioner');
         return _installationFailed(error, stack, onStatus);
       }
     } catch (error, stack) {
@@ -639,16 +640,16 @@ class YtDlpProvisioner {
     } catch (error, stack) {
       try {
         await backup.rename(target.path);
-      } catch (_) {}
+      } catch (rollbackError) {
+        // The original error is rethrown below either way — a failed
+        // rollback additionally leaves the old binary at the backup path.
+        AppLogger.log.e(
+          'YtDlpProvisioner: rollback to backup failed: $rollbackError',
+        );
+      }
       Error.throwWithStackTrace(error, stack);
     }
-    await _deleteQuietly(backup);
-  }
-
-  static Future<void> _deleteQuietly(FileSystemEntity entity) async {
-    try {
-      if (await entity.exists()) await entity.delete(recursive: true);
-    } catch (_) {}
+    await deleteFileQuietly(backup, 'YtDlpProvisioner');
   }
 }
 

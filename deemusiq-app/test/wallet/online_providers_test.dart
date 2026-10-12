@@ -40,7 +40,7 @@ void main() {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
-    final entries = await container.read(leaderboardProvider.future);
+    final entries = await container.read(leaderboardProvider(null).future);
     expect(entries, isEmpty);
   });
 

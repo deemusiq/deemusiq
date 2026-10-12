@@ -80,10 +80,13 @@ Known friction points to solve before the MR (be honest in the MR description):
 - **Rust toolchain** + `dart cli/cli.dart install-dependencies` for Android.
 - **Monorepo**: `subdir: deemusiq-app` is required.
 - **Anti-tamper hash check**: the app verifies its own APK hash online and
-  locks the wallet on mismatch — make sure the build works when the published
-  hash endpoint is absent (F-Droid builds are signed by F-Droid, so the hash
-  will never match ours). Flag this to reviewers; the fdroid flavor may need
-  the check disabled via a `--dart-define`.
+  locks the wallet on mismatch — F-Droid builds are signed by F-Droid, so the
+  hash will never match ours. This is handled by a compile-time kill switch:
+  pass `--dart-define=DEEMUSIQ_FDROID=true` in the build (see the `Builds:`
+  skeleton). It disables ONLY the signing-cert check and the published
+  APK-hash check (both assume our release key/artifact); the backend TLS pin
+  probe, payment HMAC and update-metadata signature are untouched. The flag
+  defaults off, so our own CI builds are unaffected.
 
 ## 4. Inclusion-policy risks for a Spotube rebrand — and how to disclose them
 

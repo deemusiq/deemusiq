@@ -26,14 +26,15 @@ class MetadataPluginSavedArtistNotifier
   }
 
   Future<void> addFavorite(List<DeeMusiqFullArtistObject> artists) async {
-    if (artists.isEmpty || state.value == null) return;
-    final oldState = state.value;
+    final current = state.value;
+    if (artists.isEmpty || current == null) return;
+    final oldState = current;
 
     state = AsyncData(
-      state.value!.copyWith(
+      current.copyWith(
         items: [
           ...artists,
-          ...state.value!.items,
+          ...current.items,
         ],
       ),
     );
@@ -43,20 +44,21 @@ class MetadataPluginSavedArtistNotifier
           .save(artists.map((e) => e.id).toList());
     } catch (e) {
       AppLogger.log.w('Failed to save artists: ${e.toString()}');
-      state = AsyncData(oldState!);
+      state = AsyncData(oldState);
       rethrow;
     }
   }
 
   Future<void> removeFavorite(List<DeeMusiqFullArtistObject> artists) async {
-    if (artists.isEmpty || state.value == null) return;
+    final current = state.value;
+    if (artists.isEmpty || current == null) return;
 
-    final oldState = state.value;
+    final oldState = current;
 
     final artistIds = artists.map((e) => e.id).toList();
     state = AsyncData(
-      state.value!.copyWith(
-        items: state.value!.items
+      current.copyWith(
+        items: current.items
             .where(
               (e) => artistIds.contains((e).id) == false,
             )
@@ -68,7 +70,7 @@ class MetadataPluginSavedArtistNotifier
       await (await metadataPlugin).artist.unsave(artistIds);
     } catch (e) {
       AppLogger.log.w('Failed to unsave artists: ${e.toString()}');
-      state = AsyncData(oldState!);
+      state = AsyncData(oldState);
       rethrow;
     }
   }

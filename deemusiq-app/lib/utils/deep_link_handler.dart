@@ -47,6 +47,11 @@ class DeepLinkHandler {
       host == 'youtu.be' || host.endsWith('.youtu.be');
 
   static String? _extractYouTubeId(Uri uri) {
+    // Require an https scheme: without this, a custom-scheme link like
+    // `deemusiq://youtube.com?v=<id>` parses as a YouTube link and navigates
+    // to an arbitrary track. Host matching alone ignores the scheme.
+    final scheme = uri.scheme.toLowerCase();
+    if (scheme != 'https' && scheme != 'http') return null;
     final host = uri.host.toLowerCase();
     if (_isYouTubeShortHost(host)) {
       return uri.pathSegments.isNotEmpty ? uri.pathSegments.first : null;

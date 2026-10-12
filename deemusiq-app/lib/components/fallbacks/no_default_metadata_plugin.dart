@@ -39,10 +39,9 @@ class NoDefaultMetadataPlugin extends StatelessWidget {
                   showDialog(
                     context: context,
                     builder: (ctx) => AlertDialog(
-                      title: const Text("Metadata Providers"),
-                      content: const Text(
-                        "External plugins have been removed. DeeMusiq uses its native backend for metadata.",
-                      ),
+                      title: Text(context.l10n.metadata_providers_title),
+                      content:
+                          Text(context.l10n.metadata_providers_removed_body),
                       actions: [
                         if (onRetry != null)
                           Button.outline(
@@ -51,11 +50,11 @@ class NoDefaultMetadataPlugin extends StatelessWidget {
                               ctx.maybePop();
                               onRetry?.call();
                             },
-                            child: const Text("Retry"),
+                            child: Text(context.l10n.retry),
                           ),
                         Button.primary(
                           onPressed: () => ctx.maybePop(),
-                          child: const Text("OK"),
+                          child: Text(context.l10n.ok),
                         ),
                       ],
                     ),
@@ -66,7 +65,7 @@ class NoDefaultMetadataPlugin extends StatelessWidget {
                 Button.outline(
                   leading: const Icon(DeeMusiqIcons.refresh),
                   onPressed: onRetry,
-                  child: const Text("Retry"),
+                  child: Text(context.l10n.retry),
                 ),
             ],
           ),

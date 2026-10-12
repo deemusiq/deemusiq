@@ -11,6 +11,15 @@ const allowList = [
   "spotify.com",
 ];
 
+/// Host-boundary-safe allowlist test: `example.com` matches
+/// `example.com` and `*.example.com`, but NOT `evilexample.com` or
+/// `example.com.attacker.tld`.
+///
+/// A bare `endsWith` matches any host with that suffix, which would let
+/// `notspotify.com` satisfy the Spotify entry.
+bool _hostMatches(String host, String domain) =>
+    host == domain || host.endsWith('.$domain');
+
 /// SECURITY: Custom HttpOverrides that permits bad certificates ONLY for
 /// Spotify API hosts (a legacy workaround for Spotify's cert issues).
 ///
@@ -27,7 +36,7 @@ class BadCertificateAllowlistOverrides extends HttpOverrides {
     return super.createHttpClient(context)
       ..badCertificateCallback = (X509Certificate cert, String host, int port) {
         return allowList.any((allowedHost) {
-          return host.endsWith(allowedHost);
+          return _hostMatches(host, allowedHost);
         });
       };
   }
@@ -99,6 +108,39 @@ bool validateServerCertSha256(X509Certificate cert) {
   return pins.any((pin) => constantTimeEquals(pin, actual));
 }
 
+const String _backendBaseUrl =
+    String.fromEnvironment("DEEMUSIQ_BACKEND_URL", defaultValue: "");
+
+/// The host the TLS pin applies to.
+///
+/// Prefer the DEDICATED `DEEMUSIQ_PINNED_HOST` define: the pin probe must be
+/// able to locate the host from the PIN configuration alone. It previously
+/// derived the host from `DEEMUSIQ_BACKEND_URL`, which meant a build that had
+/// a pin but no backend URL silently produced a null host — disabling both the
+/// probe and the `badCertificateCallback` pin judgement, i.e. shipping with no
+/// MITM protection at all while the app still looked pin-configured.
+///
+/// Falls back to the backend URL for existing builds; a release build is
+/// expected to set both.
+const String _pinnedHostDefine = String.fromEnvironment(
+  "DEEMUSIQ_PINNED_HOST",
+  defaultValue: "",
+);
+
+String? get _backendPinHost {
+  final explicit = _pinnedHostDefine.trim();
+  if (explicit.isNotEmpty) {
+    final parsed = Uri.tryParse(
+      explicit.contains('://') ? explicit : 'https://$explicit',
+    );
+    final host = parsed?.host;
+    if (host != null && host.isNotEmpty) return host;
+  }
+  if (_backendBaseUrl.isEmpty) return null;
+  final host = Uri.tryParse(_backendBaseUrl)?.host;
+  return host == null || host.isEmpty ? null : host;
+}
+
 /// HttpOverrides that enforces TLS certificate pinning for the backend host
 /// AND allows bad certs only for Spotify API hosts.
 ///
@@ -114,9 +156,15 @@ class DeeMusiqHttpOverrides extends HttpOverrides {
   HttpClient createHttpClient(SecurityContext? context) {
     return super.createHttpClient(context)
       ..badCertificateCallback = (X509Certificate cert, String host, int port) {
-        if (kDebugMode && allowList.any((h) => host.endsWith(h))) return true;
+        if (kDebugMode && allowList.any((h) => _hostMatches(host, h))) return true;
 
-        if (serverCertPinningEnabled) {
+        // The pin judges ONLY the backend host. Where this callback fires for
+        // every handshake (Android/iOS), applying it to unrelated hosts would
+        // reject their valid certificates and break playback/metadata calls.
+        final pinnedHost = _backendPinHost;
+        if (serverCertPinningEnabled &&
+            pinnedHost != null &&
+            host == pinnedHost) {
           return validateServerCertSha256(cert);
         }
 
@@ -144,6 +192,12 @@ enum BackendPinProbeState {
   /// configured pin — a valid-but-wrong cert (compromised CA / MITM proxy).
   /// Money features must lock, exactly like a tampered build.
   failed,
+
+  /// A pin IS configured but the host it applies to could not be resolved.
+  /// This is a build-time misconfiguration, not a benign dev build, so it is
+  /// treated as [failed] and locks money rather than silently disabling the
+  /// control.
+  misconfigured,
 
   /// The backend could not be reached (offline / DNS / timeout). Verdict
   /// deferred: callers degrade to normal offline behavior and lock NOTHING.
@@ -175,6 +229,7 @@ class BackendCertPinProbe {
   static bool? get backendPinVerified => switch (state.value) {
         BackendPinProbeState.verified => true,
         BackendPinProbeState.failed => false,
+        BackendPinProbeState.misconfigured => false,
         _ => null,
       };
 
@@ -189,12 +244,27 @@ class BackendCertPinProbe {
   /// Starts the startup probe, the periodic refresh and the
   /// connectivity-regain re-probe. [backendBaseUrl] is passed in (rather than
   /// imported from the wallet services) to keep this module dependency-light.
+  ///
+  /// The probe locates its host from [_backendPinHost] (the dedicated
+  /// `DEEMUSIQ_PINNED_HOST` define, falling back to [backendBaseUrl]) rather
+  /// than from [backendBaseUrl] alone, so a build with a pin configured always
+  /// runs the probe. A pin that cannot be located is [misconfigured], which
+  /// locks money — never `disabled`, which would ship silently unprotected.
   static void start(String backendBaseUrl) {
     if (_started) return;
     _started = true;
     _backendBaseUrl = backendBaseUrl;
-    if (!serverCertPinningEnabled || backendBaseUrl.isEmpty) {
+    if (!serverCertPinningEnabled) {
       state.value = BackendPinProbeState.disabled;
+      return;
+    }
+    final host = _backendPinHost;
+    if (host == null) {
+      state.value = BackendPinProbeState.misconfigured;
+      AppLogger.log.e(
+        'BackendCertPinProbe: a TLS pin is configured but no pinned host could '
+        'be resolved — set DEEMUSIQ_PINNED_HOST. Locking wallet.',
+      );
       return;
     }
     unawaited(verify());
@@ -222,17 +292,19 @@ class BackendCertPinProbe {
       state.value = BackendPinProbeState.disabled;
       return state.value;
     }
-    final base = _backendBaseUrl;
-    final uri = base == null ? null : Uri.tryParse(base);
-    if (uri == null || uri.host.isEmpty) {
-      state.value = BackendPinProbeState.disabled;
+    final host = _backendPinHost;
+    if (host == null) {
+      state.value = BackendPinProbeState.misconfigured;
       return state.value;
     }
-    final port = uri.hasPort ? uri.port : 443;
+    final baseUri = _backendBaseUrl == null
+        ? null
+        : Uri.tryParse(_backendBaseUrl ?? '');
+    final port = (baseUri != null && baseUri.hasPort) ? baseUri.port : 443;
     SecureSocket? socket;
     try {
       socket = await SecureSocket.connect(
-        uri.host,
+        host,
         port,
         // Platform validation is bypassed ON PURPOSE here: the probe's whole
         // job is to judge the peer certificate against the pin itself, so a
@@ -251,9 +323,10 @@ class BackendCertPinProbe {
           '(possible MITM / compromised CA)',
         );
       }
-    } catch (_) {
+    } catch (e) {
       // Offline, DNS failure, timeout, handshake reset: degrade to the normal
       // offline behavior — an unreachable host is not tamper evidence.
+      AppLogger.log.d('BackendCertPinProbe unreachable: $e');
       state.value = BackendPinProbeState.unreachable;
     } finally {
       socket?.destroy();

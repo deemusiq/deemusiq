@@ -6,6 +6,7 @@ import 'package:shadcn_flutter/shadcn_flutter_extension.dart';
 import 'package:deemusiq/collections/routes.gr.dart';
 import 'package:deemusiq/collections/deemusiq_icons.dart';
 import 'package:deemusiq/components/wallet/wallet_common.dart';
+import 'package:deemusiq/extensions/context.dart';
 import 'package:deemusiq/provider/wallet/wallet_provider.dart';
 import 'package:deemusiq/services/logger/logger.dart';
 
@@ -72,7 +73,7 @@ class PushSongDialog extends HookConsumerWidget {
         if (ok) {
           showWalletToast(
             context,
-            "Pushed \"$title\" with ${amount.value} tokens 🚀",
+            context.l10n.push_success(title, amount.value),
             icon: DeeMusiqIcons.boost,
           );
           Navigator.pop(context);
@@ -80,15 +81,12 @@ class PushSongDialog extends HookConsumerWidget {
           // Online failures (backend refused / unreachable) set lastActionError;
           // otherwise the push was blocked by the local balance check.
           final reason = ref.read(walletProvider.notifier).lastActionError;
-          showWalletToast(context, reason ?? "Not enough tokens for that push");
+          showWalletToast(context, reason ?? context.l10n.push_not_enough);
         }
       } catch (e, stack) {
         AppLogger.reportError(e, stack, 'PushSongDialog.push');
         if (context.mounted) {
-          showWalletToast(
-            context,
-            "Something went wrong — refresh your wallet before trying again.",
-          );
+          showWalletToast(context, context.l10n.push_failed);
         }
       } finally {
         if (context.mounted) pushing.value = false;
@@ -100,7 +98,7 @@ class PushSongDialog extends HookConsumerWidget {
         children: [
           const Icon(DeeMusiqIcons.boost, color: deeMusiqOrange),
           const Gap(8),
-          Expanded(child: const Text("Push this song").large()),
+          Expanded(child: Text(context.l10n.push_dialog_title).large()),
         ],
       ),
       content: ConstrainedBox(
@@ -117,11 +115,11 @@ class PushSongDialog extends HookConsumerWidget {
                 const Icon(DeeMusiqIcons.token,
                     color: deeMusiqOrange, size: 16),
                 const Gap(6),
-                Text("Balance: ${formatTokens(balance)} tokens").small(),
+                Text(context.l10n.token_balance(formatTokens(balance))).small(),
               ],
             ),
             const Gap(12),
-            const Text("How many tokens?").muted().small(),
+            Text(context.l10n.push_how_many).muted().small(),
             const Gap(8),
             Wrap(
               spacing: 8,
@@ -148,7 +146,9 @@ class PushSongDialog extends HookConsumerWidget {
                   const Gap(10),
                   Expanded(
                     child: Text(
-                      "Pushing boosts this song on the DeeMusiq trending board and supports ${artist == "" ? "the artist" : artist}.",
+                      context.l10n.push_explainer(artist == ""
+                          ? context.l10n.push_the_artist
+                          : artist),
                     ).muted().small(),
                   ),
                 ],
@@ -157,7 +157,7 @@ class PushSongDialog extends HookConsumerWidget {
             if (!canAfford) ...[
               const Gap(12),
               Text(
-                "You need ${amount.value - balance} more tokens for this push.",
+                context.l10n.push_need_more(amount.value - balance),
                 style: TextStyle(
                   color: context.theme.colorScheme.destructive,
                 ),
@@ -169,7 +169,7 @@ class PushSongDialog extends HookConsumerWidget {
       actions: [
         Button.outline(
           onPressed: () => Navigator.pop(context),
-          child: const Text("Cancel"),
+          child: Text(context.l10n.cancel),
         ),
         if (!canAfford)
           Button.secondary(
@@ -177,11 +177,13 @@ class PushSongDialog extends HookConsumerWidget {
               Navigator.pop(context);
               context.navigateTo(const TokenStoreRoute());
             },
-            child: const Text("Get tokens"),
+            child: Text(context.l10n.get_tokens),
           ),
         Button.primary(
           onPressed: canAfford && !pushing.value ? push : null,
-          child: Text(pushing.value ? "Pushing…" : "Push ${amount.value}"),
+          child: Text(pushing.value
+              ? context.l10n.push_pushing
+              : context.l10n.push_amount(amount.value)),
         ),
       ],
     );

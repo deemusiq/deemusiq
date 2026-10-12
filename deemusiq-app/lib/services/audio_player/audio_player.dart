@@ -1,11 +1,12 @@
 
+import 'dart:math';
+
 import 'package:media_kit/media_kit.dart' hide Track;
 import 'package:deemusiq/models/metadata/metadata.dart';
 import 'package:deemusiq/services/ad_roll/ad_roll_service.dart';
 import 'package:deemusiq/services/logger/logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:deemusiq/services/audio_player/custom_player.dart';
-import 'package:deemusiq/services/audio_player/audio_equalizer.dart';
 
 import 'package:media_kit/media_kit.dart' as mk;
 import 'package:path/path.dart' show basename;
@@ -69,8 +70,25 @@ extension on DeeMusiqTrackObject {
           .isEncryptedTrack((this as DeeMusiqLocalTrackObject).path);
 }
 
+/// dB → linear gain for per-track loudness normalization, clamped to ±15 dB
+/// so a broken/malicious DTO value can't blast or mute playback.
+double loudnessGainLinear(double gainDb) {
+  return pow(10.0, gainDb.clamp(-15.0, 15.0) / 20.0).toDouble();
+}
+
 abstract class AudioPlayerInterface {
   final CustomPlayer _mkPlayer;
+
+  /// The user-set volume (0–1), tracked separately from the per-track
+  /// loudness gain so the two combine multiplicatively and `volume` keeps
+  /// reporting what the USER set (interruption duck/restore, Connect peers
+  /// and the ad player all key off it).
+  double userVolume = 1.0;
+
+  /// The active track's catalog gain in dB (`gainDb` from the track DTO), or
+  /// null when the track carries no measurement — mpv's dynaudnorm stays the
+  /// catch-all for those (see setTrackGainDb/setAudioNormalization).
+  double? trackGainDb;
 
   AudioPlayerInterface()
       : _mkPlayer = CustomPlayer(
@@ -80,18 +98,6 @@ abstract class AudioPlayerInterface {
             async: true,
           ),
         ) {
-    // Duplicate subscription removed — CustomPlayer._onMediaKitError handles this.
-    // _mkPlayer.stream.error.listen((event) {
-    //   AppLogger.log.e('AudioPlayer error: $event');
-    //   AppLogger.reportError(event, StackTrace.current, 'AudioPlayer error');
-    //   AudioErrorHandler.instance.handleError(
-    //     event is Exception ? event : Exception(event.toString()),
-    //     StackTrace.current,
-    //     context: 'AudioPlayer stream',
-    //     canSkipTrack: true,
-    //   );
-    // });
-
     // Wire up the error handler's retry/skip callbacks to this player
     AudioErrorHandler.instance.onSkipRequested = () {
       try {
@@ -169,9 +175,10 @@ abstract class AudioPlayerInterface {
     return _mkPlayer.state.playlistMode;
   }
 
-  /// Returns the current volume of the player, between 0 and 1
+  /// Returns the current USER volume of the player, between 0 and 1 (the
+  /// per-track normalization gain is applied on top and not reflected here).
   double get volume {
-    return _mkPlayer.state.volume / 100;
+    return userVolume;
   }
 
   bool get isBuffering {

@@ -183,7 +183,7 @@ class TrackOptions extends HookConsumerWidget {
               DeeMusiqIcons.boost,
               color: deeMusiqOrange,
             ),
-            title: const Text("Push this song"),
+            title: Text(context.l10n.push_dialog_title),
           ),
         if (isAuthenticated && !isLocalTrack) ...[
           ButtonTile(
@@ -309,7 +309,7 @@ class TrackOptions extends HookConsumerWidget {
               );
             },
             leading: const Icon(DeeMusiqIcons.speaker),
-            title: const Text("Send to nearby device"),
+            title: Text(context.l10n.share_nearby_title),
           ),
         if (!isLocalTrack)
           ButtonTile(
@@ -341,7 +341,7 @@ class TrackOptions extends HookConsumerWidget {
               DeeMusiqIcons.flag,
               color: deeMusiqOrange,
             ),
-            title: const Text("Report"),
+            title: Text(context.l10n.report),
           ),
       ],
     );

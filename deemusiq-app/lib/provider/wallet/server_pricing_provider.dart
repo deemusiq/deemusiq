@@ -13,11 +13,16 @@ class ServerPricedPack {
   final String priceLabel;
   final String currencyCode;
 
+  /// The backend's authoritative zero-decimal flag for this currency. Absent
+  /// on older servers, so it defaults to false (2dp) rather than guessing.
+  final bool zeroDecimal;
+
   const ServerPricedPack({
     required this.pack,
     required this.price,
     required this.priceLabel,
     required this.currencyCode,
+    this.zeroDecimal = false,
   });
 
   factory ServerPricedPack.fromJson(Map<String, dynamic> json) {
@@ -33,6 +38,7 @@ class ServerPricedPack {
       price: (json["price"] as num?)?.toDouble() ?? 0,
       priceLabel: json["priceLabel"] as String? ?? "",
       currencyCode: json["currencyCode"] as String? ?? "",
+      zeroDecimal: json["zeroDecimal"] == true,
     );
   }
 }

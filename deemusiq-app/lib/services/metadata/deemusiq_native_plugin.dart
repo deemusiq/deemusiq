@@ -24,9 +24,11 @@ import 'package:deemusiq/services/youtube_engine/youtube_engine.dart';
 import 'package:deemusiq/services/youtube_engine/yt_dlp_engine.dart';
 import 'package:deemusiq/services/youtube_engine/direct_ytdlp_engine.dart';
 import 'package:deemusiq/services/youtube_engine/yt_dlp_provisioner.dart';
-import 'package:youtube_explode_dart/youtube_explode_dart.dart' show Video, StreamManifest;
+import 'package:youtube_explode_dart/youtube_explode_dart.dart'
+    show Video, StreamManifest;
 import 'package:deemusiq/services/audio_player/audio_error_handler.dart';
 import 'package:deemusiq/services/audio_player/audio_quality.dart';
+import 'package:deemusiq/services/audio_player/data_saver.dart';
 import 'package:deemusiq/services/artist_info/artist_info_service.dart';
 import 'package:deemusiq/services/connectivity/engine_failover.dart';
 import 'package:deemusiq/services/content_filter.dart';
@@ -49,7 +51,16 @@ final PluginConfiguration kDeeMusiqNativePluginConfig = PluginConfiguration(
   ],
 );
 
-
+/// Source repository of the built-in native provider. The external plugin
+/// store is gone, but the distribution origin still needs exactly one home —
+/// the About page renders this instead of a duplicated hardcoded link.
+final kDeeMusiqPluginRepository = MetadataPluginRepository(
+  name: 'deemusiq',
+  owner: 'deemusiq',
+  description: "DeeMusiq's own catalog — artists, albums and tracks.",
+  repoUrl: 'https://deemusiq.co.za/',
+  topics: const ['music', 'metadata', 'flutter'],
+);
 
 // ── Playable-source encoding ─────────────────────────────────────────────────
 // Each track carries its audio source in `externalUri` so the audio-source
@@ -94,6 +105,11 @@ bool _isNotFound(Object error) =>
 // albums. Their ids carry this prefix so the album endpoint knows to resolve
 // them through the YouTube engine instead of the catalog API.
 const _ytAlbumIdPrefix = "yt:";
+
+/// Stable section id for a browse-fallback query, used as both the section id
+/// and the tail of its `deemusiq:section:` external uri.
+String _fallbackSectionId(String query) =>
+    query.replaceAll(" ", "_").toLowerCase();
 final _youtubeVideoIdShape = RegExp(r'^[A-Za-z0-9_-]{11}$');
 
 /// Extracts the YouTube video id from an album id fabricated by the browse
@@ -158,8 +174,9 @@ class _CatalogApi {
   /// URL (`/metadata/audio/<id>?e=…&s=…`), regardless of whether the backend
   /// is configured in this build.
   static bool isCatalogStreamUrl(String source) {
-    final raw =
-        source.startsWith(_urlPrefix) ? source.substring(_urlPrefix.length) : source;
+    final raw = source.startsWith(_urlPrefix)
+        ? source.substring(_urlPrefix.length)
+        : source;
     final uri = Uri.tryParse(raw);
     if (uri == null || !uri.hasAuthority) return false;
     return RegExp(r'^/metadata/audio/[^/]+$').hasMatch(uri.path) &&
@@ -231,12 +248,14 @@ class _CatalogApi {
           );
         }
         if (attempt >= _maxAttempts) {
-          AppLogger.log.w('Catalog API failed after $_maxAttempts attempts: $path — ${e.toString()}');
+          AppLogger.log.w(
+              'Catalog API failed after $_maxAttempts attempts: $path — ${e.toString()}');
           AppLogger.reportError(e, stack);
           rethrow;
         }
         final delay = _backoff[(attempt - 1).clamp(0, _backoff.length - 1)];
-        AppLogger.log.w('Catalog API attempt $attempt/$_maxAttempts failed: $path — retrying in ${delay.inMilliseconds}ms');
+        AppLogger.log.w(
+            'Catalog API attempt $attempt/$_maxAttempts failed: $path — retrying in ${delay.inMilliseconds}ms');
         await Future.delayed(delay);
       }
     }
@@ -245,7 +264,8 @@ class _CatalogApi {
   Future<Map<String, dynamic>?> search(String q, String type, int limit) =>
       _get("/metadata/search", query: {"q": q, "type": type, "limit": limit});
   Future<Map<String, dynamic>?> home() => _get("/metadata/home");
-  Future<Map<String, dynamic>?> artist(String id) => _get("/metadata/artist/$id");
+  Future<Map<String, dynamic>?> artist(String id) =>
+      _get("/metadata/artist/$id");
   Future<Map<String, dynamic>?> album(String id) => _get("/metadata/album/$id");
   Future<Map<String, dynamic>?> playlist(String id) =>
       _get("/metadata/playlist/$id");
@@ -269,6 +289,23 @@ Future<bool> fetchCatalogArtistVerified(String artistId) async {
     AppLogger.reportError(e, stack);
     return false;
   }
+}
+
+/// When the data saver is active, keep only the cheapest audio stream — the
+/// mirror of the ad player picking the HIGHEST bitrate (ads optimize startup,
+/// the saver optimizes bytes). Pass-through otherwise.
+Future<List<DeeMusiqAudioSourceStreamObject>> _dataSaverStreams(
+    List<DeeMusiqAudioSourceStreamObject> streams) async {
+  if (streams.length <= 1 || !await DataSaverService.isActive()) {
+    return streams;
+  }
+  final lowest = lowestBitrateOf(streams, (s) => s.bitrate);
+  if (lowest == null) return streams;
+  AppLogger.log.i(
+    'Data saver: picked lowest-bitrate stream '
+    '(${lowest.bitrate?.round() ?? 0} bps of ${streams.length})',
+  );
+  return [lowest];
 }
 
 List<DeeMusiqImageObject> _images(String? url) =>
@@ -348,6 +385,9 @@ DeeMusiqFullTrackObject _track(Map t) {
     durationMs: (t["durationMs"] as num?)?.toInt() ?? 0,
     isrc: "",
     explicit: t["explicit"] == true,
+    loudnessDb: (t["loudnessDb"] as num?)?.toDouble(),
+    gainDb: (t["gainDb"] as num?)?.toDouble(),
+    liteUrl: t["liteUrl"] as String?,
   ) as DeeMusiqFullTrackObject;
 }
 
@@ -360,9 +400,8 @@ DeeMusiqFullTrackObject _catalogFeedTrack(Map s) {
   final artist = (s["artistName"] ?? "").toString();
   final youtubeId = (s["youtubeId"] ?? "").toString();
   final streamUrl = (s["streamUrl"] ?? "").toString();
-  final playUri = streamUrl.isNotEmpty
-      ? "$_urlPrefix$streamUrl"
-      : "$_ytPrefix$youtubeId";
+  final playUri =
+      streamUrl.isNotEmpty ? "$_urlPrefix$streamUrl" : "$_ytPrefix$youtubeId";
   final cover = s["coverUrl"] as String?;
   final albumRef = s["album"] as Map?;
   return DeeMusiqTrackObject.full(
@@ -396,6 +435,9 @@ DeeMusiqFullTrackObject _catalogFeedTrack(Map s) {
     durationMs: (s["durationMs"] as num?)?.toInt() ?? 0,
     isrc: "",
     explicit: s["explicit"] == true,
+    loudnessDb: (s["loudnessDb"] as num?)?.toDouble(),
+    gainDb: (s["gainDb"] as num?)?.toDouble(),
+    liteUrl: s["liteUrl"] as String?,
   ) as DeeMusiqFullTrackObject;
 }
 
@@ -435,7 +477,8 @@ class _NativeSearch extends MetadataPluginSearchEndpoint {
   _NativeSearch(this.api, this._allEngines) : super();
 
   @override
-  List<String> get chips => const ["all", "tracks", "artists", "albums", "playlists"];
+  List<String> get chips =>
+      const ["all", "tracks", "artists", "albums", "playlists"];
 
   /// Maps a YouTube [Video] search result to a [DeeMusiqFullTrackObject].
   DeeMusiqFullTrackObject _videoToTrack(Video video) {
@@ -514,8 +557,7 @@ class _NativeSearch extends MetadataPluginSearchEndpoint {
         if (d != null) {
           final albums = _list(d["albums"]).map(_simpleAlbum).toList();
           final artists = _list(d["artists"]).map(_fullArtist).toList();
-          final playlists =
-              _list(d["playlists"]).map(_simplePlaylist).toList();
+          final playlists = _list(d["playlists"]).map(_simplePlaylist).toList();
           final validTracks = _list(d["tracks"])
               .map(_track)
               .where((t) => t.externalUri.isNotEmpty)
@@ -531,9 +573,7 @@ class _NativeSearch extends MetadataPluginSearchEndpoint {
           // Tracks-only miss: the catalog DID match in other sections — keep
           // those matches and backfill just the tracks from YouTube, instead
           // of discarding the catalog's albums/artists/playlists wholesale.
-          if (albums.isNotEmpty ||
-              artists.isNotEmpty ||
-              playlists.isNotEmpty) {
+          if (albums.isNotEmpty || artists.isNotEmpty || playlists.isNotEmpty) {
             return DeeMusiqSearchResponseObject(
               albums: albums,
               artists: artists,
@@ -545,7 +585,8 @@ class _NativeSearch extends MetadataPluginSearchEndpoint {
           // the full YouTube fallback below.
         }
       } catch (e, stack) {
-        AppLogger.log.w('Backend search "all" failed, falling back to YouTube: ${e.toString()}');
+        AppLogger.log.w(
+            'Backend search "all" failed, falling back to YouTube: ${e.toString()}');
         AppLogger.reportError(e, stack);
         // Fall through to YouTube fallback
       }
@@ -562,14 +603,17 @@ class _NativeSearch extends MetadataPluginSearchEndpoint {
 
   @override
   Future<DeeMusiqPaginationResponseObject<DeeMusiqSimpleAlbumObject>> albums(
-      String query, {int? limit, int? offset}) async {
+      String query,
+      {int? limit,
+      int? offset}) async {
     if (!api.isConfigured) return _page(const []);
     try {
       final d = await api.search(query, "album", limit ?? 20);
       if (d == null) return _page(const []);
       return _page(_list(d["albums"]).map(_simpleAlbum).toList());
     } catch (e, stack) {
-      AppLogger.log.w('Backend album search failed for "$query": ${e.toString()}');
+      AppLogger.log
+          .w('Backend album search failed for "$query": ${e.toString()}');
       AppLogger.reportError(e, stack);
       return _page(const []);
     }
@@ -577,14 +621,17 @@ class _NativeSearch extends MetadataPluginSearchEndpoint {
 
   @override
   Future<DeeMusiqPaginationResponseObject<DeeMusiqFullArtistObject>> artists(
-      String query, {int? limit, int? offset}) async {
+      String query,
+      {int? limit,
+      int? offset}) async {
     if (!api.isConfigured) return _page(const []);
     try {
       final d = await api.search(query, "artist", limit ?? 20);
       if (d == null) return _page(const []);
       return _page(_list(d["artists"]).map(_fullArtist).toList());
     } catch (e, stack) {
-      AppLogger.log.w('Backend artist search failed for "$query": ${e.toString()}');
+      AppLogger.log
+          .w('Backend artist search failed for "$query": ${e.toString()}');
       AppLogger.reportError(e, stack);
       return _page(const []);
     }
@@ -599,7 +646,8 @@ class _NativeSearch extends MetadataPluginSearchEndpoint {
       if (d == null) return _page(const []);
       return _page(_list(d["playlists"]).map(_simplePlaylist).toList());
     } catch (e, stack) {
-      AppLogger.log.w('Backend playlist search failed for "$query": ${e.toString()}');
+      AppLogger.log
+          .w('Backend playlist search failed for "$query": ${e.toString()}');
       AppLogger.reportError(e, stack);
       return _page(const []);
     }
@@ -607,7 +655,9 @@ class _NativeSearch extends MetadataPluginSearchEndpoint {
 
   @override
   Future<DeeMusiqPaginationResponseObject<DeeMusiqFullTrackObject>> tracks(
-      String query, {int? limit, int? offset}) async {
+      String query,
+      {int? limit,
+      int? offset}) async {
     final lim = limit ?? 20;
     // Try backend first
     if (api.isConfigured) {
@@ -615,13 +665,15 @@ class _NativeSearch extends MetadataPluginSearchEndpoint {
         final d = await api.search(query, "track", lim);
         if (d != null) {
           final tracks = _list(d["tracks"]).map(_track).toList();
-          final validTracks = tracks.where((t) => t.externalUri.isNotEmpty).toList();
+          final validTracks =
+              tracks.where((t) => t.externalUri.isNotEmpty).toList();
           if (validTracks.isNotEmpty) {
             return _page(validTracks);
           }
         }
       } catch (e, stack) {
-        AppLogger.log.w('Backend track search failed for "$query", falling back to YouTube: ${e.toString()}');
+        AppLogger.log.w(
+            'Backend track search failed for "$query", falling back to YouTube: ${e.toString()}');
         AppLogger.reportError(e, stack);
         // Fall through to YouTube fallback
       }
@@ -719,7 +771,8 @@ class _NativeAlbum extends MetadataPluginAlbumEndpoint {
       return DeeMusiqFullAlbumObject(
         id: (a["id"] ?? "").toString(),
         name: (a["title"] ?? "").toString(),
-        artists: artistRef != null ? [_simpleArtistFromRef(artistRef)] : const [],
+        artists:
+            artistRef != null ? [_simpleArtistFromRef(artistRef)] : const [],
         images: _images(a["coverUrl"] as String?),
         releaseDate: (a["releaseDate"] ?? "").toString(),
         externalUri: "deemusiq:album:$id",
@@ -742,7 +795,9 @@ class _NativeAlbum extends MetadataPluginAlbumEndpoint {
 
   @override
   Future<DeeMusiqPaginationResponseObject<DeeMusiqFullTrackObject>> tracks(
-      String id, {int? offset, int? limit}) async {
+      String id,
+      {int? offset,
+      int? limit}) async {
     try {
       final a = await api.album(id);
       if (a == null) {
@@ -782,7 +837,8 @@ class _NativeAlbum extends MetadataPluginAlbumEndpoint {
           if (albums.isNotEmpty) return _page(albums);
         }
       } catch (e, stack) {
-        AppLogger.log.w('Backend home (releases) failed, falling back to YouTube: ${e.toString()}');
+        AppLogger.log.w(
+            'Backend home (releases) failed, falling back to YouTube: ${e.toString()}');
         AppLogger.reportError(e, stack);
         // Fall through to YouTube fallback
       }
@@ -844,7 +900,8 @@ class _NativeArtist extends MetadataPluginArtistEndpoint {
       return artist;
     }
     try {
-      final url = await ArtistInfoService.instance.fetchArtistImage(artist.name);
+      final url =
+          await ArtistInfoService.instance.fetchArtistImage(artist.name);
       if (url == null) return artist;
       return artist.copyWith(images: [DeeMusiqImageObject(url: url)]);
     } catch (e, stack) {
@@ -876,14 +933,17 @@ class _NativeArtist extends MetadataPluginArtistEndpoint {
 
   @override
   Future<DeeMusiqPaginationResponseObject<DeeMusiqFullTrackObject>> topTracks(
-      String id, {int? offset, int? limit}) async {
+      String id,
+      {int? offset,
+      int? limit}) async {
     try {
       final a = await api.artist(id);
       if (a != null) {
         return _page(_list(a["topTracks"]).map(_track).toList());
       }
     } catch (e, stack) {
-      AppLogger.log.w('Failed to fetch top tracks for artist $id: ${e.toString()}');
+      AppLogger.log
+          .w('Failed to fetch top tracks for artist $id: ${e.toString()}');
       AppLogger.reportError(e, stack);
     }
     // Backend can't serve this artist (offline build, outage, or a
@@ -901,14 +961,17 @@ class _NativeArtist extends MetadataPluginArtistEndpoint {
           .toList();
       return _page(tracks);
     } catch (e, stack) {
-      AppLogger.reportError(e, stack, 'NativeArtist.topTracks YouTube fallback $id');
+      AppLogger.reportError(
+          e, stack, 'NativeArtist.topTracks YouTube fallback $id');
       return _page(const <DeeMusiqFullTrackObject>[]);
     }
   }
 
   @override
   Future<DeeMusiqPaginationResponseObject<DeeMusiqSimpleAlbumObject>> albums(
-      String id, {int? offset, int? limit}) async {
+      String id,
+      {int? offset,
+      int? limit}) async {
     try {
       final a = await api.artist(id);
       if (a == null) return _page(const []);
@@ -923,13 +986,16 @@ class _NativeArtist extends MetadataPluginArtistEndpoint {
   /// Related artists: other published artists on the platform, busiest first.
   @override
   Future<DeeMusiqPaginationResponseObject<DeeMusiqFullArtistObject>> related(
-      String id, {int? offset, int? limit}) async {
+      String id,
+      {int? offset,
+      int? limit}) async {
     if (!api.isConfigured) return _page(const []);
     try {
       final d = await api._get("/metadata/artist/$id/related");
       return _page(_list(d?["artists"]).map(_fullArtist).toList());
     } catch (e, stack) {
-      AppLogger.log.w('Failed to fetch related artists for $id: ${e.toString()}');
+      AppLogger.log
+          .w('Failed to fetch related artists for $id: ${e.toString()}');
       AppLogger.reportError(e, stack, 'NativeArtist.related $id');
       return _page(const <DeeMusiqFullArtistObject>[]);
     }
@@ -977,7 +1043,9 @@ class _NativePlaylist extends MetadataPluginPlaylistEndpoint {
 
   @override
   Future<DeeMusiqPaginationResponseObject<DeeMusiqFullTrackObject>> tracks(
-      String id, {int? offset, int? limit}) async {
+      String id,
+      {int? offset,
+      int? limit}) async {
     try {
       final p = await api.playlist(id);
       // Backend not configured (offline build): nothing to serve, but not a
@@ -991,7 +1059,8 @@ class _NativePlaylist extends MetadataPluginPlaylistEndpoint {
       }
       // Real failures (offline, 5xx) must reach the detail page's ErrorBox
       // instead of silently rendering an empty playlist.
-      AppLogger.log.w('Failed to fetch playlist tracks for $id: ${e.toString()}');
+      AppLogger.log
+          .w('Failed to fetch playlist tracks for $id: ${e.toString()}');
       AppLogger.reportError(e, stack);
       rethrow;
     }
@@ -1180,8 +1249,7 @@ class _NativeTrack extends MetadataPluginTrackEndpoint {
 /// [WalletApiClient] instead, so no remote call is duplicated here.
 class _LocalSaves {
   static Set<String> _load(String key) =>
-      (KVStoreService.sharedPreferences.getStringList(key) ?? const [])
-          .toSet();
+      (KVStoreService.sharedPreferences.getStringList(key) ?? const []).toSet();
 
   static void _store(String key, Set<String> set) =>
       KVStoreService.sharedPreferences.setStringList(key, set.toList());
@@ -1275,7 +1343,12 @@ class _NativeBrowse extends MetadataPluginBrowseEndpoint {
 
   @override
   Future<DeeMusiqPaginationResponseObject<DeeMusiqBrowseSectionObject<Object>>>
-      sections({int? offset, int? limit}) async {
+      sections({
+    int? offset,
+    int? limit,
+    void Function(List<DeeMusiqBrowseSectionObject<Object>> sections)?
+        onSection,
+  }) async {
     // 1) Try the real backend first.
     if (api.isConfigured) {
       try {
@@ -1310,10 +1383,16 @@ class _NativeBrowse extends MetadataPluginBrowseEndpoint {
               items: mapped,
             ));
           }
-          if (sections.isNotEmpty) return _page(sections);
+          if (sections.isNotEmpty) {
+            // One payload resolves at a time here, so there is nothing to
+            // stream — emit the whole feed in a single batch.
+            onSection?.call(sections);
+            return _page(sections);
+          }
         }
       } catch (e, stack) {
-        AppLogger.log.w('Backend home (browse) failed, falling back to YouTube: ${e.toString()}');
+        AppLogger.log.w(
+            'Backend home (browse) failed, falling back to YouTube: ${e.toString()}');
         AppLogger.reportError(e, stack);
         // Fall through to YouTube fallback
       }
@@ -1327,33 +1406,41 @@ class _NativeBrowse extends MetadataPluginBrowseEndpoint {
       "Gqom 2026": "Gqom 2026",
     };
 
-    // Fetch all sections in parallel, each with its own deadline — sequential
-    // engine failover per query can otherwise keep the home page on
-    // "building your timeline" for minutes when one query hangs.
-    final results = await Future.wait(
-      fallbackQueries.entries.map(
-        (entry) => _youtubeAlbumSearch(entry.value, 10)
-            .timeout(const Duration(seconds: 45), onTimeout: () => const []),
-      ),
-    );
+    final entries = fallbackQueries.entries.toList();
+    final resolved = <String, List<DeeMusiqSimpleAlbumObject>>{};
+    var emittedCount = 0;
 
-    final sections = <DeeMusiqBrowseSectionObject<Object>>[];
-    var index = 0;
-    for (final entry in fallbackQueries.entries) {
-      final albums = results[index++];
-      if (albums.isNotEmpty) {
-        sections.add(DeeMusiqBrowseSectionObject<Object>(
-          id: entry.key.replaceAll(" ", "_").toLowerCase(),
-          title: entry.key,
-          externalUri:
-              "deemusiq:section:${entry.key.replaceAll(" ", "_").toLowerCase()}",
-          browseMore: false,
-          items: albums,
-        ));
+    // Built in declaration order regardless of completion order, so the feed
+    // does not reshuffle as the faster searches land.
+    List<DeeMusiqBrowseSectionObject<Object>> collect() => [
+          for (final entry in entries)
+            if (resolved[entry.key]?.isNotEmpty ?? false)
+              DeeMusiqBrowseSectionObject<Object>(
+                id: _fallbackSectionId(entry.key),
+                title: entry.key,
+                externalUri:
+                    "deemusiq:section:${_fallbackSectionId(entry.key)}",
+                browseMore: false,
+                items: resolved[entry.key]!,
+              ),
+        ];
+
+    // Each search carries its own deadline — sequential engine failover per
+    // query can otherwise keep the home page loading for minutes when one
+    // hangs. Emitting per completion rather than awaiting all four behind a
+    // single Future.wait means the page paints each section the moment it is
+    // ready instead of staying blank until the slowest one lands.
+    await Future.wait(entries.map((entry) async {
+      resolved[entry.key] = await _youtubeAlbumSearch(entry.value, 10)
+          .timeout(const Duration(seconds: 45), onTimeout: () => const []);
+      final ready = collect();
+      if (ready.length > emittedCount) {
+        emittedCount = ready.length;
+        onSection?.call(ready);
       }
-    }
+    }));
 
-    return _page(sections);
+    return _page(collect());
   }
 
   /// Items for one browse section. The backend's home feed already returns
@@ -1368,7 +1455,8 @@ class _NativeBrowse extends MetadataPluginBrowseEndpoint {
     final cached = _sectionCache;
     if (cached == null ||
         _sectionCacheAt == null ||
-        DateTime.now().difference(_sectionCacheAt!) > const Duration(minutes: 5)) {
+        DateTime.now().difference(_sectionCacheAt!) >
+            const Duration(minutes: 5)) {
       final fresh = <String, List<Object>>{};
       try {
         final page = await sections();
@@ -1508,7 +1596,8 @@ class _NativeUser extends MetadataPluginUserEndpoint {
         if (a != null) artists.add(_fullArtist(a));
       } catch (e, stack) {
         // Artist may have left the catalog — log it and keep going.
-        AppLogger.log.w('savedArtists: artist $id unavailable: ${e.toString()}');
+        AppLogger.log
+            .w('savedArtists: artist $id unavailable: ${e.toString()}');
         AppLogger.reportError(e, stack, 'NativeUser.savedArtists $id');
       }
     }
@@ -1527,7 +1616,8 @@ class _NativeUser extends MetadataPluginUserEndpoint {
       return List.filled(ids.length, false);
     }
     try {
-      final liked = (await WalletApiClient.instance.fetchLikedTrackIds()).toSet();
+      final liked =
+          (await WalletApiClient.instance.fetchLikedTrackIds()).toSet();
       return ids.map(liked.contains).toList();
     } catch (e) {
       AppLogger.log.w('isSavedTracks failed: ${e.toString()}');
@@ -1570,7 +1660,8 @@ class _NativeCore extends MetadataPluginCore {
   /// independently of the app (updates are delivered by the in-app updater,
   /// see RootAppUpdateDialog). Hence: no plugin-level update available.
   @override
-  Future<PluginUpdateAvailable?> checkUpdate(PluginConfiguration pluginConfig) async =>
+  Future<PluginUpdateAvailable?> checkUpdate(
+          PluginConfiguration pluginConfig) async =>
       null;
 
   @override
@@ -1685,7 +1776,8 @@ class _NativeAudioSource extends MetadataPluginAudioSourceEndpoint {
       ];
     }
     if (track.name.isEmpty) {
-      AppLogger.log.w('Cannot search YouTube: track has no name (id: ${track.id})');
+      AppLogger.log
+          .w('Cannot search YouTube: track has no name (id: ${track.id})');
       return const [];
     }
     final searchQuery = StringBuffer(track.name);
@@ -1774,7 +1866,8 @@ class _NativeAudioSource extends MetadataPluginAudioSourceEndpoint {
         AppLogger.log.w(
           'Catalog backend unavailable for $id (${error.runtimeType}) — trying direct YouTube playback',
         );
-        AppLogger.reportError(error, stack, 'Catalog unavailable YouTube fallback');
+        AppLogger.reportError(
+            error, stack, 'Catalog unavailable YouTube fallback');
         final fallback = await _youtubeFallbackStreams(match);
         if (fallback.isNotEmpty) return fallback;
         rethrow;
@@ -1785,6 +1878,24 @@ class _NativeAudioSource extends MetadataPluginAudioSourceEndpoint {
               ? 'Catalog unavailable'
               : 'Catalog track $id is unavailable: no DeeMusiq backend configured (offline build)',
         );
+      }
+      // Data saver: the catalog may mint a low-bitrate lite rendition
+      // (`liteUrl` on the track DTO, served by
+      // /metadata/audio/:trackId?quality=lite). When the saver is active it
+      // replaces the full source. The track JSON is re-fetched on every
+      // resolution, so this URL is as fresh as the signed full URL below.
+      final liteUrl = (track['liteUrl'] as String?)?.trim() ?? '';
+      if (liteUrl.isNotEmpty && await DataSaverService.isActive()) {
+        final resolved =
+            liteUrl.startsWith('http') ? liteUrl : '${api.baseUrl}$liteUrl';
+        AppLogger.log.i('Data saver: playing lite rendition of $id');
+        return [
+          DeeMusiqAudioSourceStreamObject(
+            url: resolved,
+            container: 'webm',
+            type: DeeMusiqMediaCompressionType.lossy,
+          ),
+        ];
       }
       final streamUrl = track['streamUrl'] as String?;
       uri = streamUrl != null && streamUrl.isNotEmpty
@@ -1800,10 +1911,12 @@ class _NativeAudioSource extends MetadataPluginAudioSourceEndpoint {
         // Fast path: try primary engine directly first (no failover overhead)
         StreamManifest manifest;
         try {
-          manifest = await youtubeEngine.getStreamManifest(videoId)
+          manifest = await youtubeEngine
+              .getStreamManifest(videoId)
               .timeout(const Duration(seconds: 15));
         } catch (e, stack) {
-          AppLogger.log.i('Primary engine failed for $videoId, trying failover...');
+          AppLogger.log
+              .i('Primary engine failed for $videoId, trying failover...');
           AppLogger.reportError(e, stack);
           manifest = await EngineFailover.tryEngines(
             engines: allEngines,
@@ -1827,7 +1940,7 @@ class _NativeAudioSource extends MetadataPluginAudioSourceEndpoint {
         AppLogger.log.i(
           'Returning ${filteredStreams.length} streams for $videoId after quality filtering',
         );
-        return filteredStreams
+        return _dataSaverStreams(filteredStreams
             .map(
               (s) => DeeMusiqAudioSourceStreamObject(
                 url: s.url.toString(),
@@ -1836,14 +1949,15 @@ class _NativeAudioSource extends MetadataPluginAudioSourceEndpoint {
                 bitrate: s.bitrate.bitsPerSecond.toDouble(),
               ),
             )
-            .toList();
+            .toList());
       } catch (e, stack) {
         if (e is EngineFailoverException) {
           AppLogger.log.w(
             'Engine failover exhausted for $videoId: ${e.message} — Errors: ${e.errors.join(" | ")}',
           );
         } else {
-          AppLogger.log.w('Failed to get YouTube streams for $videoId: ${e.toString()}');
+          AppLogger.log
+              .w('Failed to get YouTube streams for $videoId: ${e.toString()}');
         }
         AppLogger.reportError(e, stack);
 
@@ -1856,31 +1970,36 @@ class _NativeAudioSource extends MetadataPluginAudioSourceEndpoint {
           // and the managed yt-dlp build is stale — pull the latest release
           // before the retry sweep (desktop only; no-op on Android where
           // yt-dlp engines are unavailable).
-          if (allEngines.any((e) => e is YtDlpEngine || e is DirectYtDlpEngine)) {
+          if (allEngines
+              .any((e) => e is YtDlpEngine || e is DirectYtDlpEngine)) {
             try {
               await YtDlpProvisioner.instance.resolveOrInstall(
                 forceLatest: true,
               );
             } catch (updateErr, updateStack) {
-              AppLogger.log.w('yt-dlp force-update before retry failed: $updateErr');
-              AppLogger.reportError(updateErr, updateStack, 'yt-dlp escalation');
+              AppLogger.log
+                  .w('yt-dlp force-update before retry failed: $updateErr');
+              AppLogger.reportError(
+                  updateErr, updateStack, 'yt-dlp escalation');
             }
           }
           final retryManifest = await EngineFailover.tryEngines(
             engines: allEngines,
             operation: (eng) => eng.getStreamManifest(videoId),
           );
-          final retryStreams = YouTubeAudioQualityService.filterStreams(retryManifest.audioOnly);
+          final retryStreams =
+              YouTubeAudioQualityService.filterStreams(retryManifest.audioOnly);
           if (retryStreams.isNotEmpty) {
-            AppLogger.log.i('Retry succeeded: ${retryStreams.length} streams for $videoId');
-            return retryStreams
+            AppLogger.log.i(
+                'Retry succeeded: ${retryStreams.length} streams for $videoId');
+            return _dataSaverStreams(retryStreams
                 .map((s) => DeeMusiqAudioSourceStreamObject(
-                  url: s.url.toString(),
-                  container: s.container.name,
-                  type: DeeMusiqMediaCompressionType.lossy,
-                  bitrate: s.bitrate.bitsPerSecond.toDouble(),
-                ))
-                .toList();
+                      url: s.url.toString(),
+                      container: s.container.name,
+                      type: DeeMusiqMediaCompressionType.lossy,
+                      bitrate: s.bitrate.bitsPerSecond.toDouble(),
+                    ))
+                .toList());
           }
         } catch (retryErr) {
           AppLogger.log.w('Retry also failed for $videoId: $retryErr');
@@ -1988,12 +2107,11 @@ class _NativeAudioSource extends MetadataPluginAudioSourceEndpoint {
     );
     if (fallbackStreams.isNotEmpty) {
       AudioErrorHandler.instance.notifyPlaybackFallback(
-        'DeeMusiq servers unreachable — playing from YouTube',
+        const AudioUserMessage(AudioErrorMessage.fallbackSource),
       );
     }
     return fallbackStreams;
   }
-
 }
 
 /// Wires the native endpoints onto a [MetadataPlugin]-shaped object. Used by the

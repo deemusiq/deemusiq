@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:deemusiq/models/metadata/metadata.dart';
 import 'package:deemusiq/provider/metadata_plugin/metadata_plugin_provider.dart';
+import 'package:deemusiq/provider/wallet/rewards_provider.dart';
 import 'package:deemusiq/services/logger/logger.dart';
 
 typedef ScrobbleEvent = ({DeeMusiqTrackObject track, int listenedMs, int durationMs});
@@ -48,6 +49,10 @@ class MetadataPluginScrobbleNotifier
           "listened_ms": listenedMs,
           "isrc": track is DeeMusiqFullTrackObject ? track.isrc : null,
         });
+        // A completed scrobble is the verified-play path the backend credits
+        // rewards inside — drop the cached status so the next wallet view
+        // refetches. No-op while nothing watches the provider.
+        ref.invalidate(rewardsStatusProvider);
       } catch (e, stack) {
         AppLogger.reportError(e, stack);
       }
