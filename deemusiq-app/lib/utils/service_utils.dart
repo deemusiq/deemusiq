@@ -22,10 +22,12 @@ import 'package:collection/collection.dart';
 import 'package:html/parser.dart' as parser;
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:deemusiq/collections/env.dart';
+import 'package:path/path.dart' as p;
 
 import 'package:version/version.dart';
 
@@ -491,6 +493,18 @@ abstract class ServiceUtils {
     WidgetRef ref,
   ) async {
     if (!Env.enableUpdateChecker) return;
+    // The NSIS installer's privacy page offers an update-check opt-out
+    // (SignPath Foundation requires an install-time disable option); it writes
+    // this sentinel next to the executable. Honor it before any network I/O.
+    if (kIsWindows) {
+      final sentinel = File(
+        p.join(
+          p.dirname(Platform.resolvedExecutable),
+          'install-no-update-check',
+        ),
+      );
+      if (sentinel.existsSync()) return;
+    }
     final database = ref.read(databaseProvider);
     final checkUpdate = await (database.selectOnly(database.preferencesTable)
           ..addColumns([database.preferencesTable.checkUpdate])
