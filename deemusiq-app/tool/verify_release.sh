@@ -8,6 +8,8 @@
 #   • APK signed by a different keystore than DEEMUSIQ_CERT_SHA256 pins
 #     (e.g. secrets rotated mid-build) → app fails its own anti-tamper check
 #   • APK sha256 sidecar disagreeing with the APK → integrity check chaos
+#   • Windows payload/installer missing a valid Authenticode signature, or
+#     signed by two different identities → "Unknown publisher" / looks tampered
 #
 # Presence checks grep the compiled bundle for the exact string WITHOUT
 # printing it — these are compile-time values shipped in the binary anyway
@@ -112,6 +114,58 @@ if [ "$PLATFORM" = "android" ]; then
     sidecar=$(awk '{print $1}' dist/DeeMusiq.apk.sha256)
     real=$(sha256sum "$APK" | awk '{print $1}')
     if [ "$sidecar" = "$real" ]; then ok "sha256 sidecar consistent"; else bad "sha256 sidecar mismatch"; fi
+  fi
+fi
+
+if [ "$PLATFORM" = "windows" ]; then
+  echo "== Authenticode signing =="
+  # Every shipped executable must carry a valid Authenticode signature. Unsigned
+  # payloads show "Unknown publisher", and a payload/installer identity mismatch
+  # reads as tampering, so both are checked.
+  if ! command -v powershell.exe >/dev/null 2>&1; then
+    bad "powershell.exe unavailable — cannot verify Authenticode signatures"
+  else
+    signed_ok=0
+    unsigned=""
+    # Payload binaries (always present at gate time) plus the installer, once
+    # the packaging step has produced it.
+    while IFS= read -r target; do
+      [ -n "$target" ] || continue
+      status=$(powershell.exe -NoProfile -NonInteractive -Command \
+        "\$s = Get-AuthenticodeSignature -LiteralPath '$target'; \$s.Status" \
+        | tr -d '\r')
+      case "$status" in
+        Valid) signed_ok=$((signed_ok + 1)) ;;
+        *) unsigned="$unsigned\n  - $(basename "$target"): ${status:-NotSigned}" ;;
+      esac
+    done <<EOF
+$(find build/windows/x64/runner/Release -maxdepth 1 -type f \
+    \( -name '*.exe' -o -name '*.dll' \) 2>/dev/null; \
+  ls dist/*.exe 2>/dev/null || true)
+EOF
+    if [ "$signed_ok" -gt 0 ]; then
+      ok "$signed_ok binary/binaries carry a valid Authenticode signature"
+    else
+      # Fail closed: an empty scan must not read as "everything is signed".
+      bad "no signed Windows binaries found — the signing step did not run or produced nothing"
+    fi
+    if [ -n "$unsigned" ]; then
+      bad "unsigned or invalid Authenticode signature on:$unsigned"
+    fi
+
+    # Signer identity must match across payload and installer: users judge trust
+    # by the publisher name, and a mismatch between the two is a red flag.
+    subs=$(powershell.exe -NoProfile -NonInteractive -Command \
+      "Get-ChildItem -Path 'build/windows/x64/runner/Release','dist' -Include *.exe -Recurse -File -ErrorAction SilentlyContinue |
+         ForEach-Object { (Get-AuthenticodeSignature -LiteralPath \$_.FullName).SignerCertificate.Subject } |
+         Where-Object { \$_ } | Sort-Object -Unique" | tr -d '\r' | grep -v '^$')
+    count=$(printf '%s\n' "$subs" | grep -c . || true)
+    if [ "${count:-0}" -gt 1 ]; then
+      bad "multiple signer identities across binaries — a release must carry one:"
+      printf '%s\n' "$subs" | sed 's/^/    /'
+    elif [ "${count:-0}" -eq 1 ]; then
+      ok "single signer identity: $(printf '%s' "$subs" | head -1)"
+    fi
   fi
 fi
 

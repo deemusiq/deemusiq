@@ -7,6 +7,8 @@ on:
 
 permissions:
   contents: write
+  # The SignPath action reads job details and downloads workflow artifacts.
+  actions: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -66,6 +68,10 @@ jobs:
     # permission_handler_windows. VS 2022 only warns. Revisit once the plugins
     # move to C++20 <coroutine>.
     runs-on: windows-2022
+    env:
+      # 'true' when the SignPath Foundation signing integration is configured
+      # (secret SIGNPATH_API_TOKEN present); otherwise signtool fallback runs.
+      SIGNPATH_ENABLED: ${{ secrets.SIGNPATH_API_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2.18.0
@@ -137,6 +143,138 @@ jobs:
             --dart-define=DEEMUSIQ_SERVER_CERT_SHA256="$env:DEEMUSIQ_SERVER_CERT_SHA256" `
             --dart-define=DEEMUSIQ_PINNED_HOST="$env:DEEMUSIQ_PINNED_HOST"
 
+      # Authenticode signing. Primary identity: SignPath Foundation (free OSS
+      # program, see CODE_SIGNING_POLICY.md) — attempted when the
+      # SIGNPATH_API_TOKEN secret is set. The unsigned payload goes up as a
+      # workflow artifact, an Approver approves the signing request in the
+      # SignPath UI (2h timeout), and the signed payload is extracted over
+      # Release/. The installer is signed the same way after packaging —
+      # SignPath cannot deep-sign NSIS installers, so a release needs two
+      # approved signing requests.
+      #
+      # FALLBACK: if SignPath is not configured OR any SignPath step fails or
+      # is not approved, the release switches to signtool for BOTH payload and
+      # installer (AUTHENTICODE_CERT_BASE64 .pfx + AUTHENTICODE_CERT_PASSWORD,
+      # else a SELF-SIGNED cert) — a release always carries ONE signing
+      # identity. The SignPath steps are continue-on-error so the job survives;
+      # each fallback keys off the previous step's `outcome`, not `conclusion`.
+      # Without a PUBLICLY TRUSTED certificate Windows shows "Unknown
+      # publisher" and SmartScreen warns until the publisher accumulates
+      # reputation — Microsoft documents that a self-signed cert behaves
+      # identically to no signature at all, so the fallback keeps the pipeline
+      # signature-correct (the release gate enforces a signature) but does NOT
+      # clear SmartScreen. Never rotate a public certificate near a release:
+      # publisher reputation carries forward only for an identical signing
+      # identity, while file-hash reputation resets on every build anyway.
+      - name: Upload unsigned payload (SignPath)
+        if: env.SIGNPATH_ENABLED == 'true'
+        id: upload-binaries
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-binaries-unsigned
+          path: deemusiq-app/build/windows/x64/runner/Release/**
+          if-no-files-found: error
+
+      - name: Sign Windows binaries (SignPath)
+        if: steps.upload-binaries.outcome == 'success'
+        id: signpath-binaries
+        continue-on-error: true
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          artifact-configuration-slug: ${{ vars.SIGNPATH_BINARIES_CONFIG_SLUG }}
+          github-artifact-id: ${{ steps.upload-binaries.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 7200
+          output-artifact-directory: deemusiq-app/signed-binaries
+
+      - name: Install signed payload (SignPath)
+        if: steps.signpath-binaries.outcome == 'success'
+        id: signpath-payload
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $buildDir = Resolve-Path "build/windows/x64/runner/Release"
+          # upload-artifact zips with Release/ as root and SignPath returns the
+          # same tree signed — mirror it over the build output.
+          Copy-Item -Path "signed-binaries\*" -Destination $buildDir -Recurse -Force
+          $signed = @(
+            Get-ChildItem -Path $buildDir -Include *.exe, *.dll -Recurse -File |
+              Where-Object { (Get-AuthenticodeSignature $_.FullName).Status -eq "Valid" }
+          )
+          if ($signed.Count -eq 0) { throw "SignPath step produced no validly signed binaries" }
+          $subject = (Get-AuthenticodeSignature $signed[0].FullName).SignerCertificate.Subject
+          Write-Host "Signed payload: $($signed.Count) binaries, publisher '$subject'"
+
+      # Runs when SignPath is not configured (its steps are skipped) or any of
+      # them failed — outcome is 'skipped'/'failure' then, never 'success'.
+      - name: Sign Windows binaries (signtool)
+        if: steps.signpath-payload.outcome != 'success'
+        shell: pwsh
+        env:
+          AUTHENTICODE_CERT_BASE64: ${{ secrets.AUTHENTICODE_CERT_BASE64 }}
+          AUTHENTICODE_CERT_PASSWORD: ${{ secrets.AUTHENTICODE_CERT_PASSWORD }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          if ($env:SIGNPATH_ENABLED -eq 'true') {
+            Write-Host "::warning::SignPath payload signing failed or was not approved — falling back to signtool for the WHOLE release so payload and installer carry one identity."
+          }
+          # signtool ships in the Windows SDK; pick the newest x64 build.
+          $signtool = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin" `
+            -Filter signtool.exe -Recurse -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -match '\\x64\\' } |
+            Sort-Object FullName -Descending | Select-Object -First 1
+          if (-not $signtool) { throw "signtool.exe not found on runner" }
+
+          $cert = $null
+          if ($env:AUTHENTICODE_CERT_BASE64) {
+            $pfx = Join-Path $env:RUNNER_TEMP "auth.pfx"
+            [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:AUTHENTICODE_CERT_BASE64))
+            $pw = ConvertTo-SecureString $env:AUTHENTICODE_CERT_PASSWORD -AsPlainText -Force
+            $cert = Import-PfxCertificate -FilePath $pfx -CertStoreLocation Cert:\CurrentUser\My -Password $pw
+            Write-Host "Signing with AUTHENTICODE_CERT_BASE64 (publisher reputation applies)."
+          } else {
+            Write-Host "::warning::No AUTHENTICODE_CERT_BASE64 — generating a SELF-SIGNED certificate."
+            Write-Host "::warning::Windows will still show SmartScreen 'Windows protected your PC'. A self-signed cert is treated exactly like an unsigned binary. This step exists so the pipeline is signature-correct today."
+            $cert = New-SelfSignedCertificate `
+              -Subject "CN=DeeMusiq, O=The Dembe Group, L=KwaZulu-Natal, C=ZA" `
+              -Type CodeSigningCert -CertStoreLocation Cert:\CurrentUser\My `
+              -NotAfter (Get-Date).AddYears(2)
+            # A self-signed chain resolves nowhere, so Get-AuthenticodeSignature
+            # (release gate + installer check) reports UnknownError on it. Add
+            # the cert to the ephemeral runner's Trusted Root so local
+            # verification can see the signature; end-user machines still
+            # correctly treat it as untrusted.
+            $rootStore = New-Object System.Security.Cryptography.X509Certificates.X509Store("Root", "LocalMachine")
+            $rootStore.Open("ReadWrite")
+            $rootStore.Add($cert)
+            $rootStore.Close()
+          }
+
+          $thumb = $cert.Thumbprint
+          $buildDir = Resolve-Path "build/windows/x64/runner/Release"
+          $targets = @(
+            Get-ChildItem -Path $buildDir -Include *.exe, *.dll -Recurse -File
+          )
+          if ($targets.Count -eq 0) { throw "no binaries found to sign in $buildDir" }
+
+          foreach ($t in $targets) {
+            # RFC 3161 timestamp so the signature outlives the certificate.
+            & $signtool.FullName sign /sha1 $thumb /fd SHA256 /td SHA256 `
+              /tr "http://timestamp.digicert.com" /v $t.FullName | Out-Null
+            if ($LASTEXITCODE -ne 0) { throw "signtool failed on $($t.FullName)" }
+          }
+          Write-Host "Signed $($targets.Count) binaries with thumbprint $thumb"
+          # Keep the thumbprint for the installer's "same identity" signing.
+          # The certificate itself stays in CurrentUser\My for the installer
+          # step below and is removed there — a release must carry one identity.
+          "thumb=$thumb" | Out-File -FilePath $env:GITHUB_ENV -Append
+
       - name: Verify release artifact
         # Hard gate before packaging/upload: TLS pin, backend URL, channel key
         # and payment HMAC must actually be baked into the bundle.
@@ -160,17 +298,68 @@ jobs:
           $version = (Select-String -Path pubspec.yaml -Pattern '^version:').Line -replace 'version:\s*', ''
 
           # Create NSIS installer script
+          # NOTE: this is a PowerShell expandable here-string, so every literal
+          # NSIS "$" must be escaped as `$" (a backtick). $version is the one
+          # deliberate interpolation.
           $nsis = @"
           !include "MUI2.nsh"
+          !include "nsDialogs.nsh"
+
           Name "DeeMusiq"
           OutFile "$distAbs\DeeMusiq-windows-x86_64-setup.exe"
           InstallDir `"`$PROGRAMFILES64\DeeMusiq`"
           RequestExecutionLevel admin
           !insertmacro MUI_PAGE_WELCOME
           !insertmacro MUI_PAGE_DIRECTORY
+          Page custom CreatePrivacyPage
           !insertmacro MUI_PAGE_INSTFILES
           !insertmacro MUI_PAGE_FINISH
           !insertmacro MUI_LANGUAGE "English"
+
+          ; SignPath Foundation requires software that transmits user data to
+          ; systems the user did not specify to (a) describe that in a privacy
+          ; policy, (b) DISPLAY it during installation and (c) offer an
+          ; installation option to disable those functions. DeeMusiq's only
+          ; OPTIONAL outbound transfer is the update check, so that is what this
+          ; opt-out governs. It cannot be a --dart-define because the binary is
+          ; compiled before makensis runs, so the choice is persisted as a
+          ; sentinel file next to the executable that deemusiq.exe reads.
+          !define PRIV_OPT_OUT_FILE "install-no-update-check"
+
+          Var PRIV_TEXT
+          Var PRIV_TEXT_HANDLE
+          Var PRIV_TEXT_FONT
+          Var PRIV_DIALOG
+          Var UpdateCheckBox
+
+          Function CreatePrivacyPage
+            !insertmacro MUI_HEADER_TEXT "Privacy &Data Transmission" "What DeeMusiq sends, and how to turn it off"
+            !insertmacro MUI_FINISHPAGE_TEXTBOX "`$PRIV_TEXT_HANDLE" "`$PRIV_TEXT" rds_en.lstr "`$PRIV_TEXT_FONT" "https://deemusiq.co.za/privacy"
+            !insertmacro MUI_FINISHPAGE_SHOW
+            !insertmacro MUI_PAGE_SHOW_TEXT
+
+            nsDialogs::Create /CURRENT `$0
+            Pop `$PRIV_DIALOG
+            CreateFont "`$PRIV_TEXT_FONT" "Microsoft Sans Serif" 9
+            ; Styled as a normal MUI2 button so it matches the rest of the wizard.
+            !insertmacro MUI_FINISHPAGE_TEXTBOX_SET_POSITION
+            nsDialogs::Create /CURRENT `$0
+            Pop `$PRIV_DIALOG
+            `${NSD_CreateCheckBox} 0 20u 185u 300u 10u "Check for application updates automatically"
+            Pop `$UpdateCheckBox
+            `${NSD_Unchecked} `$UpdateCheckBox
+            nsDialogs::Show
+          FunctionEnd
+
+          Function LeavePrivacyPage
+            `${NSD_GetState} `$UpdateCheckBox `$0
+            StrCmp `$0 "0" dont_write 0
+            ClearErrors
+            FileOpen `$0 "`$INSTDIR\${PRIV_OPT_OUT_FILE}" w
+            FileClose `$0
+            dont_write:
+          FunctionEnd
+
           Section "Install"
             SetOutPath `$INSTDIR
             File /r "$buildDirAbs\*"
@@ -184,6 +373,7 @@ jobs:
             WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\DeeMusiq" "DisplayVersion" "$version"
             WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\DeeMusiq" "Publisher" "The Dembe Group"
           SectionEnd
+
           Section "Uninstall"
             Delete "`$INSTDIR\*.*"
             RMDir /r "`$INSTDIR"
@@ -203,14 +393,139 @@ jobs:
           # Also create portable zip
           Compress-Archive -Path "$buildDir\*" -DestinationPath "dist/DeeMusiq-windows-x86_64-portable.zip"
 
+          Get-ChildItem dist/
+
+      - name: Upload unsigned installer (SignPath)
+        # Only worth attempting if the payload request succeeded — otherwise
+        # the payload is already signtool-signed and the installer must match.
+        if: steps.signpath-payload.outcome == 'success'
+        id: upload-installer
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer-unsigned
+          path: deemusiq-app/dist/DeeMusiq-windows-x86_64-setup.exe
+          if-no-files-found: error
+
+      - name: Sign installer (SignPath)
+        if: steps.upload-installer.outcome == 'success'
+        id: signpath-installer
+        continue-on-error: true
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          artifact-configuration-slug: ${{ vars.SIGNPATH_INSTALLER_CONFIG_SLUG }}
+          github-artifact-id: ${{ steps.upload-installer.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 7200
+          output-artifact-directory: deemusiq-app/signed-installer
+
+      - name: Install signed installer (SignPath)
+        if: steps.signpath-installer.outcome == 'success'
+        id: signpath-installer-done
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $signed = Get-ChildItem "signed-installer" -Filter *.exe -Recurse -File | Select-Object -First 1
+          if (-not $signed) { throw "SignPath step produced no signed installer" }
+          Copy-Item $signed.FullName "dist\DeeMusiq-windows-x86_64-setup.exe" -Force
+          $sig = Get-AuthenticodeSignature "dist\DeeMusiq-windows-x86_64-setup.exe"
+          if ($sig.Status -ne "Valid") {
+            throw "installer signature is $($sig.Status) — refusing to upload"
+          }
+          Write-Host "Installer signed: $($sig.SignerCertificate.Subject)"
+
+      # Sign the installer with the SAME identity as the payload — the
+      # publisher name users see comes from here, and a mismatch between
+      # installer and payload signatures reads as tampering.
+      - name: Sign installer (signtool)
+        if: steps.signpath-installer-done.outcome != 'success'
+        shell: pwsh
+        env:
+          AUTHENTICODE_CERT_BASE64: ${{ secrets.AUTHENTICODE_CERT_BASE64 }}
+          AUTHENTICODE_CERT_PASSWORD: ${{ secrets.AUTHENTICODE_CERT_PASSWORD }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $signtool = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin" `
+            -Filter signtool.exe -Recurse -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -match '\\x64\\' } |
+            Sort-Object FullName -Descending | Select-Object -First 1
+          if (-not $signtool) { throw "signtool.exe not found on runner" }
+
+          # Normal path: the payload signtool step already imported/created the
+          # cert and published its thumbprint. The other case is the rare split
+          # — payload SignPath-signed but the installer request failed — where
+          # the WHOLE release switches to signtool so no artifact mixes
+          # identities: cert setup, payload re-sign, then rebuild the installer
+          # and portable zip (makensis froze the payload into the installer at
+          # packaging time, so both must be regenerated).
+          $thumb = $env:thumb
+          if (-not $thumb) {
+            Write-Host "::warning::SignPath installer signing failed after the payload succeeded — re-signing the whole release with signtool."
+            $cert = $null
+            if ($env:AUTHENTICODE_CERT_BASE64) {
+              $pfx = Join-Path $env:RUNNER_TEMP "auth.pfx"
+              [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:AUTHENTICODE_CERT_BASE64))
+              $pw = ConvertTo-SecureString $env:AUTHENTICODE_CERT_PASSWORD -AsPlainText -Force
+              $cert = Import-PfxCertificate -FilePath $pfx -CertStoreLocation Cert:\CurrentUser\My -Password $pw
+            } else {
+              Write-Host "::warning::No AUTHENTICODE_CERT_BASE64 — generating a SELF-SIGNED certificate (SmartScreen will still warn)."
+              $cert = New-SelfSignedCertificate `
+                -Subject "CN=DeeMusiq, O=The Dembe Group, L=KwaZulu-Natal, C=ZA" `
+                -Type CodeSigningCert -CertStoreLocation Cert:\CurrentUser\My `
+                -NotAfter (Get-Date).AddYears(2)
+              # See the payload step: trust the self-signed cert on this
+              # ephemeral runner so the verification below reports Valid.
+              $rootStore = New-Object System.Security.Cryptography.X509Certificates.X509Store("Root", "LocalMachine")
+              $rootStore.Open("ReadWrite")
+              $rootStore.Add($cert)
+              $rootStore.Close()
+            }
+            $thumb = $cert.Thumbprint
+            $buildDir = Resolve-Path "build/windows/x64/runner/Release"
+            foreach ($t in @(Get-ChildItem -Path $buildDir -Include *.exe, *.dll -Recurse -File)) {
+              & $signtool.FullName sign /sha1 $thumb /fd SHA256 /td SHA256 `
+                /tr "http://timestamp.digicert.com" /v $t.FullName | Out-Null
+              if ($LASTEXITCODE -ne 0) { throw "signtool failed on $($t.FullName)" }
+            }
+            & "C:\Program Files (x86)\NSIS\makensis.exe" dist/installer.nsi
+            if ($LASTEXITCODE -ne 0) { throw "makensis re-run exited $LASTEXITCODE" }
+            Compress-Archive -Path "$buildDir\*" -DestinationPath "dist/DeeMusiq-windows-x86_64-portable.zip" -Force
+          }
+
+          $installer = Resolve-Path "dist\DeeMusiq-windows-x86_64-setup.exe"
+          & $signtool.FullName sign /sha1 $thumb /fd SHA256 /td SHA256 `
+            /tr "http://timestamp.digicert.com" /v $installer.Path | Out-Null
+          if ($LASTEXITCODE -ne 0) { throw "signtool failed on installer" }
+
+          $sig = Get-AuthenticodeSignature $installer.Path
+          if ($sig.Status -ne "Valid") {
+            throw "installer signature is $($sig.Status) — refusing to upload"
+          }
+          Write-Host "Installer signed: $($sig.SignerCertificate.Subject)"
+
+          # Now that the installer exists, leave no key material behind.
+          Remove-CertStore -CertStoreLocation Cert:\CurrentUser\My `
+            -CertThumbprint $thumb -DeleteAll -Confirm:$false
+          if ($env:AUTHENTICODE_CERT_BASE64) {
+            Remove-Item (Join-Path $env:RUNNER_TEMP "auth.pfx") -ErrorAction SilentlyContinue
+          }
+
+      - name: Publish sha256 sidecars
+        shell: pwsh
+        run: |
           # Publish a sha256 sidecar per artifact — the site displays it next
           # to the download button and the download worker serves it at
-          # /downloads/<platform>.sha256 for the app's integrity check.
+          # /downloads/<platform>.sha256 for the app's integrity check. Must run
+          # AFTER final signing: the installer exe is replaced by its signed
+          # copy above, so hashing at packaging time would publish stale sums.
           Get-ChildItem dist/DeeMusiq-windows-*.exe, dist/DeeMusiq-windows-*.zip | ForEach-Object {
             "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower())  $($_.Name)" | Out-File -Encoding ascii "$($_.FullName).sha256"
           }
-
-          Get-ChildItem dist/
 
       - uses: actions/upload-artifact@v4
         with:
