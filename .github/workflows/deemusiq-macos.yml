@@ -114,6 +114,7 @@ jobs:
           DEEMUSIQ_UPDATE_URL: ${{ vars.DEEMUSIQ_UPDATE_URL }}
           DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY: ${{ vars.DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY }}
           DEEMUSIQ_SERVER_CERT_SHA256: ${{ steps.tlspin.outputs.pin }}
+          DEEMUSIQ_PINNED_HOST: ${{ vars.DEEMUSIQ_PINNED_HOST }}
           # Google OAuth web client ID (public by design). Empty = Google
           # sign-in silently falls back to device auth.
           GOOGLE_WEB_CLIENT_ID: ${{ vars.GOOGLE_WEB_CLIENT_ID }}
@@ -126,6 +127,7 @@ jobs:
             --dart-define=DEEMUSIQ_UPDATE_URL="${DEEMUSIQ_UPDATE_URL:-https://deemusiq.co.za/#download}" \
             --dart-define=DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY="$DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY" \
             --dart-define=DEEMUSIQ_SERVER_CERT_SHA256="$DEEMUSIQ_SERVER_CERT_SHA256" \
+            --dart-define=DEEMUSIQ_PINNED_HOST="$DEEMUSIQ_PINNED_HOST" \
             --dart-define=GOOGLE_WEB_CLIENT_ID="$GOOGLE_WEB_CLIENT_ID"
 
       - name: Verify release artifact
@@ -135,6 +137,7 @@ jobs:
           DEEMUSIQ_BACKEND_URL: ${{ vars.DEEMUSIQ_BACKEND_URL }}
           DEEMUSIQ_CHANNEL_KEY: ${{ secrets.DEEMUSIQ_CHANNEL_KEY }}
           DEEMUSIQ_PAYMENT_HMAC_SECRET: ${{ secrets.DEEMUSIQ_PAYMENT_HMAC_SECRET }}
+          DEEMUSIQ_PINNED_HOST: ${{ vars.DEEMUSIQ_PINNED_HOST }}
         run: bash tool/verify_release.sh macos
 
       - name: Package macOS .dmg
