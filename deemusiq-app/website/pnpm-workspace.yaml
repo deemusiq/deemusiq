@@ -2,3 +2,10 @@ onlyBuiltDependencies:
   - '@tailwindcss/oxide'
   - esbuild
   - sharp
+# Security floors — Dependabot sweep 2026-10 (drop when parents require these)
+overrides:
+  http-cache-semantics: '>=4.3.0'      # astro ^4.2.0 range — cross-user cache disclosure
+  'picomatch@2': '^2.3.2'              # anymatch — ReDoS + POSIX class injection
+  source-map-js: '>=1.2.2'             # tailwind/css-tree — event-loop DoS
+  mdast-util-to-hast: '>=13.2.1'       # rehype-raw — unsanitized class attribute
+  postcss-selector-parser: '>=7.1.6'   # @tailwindcss/typography — quadratic parse DoS
