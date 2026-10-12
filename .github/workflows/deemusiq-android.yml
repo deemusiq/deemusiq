@@ -256,6 +256,11 @@ jobs:
           # Client-side payment request signing; must match the backend's
           # PAYMENT_HMAC_SECRET or checkouts fail closed (403). Empty = unsigned.
           DEEMUSIQ_PAYMENT_HMAC_SECRET: ${{ secrets.DEEMUSIQ_PAYMENT_HMAC_SECRET }}
+          # Google OAuth WEB client ID (public by design — embedded in clients).
+          # Baked as GOOGLE_WEB_CLIENT_ID so google_sign_in mints an ID token
+          # with this audience; the backend verifies it against GOOGLE_CLIENT_ID.
+          # Empty = "Sign in with Google" silently falls back to device auth.
+          GOOGLE_WEB_CLIENT_ID: ${{ vars.GOOGLE_WEB_CLIENT_ID }}
         # `stableFdroid`: the app has two flavor dimensions (default × store), so
         # a build variant needs one flavor from each. `stableFdroid` is the FOSS
         # combo (no Google Play Services / no google-services.json needed) — the
@@ -273,6 +278,7 @@ jobs:
           --dart-define=DEEMUSIQ_UPDATE_URL="${DEEMUSIQ_UPDATE_URL:-https://deemusiq.co.za/#download}"
           --dart-define=DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY="${DEEMUSIQ_UPDATE_ED25519_PUBLIC_KEY}"
           --dart-define=DEEMUSIQ_INTEGRITY_ED25519_PUBLIC_KEY="${DEEMUSIQ_INTEGRITY_ED25519_PUBLIC_KEY}"
+          --dart-define=GOOGLE_WEB_CLIENT_ID="${GOOGLE_WEB_CLIENT_ID}"
 
       - name: Collect APK + publish its hash
         run: |
