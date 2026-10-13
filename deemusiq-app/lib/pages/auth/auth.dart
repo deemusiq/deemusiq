@@ -339,6 +339,18 @@ class AuthPage extends HookConsumerWidget {
                             ],
                           ),
                         ),
+                        const Gap(8),
+                        // Account creation for someone with no device yet. The
+                        // device path above needs an Ed25519 handshake that only
+                        // makes sense for an install that already has a wallet,
+                        // so without this a genuinely new user has no way to
+                        // register at all.
+                        TextButton(
+                          onPressed: busyWith.value == null
+                              ? () => context.router.push(const Signup())
+                              : null,
+                          child: Text(l10n.signup_create_account),
+                        ),
                       ],
                     ),
                   ),

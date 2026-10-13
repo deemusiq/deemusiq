@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:collection/collection.dart';
+import 'package:deemusiq/services/youtube_engine/channel_id_fallback.dart';
 import 'package:deemusiq/services/youtube_engine/direct_ytdlp_engine.dart';
 import 'package:deemusiq/services/youtube_engine/youtube_engine.dart';
 import 'package:deemusiq/services/youtube_engine/yt_dlp_provisioner.dart';
@@ -84,7 +85,12 @@ class YtDlpEngine implements YouTubeEngine {
       VideoId(id),
       (info["title"] as String?) ?? "Unknown",
       (info["channel"] as String?) ?? "Unknown",
-      ChannelId((info["channel_id"] as String?) ?? id),
+      resolveChannelId([
+        info["channel_id"] as String?,
+        info["channel_url"] as String?,
+        info["uploader_id"] as String?,
+        info["uploader_url"] as String?,
+      ]),
       publishDate,
       (info["upload_date"] as String?) ?? DateTime.now().toString(),
       publishDate,

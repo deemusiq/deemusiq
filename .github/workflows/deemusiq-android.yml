@@ -152,14 +152,30 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          # Distinguish a real release from a manual experiment: a temporary
+          # keystore is fine for the latter and fatal for the former.
+          IS_TAG_BUILD: ${{ startsWith(github.ref, 'refs/tags/v') }}
         run: |
           if [ -n "$KEYSTORE_BASE64" ]; then
             echo "Using keystore from repository secret (production / update-safe)."
             echo "$KEYSTORE_BASE64" | base64 -d > android/app/deemusiq.jks
             KS_PASS="$KEYSTORE_PASSWORD"; ALIAS="$KEY_ALIAS"; K_PASS="$KEY_PASSWORD"
           else
+            # A temporary keystore is regenerated on EVERY run, so every APK is
+            # signed by a different key. Android then refuses to install it over
+            # an existing copy (INSTALL_FAILED_UPDATE_INCOMPATIBLE — "App not
+            # installed"), users must uninstall first and lose their data, and
+            # DEEMUSIQ_CERT_SHA256 anti-tamper cannot stay pinned across builds.
+            # That makes an unsigned-by-identity release strictly worse than no
+            # release, so a tag build must never silently fall back here.
+            if [ "$IS_TAG_BUILD" = "true" ]; then
+              echo "::error::No KEYSTORE_BASE64 secret on a tag build."
+              echo "::error::A per-run temporary keystore cannot update an installed app: each build has a different signing key, so Android blocks the upgrade and the DEEMUSIQ_CERT_SHA256 anti-tamper pin cannot be kept valid."
+              echo "::error::Create ONE permanent keystore and add KEYSTORE_BASE64 / KEYSTORE_PASSWORD / KEY_ALIAS / KEY_PASSWORD as repo secrets (see deemusiq-app/README.DEEMUSIQ.md). Never rotate it — losing the key means users can never update."
+              exit 1
+            fi
             echo "::warning::No KEYSTORE_BASE64 secret — generating a TEMPORARY keystore."
-            echo "::warning::APK installs for testing, but set a permanent keystore secret before public release so future updates install over old versions."
+            echo "::warning::Fine for a manual test build, but it cannot install over any previous DeeMusiq build."
             KS_PASS=$(openssl rand -hex 16); ALIAS="deemusiq"; K_PASS="$KS_PASS"
             # WARNING: temporary keystore — for testing only. Use repo secrets for production.
             keytool -genkeypair -v -keystore android/app/deemusiq.jks -keyalg RSA -keysize 2048 \

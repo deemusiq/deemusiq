@@ -1,15 +1,13 @@
 ---
 import type { IconType } from "react-icons";
-import { LuDownload, LuHistory, LuPackage, LuSparkles } from "react-icons/lu";
+import { LuDownload, LuHistory } from "react-icons/lu";
 import { ADS_SLOTS, extendedDownloadLinks } from "~/collections/app";
 import Ads from "~/components/ads/Ads.astro";
 import RootLayout from "~/layouts/RootLayout.astro";
 import DownloadItems from "~/modules/downloads/download-item.astro";
 
 const otherDownloads: [string, string, IconType][] = [
-  ["/downloads/packages", "CLI Packages Managers", LuPackage],
   ["/downloads/older", "Older Versions", LuHistory],
-  ["/downloads/nightly", "Nightly Builds", LuSparkles],
 ];
 ---
 

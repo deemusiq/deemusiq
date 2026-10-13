@@ -82,6 +82,10 @@ class AudioPlayerNotifier extends Notifier<AudioPlayerState> {
           tracks: tracks,
           currentIndex: currentIndex,
         );
+        // Media URIs embed the loopback server port — wait for the bind
+        // before minting them (same as load()), otherwise a cold-start
+        // restore bakes port -1 into every restored media.
+        await _ensureStreamingServer();
         await audioPlayer.openPlaylist(
           tracks.asMediaList(),
           initialIndex: currentIndex,
@@ -404,29 +408,21 @@ class AudioPlayerNotifier extends Notifier<AudioPlayerState> {
         : a.id == b.id;
   }
 
-  Future<void> load(
-    List<DeeMusiqTrackObject> tracks, {
-    int initialIndex = 0,
-    bool autoPlay = false,
-  }) async {
-    _isStopped = false;
-    _assertAllowedTracks(tracks);
-
-    var serverStarted = false;
+  /// Ensures the loopback streaming server is bound before any Media URIs
+  /// embedding its port are minted. Bind-once: never invalidate a healthy
+  /// serverProvider — a re-bind can change the port, and every Media URI
+  /// already in the playlist embeds the old one. Only a failed provider is
+  /// retried (by invalidating).
+  Future<void> _ensureStreamingServer() async {
     for (var attempt = 0; attempt < 10; attempt++) {
       try {
-        // Bind-once: never invalidate a healthy serverProvider from here.
-        // A re-bind can change the port, and every Media URI already in the
-        // playlist embeds the old one — queue loads must reuse the running
-        // server. Only a failed provider is retried (by invalidating).
         if (ref.read(serverProvider).hasError) {
           ref.invalidate(serverProvider);
         }
         final result = await ref.read(serverProvider.future)
             .timeout(const Duration(seconds: 5));
         if (result.port > 0) {
-          serverStarted = true;
-          break;
+          return;
         }
       } catch (e) {
         AppLogger.log.w('Streaming server start attempt $attempt failed: ${e.toString()}');
@@ -435,9 +431,18 @@ class AudioPlayerNotifier extends Notifier<AudioPlayerState> {
         await Future.delayed(const Duration(milliseconds: 500));
       }
     }
-    if (!serverStarted) {
-      throw Exception('Streaming server failed to start — playback unavailable');
-    }
+    throw Exception('Streaming server failed to start — playback unavailable');
+  }
+
+  Future<void> load(
+    List<DeeMusiqTrackObject> tracks, {
+    int initialIndex = 0,
+    bool autoPlay = false,
+  }) async {
+    _isStopped = false;
+    _assertAllowedTracks(tracks);
+
+    await _ensureStreamingServer();
 
     final medias = _blacklist
         .filter(tracks)

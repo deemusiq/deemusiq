@@ -165,7 +165,6 @@ class ServerPlaybackRoutes {
   }
 
   Future<SourcedTrack?> _getSourcedTrack(
-    Request request,
     String trackId,
   ) async {
     final activeTracks = playlist.tracks;
@@ -180,20 +179,14 @@ class ServerPlaybackRoutes {
     final activeSourcedTrack =
         await ref.read(activeTrackSourcesProvider.future);
 
-    final medias = audioPlayer.playlist.medias;
-    if (medias.isEmpty) return null;
-    final mediaIndex = medias.indexWhere(
-      (e) => e.uri == request.requestedUri.toString(),
-    );
-    final media = mediaIndex >= 0 ? medias[mediaIndex] : medias.firstOrNull;
-    if (media == null) return null;
-    final spotubeMedia =
-        media is DeeMusiqMedia ? media : DeeMusiqMedia.media(media);
+    // Resolve the source from the provider-state track directly. media_kit's
+    // `state.playlist` is only repopulated by an mpv property event that races
+    // the HTTP accept, and is skipped entirely for 5s after setShuffle — so
+    // gating on it made restored-queue streams 404 at cold start.
     final sourcedTrack = activeSourcedTrack?.track.id == track.id
         ? activeSourcedTrack?.source
         : await ref.read(
-            sourcedTrackProvider(spotubeMedia.track as DeeMusiqFullTrackObject)
-                .future,
+            sourcedTrackProvider(track).future,
           );
 
     return sourcedTrack;
@@ -1496,7 +1489,7 @@ class ServerPlaybackRoutes {
 
   Future<Response> headStreamTrackId(Request request, String trackId) async {
     try {
-      final sourcedTrack = await _getSourcedTrack(request, trackId);
+      final sourcedTrack = await _getSourcedTrack(trackId);
       if (sourcedTrack == null) {
         return Response.notFound('Track not found in the current queue');
       }
@@ -1537,7 +1530,7 @@ class ServerPlaybackRoutes {
 
   Future<Response> getStreamTrackId(Request request, String trackId) async {
     try {
-      final sourcedTrack = await _getSourcedTrack(request, trackId);
+      final sourcedTrack = await _getSourcedTrack(trackId);
       if (sourcedTrack == null) {
         return Response.notFound('Track not found in the current queue');
       }

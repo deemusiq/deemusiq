@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:cryptography/cryptography.dart';
 import 'package:deemusiq/services/kv_store/kv_store.dart';
 import 'package:deemusiq/services/logger/logger.dart';
+import 'package:deemusiq/services/youtube_engine/channel_id_fallback.dart';
 import 'package:deemusiq/services/youtube_engine/youtube_engine.dart';
 import 'package:deemusiq/services/youtube_engine/yt_dlp_provisioner.dart';
 import 'package:deemusiq/utils/platform.dart';
@@ -434,7 +435,12 @@ class DirectYtDlpEngine implements YouTubeEngine {
       VideoId(data['id'] ?? ''),
       data['title'] ?? 'Unknown',
       data['channel'] ?? 'Unknown',
-      ChannelId(data['channel_id'] ?? data['id'] ?? ''),
+      resolveChannelId([
+        data['channel_id'] as String?,
+        data['channel_url'] as String?,
+        data['uploader_id'] as String?,
+        data['uploader_url'] as String?,
+      ]),
       _parseUploadDate(data['upload_date']),
       (data['upload_date'] as String?) ?? '',
       _parseUploadDate(data['upload_date']),
@@ -485,7 +491,12 @@ class DirectYtDlpEngine implements YouTubeEngine {
               VideoId(entry['id'] ?? ''),
               entry['title'] ?? 'Unknown',
               entry['channel'] ?? 'Unknown',
-              ChannelId(entry['channel_id'] ?? entry['id'] ?? ''),
+              resolveChannelId([
+                entry['channel_id'] as String?,
+                entry['channel_url'] as String?,
+                entry['uploader_id'] as String?,
+                entry['uploader_url'] as String?,
+              ]),
               _parseUploadDate(entry['upload_date']),
               (entry['upload_date'] as String?) ?? '',
               _parseUploadDate(entry['upload_date']),

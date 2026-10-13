@@ -1,5 +1,6 @@
 import 'package:flutter_new_pipe_extractor/flutter_new_pipe_extractor.dart'
     hide Engagement;
+import 'package:deemusiq/services/youtube_engine/channel_id_fallback.dart';
 import 'package:deemusiq/services/youtube_engine/youtube_engine.dart';
 import 'package:deemusiq/utils/platform.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
@@ -75,7 +76,7 @@ class NewPipeEngine implements YouTubeEngine {
       VideoId(info.id),
       info.name,
       info.uploaderName,
-      ChannelId(info.uploaderUrl),
+      resolveChannelId([info.uploaderUrl]),
       info.uploadDate.offsetDateTime,
       info.uploadDate.offsetDateTime.toString(),
       info.uploadDate.offsetDateTime,
@@ -98,7 +99,7 @@ class NewPipeEngine implements YouTubeEngine {
       VideoId(id),
       info.name,
       info.uploaderName,
-      ChannelId(info.uploaderUrl),
+      resolveChannelId([info.uploaderUrl]),
       info.uploadDate?.offsetDateTime,
       info.uploadDate?.offsetDateTime.toString(),
       info.uploadDate?.offsetDateTime,

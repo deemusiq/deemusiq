@@ -1,7 +1,7 @@
 # DeeMusiq — SEO Notes (internal)
 
 State of SEO plumbing on deemusiq.co.za and what is still TODO by a human.
-Last updated: 2026-09-30.
+Last updated: 2026-10-12.
 
 ## Done (in repo)
 
@@ -15,21 +15,21 @@ Last updated: 2026-09-30.
   homepage entry.
 - `robots.txt`: already references the sitemap.
 - `.well-known/assetlinks.json`: Android App Links statement for applicationId
-  `za.co.deemusiq.app` (plus the `.fdroid` flavor). **PLACEHOLDER** fingerprints — see below.
+  `za.co.deemusiq.app` (plus the `.fdroid` flavor). Real release-cert
+  fingerprints filled — done.
 - `llms.txt`: LLM-facing site summary at the site root.
 - `site.webmanifest`: full icon set (32 / 180 / 192 / 256 / 512), `display: standalone`.
 - `press/`: self-serve press kit linked from the footer and the sitemap.
 
 ## TODO — requires the owner
 
-1. **Android App Links fingerprint (blocking App Links).**
-   `.well-known/assetlinks.json` contains a `REPLACE_ME` placeholder for
-   `sha256_cert_fingerprints`. Paste the release-keystore SHA-256 fingerprint from:
-
-       keytool -list -v -keystore /path/to/deemusiq-release.keystore -alias <alias>
-
-   (If Play App Signing is used, take the "App signing certificate" fingerprint
-   from Play Console instead.) Full instructions: `.well-known/assetlinks.README.txt`.
+1. **Android App Links fingerprint — done.**
+   `.well-known/assetlinks.json` carries the real release signing certificate
+   SHA-256 fingerprint for both `za.co.deemusiq.app` and the `.fdroid` flavor.
+   Remaining owner action: after each deploy, confirm Google's crawlers picked
+   it up via the verification URL in `.well-known/assetlinks.README.txt`, and
+   keep the fingerprint in sync if the signing cert ever rotates (Play App
+   Signing: use the "App signing certificate" fingerprint from Play Console).
 
 2. **IndexNow key file — deliberately NOT committed.**
    Do not let anyone commit a fabricated IndexNow key. To enable IndexNow instant

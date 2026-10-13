@@ -100,8 +100,7 @@ class TokenStorePage extends HookConsumerWidget {
                           const Gap(10),
                           Expanded(
                             child: Text(
-                              context.l10n
-                                  .token_balance(formatTokens(balance)),
+                              context.l10n.token_balance(formatTokens(balance)),
                             ).semiBold(),
                           ),
                           Button.ghost(
@@ -176,6 +175,22 @@ class TokenStorePage extends HookConsumerWidget {
 }
 
 class _PackCard extends StatelessWidget {
+  /// Edge length of the token icon tile. Fixed so every pack's artwork matches.
+  static const double _iconExtent = 52;
+
+  /// Card padding, mirrored from the [Card] call below.
+  static const double _cardPadding = 16;
+
+  /// Tallest card we can build without the text column exceeding the icon: one
+  /// title line plus a two-line subtitle. Everything below is clamped to fit,
+  /// so a floor (never a hard height) keeps all packs the same size while still
+  /// growing gracefully under a large accessibility text scale.
+  static const double _minHeight = _iconExtent + _cardPadding * 2;
+
+  /// Shared width for the price button so the column lines up across packs;
+  /// long localised prices still grow past it rather than truncating.
+  static const double _priceButtonWidth = 88;
+
   final TokenPack pack;
   final RegionTier region;
 
@@ -195,69 +210,85 @@ class _PackCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      borderColor: pack.popular ? deeMusiqOrange : null,
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: deeMusiqOrange.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(14),
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: _minHeight),
+      child: Card(
+        borderColor: pack.popular ? deeMusiqOrange : null,
+        padding: const EdgeInsets.all(_cardPadding),
+        child: Row(
+          children: [
+            Container(
+              width: _iconExtent,
+              height: _iconExtent,
+              decoration: BoxDecoration(
+                color: deeMusiqOrange.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(DeeMusiqIcons.token,
+                  color: deeMusiqOrange, size: 26),
             ),
-            child: const Icon(DeeMusiqIcons.token,
-                color: deeMusiqOrange, size: 26),
-          ),
-          const Gap(14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    Text(context.l10n
-                            .store_pack_tokens(formatTokens(pack.totalTokens)))
-                        .semiBold(),
-                    if (pack.popular) ...[
-                      const Gap(8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: deeMusiqOrange,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
+            const Gap(14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
                         child: Text(
-                          context.l10n.store_popular,
-                          style: const TextStyle(
-                              color: Color(0xFFFFFFFF), fontSize: 11),
-                        ),
+                          context.l10n.store_pack_tokens(
+                              formatTokens(pack.totalTokens)),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ).semiBold(),
                       ),
+                      if (pack.popular) ...[
+                        const Gap(8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: deeMusiqOrange,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            context.l10n.store_popular,
+                            style: const TextStyle(
+                                color: Color(0xFFFFFFFF), fontSize: 11),
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
+                  // Clamped to two lines: pack labels and the bonus string are
+                  // locale-dependent and otherwise push some cards taller than
+                  // others, which is the ragged sizing this floor hides.
+                  Text(
+                    pack.bonusTokens > 0
+                        ? context.l10n.store_pack_bonus(
+                            pack.label, pack.tokens, pack.bonusTokens)
+                        : pack.label,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ).muted().xSmall(),
+                ],
+              ),
+            ),
+            const Gap(12),
+            ConstrainedBox(
+              constraints: const BoxConstraints(minWidth: _priceButtonWidth),
+              child: Button.primary(
+                onPressed: () => showPurchaseTokensDialog(context, pack: pack),
+                child: Text(
+                  priceLabel ??
+                      region.formatPrice(pack.basePriceZar,
+                          zeroDecimal: zeroDecimal),
                 ),
-                Text(
-                  pack.bonusTokens > 0
-                      ? context.l10n.store_pack_bonus(
-                          pack.label, pack.tokens, pack.bonusTokens)
-                      : pack.label,
-                ).muted().xSmall(),
-              ],
+              ),
             ),
-          ),
-          const Gap(12),
-          Button.primary(
-            onPressed: () => showPurchaseTokensDialog(context, pack: pack),
-            child: Text(
-              priceLabel ??
-                  region.formatPrice(pack.basePriceZar,
-                      zeroDecimal: zeroDecimal),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

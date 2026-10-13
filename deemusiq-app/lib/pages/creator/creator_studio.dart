@@ -13,19 +13,18 @@ import 'package:deemusiq/collections/routes.gr.dart';
 import 'package:deemusiq/components/titlebar/titlebar.dart';
 import 'package:deemusiq/components/wallet/wallet_common.dart';
 import 'package:deemusiq/extensions/context.dart';
-import 'package:deemusiq/models/wallet/linked_account.dart';
+import 'package:deemusiq/pages/auth/mfa_prompt.dart';
 import 'package:deemusiq/provider/creator/creator_provider.dart';
 import 'package:deemusiq/provider/local_favorites/local_favorites_provider.dart';
 import 'package:deemusiq/provider/wallet/wallet_provider.dart';
-import 'package:deemusiq/services/auth/google_auth.dart';
 import 'package:deemusiq/services/logger/logger.dart';
 import 'package:deemusiq/services/wallet/payment_service.dart'
     show DeeMusiqPaymentService;
 import 'package:deemusiq/services/wallet/wallet_api.dart';
 
-/// Creator Studio: submit and manage your songs and see their stats. Gated by a
-/// Google sign-in — the backend requires a linked (server-verified) Google
-/// account for every creator action.
+/// Creator Studio: submit and manage your songs and see their stats. The
+/// creator identity is the email + password account — the studio unlocks once
+/// the emailed 6-digit code has confirmed the address.
 @RoutePage()
 class CreatorStudioPage extends HookConsumerWidget {
   static const name = "creator-studio";
@@ -35,11 +34,8 @@ class CreatorStudioPage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final online = WalletApiClient.instance.isConfigured;
-    final hasGoogle = ref.watch(
-      walletProvider.select(
-        (s) => s.linkedAccounts.any((a) => a.provider == LinkedProvider.google),
-      ),
-    );
+    final hasSession = WalletApiClient.instance.hasToken();
+    final accountAsync = ref.watch(accountStatusProvider);
 
     return SafeArea(
       bottom: false,
@@ -60,10 +56,25 @@ class CreatorStudioPage extends HookConsumerWidget {
                         title: context.l10n.creator_connect_title,
                         body: context.l10n.creator_connect_body,
                       )
-                    else if (!hasGoogle)
-                      const _GoogleGate()
+                    else if (!hasSession)
+                      const _EmailSignInGate()
                     else
-                      const _Dashboard(),
+                      accountAsync.when(
+                        loading: () => const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 32),
+                          child: Center(child: CircularProgressIndicator()),
+                        ),
+                        error: (error, _) => _MessageCard(
+                          icon: DeeMusiqIcons.info,
+                          title: context.l10n.creator_studio_load_failed,
+                          body: error is WalletApiException
+                              ? error.friendlyMessage
+                              : error.toString(),
+                        ),
+                        data: (account) => account["emailVerified"] == true
+                            ? const _Dashboard()
+                            : _VerifyEmailGate(account: account),
+                      ),
                     const Gap(40),
                   ],
                 ),
@@ -76,46 +87,64 @@ class CreatorStudioPage extends HookConsumerWidget {
   }
 }
 
-/// Shown when the user isn't signed in with Google yet.
-class _GoogleGate extends HookConsumerWidget {
-  const _GoogleGate();
+/// Shown when this device holds no backend session. Sign in with the email +
+/// password account — the identity the backend anchors creators to. A
+/// brand-new user follows "Create account", which emails a 6-digit code and
+/// signs in once it is confirmed.
+class _EmailSignInGate extends HookConsumerWidget {
+  const _EmailSignInGate();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final email = useTextEditingController();
+    final password = useTextEditingController();
     final loading = useState(false);
-    final googleSupported = GoogleAuthService.instance.isPlatformSupported;
 
     Future<void> signIn() async {
       if (loading.value) return;
-      // google_sign_in has no Linux/Windows implementation — the button is
-      // replaced by a mobile-only notice there, but guard the call anyway.
-      if (!GoogleAuthService.instance.isPlatformSupported) {
-        showWalletToast(context, context.l10n.google_sign_in_mobile_only,
+      final mail = email.text.trim();
+      if (mail.isEmpty) {
+        showWalletToast(context, context.l10n.signup_invalid_email,
+            icon: DeeMusiqIcons.info);
+        return;
+      }
+      if (password.text.isEmpty) {
+        showWalletToast(context, context.l10n.signup_enter_password,
             icon: DeeMusiqIcons.info);
         return;
       }
       loading.value = true;
       try {
-        final result = await GoogleAuthService.instance.signIn();
-        final wallet = ref.read(walletProvider.notifier);
-        if (result.displayName != null || result.email != null) {
-          await wallet.linkAccount(
-            LinkedProvider.google,
-            displayName: result.displayName ?? result.email ?? 'Google User',
-            externalId: result.email,
-          );
+        try {
+          await WalletApiClient.instance
+              .loginEmail(email: mail, password: password.text);
+        } on WalletApiException catch (e) {
+          // A 2FA-enrolled account answers with a challenge instead of a
+          // token: collect the authenticator code and finish the login rather
+          // than dead-ending (same flow as the auth page).
+          if (e.code == "mfa_required" && e.mfaToken != null) {
+            if (!context.mounted) return;
+            final code = await promptMfaCode(context);
+            if (code == null) return;
+            await WalletApiClient.instance
+                .mfaVerify(mfaToken: e.mfaToken!, code: code);
+          } else {
+            rethrow;
+          }
         }
-        await wallet.syncFromBackend();
+        // Pull account-carried state down, then let the gate re-evaluate.
         await syncFavoritesFromBackend(
             ref.read(localFavoritesProvider.notifier));
+        await ref.read(walletProvider.notifier).syncFromBackend();
+        ref.invalidate(accountStatusProvider);
         ref.invalidate(myArtistProvider);
         ref.invalidate(mySongsProvider);
-      } catch (e, stack) {
-        AppLogger.reportError(e, stack, 'creator google sign-in');
+      } on WalletApiException catch (e) {
         if (context.mounted) {
-          showWalletToast(context, context.l10n.creator_google_sign_in_failed,
-              icon: DeeMusiqIcons.info);
+          showWalletToast(context, e.friendlyMessage, icon: DeeMusiqIcons.info);
         }
+      } catch (e, stack) {
+        AppLogger.reportError(e, stack, 'creator email sign-in');
       } finally {
         if (context.mounted) loading.value = false;
       }
@@ -124,35 +153,279 @@ class _GoogleGate extends HookConsumerWidget {
     return Card(
       padding: const EdgeInsets.all(20),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Icon(DeeMusiqIcons.artist, size: 32, color: deeMusiqOrange),
           const Gap(10),
-          Text(context.l10n.creator_become_title).large().semiBold(),
+          Text(context.l10n.creator_email_gate_title)
+              .large()
+              .semiBold()
+              .center(),
           const Gap(6),
           Text(
-            context.l10n.creator_become_body,
+            context.l10n.creator_email_gate_body,
             textAlign: TextAlign.center,
           ).muted().small(),
           const Gap(16),
-          if (googleSupported)
-            Button.primary(
-              onPressed: loading.value ? null : signIn,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(DeeMusiqIcons.google, size: 18),
-                  const Gap(8),
-                  Text(loading.value
-                      ? context.l10n.please_wait
-                      : context.l10n.sign_in_with_google),
-                ],
+          TextField(
+            controller: email,
+            placeholder: Text(context.l10n.signup_email_hint),
+            keyboardType: TextInputType.emailAddress,
+          ),
+          const Gap(8),
+          TextField(
+            controller: password,
+            placeholder: Text(context.l10n.signup_password_hint),
+            obscureText: true,
+            onSubmitted: (_) => signIn(),
+          ),
+          const Gap(12),
+          Button.primary(
+            onPressed: loading.value ? null : signIn,
+            child: Text(loading.value
+                ? context.l10n.please_wait
+                : context.l10n.creator_sign_in_cta),
+          ),
+          const Gap(8),
+          TextButton(
+            onPressed: loading.value
+                ? null
+                : () => context.router.push(const Signup()),
+            child: Text(context.l10n.signup_create_account).muted(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Shown for a signed-in account whose email address is not confirmed yet.
+/// Device-only accounts first attach an email + password; the emailed
+/// 6-digit code is then the verification token that unlocks the studio.
+class _VerifyEmailGate extends HookConsumerWidget {
+  final Map<String, dynamic> account;
+  const _VerifyEmailGate({required this.account});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final email = ((account["email"] as String?) ?? "").trim();
+    final hasEmail = email.isNotEmpty;
+    final emailController = useTextEditingController(text: email);
+    final password = useTextEditingController();
+    final code = useTextEditingController();
+    final busy = useState(false);
+    // An account that already carries an email goes straight to code entry;
+    // a device-only one must save credentials first.
+    final awaitingCode = useState(hasEmail);
+    final acceptTerms = useState(false);
+    final errorText = useState<String?>(null);
+
+    Future<void> afterVerified() async {
+      await syncFavoritesFromBackend(
+          ref.read(localFavoritesProvider.notifier));
+      await ref.read(walletProvider.notifier).syncFromBackend();
+      ref.invalidate(accountStatusProvider);
+      ref.invalidate(myArtistProvider);
+      ref.invalidate(mySongsProvider);
+    }
+
+    Future<void> saveCredentials() async {
+      if (busy.value) return;
+      final mail = emailController.text.trim();
+      if (mail.isEmpty) {
+        errorText.value = l10n.signup_invalid_email;
+        return;
+      }
+      if (password.text.isEmpty) {
+        errorText.value = l10n.signup_enter_password;
+        return;
+      }
+      if (!acceptTerms.value) {
+        errorText.value = l10n.must_agree_privacy_policy;
+        return;
+      }
+      busy.value = true;
+      errorText.value = null;
+      try {
+        await WalletApiClient.instance.registerEmail(
+          email: mail,
+          password: password.text,
+          acceptTerms: true,
+        );
+        // /auth/register emails a signed link; ask for the 6-digit code too so
+        // verification can complete inside the app.
+        await WalletApiClient.instance.resendSignupCode(email: mail);
+        awaitingCode.value = true;
+        if (context.mounted) {
+          showWalletToast(context, l10n.creator_email_code_sent,
+              icon: DeeMusiqIcons.info);
+        }
+      } on WalletApiException catch (e) {
+        errorText.value = e.friendlyMessage;
+      } catch (e, stack) {
+        AppLogger.reportError(e, stack, 'creator attach email');
+        errorText.value = l10n.something_went_wrong;
+      } finally {
+        if (context.mounted) busy.value = false;
+      }
+    }
+
+    Future<void> verify() async {
+      if (busy.value) return;
+      final mail = emailController.text.trim();
+      final value = code.text.trim();
+      if (value.length != 6 || int.tryParse(value) == null) {
+        errorText.value = l10n.signup_code_length;
+        return;
+      }
+      busy.value = true;
+      errorText.value = null;
+      try {
+        await WalletApiClient.instance
+            .verifySignupCode(email: mail, code: value);
+        await afterVerified();
+      } on WalletApiException catch (e) {
+        errorText.value = e.friendlyMessage;
+      } catch (e, stack) {
+        AppLogger.reportError(e, stack, 'creator verify email');
+        errorText.value = l10n.something_went_wrong;
+      } finally {
+        if (context.mounted) busy.value = false;
+      }
+    }
+
+    Future<void> resend() async {
+      if (busy.value) return;
+      final mail = emailController.text.trim();
+      if (mail.isEmpty) {
+        errorText.value = l10n.signup_invalid_email;
+        return;
+      }
+      busy.value = true;
+      try {
+        await WalletApiClient.instance.resendSignupCode(email: mail);
+        if (context.mounted) {
+          showWalletToast(context, l10n.creator_email_code_sent,
+              icon: DeeMusiqIcons.info);
+        }
+      } on WalletApiException catch (e) {
+        if (context.mounted) {
+          showWalletToast(context, e.friendlyMessage, icon: DeeMusiqIcons.info);
+        }
+      } finally {
+        if (context.mounted) busy.value = false;
+      }
+    }
+
+    return Card(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Icon(DeeMusiqIcons.verified, size: 32, color: deeMusiqOrange),
+          const Gap(10),
+          Text(awaitingCode.value
+                  ? l10n.creator_verify_email_title
+                  : l10n.creator_add_email_title)
+              .large()
+              .semiBold()
+              .center(),
+          const Gap(6),
+          Text(
+            awaitingCode.value
+                ? l10n.creator_verify_email_body(emailController.text.trim())
+                : l10n.creator_add_email_body,
+            textAlign: TextAlign.center,
+          ).muted().small(),
+          const Gap(16),
+          if (awaitingCode.value) ...[
+            if (!hasEmail) ...[
+              TextField(
+                controller: emailController,
+                placeholder: Text(l10n.signup_email_hint),
+                keyboardType: TextInputType.emailAddress,
+                enabled: !busy.value,
+                onChanged: (_) => errorText.value = null,
               ),
-            )
-          else
+              const Gap(8),
+            ],
+            TextField(
+              controller: code,
+              placeholder: Text(l10n.signup_code_hint),
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+              enabled: !busy.value,
+              onSubmitted: (_) => verify(),
+            ),
+            const Gap(12),
+            Button.primary(
+              onPressed: busy.value ? null : verify,
+              child: Text(
+                  busy.value ? l10n.please_wait : l10n.signup_confirm),
+            ),
+            const Gap(8),
+            TextButton(
+              onPressed: busy.value ? null : resend,
+              child: Text(l10n.signup_resend_code).muted(),
+            ),
+          ] else ...[
+            TextField(
+              controller: emailController,
+              placeholder: Text(l10n.signup_email_hint),
+              keyboardType: TextInputType.emailAddress,
+              enabled: !busy.value,
+              onChanged: (_) => errorText.value = null,
+            ),
+            const Gap(8),
+            TextField(
+              controller: password,
+              placeholder: Text(l10n.signup_password_hint),
+              obscureText: true,
+              enabled: !busy.value,
+              onChanged: (_) => errorText.value = null,
+            ),
+            const Gap(8),
+            Row(
+              children: [
+                Checkbox(
+                  state: acceptTerms.value
+                      ? CheckboxState.checked
+                      : CheckboxState.unchecked,
+                  onChanged: busy.value
+                      ? null
+                      : (v) =>
+                          acceptTerms.value = v == CheckboxState.checked,
+                ),
+                const Gap(8),
+                Expanded(
+                  child: TextButton(
+                    onPressed: busy.value
+                        ? null
+                        : () => acceptTerms.value = !acceptTerms.value,
+                    child: Text(l10n.agree_privacy_policy).muted(),
+                  ),
+                ),
+              ],
+            ),
+            const Gap(12),
+            Button.primary(
+              onPressed: busy.value ? null : saveCredentials,
+              child: Text(busy.value
+                  ? l10n.please_wait
+                  : l10n.creator_save_and_email_code),
+            ),
+          ],
+          if (errorText.value != null) ...[
+            const Gap(12),
             Text(
-              context.l10n.google_sign_in_mobile_only,
-              textAlign: TextAlign.center,
-            ).muted().small(),
+              errorText.value!,
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.destructive,
+              ),
+            ),
+          ],
         ],
       ),
     );

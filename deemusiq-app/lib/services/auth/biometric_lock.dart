@@ -3,6 +3,7 @@ import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:deemusiq/services/kv_store/encrypted_kv_store.dart';
 import 'package:deemusiq/services/logger/logger.dart';
+import 'package:deemusiq/utils/platform.dart';
 
 /// Fingerprint / face / device-PIN app lock for DeeMusiq.
 ///
@@ -29,6 +30,12 @@ class BiometricLockService {
   final LocalAuthentication _auth = LocalAuthentication();
   bool _unlockedThisSession = false;
   DateTime? _lastBackgrounded;
+
+  /// local_auth ships platform implementations for Android, iOS, macOS and
+  /// Windows only. On Linux every method-channel call throws
+  /// MissingPluginException, so the plugin is never touched there.
+  static bool get _pluginSupported =>
+      kIsAndroid || kIsIOS || kIsMacOS || kIsWindows;
 
   Future<bool> isEnabled() async {
     try {
@@ -71,6 +78,7 @@ class BiometricLockService {
 
   /// Whether the device can do biometric auth at all.
   Future<bool> canCheckBiometrics() async {
+    if (!_pluginSupported) return false;
     try {
       return await _auth.canCheckBiometrics;
     } on MissingPluginException {
@@ -84,6 +92,7 @@ class BiometricLockService {
   }
 
   Future<List<BiometricType>> availableBiometrics() async {
+    if (!_pluginSupported) return const [];
     try {
       return await _auth.getAvailableBiometrics();
     } on MissingPluginException {
@@ -116,6 +125,7 @@ class BiometricLockService {
 
   /// Show the OS prompt. Returns true on success.
   Future<bool> authenticate({String reason = 'Unlock DeeMusiq'}) async {
+    if (!_pluginSupported) return false;
     try {
       final ok = await _auth.authenticate(
         localizedReason: reason,

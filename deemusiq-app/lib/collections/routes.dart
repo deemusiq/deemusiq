@@ -265,5 +265,10 @@ class AppRouter extends RootStackRouter {
           page: Auth.page,
           // parentNavigatorKey: rootNavigatorKey,
         ),
+        AutoRoute(
+          path: "/auth/signup",
+          page: Signup.page,
+          // parentNavigatorKey: rootNavigatorKey,
+        ),
       ];
 }

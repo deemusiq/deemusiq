@@ -1753,14 +1753,36 @@ class AppLocalizationsJa extends AppLocalizations {
       'Creator Studio needs DeeMusiq\'s backend to be configured.';
 
   @override
-  String get creator_google_sign_in_failed => 'Google sign-in failed';
+  String get creator_email_gate_title => 'Sign in with email to create';
 
   @override
-  String get creator_become_title => 'Become a DeeMusiq creator';
+  String get creator_email_gate_body =>
+      'The Creator Studio belongs to your email + password account. Sign in below, or create an account — we email you a 6-digit code to verify the address.';
 
   @override
-  String get creator_become_body =>
-      'Sign in with Google to claim your artist profile, submit songs, and track how they\'re doing. Your Google account also carries your likes and library across devices.';
+  String get creator_sign_in_cta => 'Sign in';
+
+  @override
+  String get creator_add_email_title => 'Add an email to become a creator';
+
+  @override
+  String get creator_add_email_body =>
+      'This account is device-only. Add an email and password — we\'ll email you a 6-digit code to confirm the address.';
+
+  @override
+  String get creator_save_and_email_code => 'Save & email code';
+
+  @override
+  String get creator_verify_email_title => 'Verify your email';
+
+  @override
+  String creator_verify_email_body(String email) {
+    return 'We emailed a 6-digit code to $email. Enter it below to unlock the Creator Studio.';
+  }
+
+  @override
+  String get creator_email_code_sent =>
+      'Check your inbox — a new code is on its way.';
 
   @override
   String get creator_studio_load_failed => 'Couldn\'t load your studio';
@@ -3519,4 +3541,58 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get payout_settlement_explainer =>
       'Tips become payable after a 7-day settlement window.';
+
+  @override
+  String get signup_create_account => 'Create an account';
+
+  @override
+  String get signup_title => 'Create your DeeMusiq account';
+
+  @override
+  String get signup_subtitle =>
+      'Sign up with any email address and a password. No device setup needed.';
+
+  @override
+  String get signup_email_hint => 'Email address';
+
+  @override
+  String get signup_password_hint => 'Password';
+
+  @override
+  String get signup_password_rule =>
+      'At least 12 characters, using 3 of: uppercase, lowercase, a number, a symbol.';
+
+  @override
+  String get signup_invalid_email => 'Enter a valid email address.';
+
+  @override
+  String get signup_enter_password => 'Enter a password.';
+
+  @override
+  String get signup_confirm => 'Confirm my email';
+
+  @override
+  String signup_code_sent(String email) {
+    return 'We sent a 6-digit code to $email.';
+  }
+
+  @override
+  String signup_enter_code(String email) {
+    return 'Enter the 6-digit code we emailed to $email.';
+  }
+
+  @override
+  String get signup_code_hint => '6-digit code';
+
+  @override
+  String get signup_code_length => 'Enter the 6-digit code from your email.';
+
+  @override
+  String get signup_resend_code => 'Send a new code';
+
+  @override
+  String get signup_code_resent => 'A new code is on its way.';
+
+  @override
+  String get signup_back_to_sign_in => 'Back to sign in';
 }

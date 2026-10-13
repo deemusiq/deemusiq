@@ -38,12 +38,7 @@ export async function getNavigationCollection() {
     string,
     string,
     (prefix: string) => Promise<CollectionEntry<"docs">[]>
-  ][] = [
-    ["Get Started", "get-started/", queryCollection],
-    ["Developing Plugins", "developing-plugins/", queryCollection],
-    ["Plugin APIs", "plugin-apis/", queryCollection],
-    ["Reference", "reference/", queryCollection],
-  ];
+  ][] = [["Get Started", "get-started/", queryCollection]];
 
   // Build navigation dynamically
   const navigation: NavigationGroup[] = await Promise.all(

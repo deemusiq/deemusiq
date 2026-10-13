@@ -447,6 +447,32 @@ class WalletApiException implements Exception {
       case "missing_payment_signature":
       case "bad_signature":
         return "This build can't start payments — please update the app.";
+      // ── Account creation (POST /auth/signup) ──
+      case "email_taken":
+        return "That email already has a DeeMusiq account — sign in instead.";
+      case "too_many_signups":
+        return "Too many accounts created from this connection. Try again tomorrow.";
+      case "terms_acceptance_required":
+        return "Please accept the terms to create an account.";
+      case "password_too_short":
+        return "Your password needs at least 12 characters.";
+      case "password_too_long":
+        return "That password is too long.";
+      case "password_too_simple":
+        return "Use at least 3 of: uppercase, lowercase, a number, a symbol.";
+      case "password_too_common":
+        return "That password is too easy to guess — pick something less common.";
+      case "password_contains_email":
+        return "Your password can't contain your email address.";
+      case "weak_password":
+        return "That password isn't strong enough — try another one.";
+      case "auth_failed":
+        return "That confirmation code isn't right. Check it and try again.";
+      // ── Creator gate (POST /creator/artist) ──
+      case "email_password_required":
+        return "The Creator Studio needs an email + password account — sign in with email to continue.";
+      case "email_verification_required":
+        return "Verify your email — we sent you a 6-digit code — to use the Creator Studio.";
     }
     switch (statusCode) {
       case 402:
@@ -985,6 +1011,69 @@ class WalletApiClient {
           },
           options: await _authed(),
         );
+      } on DioException catch (e) {
+        throw _walletApiException(e);
+      }
+    });
+  }
+
+  /// Create an account from an email + password — no device, no prior wallet.
+  ///
+  /// Deliberately separate from [registerEmail], which UPGRADES the wallet this
+  /// device already has to an email+password account and needs a live session.
+  /// This one runs unauthenticated, so the server deliberately returns NO
+  /// token: the account is created unverified and [verifySignupCode] is what
+  /// actually signs the user in.
+  Future<void> signupEmail({
+    required String email,
+    required String password,
+    required bool acceptTerms,
+  }) async {
+    if (!acceptTerms) {
+      throw const WalletApiException("terms_acceptance_required");
+    }
+    await _guardCredentialAttempts(() async {
+      try {
+        await _client().post(
+          "/auth/signup",
+          data: {
+            "email": email,
+            "password": password,
+            "acceptTerms": true,
+          },
+        );
+      } on DioException catch (e) {
+        throw _walletApiException(e);
+      }
+    });
+  }
+
+  /// Ask for another confirmation code. Answers 200 whether or not the address
+  /// has an account, so a failure here never means "no such account".
+  Future<void> resendSignupCode({required String email}) async {
+    try {
+      await _client()
+          .post("/auth/signup/resend", data: {"email": email});
+    } on DioException catch (e) {
+      throw _walletApiException(e);
+    }
+  }
+
+  /// Confirm the emailed 6-digit code and take the session it returns.
+  ///
+  /// This is the first moment a sign-up account is signed in, so the token is
+  /// cached here exactly as [loginEmail] does — otherwise the Home guard
+  /// (`isConfigured && !hasToken()`) would bounce straight back to this page.
+  Future<void> verifySignupCode({
+    required String email,
+    required String code,
+  }) async {
+    await _guardCredentialAttempts(() async {
+      try {
+        final res = await _client()
+            .post("/auth/signup/verify", data: {"email": email, "code": code});
+        _token = _sessionTokenFrom(res.data as Map);
+        await _clearLoggedOut();
       } on DioException catch (e) {
         throw _walletApiException(e);
       }
@@ -1962,7 +2051,21 @@ class WalletApiClient {
 
   // ── Creator mode ──────────────────────────────────────────────────────────
 
-  /// Create/update the caller's artist profile (requires a linked Google account).
+  /// The signed-in account's email state (GET /auth/me).
+  ///
+  /// The Creator Studio gate keys on this: no email + password → sign-in
+  /// form, unconfirmed address → emailed-code form, otherwise the dashboard.
+  Future<Map<String, dynamic>> fetchAccountStatus() async {
+    try {
+      final res = await _client().get("/auth/me", options: await _authed());
+      return Map<String, dynamic>.from(res.data as Map);
+    } on DioException catch (e) {
+      throw _walletApiException(e);
+    }
+  }
+
+  /// Create/update the caller's artist profile (requires the email + password
+  /// account with a verified address).
   Future<Map<String, dynamic>> createArtist({
     required String name,
     String? bio,
@@ -2062,10 +2165,29 @@ class WalletApiClient {
   /// Full account-carried favorites (`[{trackId,title,artist}]`), used to rebuild
   /// local likes after signing in on a new device.
   Future<List<dynamic>> fetchFavorites() async {
+    final all = <dynamic>[];
+    String? cursor;
     try {
-      final res =
-          await _client().get("/sync/favorites", options: await _authed());
-      return (res.data as Map)["favorites"] as List<dynamic>;
+      // Walk every page. The server caps a page at 10k and previously reported
+      // only `truncated: true`, which this method ignored — so a user with more
+      // than 10k favorites silently rebuilt their library with the newest 10k
+      // and every older favorite was gone, with no error anywhere.
+      //
+      // Bounded so a server that keeps handing back a cursor cannot spin us
+      // forever; 500 pages x 10k is far beyond any real library.
+      for (var page = 0; page < 500; page++) {
+        final res = await _client().get(
+          "/sync/favorites",
+          queryParameters: {if (cursor != null) "cursor": cursor},
+          options: await _authed(),
+        );
+        final body = (res.data as Map);
+        final pageItems = body["favorites"] as List<dynamic>?;
+        if (pageItems != null) all.addAll(pageItems);
+        cursor = body["nextCursor"] as String?;
+        if (cursor == null) break;
+      }
+      return all;
     } on DioException catch (e) {
       throw _walletApiException(e);
     }

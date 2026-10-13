@@ -213,3 +213,23 @@ final mySongsProvider =
       .map((e) => CreatorSong.fromJson(Map<String, dynamic>.from(e as Map)))
       .toList();
 });
+
+/// The signed-in account's email state (GET /auth/me): `email`,
+/// `emailVerified`, `hasPassword`, plus a derived `signedIn` flag. The Creator
+/// Studio gate picks its card from this — sign-in form (no session), emailed-
+/// code form (session but unconfirmed address), or the dashboard. Errors
+/// propagate so the studio can show its failure card instead of guessing.
+final accountStatusProvider =
+    FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
+  final api = WalletApiClient.instance;
+  if (!api.isConfigured || !api.hasToken()) {
+    return const {
+      "signedIn": false,
+      "email": null,
+      "emailVerified": false,
+      "hasPassword": false,
+    };
+  }
+  final data = await api.fetchAccountStatus();
+  return {...data, "signedIn": true};
+});

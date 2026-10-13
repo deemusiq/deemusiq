@@ -91,15 +91,13 @@ export default function ReleasesSection() {
 
   useEffect(() => {
     github.repos.listReleases({
-      owner: "KRTirtho",
-      repo: "spotube",
+      owner: "deemusiq",
+      repo: "deemusiq",
 
     }).then((res) => {
       setReleases(
-        res.data.filter((release) => {
-          // Ignore all releases that were published before March 18 2025
-          return new Date(release.published_at ?? new Date()) >= new Date("2025-03-18T00:00:00Z");
-        })
+        // Hide pre-releases (e.g. the machine-managed fdroid tag)
+        res.data.filter((release) => !release.prerelease)
       );
     })
 

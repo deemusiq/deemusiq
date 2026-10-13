@@ -3345,23 +3345,59 @@ abstract class AppLocalizations {
   /// **'Creator Studio needs DeeMusiq\'s backend to be configured.'**
   String get creator_connect_body;
 
-  /// No description provided for @creator_google_sign_in_failed.
+  /// No description provided for @creator_email_gate_title.
   ///
   /// In en, this message translates to:
-  /// **'Google sign-in failed'**
-  String get creator_google_sign_in_failed;
+  /// **'Sign in with email to create'**
+  String get creator_email_gate_title;
 
-  /// No description provided for @creator_become_title.
+  /// No description provided for @creator_email_gate_body.
   ///
   /// In en, this message translates to:
-  /// **'Become a DeeMusiq creator'**
-  String get creator_become_title;
+  /// **'The Creator Studio belongs to your email + password account. Sign in below, or create an account — we email you a 6-digit code to verify the address.'**
+  String get creator_email_gate_body;
 
-  /// No description provided for @creator_become_body.
+  /// No description provided for @creator_sign_in_cta.
   ///
   /// In en, this message translates to:
-  /// **'Sign in with Google to claim your artist profile, submit songs, and track how they\'re doing. Your Google account also carries your likes and library across devices.'**
-  String get creator_become_body;
+  /// **'Sign in'**
+  String get creator_sign_in_cta;
+
+  /// No description provided for @creator_add_email_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Add an email to become a creator'**
+  String get creator_add_email_title;
+
+  /// No description provided for @creator_add_email_body.
+  ///
+  /// In en, this message translates to:
+  /// **'This account is device-only. Add an email and password — we\'ll email you a 6-digit code to confirm the address.'**
+  String get creator_add_email_body;
+
+  /// No description provided for @creator_save_and_email_code.
+  ///
+  /// In en, this message translates to:
+  /// **'Save & email code'**
+  String get creator_save_and_email_code;
+
+  /// No description provided for @creator_verify_email_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify your email'**
+  String get creator_verify_email_title;
+
+  /// No description provided for @creator_verify_email_body.
+  ///
+  /// In en, this message translates to:
+  /// **'We emailed a 6-digit code to {email}. Enter it below to unlock the Creator Studio.'**
+  String creator_verify_email_body(String email);
+
+  /// No description provided for @creator_email_code_sent.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your inbox — a new code is on its way.'**
+  String get creator_email_code_sent;
 
   /// No description provided for @creator_studio_load_failed.
   ///
@@ -6245,6 +6281,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tips become payable after a 7-day settlement window.'**
   String get payout_settlement_explainer;
+
+  /// No description provided for @signup_create_account.
+  ///
+  /// In en, this message translates to:
+  /// **'Create an account'**
+  String get signup_create_account;
+
+  /// No description provided for @signup_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your DeeMusiq account'**
+  String get signup_title;
+
+  /// No description provided for @signup_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign up with any email address and a password. No device setup needed.'**
+  String get signup_subtitle;
+
+  /// No description provided for @signup_email_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Email address'**
+  String get signup_email_hint;
+
+  /// No description provided for @signup_password_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get signup_password_hint;
+
+  /// No description provided for @signup_password_rule.
+  ///
+  /// In en, this message translates to:
+  /// **'At least 12 characters, using 3 of: uppercase, lowercase, a number, a symbol.'**
+  String get signup_password_rule;
+
+  /// No description provided for @signup_invalid_email.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address.'**
+  String get signup_invalid_email;
+
+  /// No description provided for @signup_enter_password.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a password.'**
+  String get signup_enter_password;
+
+  /// No description provided for @signup_confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm my email'**
+  String get signup_confirm;
+
+  /// No description provided for @signup_code_sent.
+  ///
+  /// In en, this message translates to:
+  /// **'We sent a 6-digit code to {email}.'**
+  String signup_code_sent(String email);
+
+  /// No description provided for @signup_enter_code.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the 6-digit code we emailed to {email}.'**
+  String signup_enter_code(String email);
+
+  /// No description provided for @signup_code_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'6-digit code'**
+  String get signup_code_hint;
+
+  /// No description provided for @signup_code_length.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the 6-digit code from your email.'**
+  String get signup_code_length;
+
+  /// No description provided for @signup_resend_code.
+  ///
+  /// In en, this message translates to:
+  /// **'Send a new code'**
+  String get signup_resend_code;
+
+  /// No description provided for @signup_code_resent.
+  ///
+  /// In en, this message translates to:
+  /// **'A new code is on its way.'**
+  String get signup_code_resent;
+
+  /// No description provided for @signup_back_to_sign_in.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to sign in'**
+  String get signup_back_to_sign_in;
 }
 
 class _AppLocalizationsDelegate

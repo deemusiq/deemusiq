@@ -63,6 +63,37 @@ install over older versions. One-time setup:
 ⚠️ Keep `deemusiq.jks` and its passwords safe. If you lose them you can't ship updates
 to already-installed users.
 
+**Tag builds now refuse to fall back to the temporary keystore.** Because that key is
+regenerated per run, every APK would carry a different signing identity, so Android
+would refuse to install it over an existing copy (`INSTALL_FAILED_UPDATE_INCOMPATIBLE`
+— "App not installed"), and `DEEMUSIQ_CERT_SHA256` could not stay pinned. Set the
+secrets above before cutting a release tag.
+
+### Windows signing (separate from Android)
+
+The Windows workflow Authenticode-signs every shipped `.exe`/`.dll` and the NSIS
+installer, and `tool/verify_release.sh windows` fails the build if anything is
+unsigned or if payload and installer disagree on signer identity.
+
+**Without a certificate it self-signs**, which fixes "Unknown publisher" for your
+own machines but does *not* clear SmartScreen — Microsoft treats a self-signed
+certificate exactly like an unsigned binary, so users still get "Windows protected
+your PC". Only a publicly-trusted certificate removes that, and none of them are free:
+
+| Route | Cost | Clears SmartScreen? |
+|-------|------|---------------------|
+| No certificate | free | ❌ (self-signed ≈ unsigned) |
+| Azure Artifact Signing | paid Azure subscription; **individual Public Trust is US/Canada only** | ❌ not guaranteed — reputation still accrues |
+| OV code-signing cert (DigiCert/Sectigo/GlobalSign) | paid, annual | ⚠️ after weeks + hundreds of clean installs |
+| EV code-signing cert | paid, annual | ⚠️ **no better than OV** — instant EV reputation was removed in 2024 |
+| Microsoft Store (MSIX) | partner account | ✅ the only guaranteed path |
+
+To use a real certificate, add repo secrets `AUTHENTICODE_CERT_BASE64` (a `.pfx`) and
+`AUTHENTICODE_CERT_PASSWORD`; the workflow switches to it with no other changes. Keep
+the **same** certificate across releases — publisher reputation carries forward only
+for an identical identity, and every new build's file hash starts from zero anyway.
+Signature timestamps (RFC 3161) are applied so signatures survive cert expiry.
+
 ---
 
 ## 🚀 Go-Live checklist (everything the owner must configure)
@@ -82,7 +113,8 @@ which has a "Secrets you MUST change" section).
 | **Crypto payments** | Backend `.env`: `NOWPAYMENTS_*`, `CRYPTO_ADDR_*` | Deposit addresses live **only** on the backend — never in the app. |
 | **Verification emails** | Backend `.env`: `SMTP_HOST/PORT/USER/PASS/FROM` | Logs-only until set (registration still works). |
 | **Spotify account linking** | Backend `.env`: `SPOTIFY_CLIENT_ID/SECRET`, redirect URI `https://<backend>/link/spotify/callback` (register it in the Spotify dev dashboard) | Other providers show "coming soon" until adapters exist. |
-| **Permanent signing keystore** | Repo secrets `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD` | See "Signing" above — **do this before the first public release.** |
+| **Permanent signing keystore** | Repo secrets `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD` | See "Signing" above — **required before the first release tag**, which now fails without it. |
+| **Windows code-signing cert** | Repo secrets `AUTHENTICODE_CERT_BASE64`, `AUTHENTICODE_CERT_PASSWORD` | Optional. Absent = self-signed, so SmartScreen still warns. See "Windows signing". |
 | **Anti-tamper cert pin** | Repo secret `DEEMUSIQ_CERT_SHA256` (+ optional backend `EXPECTED_CERT_SHA256`) | See "Anti-tamper" below. Arms the brick-on-repackage check. Set it right after the permanent keystore. |
 | **Backend TLS cert pin** | Repo secret `DEEMUSIQ_SERVER_CERT_SHA256` | SHA-256 of the backend's TLS leaf cert (comma-separated pins for rotation). When set, wallet/payment TLS is pinned and an active startup/6h probe locks money features if the reachable backend presents a different cert. |
 | **Integrity hash signing key** | Build define `DEEMUSIQ_INTEGRITY_ED25519_PUBLIC_KEY` | Base64 Ed25519 public key. When set, the published APK-hash payload must carry a valid `X-Body-Signature` (hex Ed25519 over the raw body) — unsigned/invalid payloads lock the wallet as tamper evidence. |

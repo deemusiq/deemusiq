@@ -11,17 +11,16 @@ real `applicationId`s in `android/app/build.gradle`:
 (`oss.krtirtho.spotube` is only the Kotlin source package, NOT the
 applicationId — do not use it here.)
 
-BEFORE DEPLOYING you must replace the REPLACE_ME placeholder in
-`sha256_cert_fingerprints` with the SHA-256 fingerprint of the RELEASE signing
-certificate, otherwise App Links verification will fail and links will open in
-the browser instead of the app.
+The `sha256_cert_fingerprints` values are filled with the real release signing
+certificate fingerprint — App Links verification is live. The instructions
+below remain for key rotation or a signing-cert change.
 
 Get the fingerprint from the release keystore:
 
     keytool -list -v -keystore /path/to/deemusiq-release.keystore -alias <alias>
 
 Copy the "SHA256:" value (colon-separated hex, e.g.
-"AB:CD:EF:...") and paste it in place of the REPLACE_ME placeholder. Keep the
+"AB:CD:EF:...") and replace both entries above. Keep the
 JSON valid — comments are not allowed in the served file.
 
 If the APK is signed with Google Play App Signing, use the "App signing
