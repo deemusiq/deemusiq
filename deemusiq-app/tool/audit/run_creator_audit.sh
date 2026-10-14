@@ -177,8 +177,8 @@ export AUDIT_ABUSE_TS="file://$BACKEND_DIR/src/util/distributedAbuse.ts"
 # build shells out to cargo) and do NOT override XDG_CONFIG_HOME either: GTK
 # plugins (titlebar_buttons, dconf) read the theme from there and a bare
 # config dir makes them throw during layout, wedging the audit.
-export XDG_DATA_HOME="$SHOTS/appdata"
 export XDG_CACHE_HOME="$SHOTS/appdata/cache"
+export XDG_DATA_HOME="$SHOTS/appdata"
 
 echo "scenario A: email gate -> sign in -> claim -> submit form"
 # The Linux desktop build can segfault during native boot (tray/DBus/GTK on
@@ -199,8 +199,16 @@ run_flutter_test() {
     local rc=${PIPESTATUS[0]}
     set -e
     [ "$rc" = "0" ] && return 0
-    if grep -q "Unable to start the app on the device" "$out"; then
-      echo "  attempt $attempt: app died before the debug connection (boot flake) — retrying"
+    # Boot flakes: the native side (tray/DBus/GTK under the test runner) can
+    # die before the VM service connects ("Unable to start...") or seconds
+    # into boot ("did not complete") — neither produces any [audit] evidence,
+    # and neither is a flow failure. Retry those; never retry a step failure
+    # (the walk produced audit output, i.e. the app was alive and the failure
+    # is the finding).
+    if ! grep -q "\[audit\] screenshot:" "$out" && {
+       grep -q "Unable to start the app on the device" "$out" ||
+       grep -q "did not complete" "$out"; }; then
+      echo "  attempt $attempt: app died before any audit step (boot flake) — retrying"
       continue
     fi
     return 1
@@ -215,7 +223,10 @@ run_flutter_test integration_test/audit/creator_studio_audit_test.dart || {
 if [ "$WITH_VERIFY" = "--with-verify" ]; then
   echo "scenario B: device -> attach email -> emailed code -> verified"
   B_EMAIL="audit.verify.$RUN_ID@example.test"
-  run_flutter_test integration_test/audit/verify_email_audit_test.dart "$B_EMAIL" || {
+  # A separate app-state dir: a fresh device identity, so scenario B exercises
+  # the add-email gate instead of landing on the dashboard scenario A claimed.
+  XDG_DATA_HOME="$SHOTS/appdata-b" XDG_CACHE_HOME="$SHOTS/appdata-b/cache" \
+    run_flutter_test integration_test/audit/verify_email_audit_test.dart "$B_EMAIL" || {
     echo "scenario B failed — see $SHOTS"
     exit 1
   }

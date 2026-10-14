@@ -52,6 +52,28 @@ build/audit/<run-id>/
 artist name, screenshot dir, and backend locations. App state is isolated per
 run via `XDG_DATA_HOME` — every audit person is a fresh install.
 
+## Findings from building this harness (environment + app notes)
+
+- **Update dialog re-appears**: the "DeeMusiq has an update" modal is fetched
+  asynchronously and pops seconds after launch, blocking every tap. The
+  harness polls and pops it (`clearBlockingDialogs`). Consider a dismiss
+  action or a suppress flag for kiosk/CI contexts.
+- **Silent device sign-in**: on Home load the wallet layer acquires a device
+  session without user interaction, so a fresh install usually reaches the
+  Creator Studio in the *add-email* state, not the signed-out email sign-in
+  state. Both gates are audited.
+- **Stale app instance owns the D-Bus name**: a crashed/killed app still owns
+  `za.co.deemusiq.app` on the session bus — every new launch times out
+  registering and exits code 1 (looks like a boot segfault). The runner kills
+  stale audit binaries first.
+- **GTK/XDG constraints**: overriding `XDG_CONFIG_HOME` breaks
+  `titlebar_buttons` (theme lookup throws during layout) and dconf; only
+  `XDG_DATA_HOME` (app KV state) is isolated. Overriding `HOME` breaks the
+  build (cargo lives there).
+- **Native boot flake**: the Linux build occasionally segfaults during native
+  boot under the test runner. The runner retries only boot flakes — never a
+  failed step (that's the finding).
+
 ## Known limits (not audited here)
 
 - Native file-picker uploads (audio/cover) — the person picks real files; the
